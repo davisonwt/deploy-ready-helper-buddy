@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { TribalHeart } from './BondingAnimation';
 import { TribalAudio } from '@/hooks/useTribalHeartsAudio';
 import { toast } from '@/hooks/use-toast';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 
 // Rotating hero photos on the welcome/landing step -- public/wandering-hearts/
 // (not src/assets/, so referenced by public path, not bundled import).
@@ -489,6 +490,8 @@ const StepPhotos: React.FC<{ userId?: string; draft: Draft; update: any }> = ({ 
     if (!files || !userId) return;
     setUploading(true);
     const newPaths: string[] = [];
+    let rejected = 0;
+    let lastReason: string | undefined;
     try {
       for (const file of Array.from(files).slice(0, 6 - draft.photos.length)) {
         const ext = file.name.split('.').pop() || 'jpg';
@@ -496,17 +499,32 @@ const StepPhotos: React.FC<{ userId?: string; draft: Draft; update: any }> = ({ 
         const { error } = await supabase.storage
           .from('tribal-hearts-photos')
           .upload(path, file, { contentType: file.type, upsert: false });
-        if (!error) {
-          // get a signed URL we can use directly in <img>
-          const { data: signed } = await supabase.storage
-            .from('tribal-hearts-photos')
-            .createSignedUrl(path, 60 * 60 * 24 * 7);
-          if (signed?.signedUrl) newPaths.push(signed.signedUrl);
-        } else {
+        if (error) {
           console.error('upload error', error);
+          continue;
         }
+        // Scan BEFORE signing -- a signed URL is a bearer token storage
+        // RLS never re-checks, so this is the real gate for this bucket,
+        // not just the RLS backstop. Never sign/persist an unscanned file.
+        const { verdict, reason } = await moderateStorageUpload('tribal-hearts-photos', path, 'image');
+        if (verdict !== 'allow') {
+          rejected++;
+          lastReason = reason;
+          continue;
+        }
+        const { data: signed } = await supabase.storage
+          .from('tribal-hearts-photos')
+          .createSignedUrl(path, 60 * 60 * 24 * 7);
+        if (signed?.signedUrl) newPaths.push(signed.signedUrl);
       }
       update('photos', [...draft.photos, ...newPaths]);
+      if (rejected > 0) {
+        toast({
+          title: rejected === 1 ? 'A photo was rejected' : `${rejected} photos were rejected`,
+          description: moderationRejectionMessage(lastReason),
+          variant: 'destructive' as any,
+        });
+      }
     } finally {
       setUploading(false);
     }

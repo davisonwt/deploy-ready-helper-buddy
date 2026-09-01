@@ -549,6 +549,9 @@ const AppRoutes = () => (
         <AdminDashboardPage />
       </ProtectedRoute>
     } />
+    {/* moderate-media's gosat alert links here (action_url) -- the queue
+        itself lives in the "moderation" tab of the admin dashboard. */}
+    <Route path="/admin/moderation" element={<Navigate to="/admin/dashboard" replace />} />
     <Route path="/admin" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}>
         <Suspense fallback={<div>Loading...</div>}><AdminDashboardPage /></Suspense>

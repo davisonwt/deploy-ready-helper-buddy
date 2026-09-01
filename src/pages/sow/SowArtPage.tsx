@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { insertProduct } from '@/api/products';
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
 import { generateWatermarkedPreview } from '@/lib/media/generateWatermarkedPreview';
+import { moderateStorageUpload } from '@/lib/moderation/moderateUpload';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { launchConfetti } from '@/utils/confetti';
 import { toast } from 'sonner';
@@ -119,6 +120,14 @@ export default function SowArtPage() {
           contentType: 'image/jpeg',
         });
         if (uploadErr) throw uploadErr;
+        const { verdict } = await moderateStorageUpload('seed-previews', path, 'image');
+        if (verdict !== 'allow') {
+          // Non-blocking preview, same as every other failure path here --
+          // the full-res file (already scanned via SeedDropZone) is what
+          // actually matters; just don't show a rejected watermark image.
+          console.error('Watermarked preview rejected by moderation:', verdict);
+          return;
+        }
         const { data: pub } = supabase.storage.from('seed-previews').getPublicUrl(path);
         if (!alive) return;
         setPreviewUrl(pub.publicUrl);

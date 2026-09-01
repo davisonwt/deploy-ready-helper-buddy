@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, X, Bookmark, Sparkles } from 'lucide-react';
 import { TribalHeart } from './BondingAnimation';
+import ReportButton from '@/components/moderation/ReportButton';
 
 export interface HeartsProfile {
   user_id: string;
@@ -110,6 +111,15 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
             <CompatibilityRing score={score} />
           </div>
         )}
+
+        {/* Report */}
+        <div className="absolute top-4 left-4">
+          <ReportButton
+            targetType="wandering_hearts_profile"
+            targetId={profile.user_id}
+            className="rounded-full bg-black/40 text-white/80 hover:bg-black/60 hover:text-white backdrop-blur-sm"
+          />
+        </div>
 
         {/* Bottom info */}
         <div className="absolute inset-x-0 bottom-0 p-6">

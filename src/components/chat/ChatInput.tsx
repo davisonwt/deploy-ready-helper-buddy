@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 
 interface ChatInputProps {
   roomId: string;
@@ -40,6 +41,18 @@ const ChatInput = ({ roomId, onSendMessage }: ChatInputProps) => {
         .upload(filePath, file, { upsert: false });
 
       if (uploadError) throw uploadError;
+
+      // Storage RLS (20260902114500) requires a moderation verdict row for
+      // any file uploaded from now on, regardless of type -- moderate-media
+      // auto-allows non-visual files itself (nothing for a nudity scan to
+      // look at), so this call is always made, not just for images/video.
+      const kind = file.type.startsWith('video/') ? 'video' : 'image';
+      const { verdict, reason } = await moderateStorageUpload('chat-files', filePath, kind);
+      if (verdict !== 'allow') {
+        setError(moderationRejectionMessage(reason));
+        toast({ variant: 'destructive', title: 'File not sent', description: moderationRejectionMessage(reason) });
+        return '';
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('chat-files')

@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 
 export function QuickProfileSetup({ onComplete, onClose }) {
   const [step, setStep] = useState(1); // 1: Basic, 2: Photo, 3: Complete
@@ -74,6 +75,9 @@ export function QuickProfileSetup({ onComplete, onClose }) {
         .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
 
       if (uploadError) throw uploadError;
+
+      const { verdict, reason } = await moderateStorageUpload('orchard-images', path, 'image');
+      if (verdict !== 'allow') throw new Error(moderationRejectionMessage(reason));
 
       const { data: pub } = supabase.storage.from('orchard-images').getPublicUrl(path);
 

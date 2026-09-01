@@ -38,6 +38,7 @@ import {
   CalendarCheck,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -344,6 +345,11 @@ const SessionBuilder = () => {
       .upload(path, file, { upsert: true, contentType: file.type });
     if (upErr) {
       toast({ title: 'Upload failed', description: upErr.message, variant: 'destructive' });
+      return;
+    }
+    const mod = await moderateStorageUpload('radio-session-assets', path, 'image');
+    if (mod.verdict !== 'allow') {
+      toast({ title: 'File not accepted', description: moderationRejectionMessage(mod.reason), variant: 'destructive' });
       return;
     }
     const { data: signed } = await supabase.storage

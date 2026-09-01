@@ -3,6 +3,7 @@ import { Loader2, Music, UploadCloud, CheckCircle2, AlertCircle, X } from 'lucid
 import { supabase } from '@/integrations/supabase/client';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { formatSizeMessage, mapStorageUploadError } from '@/lib/uploadErrors';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 
 export type SeedKind = 'audio' | 'image' | 'document';
 
@@ -164,6 +165,16 @@ export default function SeedDropZone({
       emit({ file, fileUrl: '', storagePath: '', previewStatus: 'error', previewMessage: message, ...base });
       return;
     }
+
+    // Scan before exposing -- non-visual kinds (audio/document) are
+    // auto-allowed by moderate-media itself (nothing for a nudity model
+    // to see), so this is safe/cheap to always call.
+    const { verdict, reason } = await moderateStorageUpload(bucket, path, 'image');
+    if (verdict !== 'allow') {
+      emit({ file, fileUrl: '', storagePath: '', previewStatus: 'error', previewMessage: moderationRejectionMessage(reason), ...base });
+      return;
+    }
+
     const { data: pub } = supabase.storage.from(bucket).getPublicUrl(path);
 
     if (!generatePreview) {

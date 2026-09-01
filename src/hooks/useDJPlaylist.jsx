@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload'
 import { toast } from 'sonner'
 
 export const useDJPlaylist = () => {
@@ -137,6 +138,9 @@ export const useDJPlaylist = () => {
         console.error('🎵🎵🎵 Upload error details v2.0:', uploadError)
         throw uploadError
       }
+
+      const trackMod = await moderateStorageUpload('music-tracks', fileName, 'image')
+      if (trackMod.verdict !== 'allow') throw new Error(moderationRejectionMessage(trackMod.reason))
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage

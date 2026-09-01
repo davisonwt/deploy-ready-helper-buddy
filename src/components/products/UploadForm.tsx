@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { insertProduct } from '@/api/products';
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -137,6 +138,9 @@ export default function UploadForm() {
         throw coverUploadError;
       }
 
+      const coverMod = await moderateStorageUpload('premium-room', coverPath, 'image');
+      if (coverMod.verdict !== 'allow') throw new Error(moderationRejectionMessage(coverMod.reason));
+
       const { data: coverUrl } = supabase.storage
         .from('premium-room')
         .getPublicUrl(coverPath);
@@ -159,6 +163,9 @@ export default function UploadForm() {
         console.error('File upload error:', fileUploadError);
         throw fileUploadError;
       }
+      const mainKind = mainFile.type.startsWith('video/') ? 'video' : 'image';
+      const mainMod = await moderateStorageUpload('premium-room', filePath, mainKind);
+      if (mainMod.verdict !== 'allow') throw new Error(moderationRejectionMessage(mainMod.reason));
       const { data: fileUrl } = supabase.storage
         .from('premium-room')
         .getPublicUrl(filePath);

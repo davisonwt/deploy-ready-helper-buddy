@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { detectContactInfo, CONTACT_BLOCKED_MESSAGE } from '@/lib/wanderingHearts/contactDetection';
 import { uploadWanderingHeartsNote } from '@/lib/wanderingHearts/media';
+import ReportButton from '@/components/moderation/ReportButton';
 
 interface ChatMessage {
   id: string;
@@ -45,6 +46,8 @@ export const WanderingHeartsChat: React.FC<Props> = ({ roomId, partnerName, onBa
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const [hiddenMessageIds, setHiddenMessageIds] = useState<Set<string>>(new Set());
+
   const load = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase
@@ -53,6 +56,23 @@ export const WanderingHeartsChat: React.FC<Props> = ({ roomId, partnerName, onBa
       .eq('room_id', roomId)
       .order('created_at', { ascending: true });
     setMessages((data ?? []) as any);
+
+    // A report citing sexual content involving a minor hides that specific
+    // message immediately, pending gosat review -- everything else stays
+    // visible until a gosat acts (per wh-moderation.txt point 3).
+    const ids = (data ?? []).map((m: any) => m.id);
+    if (ids.length > 0) {
+      const { data: reports } = await supabase
+        .from('content_reports')
+        .select('target_id')
+        .eq('target_type', 'chat_message')
+        .eq('status', 'pending')
+        .eq('reason', 'minor_sexual_content')
+        .in('target_id', ids);
+      setHiddenMessageIds(new Set((reports ?? []).map((r: any) => r.target_id)));
+    } else {
+      setHiddenMessageIds(new Set());
+    }
     setLoading(false);
   }, [roomId]);
 
@@ -176,10 +196,17 @@ export const WanderingHeartsChat: React.FC<Props> = ({ roomId, partnerName, onBa
         <button onClick={onBack} className="p-2 -ml-2" style={{ color: 'hsl(38 50% 75%)' }} aria-label="Back">
           <ArrowLeft size={20} />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-lg font-serif italic" style={{ color: 'hsl(38 95% 85%)' }}>{partnerName}</h1>
           <p className="text-[11px]" style={{ color: 'hsl(38 30% 60%)' }}>All communication stays inside Wandering Hearts.</p>
         </div>
+        <ReportButton
+          targetType="wandering_hearts_room"
+          targetId={roomId}
+          size="sm"
+          variant="ghost"
+          className="text-[hsl(38,50%,75%)] hover:text-[hsl(38,95%,85%)]"
+        />
       </header>
 
       <main className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
@@ -192,6 +219,18 @@ export const WanderingHeartsChat: React.FC<Props> = ({ roomId, partnerName, onBa
         ) : (
           messages.map((m) => {
             const mine = m.sender_id === user?.id;
+            if (hiddenMessageIds.has(m.id) && !mine) {
+              return (
+                <div key={m.id} className="flex justify-start">
+                  <div
+                    className="max-w-[75%] rounded-2xl px-4 py-2.5 text-xs italic"
+                    style={{ background: 'hsl(20 25% 14%)', color: 'hsl(38 30% 55%)', border: '1px solid hsl(25 30% 22%)' }}
+                  >
+                    This message is hidden pending review.
+                  </div>
+                </div>
+              );
+            }
             return (
               <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                 <div

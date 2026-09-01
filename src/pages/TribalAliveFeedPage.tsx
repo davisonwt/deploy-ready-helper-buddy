@@ -25,6 +25,7 @@ import {
   ChevronLeft, ChevronRight, ChevronDown,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { fetchActiveProductsForFeed } from '@/api/products';
 import { useAuth } from '@/hooks/useAuth';
 import { useReferralCode } from '@/hooks/useReferralCode';
@@ -835,6 +836,9 @@ export default function TribalAliveFeedPage() {
       .from('chat-files')
       .upload(filePath, audioBlob, { contentType: 'audio/webm', upsert: false });
     if (uploadError) throw uploadError;
+
+    const mod = await moderateStorageUpload('chat-files', filePath, 'image');
+    if (mod.verdict !== 'allow') throw new Error(moderationRejectionMessage(mod.reason));
 
     const { data: { publicUrl } } = supabase.storage.from('chat-files').getPublicUrl(filePath);
     await supabase.rpc('send_chat_message', {

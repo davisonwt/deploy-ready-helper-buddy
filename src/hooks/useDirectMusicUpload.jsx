@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { toast } from 'sonner'
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload'
 
 export const useDirectMusicUpload = () => {
   const [uploading, setUploading] = useState(false)
@@ -45,6 +46,9 @@ export const useDirectMusicUpload = () => {
 
       console.log('🔥 Upload successful:', uploadData)
 
+      const trackMod = await moderateStorageUpload('music-tracks', fileName, 'image')
+      if (trackMod.verdict !== 'allow') throw new Error(moderationRejectionMessage(trackMod.reason))
+
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('music-tracks')
@@ -58,6 +62,8 @@ export const useDirectMusicUpload = () => {
           .from('music-tracks')
           .upload(coverName, trackData.coverImageFile, { contentType: trackData.coverImageFile.type, upsert: false })
         if (coverError) throw coverError
+        const coverMod = await moderateStorageUpload('music-tracks', coverName, 'image')
+        if (coverMod.verdict !== 'allow') throw new Error(moderationRejectionMessage(coverMod.reason))
         const { data: coverPublic } = supabase.storage.from('music-tracks').getPublicUrl(coverName)
         coverImageUrl = coverPublic?.publicUrl || null
       }

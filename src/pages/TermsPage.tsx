@@ -45,6 +45,15 @@ export default function TermsPage() {
             that does.
           </p>
 
+          <h2 className="text-lg font-semibold">No nudity or sexual content</h2>
+          <p>
+            Sow2Grow does not allow nudity, sexual activity, or sexual content anywhere on the
+            platform -- photos, videos, voice/video notes, profiles, and Wandering Hearts included.
+            Uploads are scanned automatically, and any member can report content they see. Violating
+            this rule removes your account; content involving a minor is escalated immediately and
+            may be reported to the relevant authorities.
+          </p>
+
           <h2 className="text-lg font-semibold">Content</h2>
           <p>
             You retain ownership of what you upload. By offering a seed on the platform, you grant

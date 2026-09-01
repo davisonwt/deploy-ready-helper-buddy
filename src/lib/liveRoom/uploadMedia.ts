@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 
 const BUCKET = 'chat-media';
 const MAX_BYTES = 50 * 1024 * 1024; // 50MB
@@ -26,6 +27,10 @@ export async function uploadChatMedia(
     upsert: false,
   });
   if (error) throw error;
+
+  const { verdict, reason } = await moderateStorageUpload(BUCKET, path, blob.type === 'video/webm' ? 'video' : 'image');
+  if (verdict !== 'allow') throw new Error(moderationRejectionMessage(reason));
+
   const { data, error: sErr } = await supabase.storage
     .from(BUCKET)
     .createSignedUrl(path, 60 * 60 * 24 * 365);

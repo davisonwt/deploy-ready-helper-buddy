@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Home, Loader2, Play, Pause, Heart, Download } from 'lucide-react';
+import ReportButton from '@/components/moderation/ReportButton';
 import { toast } from 'sonner';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
@@ -360,7 +361,10 @@ export default function MusicTrackDetailPage() {
 
             <div className="flex-1 flex flex-col gap-4">
               <div>
-                <div className="text-xs uppercase tracking-widest text-emerald-400 mb-1">Music Seed</div>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="text-xs uppercase tracking-widest text-emerald-400 mb-1">Music Seed</div>
+                  <ReportButton targetType="music_track" targetId={track.id} size="sm" className="text-slate-400 hover:text-red-400" />
+                </div>
                 <h1 className="text-2xl md:text-3xl font-bold">{track.title}</h1>
                 <div className="text-slate-300 mt-1">by {track.artist_name || 'Tribe Music'}</div>
                 {track.genre && (

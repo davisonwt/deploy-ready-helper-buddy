@@ -11,6 +11,7 @@ import { BestowalReceiptMessage } from './BestowalReceiptMessage';
 import { BookingRequestMessage } from './BookingRequestMessage';
 import { BookingResponseMessage } from './BookingResponseMessage';
 import { BookingConfirmedMessage } from './BookingConfirmedMessage';
+import ReportButton from '@/components/moderation/ReportButton';
 
 const getFileIcon = (fileType) => {
   const icons = {
@@ -207,6 +208,14 @@ const ChatMessage = ({ message, isOwn = false, onDelete, isInstructor, instructo
             >
               <Trash2 className="h-3 w-3" />
             </Button>
+          )}
+          {!isOwn && !isSystemMessage && (
+            <ReportButton
+              targetType="chat_message"
+              targetId={message.id}
+              size="sm"
+              className="h-6 w-6 p-0 text-gray-500 hover:text-red-600 hover:bg-red-100"
+            />
           )}
         </div>
         

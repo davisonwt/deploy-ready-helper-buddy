@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -582,7 +583,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
         .upload(filePath, file);
       
       if (uploadError) throw uploadError;
-      
+
+      const mod = await moderateStorageUpload('chat-files', filePath, file.type.startsWith('video/') ? 'video' : 'image');
+      if (mod.verdict !== 'allow') {
+        toast({ title: 'File not sent', description: moderationRejectionMessage(mod.reason), variant: 'destructive' });
+        return;
+      }
+
       const { data: { publicUrl } } = supabase.storage
         .from('chat-files')
         .getPublicUrl(filePath);

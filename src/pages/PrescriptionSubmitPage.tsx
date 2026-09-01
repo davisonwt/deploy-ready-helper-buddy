@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload } from '@/lib/moderation/moderateUpload';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -101,6 +102,13 @@ export default function PrescriptionSubmitPage() {
         .from('prescriptions')
         .uploadToSignedUrl(objectPath, uploadToken, file, { contentType: file.type });
       if (upErr) throw upErr;
+
+      // Reviewer-only bucket (a prescription/medical document, not general
+      // member content) -- scan for the gosat queue's context, but never
+      // surface a nudity-style rejection here; a medical doc can
+      // false-positive and submit-prescription already routes this to
+      // human review regardless of verdict.
+      void moderateStorageUpload('prescriptions', objectPath, 'image');
 
       const { data, error } = await supabase.functions.invoke('submit-prescription', {
         body: {

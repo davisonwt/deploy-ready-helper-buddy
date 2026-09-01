@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { compressVideoAdvanced } from '@/utils/videoProcessor'
 import { toast } from 'sonner'
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload'
 
 export function useFileUpload() {
   console.log('useFileUpload hook initializing - React:', React, 'useState:', useState)
@@ -100,6 +101,16 @@ export function useFileUpload() {
         console.error('Storage upload error details:', uploadError);
         toast.error('Upload failed: ' + uploadError.message, { id: 'file-upload' })
         throw uploadError;
+      }
+
+      // Scan before exposing -- this hook is shared across many buckets,
+      // so this is the one choke point that covers all of them at once.
+      // moderate-media auto-allows non-visual file types itself.
+      const mod = await moderateStorageUpload(bucket, fileName, fileToUpload.type?.startsWith('video/') ? 'video' : 'image')
+      if (mod.verdict !== 'allow') {
+        const message = moderationRejectionMessage(mod.reason)
+        toast.error(message, { id: 'file-upload' })
+        return { success: false, error: message }
       }
 
       toast.success('Upload complete!', { id: 'file-upload' })

@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Loader2, ImagePlus, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatSizeMessage, mapStorageUploadError } from '@/lib/uploadErrors';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 
 export interface CoverResult {
   fileUrl: string;
@@ -81,6 +82,14 @@ export default function CoverDropZone({ bucket, pathPrefix, onChange, required }
         onChange(null);
         return;
       }
+
+      const { verdict, reason } = await moderateStorageUpload(bucket, path, 'image');
+      if (verdict !== 'allow') {
+        setError(moderationRejectionMessage(reason));
+        onChange(null);
+        return;
+      }
+
       const { data: pub } = supabase.storage.from(bucket).getPublicUrl(path);
       onChange({ fileUrl: pub.publicUrl, storagePath: path });
     } catch (e: any) {

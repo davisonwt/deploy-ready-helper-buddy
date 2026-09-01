@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { launchConfetti } from '@/utils/confetti';
 import CoverDropZone, { type CoverResult } from '@/components/sowing/CoverDropZone';
 import PlantButton from '@/components/sowing/PlantButton';
@@ -80,6 +81,8 @@ async function uploadGalleryPhoto(file: File, userId: string): Promise<CoverResu
     contentType: file.type || 'image/jpeg',
   });
   if (error) throw error;
+  const { verdict, reason } = await moderateStorageUpload('premium-room', path, 'image');
+  if (verdict !== 'allow') throw new Error(moderationRejectionMessage(reason));
   const { data } = supabase.storage.from('premium-room').getPublicUrl(path);
   return { fileUrl: data.publicUrl, storagePath: path };
 }

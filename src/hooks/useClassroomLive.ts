@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { useToast } from '@/hooks/use-toast';
 
 export interface LiveParticipant {
@@ -229,6 +230,11 @@ export function useClassroomLive({ sessionId, userId, isHost }: UseClassroomLive
       toast({ title: 'Voice note failed', description: upErr.message, variant: 'destructive' });
       return;
     }
+    const voiceMod = await moderateStorageUpload('premium-room', path, 'image');
+    if (voiceMod.verdict !== 'allow') {
+      toast({ title: 'Voice note not sent', description: moderationRejectionMessage(voiceMod.reason), variant: 'destructive' });
+      return;
+    }
     const { data } = supabase.storage.from('premium-room').getPublicUrl(path);
     await supabase.from('live_session_messages').insert({
       session_id: sessionId,
@@ -248,6 +254,11 @@ export function useClassroomLive({ sessionId, userId, isHost }: UseClassroomLive
     const { error: upErr } = await supabase.storage.from('premium-room').upload(path, file, { contentType: file.type, upsert: false });
     if (upErr) {
       toast({ title: 'Upload failed', description: upErr.message, variant: 'destructive' });
+      return;
+    }
+    const mediaMod = await moderateStorageUpload('premium-room', path, file.type.startsWith('video/') ? 'video' : 'image');
+    if (mediaMod.verdict !== 'allow') {
+      toast({ title: 'Upload not accepted', description: moderationRejectionMessage(mediaMod.reason), variant: 'destructive' });
       return;
     }
     const { data: pub } = supabase.storage.from('premium-room').getPublicUrl(path);

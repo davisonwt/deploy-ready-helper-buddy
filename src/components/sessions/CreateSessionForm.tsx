@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Camera, Check, ChevronDown, DollarSign, FileUp, Loader2, Shield, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,6 +71,9 @@ export default function CreateSessionForm({ kind, onCreated }: { kind: Kind; onC
       const path = `${user.id}/launch-${Date.now()}-${clean}`;
       const { error } = await supabase.storage.from('premium-room').upload(path, file, { upsert: false });
       if (error) throw error;
+      const kind = file.type.startsWith('video/') ? 'video' : 'image';
+      const { verdict, reason } = await moderateStorageUpload('premium-room', path, kind);
+      if (verdict !== 'allow') throw new Error(moderationRejectionMessage(reason));
       const { data } = supabase.storage.from('premium-room').getPublicUrl(path);
       uploaded.push({ name: file.name, type: file.type, size: file.size, url: data.publicUrl });
     }

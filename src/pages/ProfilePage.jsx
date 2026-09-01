@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "../hooks/useAuth"
 import { useToast } from "../hooks/use-toast"
+import { moderateBase64Upload, moderationRejectionMessage } from "@/lib/moderation/moderateUpload"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
@@ -231,6 +232,16 @@ export default function ProfilePage() {
         }
         reader.readAsDataURL(file)
       })
+
+      // Scan before this ever reaches formData/DB -- avatar_url has no
+      // storage bucket to gate in RLS (it's a base64 string written
+      // straight into profiles.avatar_url), so this call is the entire
+      // enforcement for this path, not a backstop.
+      const { verdict, reason } = await moderateBase64Upload(resized, 'image/jpeg')
+      if (verdict !== 'allow') {
+        setPictureError(moderationRejectionMessage(reason))
+        return
+      }
 
       setFormData(prev => ({
         ...prev,

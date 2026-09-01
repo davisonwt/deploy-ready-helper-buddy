@@ -38,6 +38,7 @@ import AdminRadioManagement from '@/components/radio/AdminRadioManagement'
 import { RadioSlotApprovalInterface } from '@/components/radio/RadioSlotApprovalInterface'
 import { UserManagementDashboard } from '@/components/admin/UserManagementDashboard'
 import { ContentModerationDashboard } from '@/components/admin/ContentModerationDashboard'
+import TrustSafetyQueue from '@/components/admin/TrustSafetyQueue'
 import { EnhancedAnalyticsDashboard } from '@/components/admin/EnhancedAnalyticsDashboard'
 import { GoSatGhostAccessMonitor } from '@/components/admin/GoSatGhostAccessMonitor'
 import GosatTreasuryPage from '@/pages/GosatTreasuryPage'
@@ -409,8 +410,13 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
 
-          <TabsContent value="moderation">
-            <ContentModerationDashboard />
+          <TabsContent value="moderation" className="space-y-10">
+            <TrustSafetyQueue />
+            <div className="border-t pt-8">
+              <h2 className="text-lg font-semibold mb-1">Orchard Verification</h2>
+              <p className="text-sm text-muted-foreground mb-4">Separate from trust &amp; safety -- new orchards awaiting verification.</p>
+              <ContentModerationDashboard />
+            </div>
           </TabsContent>
 
           <TabsContent value="ghost-access" className="space-y-6">

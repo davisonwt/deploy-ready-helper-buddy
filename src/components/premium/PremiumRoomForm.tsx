@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -110,6 +111,12 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
       if (uploadError) {
         console.error('Upload failed:', uploadError);
         toast({ variant: 'destructive', title: 'Upload failed', description: uploadError.message });
+        continue;
+      }
+      const modKind = file.type.startsWith('video/') ? 'video' : file.type.startsWith('image/') ? 'image' : 'image';
+      const { verdict, reason } = await moderateStorageUpload('premium-room', filename, modKind);
+      if (verdict !== 'allow') {
+        toast({ variant: 'destructive', title: 'File not accepted', description: moderationRejectionMessage(reason) });
         continue;
       }
       const { data: pub } = supabase.storage.from('premium-room').getPublicUrl(filename);

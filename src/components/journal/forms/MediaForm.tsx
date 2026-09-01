@@ -8,6 +8,7 @@ import { getCreatorTime } from '@/utils/customTime'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
+import { moderateStorageUpload } from '@/lib/moderation/moderateUpload'
 
 interface MediaFormProps {
   selectedDate: Date
@@ -33,6 +34,12 @@ async function uploadToJournalMedia(
   })
   if (error) {
     console.error('journal-media upload failed:', error)
+    return null
+  }
+  const kind = folder === 'videos' ? 'video' : 'image'
+  const { verdict } = await moderateStorageUpload('journal-media', path, kind)
+  if (verdict !== 'allow') {
+    console.error('journal-media upload rejected by moderation:', verdict)
     return null
   }
   const { data } = supabase.storage.from('journal-media').getPublicUrl(path)

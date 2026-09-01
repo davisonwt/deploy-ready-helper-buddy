@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { queryClient } from '@/lib/queryPersistence';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -77,6 +78,9 @@ export default function RadioGenerator() {
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
+
+      const mod = await moderateStorageUpload('music-tracks', filePath, 'image');
+      if (mod.verdict !== 'allow') throw new Error(moderationRejectionMessage(mod.reason));
 
       const { data: { publicUrl } } = supabase.storage
         .from('music-tracks')

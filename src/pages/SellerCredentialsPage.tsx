@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload } from '@/lib/moderation/moderateUpload';
 import { useMyCredentials, type CredentialType } from '@/hooks/useMarketplaceTaxonomy';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,6 +49,15 @@ export default function SellerCredentialsPage() {
         .from('seller-credentials')
         .upload(path, file, { upsert: false });
       if (upErr) throw upErr;
+
+      // Reviewer-only bucket: scan for the gosat queue's benefit, but never
+      // show the uploader a nudity-style rejection here -- a credential
+      // document can false-positive, and that's a confusing, alarming
+      // message for someone submitting a legitimate license. The
+      // submission still goes to human review either way (status:
+      // 'pending' below), so a block/uncertain verdict just adds context
+      // for whoever reviews it, it never blocks the submission itself.
+      void moderateStorageUpload('seller-credentials', path, 'image');
 
       const { error: insErr } = await supabase
         .from('seller_credentials' as any)

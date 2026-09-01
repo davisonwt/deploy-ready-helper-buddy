@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { insertProduct } from '@/api/products';
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
 import { generatePdfPagePreviews } from '@/lib/media/generatePdfPreview';
+import { moderateStorageUpload } from '@/lib/moderation/moderateUpload';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { launchConfetti } from '@/utils/confetti';
 import { toast } from 'sonner';
@@ -123,6 +124,11 @@ export default function SowBookPage() {
             contentType: 'image/jpeg',
           });
           if (uploadErr) throw uploadErr;
+          const { verdict } = await moderateStorageUpload('seed-previews', path, 'image');
+          if (verdict !== 'allow') {
+            console.error('Book preview page rejected by moderation:', verdict);
+            continue;
+          }
           const { data: pub } = supabase.storage.from('seed-previews').getPublicUrl(path);
           urls.push(pub.publicUrl);
         }

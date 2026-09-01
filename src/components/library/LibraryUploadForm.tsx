@@ -1,6 +1,7 @@
 ﻿import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -92,6 +93,9 @@ export default function LibraryUploadForm() {
 
       if (fileError) throw fileError;
 
+      const mainMod = await moderateStorageUpload('premium-room', filePath, mainFile.type.startsWith('video/') ? 'video' : 'image');
+      if (mainMod.verdict !== 'allow') throw new Error(moderationRejectionMessage(mainMod.reason));
+
       const { data: fileUrl } = supabase.storage
         .from('premium-room')
         .getPublicUrl(filePath);
@@ -105,10 +109,13 @@ export default function LibraryUploadForm() {
           .from('premium-room')
           .upload(previewPath, previewFile);
         if (!previewError) {
-          const { data: previewUrlData } = supabase.storage
-            .from('premium-room')
-            .getPublicUrl(previewPath);
-          previewUrl = previewUrlData.publicUrl;
+          const previewMod = await moderateStorageUpload('premium-room', previewPath, previewFile.type.startsWith('video/') ? 'video' : 'image');
+          if (previewMod.verdict === 'allow') {
+            const { data: previewUrlData } = supabase.storage
+              .from('premium-room')
+              .getPublicUrl(previewPath);
+            previewUrl = previewUrlData.publicUrl;
+          }
         }
       }
 
@@ -121,10 +128,13 @@ export default function LibraryUploadForm() {
           .from('premium-room')
           .upload(coverPath, coverImage);
         if (!coverError) {
-          const { data: coverUrlData } = supabase.storage
-            .from('premium-room')
-            .getPublicUrl(coverPath);
-          coverUrl = coverUrlData.publicUrl;
+          const coverMod = await moderateStorageUpload('premium-room', coverPath, 'image');
+          if (coverMod.verdict === 'allow') {
+            const { data: coverUrlData } = supabase.storage
+              .from('premium-room')
+              .getPublicUrl(coverPath);
+            coverUrl = coverUrlData.publicUrl;
+          }
         }
       }
 

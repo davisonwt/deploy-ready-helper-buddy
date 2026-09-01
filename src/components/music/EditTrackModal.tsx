@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { toast } from 'sonner';
 import { Upload, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -67,6 +68,9 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
 
 
       if (uploadError) throw uploadError;
+
+      const mod = await moderateStorageUpload('music-tracks', filePath, 'image');
+      if (mod.verdict !== 'allow') throw new Error(moderationRejectionMessage(mod.reason));
 
       const { data: urlData } = supabase.storage
         .from('music-tracks')

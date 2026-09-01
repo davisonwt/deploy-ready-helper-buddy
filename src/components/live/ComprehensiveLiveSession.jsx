@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload'
 import { useAuth } from '@/hooks/useAuth'
 import { useGamification } from '@/hooks/useGamification'
 
@@ -268,6 +269,12 @@ export function ComprehensiveLiveSession({
         .upload(fileName, file)
 
       if (uploadError) throw uploadError
+
+      const mod = await moderateStorageUpload('session-documents', fileName, file.type.startsWith('video/') ? 'video' : 'image')
+      if (mod.verdict !== 'allow') {
+        toast({ title: 'File not accepted', description: moderationRejectionMessage(mod.reason), variant: 'destructive' })
+        return
+      }
 
       // Create document record
       const { error: dbError } = await supabase
