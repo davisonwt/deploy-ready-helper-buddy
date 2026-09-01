@@ -92,6 +92,12 @@ clears, with no further approval.
 |---|---|---|
 | **Hot wallet** | Working float: incoming payments, outgoing payouts | Single key, automated |
 | **Squad (2-of-3)** | Accumulated S2G 15% revenue + reserve | Two of: davison, Ed, Amber |
+| **Launch Orchard wallet** | Funds held for Launch orchards | Single key, automated |
+| **Uplift Orchard wallet** | Funds held for Uplift orchards | Single key, automated |
+
+The two orchard wallets are a separate pair again — not this hot wallet,
+not the Squad. Full detail (addresses, and why they're single-key and
+never swept) is in section 10.
 
 A scheduled sweep moves S2G's cut from hot wallet to Squad (daily, or on
 threshold), leaving only near-term float exposed.
@@ -126,8 +132,19 @@ here only as a signing key for the Squad. They are distinct from — and
 must never share a schema field with — those same people's personal payout
 destinations as sowers.
 
-This is the treasury half only. **The hot wallet described above does not
-exist yet** — the operational float wallet still needs to be created.
+**Live hot wallet (created 2026-09-01):**
+
+| | |
+|---|---|
+| Address | `6zbpF3HQbxFVMfUPMRzZZ52nwA7PSvqeq2Cqibq2BcxZ` |
+| Signing | Single key, automated |
+| Secrets | `SOLANA_HOT_WALLET_SECRET_KEY` / `SOLANA_HOT_WALLET_ADDRESS`, configured in Supabase |
+| Cluster | devnet (code default — `payout-earnings`' Solana rail switches to mainnet-beta only via explicit config) |
+| Status | Not yet funded. No real sends have been made. |
+
+This is the treasury half. The two orchard wallets (Launch, Uplift) are a
+different pair again — see section 10 for their addresses and why they
+exist separately from both this wallet and the Squad.
 
 ---
 
@@ -402,34 +419,134 @@ observes, it does not become a second way to move money.
 
 ---
 
-## 10. Orchard bestowals
+## 10. Orchards — Launch and Uplift
 
-All bestowals to community orchards and production orchards are held in
-S2G's wallet (Phantom) or account (PayPal) rather than paid out per
-transaction.
+Replaces the open questions previously in this section. Decided 2026-09-01.
 
-**This is the highest-trust-risk holding on the platform** and needs
-explicit rules before it scales. Orchard funds are raised *for* a stated
-purpose; S2G holding them without defined release conditions is exactly
-where trust breaks down — and it is a larger custody position than the
-$20 batching in section 9.
+### The wallets
 
-**Open, must be decided:**
-- What condition releases orchard funds? A funding goal being met, a
-  deadline, an S2G decision, an orchard-owner request?
-- Who authorises release — the orchard creator, S2G, or both?
-- What happens if an orchard never reaches its goal? Refund to bestowers,
-  release anyway, or hold indefinitely?
-- Are bestowers told, at the point of giving, what the release condition
-  is and what happens if it isn't met? **They should be.**
+Four wallets, four distinct purposes. Nothing shares a wallet with money it
+doesn't belong to.
 
-**Reuse, don't reinvent.** The platform already has an escrow mechanism —
-`release-escrow`, `escrow_events`, and `release_status` on physical-goods
-orders. Orchard holdings are the same shape of problem: money held against
-a future condition, with an audit trail of who released it and when.
-Extend that system rather than building a second holding mechanism with
-its own separate rules.
+| Wallet | Holds | Signing |
+|---|---|---|
+| **Hot wallet** | Working float: incoming payments, outgoing payouts | Single key, automated |
+| **Squad (2-of-3)** | S2G's own accumulated 15% revenue | Two of: davison, Ed, Amber |
+| **Launch Orchard wallet** | Funds held for Launch orchards | Single key, automated |
+| **Uplift Orchard wallet** | Funds held for Uplift orchards | Single key, automated |
 
-Orchard holdings must appear in the section 9 gosat view alongside
-individual held balances, and must be counted in the total liability
-figure. They are not S2G's money either.
+Addresses:
+- Squad vault: `BjBY4uCCEQfE66rYddTBUn9Twg7jKevH1Rze8UfZFWLs`
+- Launch Orchard: `13M2yVLWFmm2VeU1SD5PPPzJwBGUR3eny6Mbvdx3ztct`
+- Uplift Orchard: `8Aj2bWN4eDxvGiWPNbCuJXvtH5pL3ZHNGeFdcahRMVRD`
+- Hot wallet: `6zbpF3HQbxFVMfUPMRzZZ52nwA7PSvqeq2Cqibq2BcxZ`
+
+The two orchard wallets are single-key rather than multisig on purpose: a
+release pays several parties at once (factory, courier, sower, S2G), and
+requiring two human approvals per release would not scale past a handful of
+orchards. They are NOT swept to the Squad — the money in them is not S2G's.
+
+**Money in an orchard wallet is a liability, not revenue.** It belongs to
+the bestowers until the orchard funds, and to the paid parties after. It
+must never be counted as S2G's own balance. See section 9.
+
+### The shared rule: all-or-nothing
+
+Both orchard types work the same way:
+
+1. An orchard opens with a fixed target.
+2. Bestowers fill pockets. Every pocket is the same price within an orchard.
+3. **Nothing is released until the orchard is fully funded** — not the
+   factory, not the sower, not couriers, and not S2G's 15%.
+4. On full funding, everything releases at once.
+
+S2G's 15% waits with everything else. It cannot be taken early: if an
+orchard were ever refunded, S2G would have to return it. Holding it with
+the rest keeps that impossible.
+
+**There is no deadline.** An orchard stays open until it funds. This is
+community capital, not a crowdfunding campaign — it can take a long time,
+and the UI must say so plainly and up front so nobody is surprised.
+
+### Launch Orchard
+
+Funds a production run so a sower can start earning.
+
+**One pocket = one unit.** Not a fraction of one. A 100-shirt run is 100
+pockets.
+
+Pocket price is built up from the real costs:
+
+```
+Factory cost                    $10.00
+Sower's margin (their choice)   $10.00
+Delivery                         $5.00
+                               -------
+Subtotal                        $25.00
+÷ 0.85 to cover S2G's 15%       $29.41   ← pocket price
+S2G's 15%                        $4.41
+```
+
+The processor fee is the grower's, as everywhere else on the platform
+(section 1).
+
+**Two pocket types, same price:**
+- **Bestowal pocket** — the bestower claims that unit and receives it.
+- **Free-will gift pocket** — the bestower funds a unit but claims nothing;
+  that unit goes to the sower as stock they can then sow normally.
+
+A gifter can take as many pockets as they like. They pay full pocket price
+either way — a gift is not a partial contribution.
+
+This is what makes the model work: gifted units become the sower's cashflow
+inventory, so the run is never manufactured purely on hope, and the sower
+gets both capital and stock.
+
+**Whisperers are not involved in orchards.** No commission, no attribution.
+
+On full funding, release in one operation: factory paid in full, couriers
+paid, sower paid their margin, S2G takes 15%.
+
+### Uplift Orchard
+
+Free-will gifting to help a tribe member or family in genuine need — a
+vehicle, a home, food, whatever the need is.
+
+**Only S2G can open an Uplift orchard.** Not self-serve, ever. The flow is:
+a tribe member nominates someone they know to be in need, S2G does its own
+diligence, and only then does the orchard open. This is the single most
+abusable surface on the platform — one fabricated need that reaches the
+tribe does lasting damage to trust — so the gate is deliberate and manual.
+
+**Target** = the full cost of the need, plus associated costs (courier,
+documentation, whatever applies), plus S2G's 15%.
+
+**S2G pays all parties directly.** The released funds do not go to the
+recipient's wallet. S2G pays the dealer, the supplier, the courier. The
+tribe can always be shown where their gifts went, and the recipient never
+has to account for how they spent it.
+
+Every pocket here is a free-will gift. Nobody claims anything.
+
+**Whisperers are not involved.**
+
+### Reuse the existing escrow mechanism
+
+The platform already has `release-escrow`, `escrow_events` and
+`release_status`, built for physical-goods orders. Orchard holdings are the
+same shape of problem — money held against a future condition, with an
+audit trail of who released it and when. Extend that rather than building a
+third holding mechanism with its own rules.
+
+Both orchard wallets' balances must appear in the section 9 gosat liability
+view and be counted in the total held figure. They are not S2G's money.
+
+### Still open
+
+- What happens if a Launch orchard's sower withdraws, or the factory price
+  changes mid-fund? There is no deadline, but there may need to be a
+  cancel-and-refund path.
+- Refunding crypto costs fees. If an orchard is ever cancelled, who absorbs
+  them?
+- Does a Launch orchard's bestowal pocket need a delivery address collected
+  at pocket time, or at release time?
