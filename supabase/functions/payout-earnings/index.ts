@@ -62,13 +62,6 @@
 // service-role bearer, or an admin/gosat user session.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-// Type-only -- erased entirely, no runtime fetch/eval of @solana/web3.js.
-// The real module is loaded dynamically, inside the Solana leg only, by
-// _shared/solanaPayout.ts. See that file's IMPORT STRATEGY note for why:
-// a static import here made every payout-earnings run (PayPal-only ones
-// included) pay ~3s of CPU at cold boot, enough to blow the edge runtime's
-// CPU-time budget outright.
-import type { Connection } from "https://esm.sh/@solana/web3.js@1.95.3";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import {
   markCoveredRowsPaid,
@@ -79,11 +72,16 @@ import {
 import { deliverPayoutNotification } from "../_shared/postFinalize/messaging.ts";
 import { validateSolanaAddress } from "../_shared/cryptoAddress.ts";
 import { getSolanaCluster } from "../_shared/cryptoNetworks.ts";
+// No @solana/web3.js here (or anywhere in the Solana rail now) -- see
+// _shared/solanaPayout.ts's file header for why (measured ~3s CPU import
+// cost vs. the edge runtime's hard, non-configurable 2s ceiling) and what
+// replaced it (micro-sol-signer, measured at 80ms). loadHotWalletKeypair/
+// verifyHotWallet/checkHotWalletConfig are synchronous now -- no dynamic
+// import to await, the replacement is cheap enough to import statically.
 import {
   checkHotWalletConfig,
   getHotWalletUsdcBalance,
   loadHotWalletKeypair,
-  openSolanaConnection,
   sendUsdcPayout,
   verifyHotWallet,
 } from "../_shared/solanaPayout.ts";
@@ -287,12 +285,14 @@ Deno.serve(async (req) => {
       // derive its public key, compare against the configured address --
       // report match/mismatch instead of throwing, so a dry run can surface
       // a bad config instead of just looking clean and failing for real
-      // later. Gated on solanaOwed so a PayPal-only dry run never pays the
-      // lazy @solana/web3.js import cost.
-      let hotWalletCheck: Awaited<ReturnType<typeof checkHotWalletConfig>> | { configured: false; error: string } | null = null;
+      // later. Still gated on solanaOwed -- not for import cost anymore
+      // (checkHotWalletConfig is synchronous, the import is static and
+      // cheap), just because there's no reason to decode a private key on
+      // a run with no Solana recipient to check it against.
+      let hotWalletCheck: ReturnType<typeof checkHotWalletConfig> | { configured: false; error: string } | null = null;
       if (solanaOwed.length > 0) {
         try {
-          hotWalletCheck = await checkHotWalletConfig();
+          hotWalletCheck = checkHotWalletConfig();
         } catch (e) {
           hotWalletCheck = { configured: false, error: e instanceof Error ? e.message : String(e) };
         }
@@ -339,21 +339,15 @@ Deno.serve(async (req) => {
       // must never retroactively mislabel an earlier recipient who was
       // already successfully paid — see the per-recipient try/catch below.
       let setup: {
-        sender: Awaited<ReturnType<typeof loadHotWalletKeypair>>;
+        sender: ReturnType<typeof loadHotWalletKeypair>;
         hotWalletAddress: string;
         cluster: ReturnType<typeof getSolanaCluster>;
-        connection: Connection;
       } | null = null;
       try {
-        // Both of these are where the actual @solana/web3.js dynamic
-        // import happens (loadHotWalletKeypair internally, openSolanaConnection
-        // directly) -- the first real cost is paid here, only now, only
-        // because this run actually has a Solana recipient to pay.
-        const sender = await loadHotWalletKeypair();
+        const sender = loadHotWalletKeypair();
         const { address: hotWalletAddress } = verifyHotWallet(sender);
         const cluster = getSolanaCluster();
-        const connection = await openSolanaConnection();
-        setup = { sender, hotWalletAddress, cluster, connection };
+        setup = { sender, hotWalletAddress, cluster };
         console.log(
           `payout-earnings: Solana leg starting — cluster=${cluster} hotWallet=${hotWalletAddress} ` +
             `recipients=${eligibleSolana.length}`,
@@ -373,13 +367,13 @@ Deno.serve(async (req) => {
       }
 
       if (setup) {
-        const { sender, hotWalletAddress, cluster, connection } = setup;
+        const { sender, hotWalletAddress, cluster } = setup;
         try {
           // Preflight: never half-complete a run because the wallet ran dry
           // partway through — check the total needed against the actual
           // balance before sending anything.
           const totalNeeded = round2(eligibleSolana.reduce((s, r) => s + round2(Number(r.amount_usd || 0)), 0));
-          const balance = await getHotWalletUsdcBalance(connection, sender, cluster);
+          const balance = await getHotWalletUsdcBalance(sender, cluster);
           if (balance < totalNeeded) {
             console.error(
               `payout-earnings: SOLANA BALANCE INSUFFICIENT — hot wallet (${hotWalletAddress}, ${cluster}) has ` +
@@ -420,7 +414,7 @@ Deno.serve(async (req) => {
               await markCoveredRowsProcessing(admin, r.covered_rows as CoveredRow[]);
 
               try {
-                const { signature } = await sendUsdcPayout(connection, sender, rail.address!, amount);
+                const { signature } = await sendUsdcPayout(sender, rail.address!, amount);
                 // The transfer is now irreversible and finalized on-chain.
                 // Everything from here is bookkeeping — if it fails, the
                 // fix is a human reconciling the row, never an automatic
