@@ -62,7 +62,13 @@
 // service-role bearer, or an admin/gosat user session.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { Connection } from "https://esm.sh/@solana/web3.js@1.95.3";
+// Type-only -- erased entirely, no runtime fetch/eval of @solana/web3.js.
+// The real module is loaded dynamically, inside the Solana leg only, by
+// _shared/solanaPayout.ts. See that file's IMPORT STRATEGY note for why:
+// a static import here made every payout-earnings run (PayPal-only ones
+// included) pay ~3s of CPU at cold boot, enough to blow the edge runtime's
+// CPU-time budget outright.
+import type { Connection } from "https://esm.sh/@solana/web3.js@1.95.3";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import {
   markCoveredRowsPaid,
@@ -72,10 +78,11 @@ import {
 } from "../_shared/payoutLedger.ts";
 import { deliverPayoutNotification } from "../_shared/postFinalize/messaging.ts";
 import { validateSolanaAddress } from "../_shared/cryptoAddress.ts";
-import { getSolanaCluster, getSolanaRpcUrl } from "../_shared/cryptoNetworks.ts";
+import { getSolanaCluster } from "../_shared/cryptoNetworks.ts";
 import {
   getHotWalletUsdcBalance,
   loadHotWalletKeypair,
+  openSolanaConnection,
   sendUsdcPayout,
   verifyHotWallet,
 } from "../_shared/solanaPayout.ts";
@@ -311,12 +318,21 @@ Deno.serve(async (req) => {
       // Solana outcome not-configured. Once sends start, a later failure
       // must never retroactively mislabel an earlier recipient who was
       // already successfully paid — see the per-recipient try/catch below.
-      let setup: { sender: ReturnType<typeof loadHotWalletKeypair>; hotWalletAddress: string; cluster: ReturnType<typeof getSolanaCluster>; connection: Connection } | null = null;
+      let setup: {
+        sender: Awaited<ReturnType<typeof loadHotWalletKeypair>>;
+        hotWalletAddress: string;
+        cluster: ReturnType<typeof getSolanaCluster>;
+        connection: Connection;
+      } | null = null;
       try {
-        const sender = loadHotWalletKeypair();
+        // Both of these are where the actual @solana/web3.js dynamic
+        // import happens (loadHotWalletKeypair internally, openSolanaConnection
+        // directly) -- the first real cost is paid here, only now, only
+        // because this run actually has a Solana recipient to pay.
+        const sender = await loadHotWalletKeypair();
         const { address: hotWalletAddress } = verifyHotWallet(sender);
         const cluster = getSolanaCluster();
-        const connection = new Connection(getSolanaRpcUrl(), "confirmed");
+        const connection = await openSolanaConnection();
         setup = { sender, hotWalletAddress, cluster, connection };
         console.log(
           `payout-earnings: Solana leg starting — cluster=${cluster} hotWallet=${hotWalletAddress} ` +

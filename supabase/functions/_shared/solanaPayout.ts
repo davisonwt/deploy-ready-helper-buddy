@@ -27,25 +27,37 @@
 //
 // Cluster defaults to devnet (see _shared/cryptoNetworks.ts) -- nothing
 // here points at mainnet unless SOLANA_CLUSTER=mainnet-beta is set.
+//
+// IMPORT STRATEGY -- read before touching this file: @solana/web3.js and
+// @solana/spl-token are loaded via `await import(...)` INSIDE the functions
+// that actually need them, never as static top-level imports. Evaluating
+// those two packages' dependency graphs (elliptic curve math, tweetnacl,
+// bn.js, borsh, buffer polyfills, ...) cold cost ~3s of CPU at module load
+// -- enough to blow the edge runtime's CPU-time budget and fail every
+// invocation with WORKER_RESOURCE_LIMIT/CPUTime, even a dry_run that never
+// touches a Solana recipient. A dynamic import only pays that cost the
+// first time it actually runs, and only in the request that needs it -- a
+// PayPal-only payout-earnings run must never pay this cost at all. Only
+// type-only imports (`import type`, erased entirely, no runtime fetch) are
+// allowed at top level here. Keep it that way.
 
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Transaction,
-} from "https://esm.sh/@solana/web3.js@1.95.3";
-import {
-  createTransferCheckedInstruction,
-  getAssociatedTokenAddress,
-  getAccount,
-  getMint,
-  getOrCreateAssociatedTokenAccount,
-} from "https://esm.sh/@solana/spl-token@0.4.8";
+import type { Connection, Keypair } from "https://esm.sh/@solana/web3.js@1.95.3";
 import bs58 from "https://esm.sh/bs58@5.0.0";
 import { validateSolanaAddress } from "./cryptoAddress.ts";
-import { USDC_MINTS, getSolanaCluster, type SolanaCluster } from "./cryptoNetworks.ts";
+import { USDC_MINTS, getSolanaCluster, getSolanaRpcUrl, type SolanaCluster } from "./cryptoNetworks.ts";
 
-export function loadHotWalletKeypair(): Keypair {
+// Cached after the first call within a given invocation -- a dynamic
+// import() of the same specifier resolves from the module cache on every
+// call after the first, so this doesn't re-pay the cost per function call,
+// only once per cold instance the first time any of them is used.
+function loadWeb3() {
+  return import("https://esm.sh/@solana/web3.js@1.95.3");
+}
+function loadSplToken() {
+  return import("https://esm.sh/@solana/spl-token@0.4.8");
+}
+
+export async function loadHotWalletKeypair(): Promise<Keypair> {
   const raw = Deno.env.get("SOLANA_HOT_WALLET_SECRET_KEY");
   if (!raw) {
     throw new Error(
@@ -57,7 +69,8 @@ export function loadHotWalletKeypair(): Keypair {
   const bytes = trimmed.startsWith("[")
     ? Uint8Array.from(JSON.parse(trimmed))
     : bs58.decode(trimmed);
-  return Keypair.fromSecretKey(bytes);
+  const { Keypair: KeypairClass } = await loadWeb3();
+  return KeypairClass.fromSecretKey(bytes);
 }
 
 /**
@@ -66,6 +79,9 @@ export function loadHotWalletKeypair(): Keypair {
  * were set inconsistently (e.g. the key was rotated and the address
  * wasn't, or vice versa) -- refuse to send rather than silently sending
  * from a wallet nobody logged or verified.
+ *
+ * No dynamic import needed here -- `sender` is already a live Keypair
+ * instance by the time this is called; this only calls a method on it.
  */
 export function verifyHotWallet(sender: Keypair): { address: string } {
   const configured = (Deno.env.get("SOLANA_HOT_WALLET_ADDRESS") ?? "").trim();
@@ -85,12 +101,20 @@ export function verifyHotWallet(sender: Keypair): { address: string } {
   return { address: derived };
 }
 
+/** Opens a Connection to the configured cluster/RPC. Only call this once a Solana send is actually needed this run. */
+export async function openSolanaConnection(): Promise<Connection> {
+  const { Connection: ConnectionClass } = await loadWeb3();
+  return new ConnectionClass(getSolanaRpcUrl(), "confirmed");
+}
+
 /** Current USDC balance held in the hot wallet's associated token account, in whole USDC. */
 export async function getHotWalletUsdcBalance(
   connection: Connection,
   sender: Keypair,
   cluster: SolanaCluster,
 ): Promise<number> {
+  const { PublicKey } = await loadWeb3();
+  const { getAssociatedTokenAddress, getAccount, getMint } = await loadSplToken();
   const mint = new PublicKey(USDC_MINTS[cluster]);
   const ata = await getAssociatedTokenAddress(mint, sender.publicKey);
   try {
@@ -126,6 +150,14 @@ export async function sendUsdcPayout(
   if (addrErr) throw new Error(`invalid destination address: ${addrErr}`);
 
   const cluster = getSolanaCluster();
+  const { PublicKey, Transaction } = await loadWeb3();
+  const {
+    createTransferCheckedInstruction,
+    getAssociatedTokenAddress,
+    getMint,
+    getOrCreateAssociatedTokenAccount,
+  } = await loadSplToken();
+
   const mint = new PublicKey(USDC_MINTS[cluster]);
   const destPubkey = new PublicKey(destinationAddress);
 
