@@ -65,11 +65,24 @@ export async function fetchMyPurchases(userId: string): Promise<EscrowBestowal[]
   return (data ?? []) as EscrowBestowal[];
 }
 
-/** Everything this user sold. */
+/**
+ * Everything this user sold. product_bestowals.sower_id stores sowers.id
+ * (that table's own PK), not the seller's auth id -- resolve it first, same
+ * pattern as src/api/sowerContent.ts. A user with no sowers row has never
+ * sold anything.
+ */
 export async function fetchMySales(userId: string): Promise<EscrowBestowal[]> {
+  const { data: sowerRow, error: sowerErr } = await supabase
+    .from('sowers')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (sowerErr) throw sowerErr;
+  if (!sowerRow) return [];
+
   const { data, error } = await (supabase.from('product_bestowals') as any)
     .select(SELECT)
-    .eq('sower_id', userId)
+    .eq('sower_id', sowerRow.id)
     .eq('status', 'completed')
     .order('created_at', { ascending: false });
   if (error) throw error;

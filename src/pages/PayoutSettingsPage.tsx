@@ -233,39 +233,43 @@ export default function PayoutSettingsPage() {
           <CardHeader>
             <CardTitle className="text-base">Your payout rail</CardTitle>
             <CardDescription>
-              PayPal payouts are batched to a $20 minimum because PayPal charges a fee per
-              transfer. USDC on Solana costs a fraction of a cent to send, so once that rail is
-              live, Solana recipients are paid immediately — any amount, no threshold.
+              This is exactly what the weekly payout run uses to decide where your money goes —
+              whichever one is marked "Active now" below is the only one that pays you. PayPal
+              payouts are batched to a $20 minimum because PayPal charges a fee per transfer.
+              USDC on Solana costs a fraction of a cent to send, so Solana recipients are paid
+              immediately — any amount, no threshold.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 rounded-md border p-3">
               <div className="flex items-center gap-2 font-medium">
                 PayPal
-                {hasVerifiedPaypal && (
+                {!solanaAddress && hasVerifiedPaypal && (
                   <Badge className="text-[10px] bg-primary/15 text-primary border border-primary/30">
                     Active now
                   </Badge>
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {hasVerifiedPaypal
-                  ? 'Connected and verified — this is what pays you today.'
-                  : 'Not connected yet.'}
+                {solanaAddress
+                  ? 'Connected, but not paying you — Solana USDC is your active rail below.'
+                  : hasVerifiedPaypal
+                    ? 'Connected and verified — this is what pays you today.'
+                    : 'Not connected yet — nothing will pay you until you connect PayPal or switch to Solana.'}
               </p>
             </div>
             <div className="flex-1 rounded-md border p-3">
               <div className="flex items-center gap-2 font-medium">
                 Solana USDC
                 {solanaAddress && (
-                  <Badge variant="secondary" className="text-[10px]">
-                    Saved
+                  <Badge className="text-[10px] bg-primary/15 text-primary border border-primary/30">
+                    Active now
                   </Badge>
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {solanaAddress
-                  ? 'Address saved — ready for when instant Solana payouts launch.'
+                  ? 'This is what pays you today — PayPal will not be paid until you switch back.'
                   : 'Not set yet.'}
               </p>
             </div>

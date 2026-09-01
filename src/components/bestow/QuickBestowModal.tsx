@@ -24,17 +24,38 @@ import { useNowPayments } from '@/hooks/useNowPayments';
 import { usePaypal } from '@/hooks/usePaypal';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
-import { priceBreakdown } from '@/lib/pricing/platformFee';
+import { priceBreakdown, round2 } from '@/lib/pricing/platformFee';
 
 export interface QuickBestowModalProps {
   open: boolean;
   onClose: () => void;
   orchardId: string;
   seedTitle: string;
-  sowerUserId: string;
+  sowerUserId?: string;
   hostUserId?: string | null;
   whispererSharePct?: number;
   defaultAmount?: number;
+  /**
+   * Exact pocket count being purchased (defaults to 1, the "quick bestow"
+   * case). Basket checkout passes pockets-selected × quantity so the
+   * invoice/order actually charges for what was chosen, not just one pocket.
+   */
+  pocketsCount?: number;
+  /**
+   * Basket checkout: locks the amount field to defaultAmount (no free typing,
+   * no quick-amount buttons) and displays defaultAmount directly rather than
+   * priceBreakdown(amount) — orchard pocket_price is already the full charge
+   * (see create-nowpayments-invoice/create-paypal-order, no separate gross-up
+   * applied), so grossing it up again here would show a total buyers aren't
+   * actually charged.
+   */
+  lockAmount?: boolean;
+  /**
+   * Fires once invoice/order creation actually succeeds (payment initiated),
+   * before the tab opens (crypto) or the redirect happens (PayPal). Never
+   * call basket-item removal from onClose — that also fires on Cancel.
+   */
+  onSuccess?: () => void;
 }
 
 export default function QuickBestowModal({
@@ -42,6 +63,9 @@ export default function QuickBestowModal({
   orchardId, seedTitle,
   hostUserId, whispererSharePct = 10,
   defaultAmount = 5,
+  pocketsCount = 1,
+  lockAmount = false,
+  onSuccess,
 }: QuickBestowModalProps) {
   const { user } = useAuth();
   const { createInvoice } = useNowPayments();
@@ -69,7 +93,7 @@ export default function QuickBestowModal({
       if (effectiveProvider === 'nowpayments') {
         const invoice = await createInvoice({
           orchardId,
-          pocketsCount: 1,
+          pocketsCount,
           payCurrency: DEFAULT_CRYPTO_PAY_CURRENCY,
           message: note || undefined,
           growerId: hostUserId || undefined,
@@ -77,11 +101,12 @@ export default function QuickBestowModal({
         if (invoice.invoiceUrl) {
           window.open(invoice.invoiceUrl, '_blank');
           toast.message('Invoice opened.', { description: CRYPTO_ROUNDING_NOTICE });
+          onSuccess?.();
         }
       } else {
         const order = await createOrder({
           orchardId,
-          pocketsCount: 1,
+          pocketsCount,
           message: note || undefined,
           growerId: hostUserId || undefined,
         });
@@ -89,6 +114,7 @@ export default function QuickBestowModal({
           // Post-bestowal chat notes (thank-yous + receipt) are posted
           // server-side once the order actually finalizes — see
           // supabase/functions/_shared/postFinalize/messaging.ts.
+          onSuccess?.();
           redirectToApprove(order.approveUrl);
           return;
         }
@@ -107,7 +133,9 @@ export default function QuickBestowModal({
   // create-nowpayments-invoice / create-paypal-order) — the processor fee
   // estimate and the amount shown here must be computed on that S2G-inclusive
   // total, not the raw base, or both numbers understate what's charged.
-  const pricing = priceBreakdown(amount);
+  const pricing = lockAmount
+    ? { base: defaultAmount, s2gFee: 0, total: round2(defaultAmount) }
+    : priceBreakdown(amount);
   const belowCryptoMin = pricing.total < MIN_CRYPTO_BESTOWAL_USD;
   const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
   const feePreview = quoteFee(effectiveProvider, pricing.total);
@@ -133,20 +161,27 @@ export default function QuickBestowModal({
               min={1}
               step={0.5}
               value={amount}
+              disabled={lockAmount}
               onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
             />
-            <div className="mt-2 flex flex-wrap gap-2">
-              {[5, 10, 25, 50, 100].map(v => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setAmount(v)}
-                  className={`rounded-full border px-2.5 py-0.5 text-xs ${
-                    amount === v ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600' : 'border-border hover:bg-muted'
-                  }`}
-                >${v}</button>
-              ))}
-            </div>
+            {lockAmount ? (
+              <p className="text-xs text-muted-foreground mt-1">
+                Set by your basket selection — {pocketsCount} pocket{pocketsCount === 1 ? '' : 's'}.
+              </p>
+            ) : (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[5, 10, 25, 50, 100].map(v => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setAmount(v)}
+                    className={`rounded-full border px-2.5 py-0.5 text-xs ${
+                      amount === v ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600' : 'border-border hover:bg-muted'
+                    }`}
+                  >${v}</button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>

@@ -43,7 +43,14 @@ export default function CryptoPayoutSettings() {
   const [address, setAddress] = useState('');
   const [confirmAddress, setConfirmAddress] = useState('');
   const [acknowledged, setAcknowledged] = useState(false);
+  // Separate from `acknowledged` (irreversibility) on purpose — this is the
+  // explicit "yes, switch me off PayPal" consent. Saving an address must
+  // never flip payout_network as a side effect of just typing it in; see
+  // payout-earnings/index.ts, which buckets recipients on payout_network
+  // alone (PayPal loses every future run once this is 'solana_usdc').
+  const [activateAsRail, setActivateAsRail] = useState(false);
   const [saved, setSaved] = useState<{ payout_address: string } | null>(null);
+  const [activeNetwork, setActiveNetwork] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -56,6 +63,7 @@ export default function CryptoPayoutSettings() {
       const summary = data?.network_mode;
       setMode(summary ? { solana_cluster: summary.solana_cluster, is_testnet: summary.is_testnet } : null);
       const p = data?.payout;
+      setActiveNetwork(p?.payout_network ?? null);
       // Only prefill from a Solana-configured payout — this card no longer
       // has a way to show/edit anything else.
       if (p?.payout_network === PAYOUT_NETWORK && p?.payout_address) {
@@ -74,8 +82,9 @@ export default function CryptoPayoutSettings() {
 
   const addressError = address ? validateSolanaAddress(address) : null;
   const mismatch = confirmAddress.trim() !== address.trim();
+  const alreadyActive = activeNetwork === PAYOUT_NETWORK;
 
-  const canSave = !!address && !addressError && !mismatch && acknowledged && !saving;
+  const canSave = !!address && !addressError && !mismatch && acknowledged && activateAsRail && !saving;
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -93,9 +102,11 @@ export default function CryptoPayoutSettings() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setSaved({ payout_address: data.payout.payout_address });
+      setActiveNetwork(PAYOUT_NETWORK);
       setConfirmAddress('');
       setAcknowledged(false);
-      toast.success('Payout destination saved. Check your Sow2Grow notifications for a confirmation of the change.');
+      setActivateAsRail(false);
+      toast.success('Solana USDC is now your active payout rail. Check your Sow2Grow notifications for a confirmation of the change.');
     } catch (e: any) {
       console.error(e);
       toast.error(e?.message ?? 'Could not save payout destination');
@@ -120,11 +131,22 @@ export default function CryptoPayoutSettings() {
         </CardTitle>
         <CardDescription>
           Where we send your on-chain payouts. USDC on the Solana network — a fraction of a cent
-          to send, so once this rail is live, you're paid immediately, any amount, no threshold.
+          to send, so once it's your active rail, you're paid immediately, any amount, no
+          threshold. This is a separate, exclusive rail from PayPal: only one pays you at a time.
         </CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-5">
+        {!loading && (
+          <Alert variant={alreadyActive ? 'default' : undefined}>
+            <AlertDescription className="text-xs font-medium">
+              {alreadyActive
+                ? 'Solana USDC is your active payout rail right now — PayPal will not be paid until you switch back.'
+                : "You're not on the Solana rail — payouts default to PayPal (see your connection status above). Saving and activating a Solana address below switches future payouts to Solana and stops PayPal."}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {mode?.is_testnet && (
           <Alert>
             <ShieldAlert className="h-4 w-4" />
@@ -195,9 +217,21 @@ export default function CryptoPayoutSettings() {
               </Label>
             </div>
 
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="payout-activate"
+                checked={activateAsRail}
+                onCheckedChange={(v) => setActivateAsRail(v === true)}
+              />
+              <Label htmlFor="payout-activate" className="text-xs font-normal leading-snug">
+                Make Solana USDC my active payout rail. I understand this switches future weekly
+                payouts to Solana and stops PayPal from paying me until I switch back.
+              </Label>
+            </div>
+
             <Button onClick={handleSave} disabled={!canSave} className="gap-2">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save payout destination
+              {alreadyActive ? 'Update Solana address' : 'Switch to Solana USDC'}
             </Button>
           </>
         )}

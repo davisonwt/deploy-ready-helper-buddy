@@ -16,7 +16,7 @@ export default function BasketPage() {
   console.log('🛒 BasketPage rendered')
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { basketItems, removeFromBasket, updateQuantity, clearBasket, getTotalItems, getTotalAmount } = useBasket()
+  const { basketItems, removeFromBasket, updateQuantity, getTotalItems, getTotalAmount } = useBasket()
   const { formatAmount } = useCurrency()
   const { toast } = useToast()
   
@@ -31,8 +31,14 @@ export default function BasketPage() {
     specialInstructions: ''
   })
   
+  // Basket checkout is a sequential queue, one orchard bestowal at a time —
+  // the backend (create-nowpayments-invoice / create-paypal-order) only ever
+  // charges a single orchard per invoice/order, so "charge the whole basket"
+  // means walking every distinct item and initiating a correctly-priced
+  // bestowal for each, not one combined payment for just the first item.
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [selectedBasketItem, setSelectedBasketItem] = useState(null)
+  const [checkoutQueue, setCheckoutQueue] = useState([])
+  const [checkoutIndex, setCheckoutIndex] = useState(0)
 
   const handleInputChange = (field, value) => {
     setInvoiceForm(prev => ({
@@ -60,27 +66,40 @@ export default function BasketPage() {
       return
     }
 
-    // Combine all basket items into one payment
-    const combinedPayment = {
-      orchardId: basketItems[0]?.orchardId,
-      amount: getTotalAmount(),
-      currency: basketItems[0]?.currency || 'USD',
-      pockets: basketItems.flatMap(item => Array.isArray(item.pockets) ? item.pockets : []),
-      invoiceInfo: invoiceForm
-    }
+    if (basketItems.length === 0) return
 
-    setSelectedBasketItem(combinedPayment)
+    setCheckoutQueue(basketItems)
+    setCheckoutIndex(0)
     setShowPaymentModal(true)
   }
 
-  const handlePaymentComplete = () => {
-    clearBasket()
+  // Only fires once an item's invoice/order was actually created (see
+  // QuickBestowModal's onSuccess) — never on Cancel/backdrop-close, so a
+  // cancelled or failed item is left in the basket for the sower to retry.
+  const handleItemSuccess = () => {
+    const item = checkoutQueue[checkoutIndex]
+    if (item) removeFromBasket(item.id)
+
+    const nextIndex = checkoutIndex + 1
+    if (nextIndex < checkoutQueue.length) {
+      setCheckoutIndex(nextIndex)
+      return
+    }
+
     setShowPaymentModal(false)
+    setCheckoutQueue([])
+    setCheckoutIndex(0)
     toast({
-      title: "Payment Successful! 🌱",
-      description: "Thank you for your bestowal. Your invoice will be sent to your email.",
+      title: "Payment started 🌱",
+      description: "Thank you for your bestowal. Paid items have been cleared from your basket.",
     })
     navigate('/dashboard')
+  }
+
+  const handleModalClose = () => {
+    setShowPaymentModal(false)
+    setCheckoutQueue([])
+    setCheckoutIndex(0)
   }
 
   if (!user) {
@@ -296,17 +315,28 @@ export default function BasketPage() {
         </div>
       </div>
 
-      {/* Payment Modal — bestower chooses crypto (USDC) or PayPal */}
-      {showPaymentModal && selectedBasketItem && (
-        <QuickBestowModal
-          open={showPaymentModal}
-          onClose={() => setShowPaymentModal(false)}
-          orchardId={selectedBasketItem.orchardId}
-          seedTitle={basketItems[0]?.orchardTitle || 'Orchard'}
-          sowerUserId={basketItems[0]?.sowerUserId || basketItems[0]?.growerId || ''}
-          defaultAmount={selectedBasketItem.amount}
-        />
-      )}
+      {/* Payment Modal — bestower chooses crypto (USDC) or PayPal. Walks the
+          checkout queue one orchard at a time; see handleItemSuccess. */}
+      {showPaymentModal && checkoutQueue[checkoutIndex] && (() => {
+        const item = checkoutQueue[checkoutIndex]
+        const pocketsCount = (Array.isArray(item.pockets) ? item.pockets.length : 1) * (item.quantity || 1)
+        return (
+          <QuickBestowModal
+            open={showPaymentModal}
+            onClose={handleModalClose}
+            orchardId={item.orchardId}
+            seedTitle={
+              checkoutQueue.length > 1
+                ? `${item.orchardTitle || 'Orchard'} (${checkoutIndex + 1} of ${checkoutQueue.length})`
+                : (item.orchardTitle || 'Orchard')
+            }
+            pocketsCount={pocketsCount}
+            defaultAmount={Number(item.amount || 0) * pocketsCount}
+            lockAmount
+            onSuccess={handleItemSuccess}
+          />
+        )
+      })()}
     </div>
   )
 }
