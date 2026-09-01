@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowLeft, Check, MapPin, Heart, Upload, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,7 +6,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { TribalHeart } from './BondingAnimation';
 import { TribalAudio } from '@/hooks/useTribalHeartsAudio';
 import { toast } from '@/hooks/use-toast';
-import heroImg from '@/assets/tribal-hearts-hero.jpg';
+
+// Rotating hero photos on the welcome/landing step -- public/wandering-hearts/
+// (not src/assets/, so referenced by public path, not bundled import).
+const COUPLE_PHOTOS = [
+  '/wandering-hearts/couple-1.jpg',
+  '/wandering-hearts/couple-2.jpg',
+  '/wandering-hearts/couple-3.jpg',
+  '/wandering-hearts/couple-4.jpg',
+  '/wandering-hearts/couple-5.jpg',
+];
 
 interface Props {
   onComplete: () => void;
@@ -231,17 +240,35 @@ const ProgressTrail: React.FC<{ current: number; total: number }> = ({ current, 
 
 /* ------------------------ Step 0: Welcome ------------------------ */
 
-const StepWelcome: React.FC = () => (
+const StepWelcome: React.FC = () => {
+  const [photoIndex, setPhotoIndex] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setPhotoIndex((i) => (i + 1) % COUPLE_PHOTOS.length), 4000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
   <div className="text-center">
-    <motion.img
-      src={heroImg}
-      alt="Tribal hearts circle"
-      className="w-full max-w-xs mx-auto rounded-3xl mb-8"
+    <motion.div
+      className="relative w-full max-w-xs mx-auto aspect-[3/2] rounded-3xl mb-8 overflow-hidden"
       initial={{ scale: 0.85, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 1.5, ease: [0.34, 1.56, 0.64, 1] }}
       style={{ boxShadow: '0 20px 60px hsl(15 80% 25% / 0.5)' }}
-    />
+    >
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={photoIndex}
+          src={COUPLE_PHOTOS[photoIndex]}
+          alt="A couple from the tribe"
+          className="absolute inset-0 w-full h-full object-cover"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1 }}
+        />
+      </AnimatePresence>
+    </motion.div>
     <motion.h1
       className="text-4xl font-serif italic mb-3"
       style={{ color: 'hsl(38 95% 85%)' }}
@@ -264,7 +291,8 @@ const StepWelcome: React.FC = () => (
       genuine sparks inside the tribe.
     </motion.p>
   </div>
-);
+  );
+};
 
 /* ------------------------ Step 1: Intent ------------------------ */
 

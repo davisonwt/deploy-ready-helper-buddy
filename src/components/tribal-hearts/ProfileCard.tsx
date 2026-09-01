@@ -87,7 +87,11 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
             className="absolute inset-0 flex items-center justify-center"
             style={{ background: 'hsl(20 25% 12%)' }}
           >
-            <TribalHeart size={80} color="warm" />
+            <img
+              src="/wandering-hearts/logo.png"
+              alt="Wandering Hearts"
+              className="w-20 h-20 rounded-full object-cover opacity-80"
+            />
           </div>
         )}
 

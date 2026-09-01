@@ -4,15 +4,15 @@ import { ArrowLeft, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProfileCard } from '@/components/tribal-hearts/ProfileCard';
 import { SparkModal } from '@/components/tribal-hearts/SparkModal';
-import {
-  BondingAnimation,
-  TribalHeart,
-} from '@/components/tribal-hearts/BondingAnimation';
+import { BondingAnimation } from '@/components/tribal-hearts/BondingAnimation';
 import { TribalHeartsOnboarding } from '@/components/tribal-hearts/TribalHeartsOnboarding';
 import { useTribalHearts } from '@/hooks/useTribalHearts';
 import { TribalAudio } from '@/hooks/useTribalHeartsAudio';
 import { toast } from '@/hooks/use-toast';
-import heroImg from '@/assets/tribal-hearts-hero.jpg';
+
+// public/wandering-hearts/ (not src/assets/, so referenced by public path).
+const heroImg = '/wandering-hearts/hero-banner.jpg';
+const logoImg = '/wandering-hearts/logo.png';
 
 const TribalHeartsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -143,7 +143,7 @@ const TribalHeartsPage: React.FC = () => {
         </button>
 
         <div className="flex items-center gap-2">
-          <TribalHeart size={28} color="warm" pulse />
+          <img src={logoImg} alt="Wandering Hearts" className="w-7 h-7 rounded-full object-cover" />
           <h1
             className="text-xl font-serif italic"
             style={{ color: 'hsl(38 95% 85%)' }}
