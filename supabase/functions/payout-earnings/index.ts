@@ -80,6 +80,7 @@ import { deliverPayoutNotification } from "../_shared/postFinalize/messaging.ts"
 import { validateSolanaAddress } from "../_shared/cryptoAddress.ts";
 import { getSolanaCluster } from "../_shared/cryptoNetworks.ts";
 import {
+  checkHotWalletConfig,
   getHotWalletUsdcBalance,
   loadHotWalletKeypair,
   openSolanaConnection,
@@ -282,7 +283,26 @@ Deno.serve(async (req) => {
     const outcomes: RecipientOutcome[] = [...paypalOutcomes, ...solanaOutcomes];
 
     if (dryRun) {
-      return json({ dry_run: true, totalFloatUsd, recipients: outcomes });
+      // Config check only, never a send: decode the hot wallet secret,
+      // derive its public key, compare against the configured address --
+      // report match/mismatch instead of throwing, so a dry run can surface
+      // a bad config instead of just looking clean and failing for real
+      // later. Gated on solanaOwed so a PayPal-only dry run never pays the
+      // lazy @solana/web3.js import cost.
+      let hotWalletCheck: Awaited<ReturnType<typeof checkHotWalletConfig>> | { configured: false; error: string } | null = null;
+      if (solanaOwed.length > 0) {
+        try {
+          hotWalletCheck = await checkHotWalletConfig();
+        } catch (e) {
+          hotWalletCheck = { configured: false, error: e instanceof Error ? e.message : String(e) };
+        }
+      }
+      return json({
+        dry_run: true,
+        totalFloatUsd,
+        solana: { cluster: getSolanaCluster(), hot_wallet_check: hotWalletCheck },
+        recipients: outcomes,
+      });
     }
 
     // Every non-eligible PayPal recipient gets exactly one chat notification

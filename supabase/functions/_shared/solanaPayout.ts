@@ -101,6 +101,34 @@ export function verifyHotWallet(sender: Keypair): { address: string } {
   return { address: derived };
 }
 
+export interface HotWalletCheckResult {
+  configured: true;
+  derived_address: string;
+  configured_address: string | null;
+  address_matches: boolean;
+}
+
+/**
+ * Decodes SOLANA_HOT_WALLET_SECRET_KEY and derives its public key, compared
+ * against SOLANA_HOT_WALLET_ADDRESS -- WITHOUT throwing on a mismatch, so a
+ * caller (the dry-run path) can report the result instead of failing the
+ * whole request over it. Still throws if the secret key itself is missing
+ * or malformed -- there's nothing to report in that case, that's a config
+ * error, not a mismatch. Never returns or logs the secret key itself, only
+ * the public address it derives to.
+ */
+export async function checkHotWalletConfig(): Promise<HotWalletCheckResult> {
+  const sender = await loadHotWalletKeypair();
+  const derived = sender.publicKey.toBase58();
+  const configured = (Deno.env.get("SOLANA_HOT_WALLET_ADDRESS") ?? "").trim() || null;
+  return {
+    configured: true,
+    derived_address: derived,
+    configured_address: configured,
+    address_matches: !!configured && configured === derived,
+  };
+}
+
 /** Opens a Connection to the configured cluster/RPC. Only call this once a Solana send is actually needed this run. */
 export async function openSolanaConnection(): Promise<Connection> {
   const { Connection: ConnectionClass } = await loadWeb3();
