@@ -11,7 +11,6 @@ import { Loader2, Star, Trash2, AlertCircle, CheckCircle2, LayoutDashboard, Arro
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import AddNowPaymentsWallet from '@/components/payouts/AddNowPaymentsWallet';
 import ConnectPaypalButton from '@/components/payouts/ConnectPaypalButton';
 import CryptoPayoutSettings from '@/components/payouts/CryptoPayoutSettings';
 import { PAYOUT_PROVIDERS } from '@/lib/payments/providerFees';
@@ -339,7 +338,6 @@ export default function PayoutSettingsPage() {
             onRemove={removeWallet}
             emptyText="No crypto payout wallets yet."
           />
-          <AddNowPaymentsWallet onSaved={load} />
         </TabsContent>
 
         <TabsContent value="paypal" className="space-y-4 mt-4">

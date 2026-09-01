@@ -1,10 +1,16 @@
 /**
- * Crypto payout destination settings — USDC (Solana) or XRP (Ripple).
+ * Crypto payout destination settings — USDC on Solana.
  *
- * Sits alongside the existing NOWPayments / PayPal payout methods; it does not
- * replace them. All persistence goes through the `update-crypto-payout` edge
- * function so the address is validated server-side, audited, and the owner is
- * notified of the change.
+ * Sits alongside the existing PayPal payout method; it does not replace it.
+ * All persistence goes through the `update-crypto-payout` edge function so
+ * the address is validated server-side, audited, and the owner is notified
+ * of the change.
+ *
+ * Solana-only per spec-payments.md's two-rails decision (USDC on Solana,
+ * PayPal — XRP was never funded and nothing that sends money reads an XRP
+ * address). The payout_tag/payout_wallet_type columns and the
+ * update-crypto-payout backend still accept 'xrp' for now (out of scope
+ * here) — this component just stops offering it as a choice.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,29 +18,19 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertTriangle, Loader2, ShieldAlert, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import XrpRateNotice from '@/components/payouts/XrpRateNotice';
 
 import { useAuth } from '@/hooks/useAuth';
-import {
-  EXCHANGE_TAG_WARNING,
-  IRREVERSIBLE_WARNING,
-  NETWORK_LABELS,
-  PayoutNetwork,
-  PayoutWalletType,
-  maskAddress,
-  validateDestinationTag,
-  validatePayoutAddress,
-} from '@/lib/payments/cryptoAddress';
+import { IRREVERSIBLE_WARNING, maskAddress, validateSolanaAddress } from '@/lib/payments/cryptoAddress';
+
+const PAYOUT_NETWORK = 'solana_usdc' as const;
 
 interface NetworkMode {
   solana_cluster: string;
-  xrp_network: string;
   is_testnet: boolean;
 }
 
@@ -44,18 +40,10 @@ export default function CryptoPayoutSettings() {
   const [saving, setSaving] = useState(false);
   const [mode, setMode] = useState<NetworkMode | null>(null);
 
-  const [network, setNetwork] = useState<PayoutNetwork>('solana_usdc');
-  const [walletType, setWalletType] = useState<PayoutWalletType>('personal');
   const [address, setAddress] = useState('');
   const [confirmAddress, setConfirmAddress] = useState('');
-  const [tag, setTag] = useState('');
   const [acknowledged, setAcknowledged] = useState(false);
-  const [saved, setSaved] = useState<{
-    payout_network: PayoutNetwork;
-    payout_address: string;
-    payout_tag: number | null;
-    payout_wallet_type: PayoutWalletType;
-  } | null>(null);
+  const [saved, setSaved] = useState<{ payout_address: string } | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -65,15 +53,15 @@ export default function CryptoPayoutSettings() {
         method: 'GET',
       });
       if (error) throw error;
-      setMode(data?.network_mode ?? null);
+      const summary = data?.network_mode;
+      setMode(summary ? { solana_cluster: summary.solana_cluster, is_testnet: summary.is_testnet } : null);
       const p = data?.payout;
-      if (p?.payout_address) {
-        setSaved(p);
-        setNetwork(p.payout_network);
-        setWalletType(p.payout_wallet_type ?? 'personal');
+      // Only prefill from a Solana-configured payout — this card no longer
+      // has a way to show/edit anything else.
+      if (p?.payout_network === PAYOUT_NETWORK && p?.payout_address) {
+        setSaved({ payout_address: p.payout_address });
         setAddress(p.payout_address);
         setConfirmAddress('');
-        setTag(p.payout_tag === null || p.payout_tag === undefined ? '' : String(p.payout_tag));
       }
     } catch (e: any) {
       console.error('crypto payout load failed', e);
@@ -84,15 +72,10 @@ export default function CryptoPayoutSettings() {
 
   useEffect(() => { load(); }, [load]);
 
-  const isXrp = network === 'xrp';
-  const needsTag = isXrp && walletType === 'custodial';
-
-  const addressError = address ? validatePayoutAddress(network, address) : null;
-  const tagError = needsTag ? validateDestinationTag(tag) : null;
+  const addressError = address ? validateSolanaAddress(address) : null;
   const mismatch = confirmAddress.trim() !== address.trim();
 
-  const canSave =
-    !!address && !addressError && !tagError && !mismatch && acknowledged && !saving;
+  const canSave = !!address && !addressError && !mismatch && acknowledged && !saving;
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -100,16 +83,16 @@ export default function CryptoPayoutSettings() {
     try {
       const { data, error } = await supabase.functions.invoke('update-crypto-payout', {
         body: {
-          payout_network: network,
+          payout_network: PAYOUT_NETWORK,
           payout_address: address.trim(),
           payout_address_confirm: confirmAddress.trim(),
-          payout_tag: needsTag ? Number(tag) : null,
-          payout_wallet_type: isXrp ? walletType : 'personal',
+          payout_tag: null,
+          payout_wallet_type: 'personal',
         },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setSaved(data.payout);
+      setSaved({ payout_address: data.payout.payout_address });
       setConfirmAddress('');
       setAcknowledged(false);
       toast.success('Payout destination saved. Check your Sow2Grow notifications for a confirmation of the change.');
@@ -131,13 +114,13 @@ export default function CryptoPayoutSettings() {
           Crypto payout wallet
           {saved && (
             <Badge variant="secondary" className="text-[10px]">
-              {NETWORK_LABELS[saved.payout_network]} · {maskAddress(saved.payout_address)}
+              USDC (Solana) · {maskAddress(saved.payout_address)}
             </Badge>
           )}
         </CardTitle>
         <CardDescription>
-          Where we send your on-chain payouts. Two networks are supported: USDC on Solana, and
-          XRP on the XRP Ledger.
+          Where we send your on-chain payouts. USDC on the Solana network — a fraction of a cent
+          to send, so once this rail is live, you're paid immediately, any amount, no threshold.
         </CardDescription>
       </CardHeader>
 
@@ -147,8 +130,8 @@ export default function CryptoPayoutSettings() {
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle>Test mode</AlertTitle>
             <AlertDescription className="text-xs">
-              Sow2Grow is currently pointed at test networks (Solana {mode.solana_cluster}, XRP{' '}
-              {mode.xrp_network}). Transfers made now carry no real value.
+              Sow2Grow is currently pointed at a test network (Solana {mode.solana_cluster}).
+              Transfers made now carry no real value.
             </AlertDescription>
           </Alert>
         )}
@@ -165,87 +148,13 @@ export default function CryptoPayoutSettings() {
         ) : (
           <>
             <div className="space-y-2">
-              <Label>Payout currency / network</Label>
-              <RadioGroup
-                value={network}
-                onValueChange={(v) => {
-                  setNetwork(v as PayoutNetwork);
-                  setAddress('');
-                  setConfirmAddress('');
-                  setTag('');
-                  setAcknowledged(false);
-                }}
-                className="grid gap-2 sm:grid-cols-2"
-              >
-                {(['solana_usdc', 'xrp'] as PayoutNetwork[]).map((n) => (
-                  <div key={n} className="flex items-center gap-2 rounded-md border p-3">
-                    <RadioGroupItem value={n} id={`net-${n}`} />
-                    <Label htmlFor={`net-${n}`} className="cursor-pointer">
-                      {NETWORK_LABELS[n]}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </div>
-
-            {!isXrp && (
-              <Alert>
-                <Wallet className="h-4 w-4" />
-                <AlertDescription className="text-xs">
-                  PayPal payouts are batched to a $20 minimum because PayPal charges a fee per
-                  transfer. USDC on Solana costs a fraction of a cent to send, so once this rail
-                  is live, Solana recipients are paid immediately — any amount, no threshold.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {isXrp && <XrpRateNotice context="payout" />}
-
-            {isXrp && (
-
-              <div className="space-y-2">
-                <Label>What kind of XRP wallet is this?</Label>
-                <RadioGroup
-                  value={walletType}
-                  onValueChange={(v) => {
-                    setWalletType(v as PayoutWalletType);
-                    setTag('');
-                    setAcknowledged(false);
-                  }}
-                  className="space-y-2"
-                >
-                  <div className="flex items-start gap-2 rounded-md border p-3">
-                    <RadioGroupItem value="personal" id="wt-personal" className="mt-1" />
-                    <Label htmlFor="wt-personal" className="cursor-pointer font-normal">
-                      <span className="font-medium">Personal / self-custody wallet</span>
-                      <span className="block text-xs text-muted-foreground">
-                        e.g. hardware wallet, Xaman, Trezor / Ledger. No destination tag needed.
-                      </span>
-                    </Label>
-                  </div>
-                  <div className="flex items-start gap-2 rounded-md border p-3">
-                    <RadioGroupItem value="custodial" id="wt-custodial" className="mt-1" />
-                    <Label htmlFor="wt-custodial" className="cursor-pointer font-normal">
-                      <span className="font-medium">Account at a centralized exchange</span>
-                      <span className="block text-xs text-muted-foreground">
-                        e.g. Binance, Kraken, Coinbase, VALR, LUNO. A destination tag is required.
-                      </span>
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="payout-address">
-                {isXrp ? 'XRP wallet address' : 'Solana wallet address'}
-              </Label>
+              <Label htmlFor="payout-address">Solana wallet address</Label>
               <Input
                 id="payout-address"
                 value={address}
                 spellCheck={false}
                 autoComplete="off"
-                placeholder={isXrp ? 'r...' : 'Base58 Solana address'}
+                placeholder="Base58 Solana address"
                 onChange={(e) => setAddress(e.target.value)}
               />
               {addressError && <p className="text-xs text-destructive">{addressError}</p>}
@@ -266,30 +175,11 @@ export default function CryptoPayoutSettings() {
               )}
             </div>
 
-            {needsTag && (
-              <div className="space-y-2">
-                <Label htmlFor="payout-tag">Destination tag</Label>
-                <Input
-                  id="payout-tag"
-                  inputMode="numeric"
-                  value={tag}
-                  placeholder="e.g. 1234567"
-                  onChange={(e) => setTag(e.target.value)}
-                />
-                {tagError && <p className="text-xs text-destructive">{tagError}</p>}
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription className="text-xs">{EXCHANGE_TAG_WARNING}</AlertDescription>
-                </Alert>
-              </div>
-            )}
-
             {address && !addressError && (
               <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-1">
                 <div className="font-medium">Please double-check before saving:</div>
-                <div>Network: {NETWORK_LABELS[network]}</div>
+                <div>Network: USDC (Solana)</div>
                 <div className="break-all">Address: {address.trim()}</div>
-                {needsTag && <div>Destination tag: {tag || '—'}</div>}
               </div>
             )}
 
@@ -300,8 +190,8 @@ export default function CryptoPayoutSettings() {
                 onCheckedChange={(v) => setAcknowledged(v === true)}
               />
               <Label htmlFor="payout-ack" className="text-xs font-normal leading-snug">
-                I have checked every character of this address{needsTag ? ' and tag' : ''} and I
-                understand crypto payments cannot be reversed or refunded.
+                I have checked every character of this address and I understand crypto payments
+                cannot be reversed or refunded.
               </Label>
             </div>
 
