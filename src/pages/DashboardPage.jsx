@@ -526,6 +526,15 @@ export default function SeedFlowDashboard() {
   }
   const catMeta = (c) => CATEGORY_META[(c || 'other').toLowerCase()] || CATEGORY_META.other
 
+  // Display label for orchards.orchard_type -- the DB values 'community'
+  // and 'production' stay as-is (spec-payments.md's Uplift/Launch renaming
+  // is display-only), so map them here rather than showing the raw enum.
+  const orchardTypeLabel = (t) => {
+    if (t === 'community') return 'Uplift Orchard'
+    if (t === 'production') return 'Launch Orchard'
+    return (t || '').toString().toUpperCase().replace('_', ' ')
+  }
+
   const seedCards = mySeeds.map((s) => {
     const meta = catMeta(s.category)
     return {
@@ -547,7 +556,7 @@ export default function SeedFlowDashboard() {
     return {
       id: `myorchard-${o.id}`,
       name: o.title || 'My Orchard',
-      type: (o.orchard_type || meta.label).toString().toUpperCase().replace('_', ' '),
+      type: o.orchard_type ? orchardTypeLabel(o.orchard_type) : meta.label.toUpperCase(),
       status: 'Yours',
       activity: meta.label,
       description: o.description || 'An orchard you are growing',
@@ -602,7 +611,7 @@ export default function SeedFlowDashboard() {
     return {
       id: `bestowed-${o.id}`,
       name: o.title || 'Tribe Orchard',
-      type: (o.orchard_type || meta.label).toString().toUpperCase().replace('_', ' '),
+      type: o.orchard_type ? orchardTypeLabel(o.orchard_type) : meta.label.toUpperCase(),
       status: 'Tending',
       activity: meta.label,
       description: o.description || 'A seed you are tending in the tribe',

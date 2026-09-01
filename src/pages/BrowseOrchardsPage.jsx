@@ -28,14 +28,14 @@ const WANDERING_ROLES = [
 
 const ORCHARD_TYPES = [
   { label: 'All Types', value: 'all' },
-  { label: 'Community', value: 'community', emoji: '🏘️', color: '#6366f1', desc: 'Tribe funds a need together' },
-  { label: 'Production', value: 'production', emoji: '🏭', color: '#f59e0b', desc: 'Fund a product into existence' },
+  { label: 'Uplift Orchard', value: 'community', emoji: '🏘️', color: '#6366f1', desc: 'Tribe funds a need together' },
+  { label: 'Launch Orchard', value: 'production', emoji: '🏭', color: '#f59e0b', desc: 'Fund a product into existence' },
   { label: 'Single Seed', value: 'single_seed', emoji: '🌱', color: '#10b981', desc: 'One seed, one bestow' },
 ]
 
 const TYPE_CONFIG = {
-  community: { color: '#6366f1', bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.4)', emoji: '🏘️', label: 'Community Orchard' },
-  production: { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.4)', emoji: '🏭', label: 'Production Orchard' },
+  community: { color: '#6366f1', bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.4)', emoji: '🏘️', label: 'Uplift Orchard' },
+  production: { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.4)', emoji: '🏭', label: 'Launch Orchard' },
   single_seed: { color: '#10b981', bg: 'rgba(34,211,238,0.15)', border: 'rgba(34,211,238,0.35)', emoji: '🌱', label: 'Single Seed' },
   full_value: { color: '#10b981', bg: 'rgba(34,211,238,0.15)', border: 'rgba(34,211,238,0.35)', emoji: '🌱', label: 'Single Seed' },
 }

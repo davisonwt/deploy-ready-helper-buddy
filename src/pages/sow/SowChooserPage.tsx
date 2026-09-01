@@ -46,8 +46,8 @@ const PRODUCE: Card[] = [
 ];
 
 const ORCHARDS: Card[] = [
-  { key: 'community', label: 'Community', icon: communityIcon, live: true, route: '/create-orchard' },
-  { key: 'production', label: 'Production', icon: productionIcon, live: true, route: '/create-orchard' },
+  { key: 'community', label: 'Uplift Orchard', icon: communityIcon, live: true, route: '/create-orchard' },
+  { key: 'production', label: 'Launch Orchard', icon: productionIcon, live: true, route: '/create-orchard' },
 ];
 
 /**
