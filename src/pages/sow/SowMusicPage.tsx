@@ -33,7 +33,19 @@ const GENRES: OnePickerOption[] = [
   'Latin', 'Metal', 'Ambient', 'Soul', 'World', 'Other',
 ].map((g) => ({ value: g.toLowerCase(), label: g }));
 
-const AUDIO_ACCEPT = '.wav,.mp3,.flac,.aac,.m4a,.ogg';
+// Single-track mode requires a real 45s preview (audioTrim.ts, WAV/MP3
+// only -- no ffmpeg available, deliberate). A FLAC/AAC/M4A/OGG single
+// previously showed here as accepted (this list used to include them),
+// uploaded successfully, then got permanently stuck at Plant -- the
+// 'unsupported' preview status blocks planting by design
+// (spec-seed-protection.md: "if preview generation fails, the upload
+// fails"), so anything past WAV/MP3 was always going to fail here, just
+// only visibly so after the upload had already succeeded. Album mode is
+// different -- AlbumTrackList never attempts a preview per track (see its
+// own status type: 'uploading' | 'ready' | 'error', no preview concept at
+// all), so its own, separate format list a few lines below is accurate
+// and untouched.
+const AUDIO_ACCEPT = '.wav,.mp3';
 const ALBUM_MIN_TRACKS = 8;
 
 type Mode = 'single' | 'album';
@@ -343,7 +355,7 @@ export default function SowMusicPage() {
                 pathPrefix={pathPrefix}
                 generatePreview
                 accept={AUDIO_ACCEPT}
-                allowedLabel="WAV or MP3 for an automatic 45-second preview. Other formats can still be uploaded through the classic form."
+                allowedLabel="WAV or MP3 only, for an automatic 45-second preview. For an album with mixed formats, use Album mode above instead."
                 onChange={setSeedFile}
               />
             </div>
