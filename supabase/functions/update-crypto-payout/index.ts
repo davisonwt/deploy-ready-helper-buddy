@@ -167,6 +167,11 @@ Deno.serve(async (req) => {
     // must never undo or block the save that already committed above. Sent
     // via send_brevo_email using the service-role bearer, which that
     // function accepts for exactly this kind of internal, non-self send.
+    // Surfaced in the response as email_notification below (not just
+    // logged) so a caller -- including a test script -- has a real signal
+    // to check without needing dashboard log access. Still best-effort:
+    // this never changes the HTTP status or undoes the save above.
+    let emailNotification: { attempted: true; ok: boolean; status?: number; error?: string };
     try {
       const emailRes = await fetch(`${SUPABASE_URL}/functions/v1/send_brevo_email`, {
         method: "POST",
@@ -187,13 +192,19 @@ Deno.serve(async (req) => {
         }),
       });
       if (!emailRes.ok) {
-        console.warn("payout change email failed", emailRes.status, await emailRes.text().catch(() => ""));
+        const detail = await emailRes.text().catch(() => "");
+        console.warn("payout change email failed", emailRes.status, detail);
+        emailNotification = { attempted: true, ok: false, status: emailRes.status, error: detail.slice(0, 300) };
+      } else {
+        emailNotification = { attempted: true, ok: true };
       }
     } catch (e) {
-      console.warn("payout change email exception", e);
+      const detail = e instanceof Error ? e.message : String(e);
+      console.warn("payout change email exception", detail);
+      emailNotification = { attempted: true, ok: false, error: detail };
     }
 
-    return json({ success: true, payout: updated, network_mode: mode });
+    return json({ success: true, payout: updated, network_mode: mode, email_notification: emailNotification });
   } catch (e) {
     console.error("update-crypto-payout error", e);
     return json({ error: "Failed to update payout details" }, 500);
