@@ -1,0 +1,30 @@
+-- Wallet-hardening audit finding #1 (highest ranked): grant_bootstrap_admin
+-- was directly callable by any authenticated user, with zero internal
+-- caller validation -- no auth.uid() check, nothing. Every other
+-- privileged SECURITY DEFINER money/role function in this schema
+-- (escrow_release_bestowal, credit_sower_balance_from_topup,
+-- finalize_basket_order, finalize_content_purchase, release_due_escrow)
+-- is correctly locked to service_role only; this was the one exception.
+--
+-- It appears to have been saved in practice by validate_role_changes_
+-- trigger on user_roles, which independently blocks a non-admin caller
+-- from inserting an admin/gosat row -- confirmed attached and enabled,
+-- and its logic checks has_role(auth.uid(), 'admin'/'gosat') before
+-- allowing the insert, using the ORIGINAL caller's auth.uid() regardless
+-- of this function's own SECURITY DEFINER context. NOT verified with a
+-- live call, though: attempting to actually invoke this as a non-admin
+-- session (even inside a transaction meant to be rolled back) was
+-- correctly refused by this session's own safety controls, as it is a
+-- real privilege-escalation attempt against production. So: this was
+-- probably not exploitable today, saved by a DIFFERENT feature's side
+-- effect rather than its own defense -- which is exactly the kind of
+-- thing that stops being true the moment that other trigger changes.
+--
+-- grant_user_role_admin already exists as the correctly-guarded way to
+-- grant a role from an authenticated admin/gosat session (checks
+-- is_admin_or_gosat(auth.uid()) itself, logs via log_security_event).
+-- Nothing loses functionality here -- grep confirms no client code calls
+-- grant_bootstrap_admin at all (only the generated types file references
+-- its signature). service_role keeps EXECUTE, for any legitimate one-time
+-- ops/bootstrap use from a trusted context.
+REVOKE EXECUTE ON FUNCTION public.grant_bootstrap_admin(text) FROM authenticated;
