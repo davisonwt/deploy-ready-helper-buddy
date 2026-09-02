@@ -13,6 +13,7 @@
  * here) — this component just stops offering it as a choice.
  */
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AlertTriangle, Loader2, ShieldAlert, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +36,11 @@ interface NetworkMode {
   is_testnet: boolean;
 }
 
+interface SecurityQuestion {
+  index: number;
+  label: string;
+}
+
 export default function CryptoPayoutSettings() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -43,6 +50,9 @@ export default function CryptoPayoutSettings() {
   const [address, setAddress] = useState('');
   const [confirmAddress, setConfirmAddress] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
+  const [securityQuestions, setSecurityQuestions] = useState<SecurityQuestion[] | null>(null);
+  const [selectedQuestionIndex, setSelectedQuestionIndex] = useState<number | null>(null);
+  const [securityAnswer, setSecurityAnswer] = useState('');
   const [acknowledged, setAcknowledged] = useState(false);
   // Separate from `acknowledged` (irreversibility) on purpose — this is the
   // explicit "yes, switch me off PayPal" consent. Saving an address must
@@ -63,6 +73,7 @@ export default function CryptoPayoutSettings() {
       if (error) throw error;
       const summary = data?.network_mode;
       setMode(summary ? { solana_cluster: summary.solana_cluster, is_testnet: summary.is_testnet } : null);
+      setSecurityQuestions(data?.security_questions ?? null);
       const p = data?.payout;
       setActiveNetwork(p?.payout_network ?? null);
       // Only prefill from a Solana-configured payout — this card no longer
@@ -85,7 +96,17 @@ export default function CryptoPayoutSettings() {
   const mismatch = confirmAddress.trim() !== address.trim();
   const alreadyActive = activeNetwork === PAYOUT_NETWORK;
 
-  const canSave = !!address && !addressError && !mismatch && acknowledged && activateAsRail && !!currentPassword && !saving;
+  const canSave =
+    !!address &&
+    !addressError &&
+    !mismatch &&
+    acknowledged &&
+    activateAsRail &&
+    !!currentPassword &&
+    !!securityQuestions &&
+    selectedQuestionIndex !== null &&
+    !!securityAnswer.trim() &&
+    !saving;
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -99,6 +120,8 @@ export default function CryptoPayoutSettings() {
           payout_tag: null,
           payout_wallet_type: 'personal',
           current_password: currentPassword,
+          security_question_index: selectedQuestionIndex,
+          security_answer: securityAnswer,
         },
       });
       if (error) throw error;
@@ -107,9 +130,11 @@ export default function CryptoPayoutSettings() {
       setActiveNetwork(PAYOUT_NETWORK);
       setConfirmAddress('');
       setCurrentPassword('');
+      setSelectedQuestionIndex(null);
+      setSecurityAnswer('');
       setAcknowledged(false);
       setActivateAsRail(false);
-      toast.success('Solana USDC is now your active payout rail. We emailed you a confirmation — a new address has a 48-hour holding period before it can be paid.');
+      toast.success('Solana USDC is now your active payout rail. A new address has a 48-hour holding period before it can be paid.');
     } catch (e: any) {
       console.error(e);
       toast.error(e?.message ?? 'Could not save payout destination');
@@ -245,9 +270,54 @@ export default function CryptoPayoutSettings() {
               <p className="text-xs text-muted-foreground">
                 Required to confirm it's really you — this is the single most common way marketplace
                 accounts get their payouts redirected. A new or changed address also has a 48-hour
-                holding period before it can be paid, and we'll email you when it changes.
+                holding period before it can be paid.
               </p>
             </div>
+
+            {securityQuestions ? (
+              <div className="space-y-2">
+                <Label>Answer one of your security questions</Label>
+                <RadioGroup
+                  value={selectedQuestionIndex !== null ? String(selectedQuestionIndex) : undefined}
+                  onValueChange={(v) => setSelectedQuestionIndex(Number(v))}
+                  className="space-y-1"
+                >
+                  {securityQuestions.map((q) => (
+                    <div key={q.index} className="flex items-center gap-2">
+                      <RadioGroupItem value={String(q.index)} id={`payout-secq-${q.index}`} />
+                      <Label htmlFor={`payout-secq-${q.index}`} className="text-xs font-normal">
+                        {q.label}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+                <Input
+                  id="payout-security-answer"
+                  value={securityAnswer}
+                  autoComplete="off"
+                  placeholder="Your answer"
+                  disabled={selectedQuestionIndex === null}
+                  onChange={(e) => setSecurityAnswer(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  A second check, on top of your password, specifically for changing where your
+                  money goes.
+                </p>
+              </div>
+            ) : (
+              <Alert variant="destructive">
+                <ShieldAlert className="h-4 w-4" />
+                <AlertTitle>Security questions required</AlertTitle>
+                <AlertDescription className="text-xs">
+                  Set up your security questions before changing a payout address — it's the second
+                  check we require alongside your password.{' '}
+                  <Link to="/onboarding/security" className="underline font-medium">
+                    Set them up now
+                  </Link>
+                  .
+                </AlertDescription>
+              </Alert>
+            )}
 
             <Button onClick={handleSave} disabled={!canSave} className="gap-2">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}

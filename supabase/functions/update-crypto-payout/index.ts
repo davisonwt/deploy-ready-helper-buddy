@@ -11,18 +11,26 @@
 // provider is disabled) so POST now requires current_password and this
 // function does its own fresh signInWithPassword check against it, via a
 // throwaway client independent of whatever session token accompanied the
-// request. A stolen session token without the password fails here. The
-// owner notification is also no longer in-app-only for this one action --
-// see the email block below -- an in-app notice is visible to whoever holds
-// the session, which is exactly the attacker this defends against; general
-// notifications elsewhere in the app stay in-app-only, unchanged, this is a
-// narrow, deliberate exception for a security notice specifically. Payouts
-// to a freshly-changed address also don't go out immediately any more --
-// see payout-earnings' cooling-off check against payout_details_updated_at.
+// request. A stolen session token without the password fails here.
 //
-// GET  -> returns the caller's current payout details + network mode banner info
+// Policy correction (2026-09-02): S2G does not use email at all -- see
+// spec-payments.md. This function no longer sends any email (it previously
+// called send_brevo_email as a deliberate exception to in-app-only; that
+// exception is retired, not replaced). In its place, POST now ALSO requires
+// a correct answer to one of the member's own security questions (same
+// store as password reset, verified via verify_own_security_answer) --
+// current_password AND a security answer, both required, neither
+// sufficient alone. The owner notification stays in-app only, same as
+// every other notification in this app. Payouts to a freshly-changed
+// address still don't go out immediately -- see payout-earnings' cooling-off
+// check against payout_details_updated_at.
+//
+// GET  -> returns the caller's current payout details, network mode banner
+//         info, and (if set up) their security question labels for the UI
+//         to build a picker -- never the answers or hashes.
 // POST -> { payout_network, payout_address, payout_address_confirm,
-//           payout_tag (int|null), payout_wallet_type, current_password }
+//           payout_tag (int|null), payout_wallet_type, current_password,
+//           security_question_index (1|2|3), security_answer }
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { validatePayoutDetails } from "../_shared/cryptoAddress.ts";
@@ -36,8 +44,8 @@ const corsHeaders = {
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SUPABASE_ANON_KEY = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] ?? "";
+const SERVICE_ROLE_KEY = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? "";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -70,7 +78,23 @@ Deno.serve(async (req) => {
         .eq("user_id", user.id)
         .maybeSingle();
       if (error) throw error;
-      return json({ payout: data ?? null, network_mode: mode });
+
+      // Question text only, via the caller's own JWT -- RLS scopes this to
+      // their own row same as everything else here. Never the answers/hashes.
+      const { data: secQ } = await userClient
+        .from("user_security_questions")
+        .select("question_1, question_2, question_3")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const securityQuestions = secQ
+        ? [
+            { index: 1, label: secQ.question_1 },
+            { index: 2, label: secQ.question_2 },
+            { index: 3, label: secQ.question_3 },
+          ]
+        : null;
+
+      return json({ payout: data ?? null, network_mode: mode, security_questions: securityQuestions });
     }
 
     if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
@@ -108,6 +132,30 @@ Deno.serve(async (req) => {
       return json({ error: "That password is incorrect.", code: "reauth_failed" }, 401);
     }
 
+    // Second factor: one correct answer from the member's own security
+    // questions (same store as password reset). Both this and the password
+    // above are required -- neither alone is enough to move a payout
+    // destination.
+    const questionIndex = Number(body.security_question_index);
+    const securityAnswer = typeof body.security_answer === "string" ? body.security_answer : "";
+    if (![1, 2, 3].includes(questionIndex) || !securityAnswer.trim()) {
+      return json({
+        error: "Answer one of your security questions to confirm this change.",
+        code: "security_answer_required",
+      }, 400);
+    }
+    const { data: answerOk, error: answerRpcErr } = await userClient.rpc("verify_own_security_answer", {
+      p_question_index: questionIndex,
+      p_answer: securityAnswer,
+    });
+    if (answerRpcErr) throw answerRpcErr;
+    if (!answerOk) {
+      return json({
+        error: "That answer doesn't match. If you haven't set up security questions yet, do that first.",
+        code: "security_answer_incorrect",
+      }, 401);
+    }
+
     const address = typeof body.payout_address === "string" ? body.payout_address.trim() : "";
     const confirm = typeof body.payout_address_confirm === "string"
       ? body.payout_address_confirm.trim()
@@ -140,7 +188,9 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (updErr) return json({ error: updErr.message }, 400);
 
-    // Notify the owner out-of-band. Never blocks the save.
+    // Notify the owner, in-app only -- same as every other notification in
+    // this app (see the file header: the email exception this used to carry
+    // is retired). Never blocks the save.
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
     const masked = address.length > 12 ? `${address.slice(0, 6)}…${address.slice(-6)}` : address;
     const label = payload.payout_network === "xrp" ? "XRP (Ripple)" : "USDC (Solana)";
@@ -162,49 +212,7 @@ Deno.serve(async (req) => {
       console.warn("payout change notification insert failed", e);
     }
 
-    // Email is a deliberate, narrow exception to "in-app only" for this one
-    // action -- see the file header. Best-effort: a delivery failure here
-    // must never undo or block the save that already committed above. Sent
-    // via send_brevo_email using the service-role bearer, which that
-    // function accepts for exactly this kind of internal, non-self send.
-    // Surfaced in the response as email_notification below (not just
-    // logged) so a caller -- including a test script -- has a real signal
-    // to check without needing dashboard log access. Still best-effort:
-    // this never changes the HTTP status or undoes the save above.
-    let emailNotification: { attempted: true; ok: boolean; status?: number; error?: string };
-    try {
-      const emailRes = await fetch(`${SUPABASE_URL}/functions/v1/send_brevo_email`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
-          apikey: SUPABASE_ANON_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          to: user.email,
-          subject: "Your Sow2Grow payout destination was changed",
-          html:
-            `<p>Your Sow2Grow payout destination was changed to <strong>${label}</strong> — ${masked}` +
-            (tag !== null ? ` (destination tag ${tag})` : "") +
-            `.</p><p>New payout addresses have a 48-hour holding period before any payout is sent to them.</p>` +
-            `<p><strong>If you did not make this change, contact support immediately and secure your account</strong> ` +
-            `(change your password and review your active sessions).</p>`,
-        }),
-      });
-      if (!emailRes.ok) {
-        const detail = await emailRes.text().catch(() => "");
-        console.warn("payout change email failed", emailRes.status, detail);
-        emailNotification = { attempted: true, ok: false, status: emailRes.status, error: detail.slice(0, 300) };
-      } else {
-        emailNotification = { attempted: true, ok: true };
-      }
-    } catch (e) {
-      const detail = e instanceof Error ? e.message : String(e);
-      console.warn("payout change email exception", detail);
-      emailNotification = { attempted: true, ok: false, error: detail };
-    }
-
-    return json({ success: true, payout: updated, network_mode: mode, email_notification: emailNotification });
+    return json({ success: true, payout: updated, network_mode: mode });
   } catch (e) {
     console.error("update-crypto-payout error", e);
     return json({ error: "Failed to update payout details" }, 500);

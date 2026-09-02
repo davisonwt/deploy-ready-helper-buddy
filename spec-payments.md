@@ -579,3 +579,34 @@ view and be counted in the total held figure. They are not S2G's money.
   them?
 - Does a Launch orchard's bestowal pocket need a delivery address collected
   at pocket time, or at release time?
+
+## 12. Payout-address change security (2026-09-02)
+
+Changing where a member's payout money goes (`update-crypto-payout`) is a
+common account-takeover target, so it carries its own re-auth, separate from
+a normal session token:
+
+- **Current password, required.** The function does its own fresh
+  `signInWithPassword` check, independent of whatever session token
+  accompanied the request. A stolen session token alone cannot pass this.
+- **One correct security-question answer, also required.** Same store as
+  password reset (`user_security_questions`), verified via
+  `verify_own_security_answer` — narrower than the password-reset RPC
+  (which needs all three answers plus its own lockout, because it's the
+  *only* factor for an unauthenticated recovery flow). Here it's a second
+  factor on top of an already-verified password, so one correct answer is
+  proportionate, and the endpoint's existing rate limit
+  (`RateLimitPresets.PAYMENT`, 5/hour) already bounds guessing.
+- **No email.** S2G does not use email at all — this endpoint originally
+  carried a deliberate, narrow exception (a confirmation email via
+  `send_brevo_email`) when the password re-auth requirement above was
+  first added; that exception is retired, not replaced. The owner
+  notification is in-app only, same as every other notification in this
+  app.
+- **48-hour cooling-off, unchanged.** A freshly-changed address still can't
+  be paid immediately — see `payout-earnings`' check against
+  `payout_details_updated_at`.
+
+If a member hasn't set up security questions, `CryptoPayoutSettings` blocks
+the form and sends them to set that up first — there's no path that skips
+the second factor.
