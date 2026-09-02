@@ -2,16 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ShieldAlert, Flag, ImageIcon, CheckCircle2, XCircle, UserX } from 'lucide-react';
+import { Loader2, ShieldAlert, Flag, ImageIcon, CheckCircle2, XCircle, UserX, AlertTriangle, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 /**
- * The real trust & safety queue: content_reports (user-filed) and
+ * The real trust & safety queue: content_reports (user-filed),
  * media_moderation (Sightengine verdicts that need a human -- block or
- * uncertain, not yet reviewed). Actions here directly flip the RLS
- * conditions in 20260902114500 (media_is_allowed) and
+ * uncertain, not yet reviewed), and abuse_flags (text-based detector --
+ * see 20260902130000_abuse_detection.sql). Actions here directly flip the
+ * RLS conditions in 20260902114500 (media_is_allowed) and
  * content_hidden_pending_minor_report -- this is not cosmetic.
  */
 interface ReportRow {
@@ -23,27 +24,86 @@ interface ModRow {
   subject_ref: string | null; uploader_user_id: string; verdict: string; minor_suspected: boolean;
   reason: string | null; created_at: string;
 }
+interface AbuseFlagRow {
+  id: string; content_type: string; content_id: string | null; room_id: string | null;
+  author_id: string; matched_rule: string; category: string; severity: string;
+  action_taken: 'flagged' | 'blocked'; repeat_offender: boolean; status: string; created_at: string;
+}
+
+const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
+const SEVERITY_VARIANT: Record<string, 'destructive' | 'secondary'> = {
+  critical: 'destructive', high: 'destructive', medium: 'secondary', low: 'secondary',
+};
 
 export default function TrustSafetyQueue() {
   const { user } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [reports, setReports] = useState<ReportRow[]>([]);
   const [modRows, setModRows] = useState<ModRow[]>([]);
+  const [abuseRows, setAbuseRows] = useState<AbuseFlagRow[]>([]);
+  const [messagePreviews, setMessagePreviews] = useState<Record<string, string>>({});
   const [acting, setActing] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: r }, { data: m }] = await Promise.all([
+    const [{ data: r }, { data: m }, { data: a }] = await Promise.all([
       supabase.from('content_reports').select('*').eq('status', 'pending').order('created_at', { ascending: false }),
       supabase.from('media_moderation').select('*').in('verdict', ['block', 'uncertain']).is('reviewed_at', null)
         .order('minor_suspected', { ascending: false }).order('created_at', { ascending: true }),
+      supabase.from('abuse_flags').select('*').eq('status', 'pending_review').order('created_at', { ascending: false }),
     ]);
     setReports((r ?? []) as any);
     setModRows((m ?? []) as any);
+    const abuse = ((a ?? []) as any as AbuseFlagRow[])
+      .slice()
+      .sort((x, y) => (SEVERITY_RANK[y.severity] ?? 0) - (SEVERITY_RANK[x.severity] ?? 0));
+    setAbuseRows(abuse);
     setLoading(false);
-  }, []);
+
+    // Audit trail: every gosat view of a flag writes a row -- "who
+    // looked, at what, when." One row per flag actually shown, written
+    // once per page load (not on every render).
+    if (user?.id && abuse.length > 0) {
+      await supabase.from('abuse_flag_views').insert(
+        abuse.map((row) => ({ flag_id: row.id, viewed_by: user.id }))
+      );
+    }
+  }, [user?.id]);
 
   useEffect(() => { load(); }, [load]);
+
+  const loadMessagePreview = async (row: AbuseFlagRow) => {
+    if (row.content_type !== 'chat_message' || !row.content_id || messagePreviews[row.id]) return;
+    const { data } = await supabase.from('chat_messages').select('content').eq('id', row.content_id).maybeSingle();
+    setMessagePreviews((prev) => ({ ...prev, [row.id]: (data as any)?.content || '(message no longer available)' }));
+  };
+
+  const resolveAbuseFlag = async (row: AbuseFlagRow, status: 'reviewed_allowed' | 'reviewed_dismissed' | 'reviewed_suspended') => {
+    if (!user?.id) return;
+    setActing(row.id);
+    try {
+      const { error } = await supabase.from('abuse_flags')
+        .update({ status, reviewed_at: new Date().toISOString(), reviewed_by: user.id })
+        .eq('id', row.id);
+      if (error) throw error;
+
+      if (status === 'reviewed_suspended') {
+        // abuse_flags already carries the resolved author_id directly --
+        // no per-content-type uploader lookup needed, unlike
+        // suspendTargetUploader below (which exists for content_reports,
+        // where the target's uploader isn't known up front).
+        await supabase.from('profiles').update({ suspended: true } as any).eq('user_id', row.author_id);
+      }
+      toast.success(
+        status === 'reviewed_allowed' ? 'Marked allowed' : status === 'reviewed_dismissed' ? 'Dismissed' : 'Author suspended'
+      );
+      setAbuseRows((prev) => prev.filter((x) => x.id !== row.id));
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Could not resolve flag');
+    } finally {
+      setActing(null);
+    }
+  };
 
   const resolveReport = async (row: ReportRow, status: 'allowed' | 'removed' | 'suspended') => {
     if (!user?.id) return;
@@ -106,6 +166,64 @@ export default function TrustSafetyQueue() {
         <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : (
         <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Abuse flags ({abuseRows.length})</CardTitle>
+              <CardDescription>
+                Automated text detection -- chat, listings, bios, orchard descriptions. Sorted by severity;
+                wallet-address and credential attempts below were already blocked before they were ever sent.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {abuseRows.length === 0 && <p className="text-sm text-muted-foreground py-4">Nothing waiting on review.</p>}
+              {abuseRows.map((row) => (
+                <div key={row.id} className={`flex items-start justify-between gap-3 rounded-md border p-3 ${row.severity === 'critical' ? 'border-destructive bg-destructive/5' : ''}`}>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {row.repeat_offender && <Badge variant="destructive">REPEAT OFFENDER</Badge>}
+                      <Badge variant={SEVERITY_VARIANT[row.severity] ?? 'secondary'}>{row.severity}</Badge>
+                      <Badge variant={row.action_taken === 'blocked' ? 'destructive' : 'secondary'}>
+                        {row.action_taken === 'blocked' ? 'blocked before send' : 'flagged'}
+                      </Badge>
+                      <span className="text-sm font-medium">{row.category}</span>
+                      <span className="text-xs text-muted-foreground">({row.matched_rule})</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {row.content_type}
+                      {row.content_id && ` · ${row.content_id}`}
+                      {row.room_id && ` · room ${row.room_id}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      author {row.author_id} · {new Date(row.created_at).toLocaleString()}
+                    </p>
+                    {row.content_type === 'chat_message' && row.content_id && (
+                      messagePreviews[row.id] ? (
+                        <p className="text-sm mt-1.5 rounded bg-muted p-2 italic">"{messagePreviews[row.id]}"</p>
+                      ) : (
+                        <Button size="sm" variant="ghost" className="h-6 px-2 mt-1 text-xs" onClick={() => loadMessagePreview(row)}>
+                          <Eye className="h-3 w-3 mr-1" /> View message
+                        </Button>
+                      )
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {row.action_taken === 'flagged' && (
+                      <Button size="sm" variant="outline" disabled={acting === row.id} onClick={() => resolveAbuseFlag(row, 'reviewed_allowed')}>
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Allow
+                      </Button>
+                    )}
+                    <Button size="sm" variant="outline" disabled={acting === row.id} onClick={() => resolveAbuseFlag(row, 'reviewed_dismissed')}>
+                      <XCircle className="h-3.5 w-3.5 mr-1" /> Dismiss
+                    </Button>
+                    <Button size="sm" variant="destructive" disabled={acting === row.id} onClick={() => resolveAbuseFlag(row, 'reviewed_suspended')}>
+                      <UserX className="h-3.5 w-3.5 mr-1" /> Suspend
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2"><Flag className="h-4 w-4" /> Reports ({reports.length})</CardTitle>

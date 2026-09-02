@@ -54,6 +54,17 @@ export default function TermsPage() {
             may be reported to the relevant authorities.
           </p>
 
+          <h2 className="text-lg font-semibold">Automated content review</h2>
+          <p>
+            Sow2Grow uses automated systems to scan for harassment, scams, phishing, and other
+            content that breaks these terms -- across chat messages, listing descriptions, profile
+            bios, and orchard descriptions. A human doesn't read ordinary conversations; the system
+            only raises what it flags for a moderator (a "gosat") to review. Certain content -- a
+            wallet address in a message, or a request for your password, seed phrase, or a
+            verification code -- is blocked automatically before it's sent, since those are the most
+            common way marketplace members get robbed or have an account taken over.
+          </p>
+
           <h2 className="text-lg font-semibold">Content</h2>
           <p>
             You retain ownership of what you upload. By offering a seed on the platform, you grant

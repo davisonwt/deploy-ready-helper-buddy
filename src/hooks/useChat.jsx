@@ -237,6 +237,15 @@ export const useChat = () => {
         throw error;
       }
 
+      if (!data) {
+        // send_chat_message returns null (no error) when the content was
+        // blocked -- see abuse_detect_chat_message_trigger's hard-block
+        // categories (wallet address, credential/key solicitation). The
+        // attempt is already logged server-side; this is just telling
+        // the sender why nothing was sent.
+        throw new Error("That message can't be sent -- it looks like it includes a wallet address or asks for a password/seed phrase/verification code. If someone asked you for that, use the Report button instead.");
+      }
+
       console.log('Message inserted successfully (RPC):', data);
 
       // Update room's updated_at timestamp
