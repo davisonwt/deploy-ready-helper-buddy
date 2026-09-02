@@ -107,7 +107,14 @@ async function scanOne(body: Record<string, unknown>, label: string) {
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/moderate-media`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${SERVICE_ROLE_KEY}`, "Content-Type": "application/json" },
+      // moderate-media's service-role backfill check reads the apikey
+      // header (new-style secret keys aren't JWTs, so they can't ride
+      // Authorization the way the legacy service_role key could).
+      headers: {
+        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+        apikey: SERVICE_ROLE_KEY!,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
