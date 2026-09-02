@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../hooks/useAuth'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
@@ -416,15 +417,40 @@ export default function SeedFlowDashboard() {
   const [plantMenuOpen, setPlantMenuOpen] = useState(false)
   const [tribalFeedsOpen, setTribalFeedsOpen] = useState(false)
   const tribalFeedsRef = useRef(null)
+  const tribalFeedsMenuRef = useRef(null)
+  const [tribalFeedsMenuPos, setTribalFeedsMenuPos] = useState(null)
   useEffect(() => {
     if (!tribalFeedsOpen) return
     const onDocClick = (e) => {
-      if (tribalFeedsRef.current && !tribalFeedsRef.current.contains(e.target)) {
+      if (
+        tribalFeedsRef.current && !tribalFeedsRef.current.contains(e.target) &&
+        tribalFeedsMenuRef.current && !tribalFeedsMenuRef.current.contains(e.target)
+      ) {
         setTribalFeedsOpen(false)
       }
     }
     document.addEventListener('mousedown', onDocClick)
     return () => document.removeEventListener('mousedown', onDocClick)
+  }, [tribalFeedsOpen])
+  // The button lives inside the header's horizontally-scrollable pill row
+  // (overflow-x: auto, added in 2be8eeff) -- an absolutely-positioned
+  // dropdown anchored inside that ancestor gets clipped to its scroll
+  // viewport. Portal the menu to <body> instead, positioned via the
+  // button's own bounding rect, so it renders outside the clipping
+  // container while the pill row keeps scrolling normally. Close (rather
+  // than reposition) on scroll/resize -- simplest correct behavior for a
+  // short-lived menu, same as clicking outside.
+  useLayoutEffect(() => {
+    if (!tribalFeedsOpen) { setTribalFeedsMenuPos(null); return }
+    const rect = tribalFeedsRef.current?.getBoundingClientRect()
+    if (rect) setTribalFeedsMenuPos({ top: rect.bottom + 6, left: rect.left })
+    const close = () => setTribalFeedsOpen(false)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
   }, [tribalFeedsOpen])
   const TRIBAL_FEED_TIERS = [
     { tier: 'homestead', label: 'Homestead', emoji: '🏡' },
@@ -1111,11 +1137,12 @@ export default function SeedFlowDashboard() {
                    >
                      🌿 Feeds <span style={{ fontSize: 9, opacity: 0.8 }}>▾</span>
                    </button>
-                  {tribalFeedsOpen && (
+                  {tribalFeedsOpen && tribalFeedsMenuPos && createPortal(
                     <div
+                      ref={tribalFeedsMenuRef}
                       role="menu"
                       style={{
-                        position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 50,
+                        position: 'fixed', top: tribalFeedsMenuPos.top, left: tribalFeedsMenuPos.left, zIndex: 200,
                         minWidth: 200,
                         background: 'rgba(10,15,12,0.96)',
                         backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
@@ -1144,7 +1171,8 @@ export default function SeedFlowDashboard() {
                           {t.label}
                         </Link>
                       ))}
-                    </div>
+                    </div>,
+                    document.body
                   )}
                 </div>
                 <Link to="/sow" style={{ textDecoration: 'none', flexShrink: 0 }}>
