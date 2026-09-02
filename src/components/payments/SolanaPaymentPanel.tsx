@@ -1,10 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
-import { Loader2, Copy, Check, ExternalLink, AlertTriangle } from 'lucide-react';
+import {
+  Loader2, Copy, Check, ExternalLink, AlertTriangle, Wallet, ChevronDown, Smartphone,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import type { SolanaPaymentResponse, SolanaPaymentResolution } from '@/lib/payments/solanaPaymentGate';
+import { useSolanaWalletPay, type WalletPayError } from '@/hooks/useSolanaWalletPay';
+import { PHANTOM_INSTALL_URL, isMobileDevice } from '@/lib/payments/solanaWallet';
+import { cn } from '@/lib/utils';
 
 interface CheckResponse {
   status: 'pending' | 'paid' | 'underpaid' | 'expired' | 'failed';
@@ -44,24 +50,114 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
+function WalletErrorPanel({
+  error, amountUsdc, onRetry, onInstall,
+}: {
+  error: WalletPayError;
+  amountUsdc: number;
+  onRetry: () => void;
+  onInstall: () => void;
+}) {
+  if (error.kind === 'not-installed') {
+    return (
+      <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4 text-center">
+        <p className="text-sm">
+          {isMobileDevice()
+            ? "Phantom isn't open here — continue in the Phantom app, or use the QR code below."
+            : "Phantom isn't installed in this browser — install it, or use the QR code below."}
+        </p>
+        <Button onClick={onInstall} className="w-full gap-2">
+          <ExternalLink className="h-4 w-4" />
+          {isMobileDevice() ? 'Open in Phantom app' : 'Install Phantom'}
+        </Button>
+      </div>
+    );
+  }
+
+  const copy: Record<Exclude<WalletPayError['kind'], 'not-installed'>, string> = {
+    rejected: 'You declined the request in Phantom.',
+    'insufficient-funds': `You have ${(error.balance ?? 0).toFixed(2)} USDC — you need ${(error.shortfall ?? amountUsdc).toFixed(2)} more to complete this payment.`,
+    'wrong-network': error.message,
+    unknown: error.message,
+  };
+
+  return (
+    <div className="space-y-3 rounded-lg border border-orange-500/40 bg-orange-500/10 p-4 text-center">
+      <AlertTriangle className="mx-auto h-6 w-6 text-orange-500" />
+      <p className="text-sm text-orange-700 dark:text-orange-300">{copy[error.kind]}</p>
+      <Button variant="outline" onClick={onRetry} className="w-full">Try again</Button>
+    </div>
+  );
+}
+
+function StatusRow({ text }: { text: string }) {
+  return (
+    <div className="flex items-center justify-center gap-2 rounded-lg border border-border bg-muted/30 p-4 text-sm font-medium">
+      <Loader2 className="h-4 w-4 animate-spin" />
+      {text}
+    </div>
+  );
+}
+
 /**
- * The QR/deep-link/poll screen for a direct Solana USDC payment. Renders
- * inside SolanaPaymentHost's dialog (imperative flow via
- * presentSolanaPayment) but takes plain props so it could also be embedded
- * directly by a future call site that wants it inline instead.
+ * The Solana USDC payment screen. Primary path: sign and send directly
+ * from Phantom (or another Wallet-Standard extension) with one click.
+ * Fallback, collapsed by default: the QR/deep-link/manual-copy path for
+ * paying from a different device. Both paths embed the same Solana Pay
+ * reference, so check-solana-payment's polling below (unchanged) finds
+ * either one identically.
  */
 export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymentPanelProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<CheckResponse['status']>('pending');
   const [receivedAmountUsdc, setReceivedAmountUsdc] = useState<number | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number>(() =>
     Math.max(0, Math.floor((new Date(payment.expiresAt).getTime() - Date.now()) / 1000)),
   );
   const resolvedRef = useRef(false);
 
+  const poll = useCallback(async () => {
+    if (resolvedRef.current) return;
+    try {
+      const data = await invokePaymentFunction<CheckResponse>('check-solana-payment', {
+        intentId: payment.intentId,
+      });
+      setStatus(data.status);
+      setReceivedAmountUsdc(data.receivedAmountUsdc);
+      if (data.status === 'paid') {
+        resolvedRef.current = true;
+        toast.success('Payment received!');
+        onResolved('paid');
+      } else if (data.status === 'expired') {
+        resolvedRef.current = true;
+        onResolved('expired');
+      }
+    } catch (err) {
+      // A transient check failure (RPC hiccup, etc.) — stay pending and
+      // let the next 5s poll try again. The cron sweep is the backstop
+      // if the buyer closes the tab entirely.
+      console.warn('check-solana-payment poll failed', err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payment.intentId]);
+
+  const handleSubmitted = useCallback(() => {
+    // Phantom confirmed submission -- check right away instead of waiting
+    // up to 5s for the next scheduled poll. "Paid" still only comes from
+    // this same server-verified poll, never from the wallet call alone.
+    poll();
+  }, [poll]);
+
+  const { phase, error, pay, reset, hasPhantom } = useSolanaWalletPay(payment, handleSubmitted);
+
+  useEffect(() => {
+    if (error?.kind === 'not-installed') setQrOpen(true);
+  }, [error]);
+
   useEffect(() => {
     let cancelled = false;
-    QRCode.toDataURL(payment.solanaPayUrl, { width: 240, margin: 1 })
+    QRCode.toDataURL(payment.solanaPayUrl, { width: 220, margin: 1 })
       .then((url) => { if (!cancelled) setQrDataUrl(url); })
       .catch((err) => console.error('QR render failed', err));
     return () => { cancelled = true; };
@@ -76,35 +172,14 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
 
   useEffect(() => {
     let cancelled = false;
-    const poll = async () => {
-      if (cancelled || resolvedRef.current) return;
-      try {
-        const data = await invokePaymentFunction<CheckResponse>('check-solana-payment', {
-          intentId: payment.intentId,
-        });
-        if (cancelled) return;
-        setStatus(data.status);
-        setReceivedAmountUsdc(data.receivedAmountUsdc);
-        if (data.status === 'paid') {
-          resolvedRef.current = true;
-          toast.success('Payment received!');
-          onResolved('paid');
-        } else if (data.status === 'expired') {
-          resolvedRef.current = true;
-          onResolved('expired');
-        }
-      } catch (err) {
-        // A transient check failure (RPC hiccup, etc.) — stay pending and
-        // let the next 5s poll try again. The cron sweep is the backstop
-        // if the buyer closes the tab entirely.
-        console.warn('check-solana-payment poll failed', err);
-      }
+    const loop = async () => {
+      if (cancelled) return;
+      await poll();
     };
-    poll();
-    const interval = setInterval(poll, 5000);
+    loop();
+    const interval = setInterval(loop, 5000);
     return () => { cancelled = true; clearInterval(interval); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payment.intentId]);
+  }, [poll]);
 
   const minutes = Math.floor(secondsLeft / 60);
   const seconds = secondsLeft % 60;
@@ -112,8 +187,10 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
   if (status === 'paid') {
     return (
       <div className="flex flex-col items-center gap-3 py-6 text-center">
-        <Check className="h-10 w-10 text-emerald-500" />
-        <p className="font-semibold">Payment confirmed</p>
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15">
+          <Check className="h-7 w-7 text-emerald-500" />
+        </div>
+        <p className="text-lg font-semibold">Payment confirmed</p>
       </div>
     );
   }
@@ -129,6 +206,17 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
     );
   }
 
+  const handleInstallOrOpen = () => {
+    if (isMobileDevice()) {
+      const url = `https://phantom.app/ul/browse/${encodeURIComponent(window.location.href)}?ref=${encodeURIComponent(window.location.origin)}`;
+      window.location.href = url;
+    } else {
+      window.open(PHANTOM_INSTALL_URL, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const walletBusy = phase === 'connecting' || phase === 'building' || phase === 'awaiting-approval' || phase === 'submitted';
+
   return (
     <div className="space-y-4">
       {status === 'underpaid' && (
@@ -139,32 +227,76 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
         </div>
       )}
 
-      <div className="flex flex-col items-center gap-2">
-        {qrDataUrl ? (
-          <img src={qrDataUrl} alt="Scan to pay with your Solana wallet" className="rounded-md border border-border" width={240} height={240} />
-        ) : (
-          <div className="flex h-[240px] w-[240px] items-center justify-center rounded-md border border-border bg-muted/30">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        )}
-        <p className="text-sm text-muted-foreground">Scan with Phantom or any Solana Pay wallet</p>
+      <div className="rounded-xl border border-border bg-gradient-to-b from-muted/40 to-transparent p-5 text-center">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Amount</p>
+        <p className="mt-1 text-3xl font-bold tabular-nums">${payment.amountUsdc.toFixed(2)} <span className="text-lg font-semibold text-muted-foreground">USDC</span></p>
       </div>
 
-      <a href={payment.solanaPayUrl} className="block sm:hidden">
-        <Button className="w-full gap-2">
-          <ExternalLink className="h-4 w-4" /> Open in Phantom
+      {/* --- Primary: pay directly from a connected wallet --- */}
+      {phase === 'error' && error ? (
+        <WalletErrorPanel error={error} amountUsdc={payment.amountUsdc} onRetry={reset} onInstall={handleInstallOrOpen} />
+      ) : !hasPhantom ? (
+        <WalletErrorPanel
+          error={{ kind: 'not-installed', message: '' }}
+          amountUsdc={payment.amountUsdc}
+          onRetry={reset}
+          onInstall={handleInstallOrOpen}
+        />
+      ) : phase === 'connecting' ? (
+        <StatusRow text="Connecting to Phantom…" />
+      ) : phase === 'building' ? (
+        <StatusRow text="Preparing transaction…" />
+      ) : phase === 'awaiting-approval' ? (
+        <StatusRow text="Approve in Phantom…" />
+      ) : phase === 'submitted' ? (
+        <StatusRow text="Confirming on Solana…" />
+      ) : (
+        <Button size="lg" onClick={pay} disabled={walletBusy} className="w-full gap-2 text-base">
+          <Wallet className="h-5 w-5" />
+          Pay ${payment.amountUsdc.toFixed(2)} USDC with Phantom
         </Button>
-      </a>
+      )}
 
-      <div className="space-y-3">
-        <CopyField label="Amount (USDC)" value={payment.amountUsdc.toFixed(2)} />
-        <CopyField label="Send to this address" value={payment.hotWalletAddress} />
-      </div>
+      {/* --- Secondary: QR / manual copy for paying from another device --- */}
+      <Collapsible open={qrOpen} onOpenChange={setQrOpen}>
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between rounded-md px-1 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+          >
+            <span className="flex items-center gap-1.5"><Smartphone className="h-4 w-4" /> Paying from another device?</span>
+            <ChevronDown className={cn('h-4 w-4 transition-transform', qrOpen && 'rotate-180')} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-4 pt-2">
+          <div className="flex flex-col items-center gap-2">
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="Scan to pay with your Solana wallet" className="rounded-md border border-border" width={220} height={220} />
+            ) : (
+              <div className="flex h-[220px] w-[220px] items-center justify-center rounded-md border border-border bg-muted/30">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground">Scan with Phantom or any Solana Pay wallet</p>
+          </div>
 
-      <p className="text-xs text-muted-foreground text-center">
-        Send exactly this amount of USDC on Solana — the reference embedded in the QR code is how we
-        find your payment. This screen updates automatically once it arrives.
-      </p>
+          <a href={payment.solanaPayUrl} className="block sm:hidden">
+            <Button variant="outline" className="w-full gap-2">
+              <ExternalLink className="h-4 w-4" /> Open in wallet app
+            </Button>
+          </a>
+
+          <div className="space-y-3">
+            <CopyField label="Amount (USDC)" value={payment.amountUsdc.toFixed(2)} />
+            <CopyField label="Send to this address" value={payment.hotWalletAddress} />
+          </div>
+
+          <p className="text-xs text-muted-foreground text-center">
+            Send exactly this amount of USDC on Solana — the reference embedded in the QR code is how we
+            find your payment.
+          </p>
+        </CollapsibleContent>
+      </Collapsible>
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
@@ -173,7 +305,7 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
         <span>{secondsLeft > 0 ? `Expires in ${minutes}:${seconds.toString().padStart(2, '0')}` : 'Expiring…'}</span>
       </div>
 
-      <Button variant="ghost" className="w-full" onClick={() => onResolved('cancelled')}>
+      <Button variant="ghost" className="w-full" onClick={() => onResolved('cancelled')} disabled={walletBusy}>
         Cancel
       </Button>
     </div>
