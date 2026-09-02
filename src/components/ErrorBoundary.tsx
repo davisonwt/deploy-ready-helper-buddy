@@ -3,6 +3,7 @@ import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { isStaleChunkError, reloadOnceForStaleChunk } from '@/lib/staleChunkReload';
 
 interface Props { 
   children: ReactNode;
@@ -31,8 +32,19 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // This boundary wraps the lazy-loaded <Suspense><AppRoutes/></Suspense>
+    // directly (see App.tsx) -- it's the one that actually catches a stale
+    // chunk failure (this tab's cached index.html points at a chunk hash
+    // that no longer exists after a deploy). Reload once instead of
+    // showing the "Something went wrong" screen for something a refresh
+    // fixes outright. Shares its reload guard with main.tsx's
+    // 'vite:preloadError' listener -- see lib/staleChunkReload.ts.
+    if (isStaleChunkError(error) && reloadOnceForStaleChunk()) {
+      return;
+    }
+
     console.error('Error Boundary caught error:', error, errorInfo);
-    
+
     // Log to external service in production
     if (process.env.NODE_ENV === 'production') {
       try {

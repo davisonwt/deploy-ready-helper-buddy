@@ -10,6 +10,7 @@ import { logInfo, logError } from "@/lib/logging";
 import { queryClient } from "./lib/queryPersistence";
 import { CryptoComProvider } from '@/providers/CryptoComProvider';
 import { clearRoleCache } from '@/hooks/useUserRoles';
+import { reloadOnceForStaleChunk } from '@/lib/staleChunkReload';
 import "./index.css";
 import '@/utils/confetti';
 
@@ -38,6 +39,19 @@ window.addEventListener('unhandledrejection', (event) => {
     reason: event.reason,
     stack: event.reason?.stack,
   });
+});
+
+// Standard Vite pattern: a lazy route/component chunk whose hash no
+// longer exists on the server (this tab has a stale index.html cached
+// from before the last deploy) throws here instead of silently failing.
+// Reload once to pick up the current deployment -- see
+// lib/staleChunkReload.ts for the shared single-reload guard, also used
+// by ErrorBoundary.tsx for the same failure arriving via React's own
+// error-boundary path instead of this window event.
+window.addEventListener('vite:preloadError', (event) => {
+  if (reloadOnceForStaleChunk()) {
+    event.preventDefault();
+  }
 });
 
 logInfo('Application starting', {
