@@ -58,17 +58,16 @@ function WalletErrorPanel({
   onRetry: () => void;
   onInstall: () => void;
 }) {
+  // Desktop-only in practice: on mobile the primary action is always the
+  // solana: link (see the render below), which never calls pay() and so
+  // never produces a 'not-installed' error in the first place.
   if (error.kind === 'not-installed') {
     return (
       <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4 text-center">
-        <p className="text-sm">
-          {isMobileDevice()
-            ? "Phantom isn't open here — continue in the Phantom app, or use the QR code below."
-            : "Phantom isn't installed in this browser — install it, or use the QR code below."}
-        </p>
+        <p className="text-sm">Phantom isn't installed in this browser — install it, or use the QR code below.</p>
         <Button onClick={onInstall} className="w-full gap-2">
           <ExternalLink className="h-4 w-4" />
-          {isMobileDevice() ? 'Open in Phantom app' : 'Install Phantom'}
+          Install Phantom
         </Button>
       </div>
     );
@@ -100,12 +99,17 @@ function StatusRow({ text }: { text: string }) {
 }
 
 /**
- * The Solana USDC payment screen. Primary path: sign and send directly
- * from Phantom (or another Wallet-Standard extension) with one click.
- * Fallback, collapsed by default: the QR/deep-link/manual-copy path for
- * paying from a different device. Both paths embed the same Solana Pay
- * reference, so check-solana-payment's polling below (unchanged) finds
- * either one identically.
+ * The Solana USDC payment screen. Primary path splits by device: desktop
+ * signs and sends directly from the Phantom extension (or another
+ * Wallet-Standard extension) with one click; mobile hands off to a plain
+ * `solana:` link instead -- the OS/Phantom handles that URI scheme
+ * natively as a payment request, amount/recipient/reference pre-filled,
+ * no in-page wallet connection needed (and no "browse" deep-link, which
+ * opens the site fresh inside Phantom's in-app browser with no session).
+ * Fallback, collapsed by default: the QR/manual-copy path for paying from
+ * a different device. All paths embed the same Solana Pay reference, so
+ * check-solana-payment's polling below (unchanged) finds any of them
+ * identically.
  */
 export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymentPanelProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -206,15 +210,12 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
     );
   }
 
+  // Desktop-only (see WalletErrorPanel) -- opens Phantom's own install page.
   const handleInstallOrOpen = () => {
-    if (isMobileDevice()) {
-      const url = `https://phantom.app/ul/browse/${encodeURIComponent(window.location.href)}?ref=${encodeURIComponent(window.location.origin)}`;
-      window.location.href = url;
-    } else {
-      window.open(PHANTOM_INSTALL_URL, '_blank', 'noopener,noreferrer');
-    }
+    window.open(PHANTOM_INSTALL_URL, '_blank', 'noopener,noreferrer');
   };
 
+  const mobile = isMobileDevice();
   const walletBusy = phase === 'connecting' || phase === 'building' || phase === 'awaiting-approval' || phase === 'submitted';
 
   return (
@@ -232,8 +233,17 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
         <p className="mt-1 text-3xl font-bold tabular-nums">${payment.amountUsdc.toFixed(2)} <span className="text-lg font-semibold text-muted-foreground">USDC</span></p>
       </div>
 
-      {/* --- Primary: pay directly from a connected wallet --- */}
-      {phase === 'error' && error ? (
+      {/* --- Primary: mobile gets a direct solana: link (the OS/Phantom
+          handles it as a payment request, amount/recipient/reference
+          pre-filled); desktop gets the extension connect-and-sign flow. --- */}
+      {mobile ? (
+        <a href={payment.solanaPayUrl}>
+          <Button size="lg" className="w-full gap-2 text-base">
+            <Wallet className="h-5 w-5" />
+            Pay ${payment.amountUsdc.toFixed(2)} USDC in Phantom
+          </Button>
+        </a>
+      ) : phase === 'error' && error ? (
         <WalletErrorPanel error={error} amountUsdc={payment.amountUsdc} onRetry={reset} onInstall={handleInstallOrOpen} />
       ) : !hasPhantom ? (
         <WalletErrorPanel
@@ -279,12 +289,6 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
             )}
             <p className="text-sm text-muted-foreground">Scan with Phantom or any Solana Pay wallet</p>
           </div>
-
-          <a href={payment.solanaPayUrl} className="block sm:hidden">
-            <Button variant="outline" className="w-full gap-2">
-              <ExternalLink className="h-4 w-4" /> Open in wallet app
-            </Button>
-          </a>
 
           <div className="space-y-3">
             <CopyField label="Amount (USDC)" value={payment.amountUsdc.toFixed(2)} />
