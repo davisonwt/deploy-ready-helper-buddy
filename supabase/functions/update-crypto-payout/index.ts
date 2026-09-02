@@ -36,6 +36,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { validatePayoutDetails } from "../_shared/cryptoAddress.ts";
 import { networkModeSummary } from "../_shared/cryptoNetworks.ts";
 import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
+import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -215,6 +216,7 @@ Deno.serve(async (req) => {
     return json({ success: true, payout: updated, network_mode: mode });
   } catch (e) {
     console.error("update-crypto-payout error", e);
+    await logFunctionFailure("update-crypto-payout", e);
     return json({ error: "Failed to update payout details" }, 500);
   }
 });

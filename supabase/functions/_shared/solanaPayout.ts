@@ -185,6 +185,19 @@ export async function getHotWalletUsdcBalance(seed: Uint8Array, cluster: SolanaC
   return Number(decoded.data.amount) / 10 ** USDC_DECIMALS;
 }
 
+/**
+ * Native SOL balance held by the hot wallet itself (not the USDC token
+ * account), in whole SOL. Every USDC transfer this wallet sends still
+ * needs SOL for the transaction fee (paid natively, never in USDC) --
+ * sentinel's fee-starvation check reads this to warn before the wallet
+ * runs out of gas for its own sends, not to move funds.
+ */
+export async function getHotWalletSolBalance(seed: Uint8Array): Promise<number> {
+  const owner = sol.getAddress(seed);
+  const result = await rpc<{ value: number }>("getBalance", [owner, { commitment: "confirmed" }]);
+  return result.value / 1e9; // lamports -> SOL
+}
+
 export interface SolanaUsdcSendResult {
   signature: string;
   cluster: SolanaCluster;

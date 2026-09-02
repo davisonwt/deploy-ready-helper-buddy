@@ -27,7 +27,8 @@ import {
   Check,
   X,
   Radio,
-  Wallet
+  Wallet,
+  ShieldCheck
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRoles } from '../hooks/useRoles'
@@ -39,6 +40,7 @@ import { RadioSlotApprovalInterface } from '@/components/radio/RadioSlotApproval
 import { UserManagementDashboard } from '@/components/admin/UserManagementDashboard'
 import { ContentModerationDashboard } from '@/components/admin/ContentModerationDashboard'
 import TrustSafetyQueue from '@/components/admin/TrustSafetyQueue'
+import SentinelPanel from '@/components/admin/SentinelPanel'
 import { EnhancedAnalyticsDashboard } from '@/components/admin/EnhancedAnalyticsDashboard'
 import { GoSatGhostAccessMonitor } from '@/components/admin/GoSatGhostAccessMonitor'
 import GosatTreasuryPage from '@/pages/GosatTreasuryPage'
@@ -359,7 +361,7 @@ export default function AdminDashboardPage() {
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="analytics" className="space-y-6">
           <div className="flex justify-center mb-8">
-            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
               <TabsTrigger 
                 value="analytics" 
                 className="border-2 border-primary/20 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-primary/40 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
@@ -392,8 +394,15 @@ export default function AdminDashboardPage() {
                 <Wallet className="w-4 h-4 mr-2" />
                 Treasury
               </TabsTrigger>
-              <TabsTrigger 
-                value="legacy" 
+              <TabsTrigger
+                value="sentinel"
+                className="border-2 border-rose-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-rose-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-rose-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:border-rose-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                Sentinel
+              </TabsTrigger>
+              <TabsTrigger
+                value="legacy"
                 className="border-2 border-slate-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-slate-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:border-slate-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
                 Legacy
@@ -421,6 +430,10 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="ghost-access" className="space-y-6">
             <GoSatGhostAccessMonitor />
+          </TabsContent>
+
+          <TabsContent value="sentinel" className="space-y-6">
+            <SentinelPanel />
           </TabsContent>
 
           <TabsContent value="treasury" className="space-y-6">

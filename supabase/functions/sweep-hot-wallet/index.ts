@@ -35,6 +35,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimiter.ts";
+import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 import { getSolanaCluster } from "../_shared/cryptoNetworks.ts";
 import {
   getHotWalletUsdcBalance,
@@ -170,6 +171,7 @@ Deno.serve(async (req) => {
     }
   } catch (err) {
     console.error("sweep-hot-wallet error", err);
+    await logFunctionFailure("sweep-hot-wallet", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }
 });

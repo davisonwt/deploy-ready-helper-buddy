@@ -40,6 +40,7 @@ import {
   verifyPaypalWebhookSig,
 } from "../_shared/paypal/client.ts";
 import { markCoveredRowsPaid, markCoveredRowsPending, type CoveredRow } from "../_shared/payoutLedger.ts";
+import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
 type PaypalEvent = {
   id?: string;
@@ -153,6 +154,7 @@ Deno.serve(async (req) => {
     return json({ ok: true });
   } catch (err) {
     console.error("paypal-webhook handler error", err);
+    await logFunctionFailure("paypal-webhook", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }
 });

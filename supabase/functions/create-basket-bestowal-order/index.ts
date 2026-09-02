@@ -14,6 +14,7 @@ import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { priceBreakdown } from "../_shared/platformFee.ts";
 import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
+import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -360,6 +361,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("create-basket-bestowal-order error", err);
+    await logFunctionFailure("create-basket-bestowal-order", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }
 });

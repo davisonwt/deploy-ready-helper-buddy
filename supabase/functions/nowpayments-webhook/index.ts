@@ -9,6 +9,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { deliverFinalizeMessages } from "../_shared/postFinalize/messaging.ts";
 import { syncBooksEntries } from "../_shared/postFinalize/books.ts";
+import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -102,6 +103,7 @@ Deno.serve(async (req) => {
     return json({ ok: true });
   } catch (err) {
     console.error("nowpayments-webhook handler error", err);
+    await logFunctionFailure("nowpayments-webhook", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }
 });

@@ -78,6 +78,7 @@ import { deliverPayoutNotification } from "../_shared/postFinalize/messaging.ts"
 import { validateSolanaAddress } from "../_shared/cryptoAddress.ts";
 import { getSolanaCluster } from "../_shared/cryptoNetworks.ts";
 import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimiter.ts";
+import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 // No @solana/web3.js here (or anywhere in the Solana rail now) -- see
 // _shared/solanaPayout.ts's file header for why (measured ~3s CPU import
 // cost vs. the edge runtime's hard, non-configurable 2s ceiling) and what
@@ -731,6 +732,7 @@ Deno.serve(async (req) => {
     }
   } catch (err) {
     console.error("payout-earnings error", err);
+    await logFunctionFailure("payout-earnings", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }
 });

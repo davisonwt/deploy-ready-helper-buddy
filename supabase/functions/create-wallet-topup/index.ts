@@ -7,6 +7,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
+import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -176,6 +177,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("create-wallet-topup error", err);
+    await logFunctionFailure("create-wallet-topup", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }
 });

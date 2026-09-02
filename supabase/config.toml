@@ -457,4 +457,7 @@ verify_jwt = false
 [functions.sweep-hot-wallet]
 verify_jwt = false
 
+[functions.sentinel]
+verify_jwt = false
+
 

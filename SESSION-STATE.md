@@ -2342,6 +2342,123 @@ effects (a per-tile "add compost" animation, plain decorative Tailwind
 pulse/bounce circles on `RegisterPage.jsx`) — neither is what was
 described, both left alone.
 
+## Fixed — 2026-09-02, later (sentinel: hourly monitoring agent, built and live)
+
+Built from a spec the user wrote (`sentinel.txt`) matching Open item 1
+above almost exactly. Detects and reports only -- never fixes anything
+itself. All 8 checks live, hourly via `invoke_money_job` (cron
+`sentinel-hourly`, jobid 20).
+
+- **New tables**: `sentinel_events` (open/acknowledged/resolved
+  conditions, one open row per `(check_name, subject)` via a partial
+  unique index -- this is what makes dedup/re-notify/auto-resolve work),
+  `function_invocations` (failure-only log, the fallback for check #4 --
+  neither `function_edge_logs` nor any other log/analytics table is
+  reachable via SQL from this project, confirmed empty
+  `information_schema` search, and the Management API's log-query
+  endpoint was already confirmed unreliable earlier this session; this
+  gives a failure **count** per function per hour, explicitly not
+  mislabeled as a rate, since no reachable total-invocation denominator
+  exists either), `sentinel_avatar_watch` (internal-only, no client
+  access -- diffs `profiles.avatar_url` against the previous run to catch
+  a wipe, since no audit trail exists for that column anywhere else).
+  Two SECURITY DEFINER RPCs (`get_cron_job_health`,
+  `get_config_drift_signals`) expose `cron.job`/`pg_trigger`/RLS-status/
+  `has_function_privilege` introspection to the function, none of which
+  PostgREST exposes directly.
+- **Checks**: cron health (payout-earnings-weekly, sweep-hot-wallet-daily
+  -- overdue or failed), stuck money (payouts/escrow/covered-source-rows
+  stuck processing), hot wallet (over ceiling with no 24h sweep; SOL
+  below a fee-starvation floor), function health (failure counts for the
+  10 functions matching this session's rate-limited "money-touching"
+  set plus moderate-media), unwatched queues (content_reports,
+  media_moderation, abuse_flags, `minor_suspected` at any age --
+  immediate, highest severity), third-party usage (Sightengine calls/24h
+  -- `SIGHTENGINE_DAILY_LIMIT` left unset rather than guessing a real
+  quota; Supabase's own project usage flagged as genuinely unreachable
+  from inside an edge function, not silently skipped), config drift
+  (required secrets, RLS on every money table, the abuse/moderation
+  triggers, `grant_bootstrap_admin` still not executable by
+  `authenticated`), data sanity (avatar wipes, new admin/gosat roles in
+  the last 24h).
+- **Gosat UI**: new Sentinel tab on `/admin` (`SentinelPanel.tsx`) --
+  open conditions by severity with an acknowledge button (RLS: gosat/
+  admin only, open→acknowledged only, verified live both ways: a real
+  gosat session can acknowledge, a non-gosat session updates zero rows),
+  plus a heartbeat line warning if sentinel hasn't run in >3h.
+- **10 money-touching/moderation functions now write to
+  `function_invocations` on their own top-level catch**:
+  `update-crypto-payout`, `payout-earnings`, `sweep-hot-wallet`,
+  `release-escrow`, `create-basket-bestowal-order`, `create-wallet-topup`,
+  `capture-paypal-order`, `paypal-webhook`, `nowpayments-webhook`,
+  `moderate-media`. New `_shared/logFunctionFailure.ts` -- builds its own
+  throwaway client from env vars rather than taking one as a parameter,
+  since whether an admin/service client happens to be in scope at a given
+  file's catch block varies (some declare it inside `try`, out of the
+  `catch`'s scope) -- a one-argument call site that always works beat
+  coordinating scope across 10 different files.
+- **Two real bugs found and fixed during testing, not just noted**:
+  (1) `notifyGosats()` queried `user_roles` for admin/gosat and built one
+  notification per matching ROW, not per user -- anyone holding both
+  admin and gosat (the norm for this app's staff, e.g. davison's
+  gosat+admin+radio_admin) got every alert twice. Fixed by deduping
+  user_ids before building notification rows; verified live (5 of 6
+  gosats had been getting exact duplicates, the 6th, holding only one
+  role, hadn't). (2) The self-check-failure reconcile (a check throwing
+  is itself logged as a critical condition) was called once per
+  individual failure inside the check loop, each call only knowing about
+  that one subject -- reconcileCheck resolves anything under a
+  check_name absent from what it's given, so this could wrongly
+  auto-resolve a DIFFERENT check's still-relevant failure record, and a
+  run with zero failures never called it at all, leaving a stale failure
+  open forever once its cause recovered. Caught live: `cron_health`
+  threw once (transient -- the RPC succeeded on every other run, both
+  before and after), and its failure record stayed open through a
+  subsequent clean run until this was fixed. Now collected across the
+  whole loop and reconciled once at the end, with an always-called
+  empty-list case specifically so a recovered check's record can close.
+  Also fixed while testing: an unrelated error-serialization bug where a
+  thrown Supabase/PostgREST error object (not an `Error` instance)
+  collapsed to the literal string "[object Object]" via `String(e)` --
+  new `errorDetail()` helper prefers `.message`, falls back to real
+  `JSON.stringify`.
+- **Tested live, exactly as the spec asked** ("force a condition where
+  safe, then delete it") — not simulated: inserted a real stuck `payouts`
+  row on the disposable Thabo seed account (never a real member's),
+  confirmed sentinel detected it, notified gosats once each (no
+  duplicates, post-fix), deleted the row, confirmed the condition
+  auto-resolved on the next run. Same live cycle for the avatar-wipe
+  check specifically, since it's directly relevant to this session's own
+  unresolved avatar_url mystery: set a fake avatar on Thabo, ran sentinel
+  to seed the baseline, cleared it, confirmed detection, confirmed
+  auto-resolution the run after. RLS on the acknowledge policy verified
+  both directions (a real gosat session can acknowledge; Thabo's
+  non-gosat session updates zero rows).
+- **Real findings sentinel surfaced immediately, still open**:
+  `SQUAD_VAULT_ADDRESS` is not set (confirmed already known from
+  `sweep-hot-wallet` testing earlier this session, now continuously
+  monitored instead of only discovered by chance); **neither
+  `payout-earnings-weekly` nor `sweep-hot-wallet-daily` has ever actually
+  fired** (`cron.job_run_details` has zero rows for either jobid) --
+  worth checking directly rather than assuming "no run yet" means "too
+  new to have had a slot," since both were scheduled hours-to-a-day
+  before this was written.
+- **What it explicitly can't do, per the spec's own instruction**: detect
+  its own downtime. If sentinel itself stops running, nothing inside this
+  system notices -- the Sentinel tab's heartbeat line will show a stale
+  "last ran" time to anyone who happens to look, but nothing pushes an
+  alert about sentinel's own silence. **External uptime monitoring (a
+  ping/healthcheck service watching for the hourly cron's own execution,
+  independent of this codebase) is still needed and not set up.**
+- Deployed and tested live this session (by the agent, not left for the
+  user to deploy first) -- the spec's own "test every check" instruction
+  needed a live function to invoke against real test data; the exact
+  redeploy command (`npx supabase functions deploy sentinel
+  update-crypto-payout payout-earnings sweep-hot-wallet release-escrow
+  create-basket-bestowal-order create-wallet-topup capture-paypal-order
+  paypal-webhook nowpayments-webhook moderate-media --project-ref
+  zuwkgasbkpjlxzsjzumu`) is recorded here for re-deploys.
+
 ## Open — priority order
 
 Every item below is current as of 2026-09-02 end of day. Everything from
@@ -2349,11 +2466,13 @@ the 2026-08-27 → 2026-09-01 handoffs that got resolved along the way is
 folded into the "Fixed" history above, not repeated here — this list is
 deliberately short and forward-looking, not a full archive.
 
-1. **Sentinel/monitoring agent** — not built yet. Needed given how many
-   findings this session came from manual, one-off audits (double-payment
-   race, RLS `sower_id` bugs, the empty-`{}`-new-keys outage, the
-   `paste_` webhook-id typo two sessions ago) rather than anything
-   automated catching them. No design started.
+1. ~~Sentinel/monitoring agent~~ — **built and live, see "Fixed —
+   2026-09-02, later" above.** Two real findings from its first runs,
+   both still open: `SQUAD_VAULT_ADDRESS` is not set, and **neither
+   `payout-earnings-weekly` nor `sweep-hot-wallet-daily` has ever
+   actually fired** — worth checking directly. Sentinel cannot detect its
+   own downtime; external uptime monitoring is still needed and not set
+   up.
 2. **End-to-end core-loop test on mainnet** — everything Solana-related
    this session (hot wallet, sweep, payout rail, anomaly alerting) is
    verified on **devnet only**. Nothing has moved real money yet. Needs a
@@ -2386,7 +2505,9 @@ deliberately short and forward-looking, not a full archive.
    env-overridable without a redeploy (`HOT_WALLET_CEILING_USD`,
    `ANOMALY_MULTIPLIER` — the latter is currently a code constant, not
    yet an env var) — review the actual numbers before treating either as
-   final.
+   final. Sentinel's own `SIGHTENGINE_DAILY_LIMIT` (unset, so its
+   third-party-usage check can't alert on a real quota yet) is the same
+   class of unsigned-off default.
 
 **Note: Lovable now appears to auto-publish on push** — worth confirming
 before assuming a manual "Publish" step is still required for a frontend

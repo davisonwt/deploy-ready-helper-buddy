@@ -12,6 +12,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimiter.ts";
+import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -82,6 +83,7 @@ Deno.serve(async (req) => {
     return json({ success: true, ...(typeof data === "object" ? data : { data }) });
   } catch (err) {
     console.error("release-escrow error", err);
+    await logFunctionFailure("release-escrow", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }
 });

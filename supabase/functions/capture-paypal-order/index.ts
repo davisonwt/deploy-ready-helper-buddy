@@ -11,6 +11,7 @@ import { z } from "npm:zod@3.23.8";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { captureAndFinalize, type PaypalOrderKind } from "../_shared/paypal/capture.ts";
 import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
+import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
 const BodySchema = z.object({
   kind: z.enum(["basket", "content", "gift", "orchard", "topup", "booking"]),
@@ -129,6 +130,7 @@ Deno.serve(async (req) => {
     result = await captureAndFinalize(service, parsed.kind, parsed.recordId, paypalOrderId);
   } catch (err) {
     console.error("PayPal capture failed", parsed.kind, parsed.recordId, err);
+    await logFunctionFailure("capture-paypal-order", err);
     return json({ error: "paypal_capture_failed", detail: err instanceof Error ? err.message : String(err) }, 502);
   }
 

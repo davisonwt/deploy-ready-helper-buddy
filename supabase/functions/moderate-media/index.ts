@@ -20,6 +20,7 @@
 // wh-moderation.txt point 1.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -314,6 +315,7 @@ Deno.serve(async (req) => {
     } catch (logErr) {
       console.error("moderate-media: failed to log fallback verdict", logErr);
     }
+    await logFunctionFailure("moderate-media", err);
     return json({ verdict: "block", reason: "scanner_error" }, 200);
   }
 });
