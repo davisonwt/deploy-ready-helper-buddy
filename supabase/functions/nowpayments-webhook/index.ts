@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceRoleKey = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"];
   const ipnSecret = Deno.env.get("NOWPAYMENTS_IPN_SECRET");
   if (!supabaseUrl || !serviceRoleKey || !ipnSecret) {
     return json({ error: "server_misconfigured" }, 500);

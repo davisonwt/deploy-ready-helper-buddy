@@ -23,7 +23,7 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const serviceRoleKey = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? "";
     const openAIApiKey = Deno.env.get("OPENAI_API_KEY");
 
     if (!supabaseUrl || !serviceRoleKey) {

@@ -28,8 +28,8 @@ const corsHeaders = {
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SUPABASE_ANON_KEY = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] ?? "";
+const SERVICE_ROLE_KEY = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? "";
 const SIGHTENGINE_API_USER = Deno.env.get("SIGHTENGINE_API_USER") ?? "";
 const SIGHTENGINE_API_SECRET = Deno.env.get("SIGHTENGINE_API_SECRET") ?? "";
 
@@ -154,6 +154,9 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("authorization") ?? "";
     if (!authHeader.toLowerCase().startsWith("bearer ")) return json({ error: "unauthorized" }, 401);
     const token = authHeader.slice(7).trim();
+    // apikey header carries the service-role key (not a JWT under new-style
+    // keys) -- Authorization stays reserved for a real user session.
+    const apikeyHeader = req.headers.get("apikey") ?? "";
 
     payload = await req.json();
 
@@ -165,7 +168,7 @@ Deno.serve(async (req) => {
     // explicitly rather than inferring it from a session. This does NOT
     // weaken the normal path below -- every ordinary client call still goes
     // through authClient.auth.getUser() exactly as before.
-    if (SERVICE_ROLE_KEY && token === SERVICE_ROLE_KEY) {
+    if (SERVICE_ROLE_KEY && apikeyHeader === SERVICE_ROLE_KEY) {
       const explicitUploaderId = String(payload?.uploaderUserId ?? "");
       if (!explicitUploaderId) return json({ error: "uploaderUserId required for service-role calls" }, 400);
       uploaderId = explicitUploaderId;

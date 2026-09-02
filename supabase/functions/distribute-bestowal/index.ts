@@ -19,8 +19,8 @@ serve(async (req) => {
 
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      const anonKey = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] ?? "";
+      const serviceRoleKey = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? "";
 
       if (!supabaseUrl || !anonKey || !serviceRoleKey) {
         throw new Error("Supabase configuration missing for distribution handler");

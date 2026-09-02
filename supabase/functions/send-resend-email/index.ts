@@ -4,8 +4,8 @@ import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SUPABASE_ANON_KEY = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"]!;
+const SERVICE_ROLE_KEY = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? "";
 
 
 const corsHeaders = {
@@ -45,7 +45,10 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
     const token = authHeader.slice(7).trim();
-    const isServiceRole = SERVICE_ROLE_KEY.length > 0 && token === SERVICE_ROLE_KEY;
+    // apikey header carries the service-role key (not a JWT under new-style
+    // keys) -- Authorization stays reserved for a real user session.
+    const apikeyHeader = req.headers.get("apikey") ?? "";
+    const isServiceRole = SERVICE_ROLE_KEY.length > 0 && apikeyHeader === SERVICE_ROLE_KEY;
 
     let callerEmail: string | null = null;
     if (!isServiceRole) {

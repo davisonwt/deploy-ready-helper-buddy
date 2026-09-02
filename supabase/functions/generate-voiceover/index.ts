@@ -61,7 +61,7 @@ serve(async (req) => {
     const selectedSpeed = typeof speed === "number" && speed >= 0.5 && speed <= 2.0 ? speed : 1.0;
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const SERVICE_KEY = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"]!;
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
     const authHeader = req.headers.get("Authorization");

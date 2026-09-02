@@ -447,4 +447,14 @@ verify_jwt = false
 [functions.trigger-video-agent]
 verify_jwt = false
 
+# New-style secret keys aren't JWTs, so Kong's gateway-level JWT check must
+# not run for these -- both authorize internal/cron callers by comparing the
+# apikey header against the secret key themselves (see supabase/functions/
+# moderate-media/index.ts and sweep-hot-wallet/index.ts).
+[functions.moderate-media]
+verify_jwt = false
+
+[functions.sweep-hot-wallet]
+verify_jwt = false
+
 

@@ -31,7 +31,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
+    JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"]!,
     { global: { headers: { Authorization: authHeader } } },
   );
   const token = authHeader.replace("Bearer ", "");

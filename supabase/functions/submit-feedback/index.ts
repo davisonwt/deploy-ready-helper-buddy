@@ -24,7 +24,7 @@ serve(async (req) => {
     const token = authHeader.slice(7).trim();
     const userClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] ?? '',
       { global: { headers: { Authorization: `Bearer ${token}` } } }
     );
     const { data: userData, error: userErr } = await userClient.auth.getUser();
@@ -49,7 +49,7 @@ serve(async (req) => {
     // Create Supabase client with service role
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? ''
     );
 
     // Get user profile for display name

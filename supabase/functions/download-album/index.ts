@@ -15,7 +15,7 @@ const STORAGE_HOST = (() => {
 // row are getPublicUrl()-style links that no longer resolve now the bucket is
 // private, so every fetch below has to go through a freshly-minted signed URL
 // instead of being fetched directly.
-const serviceClient = createClient(PROJECT_URL, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+const serviceClient = createClient(PROJECT_URL, JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? '');
 
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_MANIFEST_BYTES = 1_000_000; // 1 MB
@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] ?? '',
       {
         global: {
           headers: { Authorization: req.headers.get('Authorization')! },

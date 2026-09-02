@@ -21,7 +21,7 @@ serve(async (req) => {
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? "",
       { auth: { persistSession: false } }
     );
 
@@ -213,7 +213,7 @@ serve(async (req) => {
     try {
       const supabaseClient = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? "",
         { auth: { persistSession: false } }
       );
       const authHeader = req.headers.get("Authorization");

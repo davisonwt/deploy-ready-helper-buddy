@@ -113,7 +113,8 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
         try {
           // Use environment variables only (secure approach)
           const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-          const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+          const SUPABASE_ANON_KEY =
+            import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
           if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
             throw new Error('Supabase configuration not found. Please check your environment variables.');

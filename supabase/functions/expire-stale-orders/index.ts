@@ -20,8 +20,8 @@ const corsHeaders = {
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SUPABASE_ANON_KEY = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] ?? "";
+const SERVICE_ROLE_KEY = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? "";
 const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
 Deno.serve(async (req) => {
@@ -31,11 +31,14 @@ Deno.serve(async (req) => {
     const cronHeader = req.headers.get("x-cron-secret") ?? "";
     const authHeader = req.headers.get("authorization") ?? "";
     const token = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
+    // apikey header carries the service-role key (not a JWT under new-style
+    // keys) -- Authorization stays reserved for a real user session.
+    const apikeyHeader = req.headers.get("apikey") ?? "";
 
     let authorized = false;
     if (CRON_SECRET && token && token === CRON_SECRET) authorized = true;
     if (!authorized && CRON_SECRET && cronHeader && cronHeader === CRON_SECRET) authorized = true;
-    if (!authorized && token && token === SERVICE_ROLE_KEY) authorized = true;
+    if (!authorized && apikeyHeader && apikeyHeader === SERVICE_ROLE_KEY) authorized = true;
     if (!authorized && token) {
       const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         global: { headers: { Authorization: `Bearer ${token}` } },

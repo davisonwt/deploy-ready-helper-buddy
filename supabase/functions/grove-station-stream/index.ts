@@ -32,7 +32,7 @@ serve(async (req) => {
     }
     const userClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] ?? "",
       { global: { headers: { Authorization: `Bearer ${token}` } } }
     )
     const { data: userData, error: userErr } = await userClient.auth.getUser()

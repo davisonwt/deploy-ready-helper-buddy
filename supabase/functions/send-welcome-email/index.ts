@@ -25,7 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Require an authenticated caller and ensure the email matches the caller's account
     // to prevent abuse of this function as an open email relay.
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const ANON_KEY = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"]!;
     const authHeader = req.headers.get("authorization") ?? "";
     if (!authHeader.toLowerCase().startsWith("bearer ")) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
