@@ -77,6 +77,7 @@ import {
 import { deliverPayoutNotification } from "../_shared/postFinalize/messaging.ts";
 import { validateSolanaAddress } from "../_shared/cryptoAddress.ts";
 import { getSolanaCluster } from "../_shared/cryptoNetworks.ts";
+import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimiter.ts";
 // No @solana/web3.js here (or anywhere in the Solana rail now) -- see
 // _shared/solanaPayout.ts's file header for why (measured ~3s CPU import
 // cost vs. the edge runtime's hard, non-configurable 2s ceiling) and what
@@ -168,9 +169,10 @@ Deno.serve(async (req) => {
     const token = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
 
     let authorized = false;
-    if (CRON_SECRET && token && token === CRON_SECRET) authorized = true;
-    if (!authorized && CRON_SECRET && cronHeader && cronHeader === CRON_SECRET) authorized = true;
-    if (!authorized && token && token === SERVICE_ROLE_KEY) authorized = true;
+    let rateLimitId: string | null = null;
+    if (CRON_SECRET && token && token === CRON_SECRET) { authorized = true; rateLimitId = "cron:payout-earnings"; }
+    if (!authorized && CRON_SECRET && cronHeader && cronHeader === CRON_SECRET) { authorized = true; rateLimitId = "cron:payout-earnings"; }
+    if (!authorized && token && token === SERVICE_ROLE_KEY) { authorized = true; rateLimitId = "service:payout-earnings"; }
     if (!authorized && token) {
       const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         global: { headers: { Authorization: `Bearer ${token}` } },
@@ -179,9 +181,20 @@ Deno.serve(async (req) => {
       if (u?.user) {
         const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", u.user.id);
         authorized = !!roles?.some((r: any) => ["admin", "gosat"].includes(r.role));
+        if (authorized) rateLimitId = u.user.id;
       }
     }
     if (!authorized) return json({ error: "unauthorized" }, 401);
+
+    // Wallet-hardening audit item 3: rate-limited even for cron/service
+    // callers -- a leaked CRON_SECRET or a compromised admin session
+    // shouldn't be able to trigger unlimited payout runs. dry_run calls
+    // (the admin "next run preview") aren't excluded -- they're cheap and
+    // harmless, but sharing the same bucket means a script hammering
+    // dry_run also throttles real runs from the same caller, which is the
+    // correct conservative behavior here.
+    const rlOk = await checkRateLimit(admin, rateLimitId!, "payout_earnings_run", 30, 60, true);
+    if (!rlOk) return createRateLimitResponse(3600);
 
     const body = await req.json().catch(() => ({}));
     const dryRun = body?.dry_run === true;

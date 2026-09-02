@@ -10,6 +10,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "npm:zod@3.23.8";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { captureAndFinalize, type PaypalOrderKind } from "../_shared/paypal/capture.ts";
+import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
 
 const BodySchema = z.object({
   kind: z.enum(["basket", "content", "gift", "orchard", "topup", "booking"]),
@@ -60,6 +61,18 @@ Deno.serve(async (req) => {
     const { data: authData, error: authError } = await authClient.auth.getUser(token);
     if (authError || !authData.user) return json({ error: "unauthorized" }, 401);
     callerId = authData.user.id;
+  }
+
+  // Wallet-hardening audit item 3: rate-limited per user, fail-closed.
+  // Skipped for the service-role bypass above -- that's a trusted internal
+  // caller, same as the ownership check it already skips.
+  if (callerId) {
+    const rlService = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+    const rlOk = await checkRateLimit(
+      rlService, callerId, RateLimitPresets.PAYMENT.limitType,
+      RateLimitPresets.PAYMENT.maxAttempts, RateLimitPresets.PAYMENT.timeWindowMinutes, true,
+    );
+    if (!rlOk) return createRateLimitResponse(RateLimitPresets.PAYMENT.timeWindowMinutes * 60);
   }
 
   let parsed: z.infer<typeof BodySchema>;

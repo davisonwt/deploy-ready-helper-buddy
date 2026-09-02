@@ -11,6 +11,7 @@
 // admin/gosat user JWT.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimiter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,10 +43,11 @@ Deno.serve(async (req) => {
     const token = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
 
     let authorized = false;
+    let rateLimitId: string | null = null;
     // Cron auth: prefer Authorization: Bearer <CRON_SECRET>; legacy x-cron-secret still accepted.
-    if (CRON_SECRET && token && token === CRON_SECRET) authorized = true;
-    if (!authorized && CRON_SECRET && cronHeader && cronHeader === CRON_SECRET) authorized = true;
-    if (!authorized && token && token === SERVICE_ROLE_KEY) authorized = true;
+    if (CRON_SECRET && token && token === CRON_SECRET) { authorized = true; rateLimitId = "cron:release-escrow"; }
+    if (!authorized && CRON_SECRET && cronHeader && cronHeader === CRON_SECRET) { authorized = true; rateLimitId = "cron:release-escrow"; }
+    if (!authorized && token && token === SERVICE_ROLE_KEY) { authorized = true; rateLimitId = "service:release-escrow"; }
 
     if (!authorized && token) {
       const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -55,9 +57,18 @@ Deno.serve(async (req) => {
       if (u?.user) {
         const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", u.user.id);
         authorized = !!roles?.some((r: any) => ["admin", "gosat"].includes(r.role));
+        if (authorized) rateLimitId = u.user.id;
       }
     }
     if (!authorized) return json({ error: "unauthorized" }, 401);
+
+    // Wallet-hardening audit item 3: rate-limited even for cron/service
+    // callers -- a leaked CRON_SECRET or a compromised admin session
+    // shouldn't be able to hammer this without limit. Generous relative to
+    // the tight per-user PAYMENT preset since a legitimate cron calls this
+    // routinely on its own schedule.
+    const rlOk = await checkRateLimit(admin, rateLimitId!, "escrow_release_job", 60, 60, true);
+    if (!rlOk) return createRateLimitResponse(3600);
 
     const body = await req.json().catch(() => ({}));
     const limit = Math.min(Math.max(Number(body?.limit ?? 200), 1), 1000);

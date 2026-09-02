@@ -6,6 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
+import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -35,6 +36,16 @@ Deno.serve(async (req) => {
     if (userError || !userData?.user) return json({ error: "unauthorized" }, 401);
     const userId = userData.user.id;
 
+    const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+
+    // Wallet-hardening audit item 3: every money-touching function
+    // rate-limited per user, fail-closed.
+    const rlOk = await checkRateLimit(
+      service, userId, RateLimitPresets.PAYMENT.limitType,
+      RateLimitPresets.PAYMENT.maxAttempts, RateLimitPresets.PAYMENT.timeWindowMinutes, true,
+    );
+    if (!rlOk) return createRateLimitResponse(RateLimitPresets.PAYMENT.timeWindowMinutes * 60);
+
     let payload: Payload;
     try { payload = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
 
@@ -46,8 +57,6 @@ Deno.serve(async (req) => {
       return json({ error: "invalid_amount", message: "Amount must be between $1 and $10,000." }, 400);
     }
     const base = round2(amount);
-
-    const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
     // Fee estimate so the row stores what was shown to the user.
     // Buyer pays the processor fee — Sow2Grow golden rule.

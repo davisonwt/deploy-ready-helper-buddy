@@ -13,6 +13,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { priceBreakdown } from "../_shared/platformFee.ts";
+import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -71,6 +72,15 @@ Deno.serve(async (req) => {
       return json({ error: "unauthorized" }, 401);
     }
     const userId = userData.user.id;
+
+    // Wallet-hardening audit item 3: every money-touching function
+    // rate-limited per user, fail-closed.
+    const rlService = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+    const rlOk = await checkRateLimit(
+      rlService, userId, RateLimitPresets.PAYMENT.limitType,
+      RateLimitPresets.PAYMENT.maxAttempts, RateLimitPresets.PAYMENT.timeWindowMinutes, true,
+    );
+    if (!rlOk) return createRateLimitResponse(RateLimitPresets.PAYMENT.timeWindowMinutes * 60);
 
     let payload: RequestPayload;
     try {

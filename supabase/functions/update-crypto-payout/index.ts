@@ -27,6 +27,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { validatePayoutDetails } from "../_shared/cryptoAddress.ts";
 import { networkModeSummary } from "../_shared/cryptoNetworks.ts";
+import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -73,6 +74,17 @@ Deno.serve(async (req) => {
     }
 
     if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
+
+    // Wallet-hardening audit item 3: rate-limited per user, fail-closed.
+    // Especially important here specifically -- this endpoint now also
+    // gates a password check (below), so this is also the brute-force
+    // limit on that.
+    const rlService = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+    const rlOk = await checkRateLimit(
+      rlService, user.id, RateLimitPresets.PAYMENT.limitType,
+      RateLimitPresets.PAYMENT.maxAttempts, RateLimitPresets.PAYMENT.timeWindowMinutes, true,
+    );
+    if (!rlOk) return createRateLimitResponse(RateLimitPresets.PAYMENT.timeWindowMinutes * 60);
 
     const body = await req.json().catch(() => null);
     if (!body) return json({ error: "invalid JSON body" }, 400);
