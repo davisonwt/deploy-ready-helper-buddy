@@ -45,6 +45,8 @@ import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
 import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 import { LiveNowStrip } from '@/components/live/LiveNowStrip';
 import LiveStage from '@/components/live/LiveStage';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
@@ -97,6 +99,18 @@ interface FeedItem {
   wandering_role?: WanderingRole | null;
   created_at: string;
   href: string;
+  /**
+   * Only meaningful for kind === 'music' -- a music-typed feed card's `id`
+   * comes from one of two different tables depending on where it was
+   * planted (products.id for a sower's uploaded music seed, vs
+   * dj_music_tracks.id for a DJ track), and the two need different
+   * purchase paths: create-content-purchase-order's music_track resolver
+   * only ever looks up dj_music_tracks, so a product-sourced id 404s
+   * there (content_not_found) -- it must go through
+   * create-basket-bestowal-order instead, same as MusicTrackDetailPage's
+   * product branch.
+   */
+  contentSource?: 'product' | 'dj_track';
 }
 
 interface SeedMessage {
@@ -373,8 +387,18 @@ export default function TribalAliveFeedPage() {
           const isVideo = !isMusic && (typeLc === 'video' || /\.(mp4|webm|mov)(\?|$)/i.test(p.file_url || ''));
           const isBook  = typeLc === 'ebook' || typeLc === 'book';
           const kind: FeedKind = isMusic ? 'music' : isBook ? 'book' : isVideo ? 'video' : 'product';
+          // products.sower_id is a FK to sowers.id, NOT auth.users.id (same
+          // trap the profile-resolution block above this already had to
+          // work around) -- every downstream use of FeedItem.sower_id
+          // (messaging, following, the self-gift guard, and both bestow
+          // paths' recipientId) needs the real auth user id or it silently
+          // resolves nothing. profileMap is already keyed by the raw
+          // sowers.id too (see `profileMap[rid] = ...` above), so this
+          // reuses the same resolution rather than duplicating it.
+          const sowerUserId = profileMap[p.sower_id]?.user_id || p.sower_id;
           return {
             key: `product-${p.id}`, kind, id: p.id,
+            contentSource: isMusic ? 'product' : undefined,
             title: p.title || 'Untitled creation',
             description: p.description,
             image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null,
@@ -398,7 +422,7 @@ export default function TribalAliveFeedPage() {
             preview_url: isAudio ? (p.preview_url || null) : null,
             video_url: isVideo ? p.file_url : null,
             price: Number(p.price ?? 2),
-            sower_id: p.sower_id,
+            sower_id: sowerUserId,
             sower_name: sowerName(profileMap[p.sower_id]),
             sower_avatar: profileMap[p.sower_id]?.avatar_url || null,
             sower_handle: handleOf(profileMap[p.sower_id]),
@@ -414,6 +438,7 @@ export default function TribalAliveFeedPage() {
           const ownerId = dj.user_id || null;
           return {
             key: `dj-${t.id}`, kind: 'music', id: t.id,
+            contentSource: 'dj_track',
             title: t.track_title || 'Untitled track',
             description: t.artist_name || dj.dj_name || null,
             image: t.cover_image_url || null,
@@ -978,7 +1003,27 @@ export default function TribalAliveFeedPage() {
     const { item, kind } = confirmBestow;
     setBestowing(true);
     try {
-      if (kind === 'music') {
+      if (kind === 'music' && item.contentSource === 'product') {
+        // Product-sourced music seed -- create-content-purchase-order's
+        // music_track resolver only ever looks up dj_music_tracks, so
+        // item.id (a products.id here) would 404 there. Same single-item
+        // basket path MusicTrackDetailPage's product branch already uses.
+        const data = await invokePaymentFunction<{ solanaPayment?: SolanaPaymentResponse; approveUrl?: string }>(
+          'create-basket-bestowal-order',
+          {
+            items: [{ productId: item.id, qty: 1 }],
+            provider,
+            redirectBaseUrl: window.location.origin,
+          },
+        );
+        if (data.solanaPayment) {
+          await presentSolanaPayment(data.solanaPayment);
+        } else if (data.approveUrl) {
+          window.location.href = data.approveUrl;
+        } else {
+          throw new Error('Provider did not return a checkout URL');
+        }
+      } else if (kind === 'music') {
         await purchaseTrack(item.id, item.price, { provider });
       } else {
         await sendGift({
@@ -992,6 +1037,16 @@ export default function TribalAliveFeedPage() {
         });
       }
       setConfirmBestow(null);
+    } catch (err) {
+      // The product-sourced branch above (invokePaymentFunction) throws on
+      // failure, unlike purchaseTrack/sendGift which catch and toast
+      // internally -- surface it the same way so a failure here isn't silent.
+      console.error('confirmBestowWithProvider failed', err);
+      toast({
+        title: 'Bestowal failed',
+        description: err instanceof Error ? err.message : 'Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setBestowing(false);
     }
