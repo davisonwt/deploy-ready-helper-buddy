@@ -314,7 +314,16 @@ export class AuthProviderClass extends React.Component {
 
       if (error) return { success: false, error: error.message }
 
-      const updatedUser = { ...currentUser, ...data }
+      // `data` is the full profiles row, which has its OWN `id` (the row's
+      // primary key) distinct from `user_id` (the auth user's id) --
+      // spreading it after currentUser let profiles.id silently clobber
+      // the auth id in client state. Every later `.eq('user_id', user.id)`
+      // check then filtered on the wrong uuid and found nothing -- this is
+      // exactly what sent an already-set-up user back through
+      // RequireSecuritySetup after any profile save. Pin id/user_id back
+      // to the real auth id after the spread, same as fetchUserProfile
+      // already does.
+      const updatedUser = { ...currentUser, ...data, id: currentUser.id, user_id: currentUser.id }
       if (this._isMounted) this.setState({ user: updatedUser })
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('profileUpdated', { detail: { user: updatedUser, timestamp: Date.now() } }))
