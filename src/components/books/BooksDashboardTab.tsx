@@ -49,7 +49,16 @@ function StatCard({
 export default function BooksDashboardTab({ invoices, expenses, income }: Props) {
   const { fmt, currency, symbol } = useBooksCurrency();
   const stats = useMemo(() => {
-    const totalIncome = income.reduce((s, i) => s + i.amount, 0);
+    // Two separate income sources: books_income (auto-synced from real
+    // platform orders) and invoices (manually created/sent, tracked in
+    // their own table) -- a paid invoice is real income exactly like a
+    // synced order and must count here too. This card previously only
+    // summed books_income, silently excluding every paid invoice from
+    // both Income and Balance (net) even though the money-river chart's
+    // `inflows` below already correctly included them.
+    const syncedIncome = income.reduce((s, i) => s + i.amount, 0);
+    const paidInvoiceIncome = invoices.filter((i) => i.status === 'paid').reduce((s, i) => s + i.amount, 0);
+    const totalIncome = syncedIncome + paidInvoiceIncome;
     const outstanding = invoices.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.amount, 0);
     const spend = expenses.reduce((s, e) => s + e.amount, 0);
     return { income: totalIncome, outstanding, spend, net: totalIncome - spend };
