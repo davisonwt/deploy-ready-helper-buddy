@@ -12,8 +12,13 @@ export function isAlbum(product: {
   if (product.metadata?.is_album === true) return true;
 
   if (product.tags && Array.isArray(product.tags)) {
-    const tagStr = product.tags.join(' ').toLowerCase();
-    if (tagStr.includes('album') || tagStr.includes('lp') || tagStr.includes('ep')) {
+    // Exact-tag match, not substring: 'lp'/'ep' as *whole tags* mean an
+    // album/EP release. A substring check on the joined string false-
+    // positived on any tag merely containing those two letters anywhere
+    // ("Deep House", "Sleep", "Help", "Alps"), wrongly hiding non-album
+    // tracks from the music library.
+    const normalizedTags = product.tags.map((t) => t.trim().toLowerCase());
+    if (normalizedTags.includes('album') || normalizedTags.includes('lp') || normalizedTags.includes('ep')) {
       return true;
     }
   }

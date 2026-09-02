@@ -16,6 +16,7 @@ import { useContentPurchase } from '@/hooks/useContentPurchase';
 import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { buyerTotal } from '@/lib/pricing/platformFee';
+import { isAlbum } from '@/lib/products/isAlbum';
 import {
   Dialog,
   DialogContent,
@@ -77,16 +78,9 @@ export default function S2GCommunityMusicPage() {
             preview_url: item.preview_url || item.file_url,
             cover_image_url: item.cover_image_url,
             price: (() => {
-              // Check if it's an album
-              const isAlbum = item.tags?.some((tag: string) => 
-                tag.toLowerCase().includes('album') || 
-                tag.toLowerCase().includes('lp') || 
-                tag.toLowerCase().includes('ep')
-              ) || false;
-              
               const itemPrice = item.price || 0;
               // Singles: bestower pays the sower's price + Sow2Grow's 15% on top.
-              return isAlbum ? itemPrice : buyerTotal(itemPrice);
+              return isAlbum(item) ? itemPrice : buyerTotal(itemPrice);
             })(),
             is_giveaway: false,
             giveaway_limit: null,
@@ -132,15 +126,8 @@ export default function S2GCommunityMusicPage() {
           const dj = track.radio_djs;
           const profile = dj?.user_id ? djProfileMap.get(dj.user_id) : null;
           
-          // Check if it's an album
-          const isAlbum = track.tags?.some((tag: string) =>
-            tag.toLowerCase().includes('album') ||
-            tag.toLowerCase().includes('lp') ||
-            tag.toLowerCase().includes('ep')
-          ) || false;
-
           // Singles: bestower pays the sower's price + Sow2Grow's 15% on top.
-          const trackPrice = isAlbum
+          const trackPrice = isAlbum(track)
             ? (track.price || 0)
             : buyerTotal(track.price || 0);
           
