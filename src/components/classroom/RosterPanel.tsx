@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { InviteAttendeesDialog } from './InviteAttendeesDialog';
 import type { LiveParticipant } from '@/hooks/useClassroomLive';
 import type { ClassroomInvite } from '@/hooks/useClassroomInvites';
+import SignedImg from '@/components/media/SignedImg';
 
 interface Props {
   isHost: boolean;
@@ -79,7 +80,7 @@ export function RosterPanel({ isHost, hostUserId, inviterId, participants, invit
       <li className="flex items-center gap-2 rounded-lg bg-[#14101F]/70 border border-[#8B5CF6]/20 px-2.5 py-1.5">
         <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${dotForPresence(part?.presence_status, inRoom)}`} title={inRoom ? part?.presence_status ?? 'present' : 'not in room'} />
         <div className="h-7 w-7 rounded-full bg-[#8B5CF6]/30 flex items-center justify-center text-[11px] font-bold overflow-hidden shrink-0">
-          {invite.avatar_url ? <img src={invite.avatar_url} alt="" className="h-full w-full object-cover" /> : (invite.display_name?.[0] ?? '?')}
+          {invite.avatar_url ? <SignedImg src={invite.avatar_url} alt="" className="h-full w-full object-cover" /> : (invite.display_name?.[0] ?? '?')}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm text-[#E8D9B5] truncate">{invite.display_name ?? 'Sower'}</p>

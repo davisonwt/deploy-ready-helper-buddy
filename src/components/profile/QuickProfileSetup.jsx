@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
+import SignedImg from '@/components/media/SignedImg';
 
 export function QuickProfileSetup({ onComplete, onClose }) {
   const [step, setStep] = useState(1); // 1: Basic, 2: Photo, 3: Complete
@@ -233,9 +234,9 @@ export function QuickProfileSetup({ onComplete, onClose }) {
                 <div className="relative mx-auto w-32 h-32 mb-4">
                   <div className="w-full h-full rounded-full overflow-hidden shadow-lg border-4 border-white">
                     {formData.avatar_url ? (
-                      <img 
-                        src={formData.avatar_url} 
-                        alt="Profile" 
+                      <SignedImg
+                        src={formData.avatar_url}
+                        alt="Profile"
                         className="w-full h-full object-cover"
                       />
                     ) : (

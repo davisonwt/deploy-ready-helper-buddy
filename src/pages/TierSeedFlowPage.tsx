@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { fetchProductsByCompanyIds, fetchSoloSowerProducts } from '@/api/products';
 import SeedFlow from '@/components/SeedFlow';
 import { type Tier, TIER_BY_ID } from '@/lib/tiers';
+import SignedImg from '@/components/media/SignedImg';
 
 interface Props {
   tier: Tier;
@@ -368,7 +369,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
                   <header className="flex items-center gap-3 p-4 border-b border-border">
                     <div className="h-12 w-12 rounded-full bg-background border border-border overflow-hidden flex items-center justify-center shrink-0">
                       {p.avatar_url ? (
-                        <img src={p.avatar_url} alt={p.name} className="h-full w-full object-cover" />
+                        <SignedImg src={p.avatar_url} alt={p.name} className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-lg">{cfg.emoji}</span>
                       )}

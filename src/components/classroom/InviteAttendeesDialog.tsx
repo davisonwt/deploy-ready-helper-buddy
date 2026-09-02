@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import SignedImg from '@/components/media/SignedImg';
 
 interface Props {
   trigger: React.ReactNode;
@@ -96,7 +97,7 @@ export function InviteAttendeesDialog({ trigger, onSend, excludeUserIds = [] }: 
                         className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition ${sel ? 'bg-[#8B5CF6]/20' : 'hover:bg-[#8B5CF6]/10'}`}
                       >
                         <div className="h-7 w-7 rounded-full bg-[#8B5CF6]/30 flex items-center justify-center text-[11px] font-bold overflow-hidden shrink-0">
-                          {p.avatar_url ? <img src={p.avatar_url} alt="" className="h-full w-full object-cover" /> : p.display_name[0]}
+                          {p.avatar_url ? <SignedImg src={p.avatar_url} alt="" className="h-full w-full object-cover" /> : p.display_name[0]}
                         </div>
                         <span className="flex-1 text-left text-[#E8D9B5] truncate">{p.display_name}</span>
                         {sel && <Check className="h-4 w-4 text-[#8B5CF6]" />}

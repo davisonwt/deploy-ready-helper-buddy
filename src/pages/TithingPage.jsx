@@ -12,6 +12,7 @@ import { motion } from 'framer-motion'
 import {
   Heart, DollarSign, User, Gift, Star, Sparkles, HandHeart,
 } from "lucide-react"
+import SignedImg from '@/components/media/SignedImg'
 
 const SUGGESTED = [50, 100, 200, 500, 1000]
 const FREQS = ['weekly', 'monthly', 'yearly']
@@ -74,7 +75,7 @@ export default function TithingPage() {
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-400/40 shadow-[0_0_24px_rgba(245,158,11,0.25)] shrink-0">
             {user?.avatar_url ? (
-              <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              <SignedImg src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-amber-500/30 to-cyan-500/20 flex items-center justify-center">
                 <User className="h-7 w-7 text-amber-200" />

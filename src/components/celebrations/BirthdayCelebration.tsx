@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Sparkles, Cake, X, ChevronRight } from 'lucide-react';
 import { useBirthdaysToday, dayCreatedLabel, type BirthdayMember } from '@/hooks/useBirthdaysToday';
 import { cn } from '@/lib/utils';
+import SignedImg from '@/components/media/SignedImg';
 
 interface Props {
   onCountChange?: (n: number) => void;
@@ -78,7 +79,7 @@ export function BirthdayCelebration({ onCountChange, className }: Props) {
           />
           <div className="relative h-12 w-12 rounded-full overflow-hidden ring-2 ring-amber-300/80 bg-slate-900">
             {m.avatar_url ? (
-              <img src={m.avatar_url} alt={m.display_name} className="h-full w-full object-cover" />
+              <SignedImg src={m.avatar_url} alt={m.display_name} className="h-full w-full object-cover" />
             ) : (
               <div className="h-full w-full flex items-center justify-center text-amber-200 font-bold text-lg">
                 {initial}

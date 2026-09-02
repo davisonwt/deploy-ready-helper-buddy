@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useReferralCode } from '@/hooks/useReferralCode';
+import SignedImg from '@/components/media/SignedImg';
 
 export interface ShareSeedDialogProps {
   open: boolean;
@@ -239,7 +240,7 @@ export default function ShareSeedDialog({
                 <label className="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-muted/50">
                   <Checkbox checked={!!selected[m.user_id]} onCheckedChange={() => toggle(m.user_id)} />
                   {m.avatar_url ? (
-                    <img src={m.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
+                    <SignedImg src={m.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
                   ) : (
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold">
                       {(m.display_name || '?').charAt(0).toUpperCase()}

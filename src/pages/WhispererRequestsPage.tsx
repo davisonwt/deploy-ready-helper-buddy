@@ -19,6 +19,7 @@ import {
   WHISPER_FALLBACK_NOTE,
   isWhisperPayable,
 } from '@/lib/whisperer/policy';
+import SignedImg from '@/components/media/SignedImg';
 
 type Row = {
   id: string;
@@ -112,7 +113,7 @@ export default function WhispererRequestsPage() {
     <Card className="p-4 flex items-center gap-3">
       <div className="h-10 w-10 rounded-full bg-muted overflow-hidden shrink-0">
         {r.whisperers?.avatar_url ? (
-          <img src={r.whisperers.avatar_url} alt={r.whisperers.display_name} className="h-full w-full object-cover" loading="lazy" />
+          <SignedImg src={r.whisperers.avatar_url} alt={r.whisperers.display_name} className="h-full w-full object-cover" loading="lazy" />
         ) : (
           <div className="h-full w-full flex items-center justify-center"><Megaphone className="h-4 w-4 text-muted-foreground" /></div>
         )}

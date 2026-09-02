@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Radio, GraduationCap, Zap, Dumbbell, Video, Users, Sparkles, Loader2 } from 'lucide-react'
 import { MidnightShell, MidnightCard } from '@/components/shell/MidnightShell'
 import { useLiveSessions, LiveKind, liveKindLabel } from '@/hooks/useLiveSessions'
+import SignedImg from '@/components/media/SignedImg'
 
 const ALL_KINDS: LiveKind[] = ['radio', 'classroom', 'skilldrop', 'training', 'one_on_one', 'community_chat']
 
@@ -155,7 +156,7 @@ function SessionCard({ s, onJoin }: { s: ReturnType<typeof useLiveSessions>['ses
       <div className="flex items-start gap-3">
         <div className="h-11 w-11 rounded-full bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center overflow-hidden flex-shrink-0">
           {s.hostAvatar ? (
-            <img src={s.hostAvatar} alt={s.hostName} className="h-full w-full object-cover" />
+            <SignedImg src={s.hostAvatar} alt={s.hostName} className="h-full w-full object-cover" />
           ) : (
             <span className="text-cyan-200 font-bold">{s.hostName.charAt(0)}</span>
           )}

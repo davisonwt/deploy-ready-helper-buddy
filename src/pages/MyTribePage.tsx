@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, Copy, Check, Users, Sparkles, Linkedin, Mail, Facebook,
 } from "lucide-react";
+import SignedImg from "@/components/media/SignedImg";
 
 /**
  * My Tribe page — shows the tribe member's permanent invitation code.
@@ -248,7 +249,7 @@ export default function MyTribePage() {
                   <div key={r.id} className="flex items-center justify-between py-3 text-sm">
                     <div className="flex items-center gap-3 min-w-0">
                       {p?.avatar_url ? (
-                        <img src={p.avatar_url} alt={name} className="h-8 w-8 rounded-full object-cover border border-white/10" />
+                        <SignedImg src={p.avatar_url} alt={name} className="h-8 w-8 rounded-full object-cover border border-white/10" />
                       ) : (
                         <div className="h-8 w-8 rounded-full bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 text-xs font-bold flex items-center justify-center">
                           {initials || "?"}

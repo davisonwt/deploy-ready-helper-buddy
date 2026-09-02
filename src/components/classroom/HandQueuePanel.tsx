@@ -1,6 +1,7 @@
 import { Hand, Mic, MicOff, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { LiveParticipant } from '@/hooks/useClassroomLive';
+import SignedImg from '@/components/media/SignedImg';
 
 interface Props {
   isHost: boolean;
@@ -37,7 +38,7 @@ export function HandQueuePanel({ isHost, participants, hostUserId, onSetCanSpeak
             {raised.map((p) => (
               <li key={p.id} className="flex items-center gap-2 rounded-lg bg-[#F0B23F]/10 border border-[#F0B23F]/30 px-2.5 py-1.5">
                 <div className="h-7 w-7 rounded-full bg-[#8B5CF6]/30 flex items-center justify-center text-[11px] font-bold text-[#E8D9B5] overflow-hidden">
-                  {p.avatar_url ? <img src={p.avatar_url} alt="" className="h-full w-full object-cover" /> : (p.display_name?.[0] ?? '?')}
+                  {p.avatar_url ? <SignedImg src={p.avatar_url} alt="" className="h-full w-full object-cover" /> : (p.display_name?.[0] ?? '?')}
                 </div>
                 <span className="flex-1 text-sm text-[#E8D9B5] truncate">{p.display_name ?? 'Sower'}</span>
                 <Button size="sm" onClick={() => onSetCanSpeak(p.user_id, true)} className="h-7 text-xs bg-[#8B5CF6] hover:bg-[#7C4FE0]">
@@ -60,7 +61,7 @@ export function HandQueuePanel({ isHost, participants, hostUserId, onSetCanSpeak
             {speakers.map((p) => (
               <li key={p.id} className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-400/30 px-2.5 py-1.5">
                 <div className="h-7 w-7 rounded-full bg-[#8B5CF6]/30 flex items-center justify-center text-[11px] font-bold text-[#E8D9B5] overflow-hidden">
-                  {p.avatar_url ? <img src={p.avatar_url} alt="" className="h-full w-full object-cover" /> : (p.display_name?.[0] ?? '?')}
+                  {p.avatar_url ? <SignedImg src={p.avatar_url} alt="" className="h-full w-full object-cover" /> : (p.display_name?.[0] ?? '?')}
                 </div>
                 <span className="flex-1 text-sm text-[#E8D9B5] truncate">{p.display_name ?? 'Sower'}</span>
                 <Button size="sm" variant="outline" onClick={() => onSetCanSpeak(p.user_id, false)} className="h-7 text-xs border-rose-400/50 text-rose-200 hover:bg-rose-500/10">
