@@ -134,6 +134,27 @@ function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
+async function alertGosatsPayoutAnomaly(
+  admin: ReturnType<typeof import("https://esm.sh/@supabase/supabase-js@2.45.0").createClient>,
+  recipientUserId: string,
+  amount: number,
+  historicalAverage: number,
+  historyCount: number,
+): Promise<void> {
+  const { data: gosats } = await admin.from("user_roles").select("user_id").in("role", ["admin", "gosat"]);
+  const rows = (gosats ?? []).map((g: any) => ({
+    user_id: g.user_id,
+    type: "payout_anomaly",
+    title: "Unusually large payout",
+    message:
+      `Recipient ${recipientUserId} is due ${amount.toFixed(2)} USD this run — over 5x their average of the ` +
+      `last ${historyCount} paid payouts (${historicalAverage.toFixed(2)} USD). Payment is proceeding; review in the moderation queue.`,
+    action_url: "/admin/moderation",
+    is_read: false,
+  }));
+  if (rows.length > 0) await admin.from("user_notifications").insert(rows);
+}
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -320,6 +341,40 @@ Deno.serve(async (req) => {
     }
 
     const outcomes: RecipientOutcome[] = [...paypalOutcomes, ...solanaOutcomes];
+
+    // Wallet-hardening audit item: anomaly alerting. Flags, never blocks --
+    // a real spike in a sower's own sales is expected and must never be
+    // held up by this. Needs at least 3 prior paid payouts before it will
+    // flag anything, so a recipient's first (or second/third) payout ever
+    // is never flagged just for having nothing to compare against.
+    if (!dryRun) {
+      const eligibleIds = [...new Set(outcomes.filter((o) => o.eligible).map((o) => o.recipient_user_id))];
+      if (eligibleIds.length > 0) {
+        const { data: history } = await admin
+          .from("payouts")
+          .select("recipient_user_id, amount")
+          .in("recipient_user_id", eligibleIds)
+          .eq("status", "paid")
+          .order("created_at", { ascending: false })
+          .limit(500);
+        const byRecipient = new Map<string, number[]>();
+        for (const h of (history ?? []) as any[]) {
+          const arr = byRecipient.get(h.recipient_user_id) ?? [];
+          if (arr.length < 10) arr.push(Number(h.amount));
+          byRecipient.set(h.recipient_user_id, arr);
+        }
+        const ANOMALY_MULTIPLIER = 5;
+        for (const o of outcomes) {
+          if (!o.eligible) continue;
+          const past = byRecipient.get(o.recipient_user_id);
+          if (!past || past.length < 3) continue;
+          const avg = past.reduce((s, n) => s + n, 0) / past.length;
+          if (avg > 0 && o.amount_usd > avg * ANOMALY_MULTIPLIER) {
+            await alertGosatsPayoutAnomaly(admin, o.recipient_user_id, o.amount_usd, avg, past.length);
+          }
+        }
+      }
+    }
 
     if (dryRun) {
       // Config check only, never a send: decode the hot wallet secret,
