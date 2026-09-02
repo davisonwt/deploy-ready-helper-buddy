@@ -59,11 +59,22 @@ function Invoke-CurlJson {
         "-w", "%{http_code}"
     ))
     if ($Body) {
-        $Body | ConvertTo-Json -Compress | Set-Content -Path $BodyFile -Encoding utf8NoBOM
+        # Set-Content -Encoding utf8NoBOM doesn't exist in Windows
+        # PowerShell 5.1 (that value was added in PS 6+) -- a BOM'd file
+        # would put stray bytes at the start of the JSON curl.exe sends as
+        # the request body. [System.Text.UTF8Encoding]::new($false) is the
+        # 5.1-compatible way to write BOM-less UTF-8.
+        $jsonBody = $Body | ConvertTo-Json -Compress
+        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+        [System.IO.File]::WriteAllText($BodyFile, $jsonBody, $utf8NoBom)
         $curlArgs.AddRange([string[]]@("-d", "@$BodyFile"))
     }
     $curlArgs.Add($Url)
-    $statusCode = & curl.exe @curlArgs
+    # Splat a plain array, not the List[string] itself -- splatting a
+    # generic List<T> directly isn't a guaranteed-identical code path to
+    # splatting a native [object[]] array in Windows PowerShell 5.1;
+    # .ToArray() removes the ambiguity rather than relying on it.
+    $statusCode = & curl.exe @($curlArgs.ToArray())
     $responseText = Get-Content "$BodyFile.response" -Raw -ErrorAction SilentlyContinue
     $parsed = $null
     try { $parsed = $responseText | ConvertFrom-Json } catch { }
