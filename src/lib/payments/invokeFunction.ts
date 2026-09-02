@@ -46,7 +46,11 @@ export async function invokePaymentFunction<T = any>(
   try {
     response = await fetch(url, init);
   } catch {
-    // One retry: cold starts and flaky mobile connections drop the first call.
+    // One retry: cold starts and flaky mobile connections drop the first
+    // call. A short delay first, rather than retrying instantly — an
+    // immediate retry can land inside the same still-booting cold-start
+    // window that just failed the first attempt.
+    await new Promise((resolve) => setTimeout(resolve, 400));
     try {
       response = await fetch(url, init);
     } catch {
