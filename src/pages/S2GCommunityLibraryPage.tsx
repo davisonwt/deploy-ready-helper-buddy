@@ -15,6 +15,7 @@ import { launchConfetti } from '@/utils/confetti';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
 import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 import ProviderPicker from '@/components/payments/ProviderPicker';
+import ReportButton from '@/components/moderation/ReportButton';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 import {
   Dialog,
@@ -275,6 +276,15 @@ export default function S2GCommunityLibraryPage() {
                             {getTypeLabel(item.type)}
                           </Badge>
                         </div>
+                        {item.user_id !== user?.id && (
+                          <ReportButton
+                            targetType="library_item"
+                            targetId={item.id}
+                            size="icon"
+                            variant="ghost"
+                            className="text-white/70 hover:text-white hover:bg-white/20"
+                          />
+                        )}
                       </div>
                       <CardTitle className='text-white line-clamp-2 mb-2'>{item.title}</CardTitle>
                       {(item as any).profile && (

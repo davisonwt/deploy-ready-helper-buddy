@@ -41,6 +41,7 @@ export const ContentModerationDashboard = lazy(() => import('@/components/admin/
 export const GamificationDashboard = lazy(() => import('@/components/gamification/GamificationDashboard'));
 export const AdvancedSearchPage = lazy(() => import('@/pages/AdvancedSearchPage'));
 export const MyTribePage = lazy(() => import('@/pages/MyTribePage'));
+export const MemberProfilePage = lazy(() => import('@/pages/MemberProfilePage'));
 
 export const ChatApp = lazy(() => import('@/pages/ChatApp'));
 export const CommunityChatsPage = lazy(() => import('@/pages/CommunityChatsPage'));

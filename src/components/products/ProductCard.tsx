@@ -20,6 +20,7 @@ import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti
 import { isAlbum as isAlbumProduct } from '@/lib/products/isAlbum';
 import SignedImg from '@/components/media/SignedImg';
 import PreviewPlayer from '@/components/media/PreviewPlayer';
+import ReportButton from '@/components/moderation/ReportButton';
 
 interface ProductCardProps {
   product: any;
@@ -261,6 +262,18 @@ export default function ProductCard({ product, featured, showActions = false, hi
                 {product.type}
               </Badge>
             </div>
+
+            {!isOwner && (
+              <div className="absolute top-3 right-3">
+                <ReportButton
+                  targetType="product"
+                  targetId={product.id}
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full bg-background/60 backdrop-blur-sm text-foreground/70 hover:text-destructive hover:bg-background/80"
+                />
+              </div>
+            )}
           </div>
 
           {/* Content */}

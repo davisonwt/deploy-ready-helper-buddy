@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import ReportButton from '@/components/moderation/ReportButton';
 
 const PRIVATE_COVER_BUCKETS = new Set(['premium-room', 'music-tracks', 'dj-music']);
 
@@ -149,6 +151,7 @@ const MODE_META: Record<Mode, {
 
 export default function SowerLibraryPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const params = useParams<{ mode?: string }>();
   const [searchParams] = useSearchParams();
   const rawMode = (params.mode || 'products').toLowerCase();
@@ -366,7 +369,12 @@ export default function SowerLibraryPage() {
                       </div>
                       <div className="flex items-center justify-between pt-1">
                         <span className="font-semibold text-foreground">${Number(r.price || 0).toFixed(2)}</span>
-                        <Button size="sm" onClick={() => handleBestow(r)}>Bestow</Button>
+                        <div className="flex items-center gap-1">
+                          {user?.id !== r.sower_user_id && (
+                            <ReportButton targetType="product" targetId={r.id} size="icon" variant="ghost" />
+                          )}
+                          <Button size="sm" onClick={() => handleBestow(r)}>Bestow</Button>
+                        </div>
                       </div>
                     </div>
                   );

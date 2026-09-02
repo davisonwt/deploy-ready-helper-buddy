@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { processOrchardsUrls } from "../utils/urlUtils"
 import { GradientPlaceholder } from "@/components/ui/GradientPlaceholder"
 import SignedImg from "@/components/media/SignedImg"
+import ReportButton from "@/components/moderation/ReportButton"
 import { motion, AnimatePresence } from "framer-motion"
 import LivingButton from "../components/LivingButton"
 import PreviewPlayer from "@/components/media/PreviewPlayer"
@@ -207,6 +208,17 @@ function OrchardCard({ orchard, index }) {
             {WANDERING_ROLES.find(r => r.value === orchard.category)?.emoji} {orchard.category}
           </span>
         </div>
+        {!orchard.isOwner && (
+          <div style={{ position: 'absolute', bottom: 12, right: 12 }}>
+            <ReportButton
+              targetType="orchard"
+              targetId={orchard.id}
+              variant="ghost"
+              size="icon"
+              className="rounded-full bg-black/60 text-white/80 hover:text-white hover:bg-black/80 backdrop-blur-sm"
+            />
+          </div>
+        )}
       </div>
 
       <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>

@@ -30,6 +30,7 @@ import {
   TierSeedFlowPage,
   StatsPage,
   ProfilePage,
+  MemberProfilePage,
   BrowseOrchardsPage,
   TribalAliveFeedPage,
   LiveRoomDetailPage,
@@ -507,6 +508,9 @@ const AppRoutes = () => (
     } />
     <Route path="/profile" element={
       <ProtectedRoute><ProfilePage /></ProtectedRoute>
+    } />
+    <Route path="/profile/:userId" element={
+      <ProtectedRoute><MemberProfilePage /></ProtectedRoute>
     } />
     <Route path="/wallet-settings" element={
       <ProtectedRoute><Layout><WalletSettingsPage /></Layout></ProtectedRoute>

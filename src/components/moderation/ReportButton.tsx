@@ -15,8 +15,12 @@ import { useAuth } from '@/hooks/useAuth';
  * targetType/targetId are freeform (content_reports has no FK -- targets
  * span many unrelated tables). Keep targetType values stable strings other
  * code can match on: 'profile' | 'wandering_hearts_profile' |
- * 'wandering_hearts_message' | 'chat_message' | 'product' | 'seed' |
- * 'music_track' | 'book' | 'community_video'.
+ * 'wandering_hearts_message' | 'wandering_hearts_room' | 'chat_message' |
+ * 'product' | 'seed' | 'orchard' | 'music_track' | 'book' |
+ * 'library_item' | 'community_video'. Every value used here must be handled by
+ * TrustSafetyQueue's suspendTargetUploader (src/components/admin/
+ * TrustSafetyQueue.tsx) -- that's the only place a target_type resolves to
+ * an actual uploader to suspend.
  *
  * The 'minor_sexual_content' reason value is load-bearing: it's the exact
  * string content_hidden_pending_minor_report() checks for (see

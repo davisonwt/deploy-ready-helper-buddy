@@ -27,6 +27,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useSignedImage } from '@/lib/storage/signedImage';
 import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
+import ReportButton from '@/components/moderation/ReportButton';
 import { fetchActiveProductsForFeed } from '@/api/products';
 import { useAuth } from '@/hooks/useAuth';
 import { useReferralCode } from '@/hooks/useReferralCode';
@@ -54,6 +55,27 @@ type FeedTab = 'following' | 'foryou' | 'local';
 type FeedKind =
   | 'seed' | 'product' | 'music' | 'video' | 'story' | 'book' | 'studies'
   | 'radio_live' | 'radio_recorded' | 'classroom' | 'skilldrop' | 'premium_room' | 'orchard';
+
+/**
+ * ReportButton target for a feed item, or null for kinds this pass
+ * doesn't cover (radio_live/radio_recorded/story/studies/classroom/
+ * skilldrop/premium_room -- live/session content, not a discrete
+ * reportable listing). 'music' and 'book' items can originate from
+ * either products or a dedicated table (dj_music_tracks/sower_books) --
+ * TrustSafetyQueue's uploader lookup tries both, same as it already does
+ * for 'music_track'.
+ */
+function reportTargetForKind(kind: FeedKind, id: string): { type: string; id: string } | null {
+  switch (kind) {
+    case 'seed': return { type: 'seed', id };
+    case 'orchard': return { type: 'orchard', id };
+    case 'product': return { type: 'product', id };
+    case 'music': return { type: 'music_track', id };
+    case 'book': return { type: 'book', id };
+    case 'video': return { type: 'community_video', id };
+    default: return null;
+  }
+}
 
 interface FeedItem {
   key: string;
@@ -1388,6 +1410,7 @@ function FeedCard({
   onShare: () => void;
   onFollow: () => void;
 }) {
+  const { user } = useAuth();
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -1504,6 +1527,7 @@ function FeedCard({
   // Only pure live broadcasts (radio_live) keep a non-bestow CTA.
   const showBestow = item.kind !== 'radio_live';
   const previewable = !!(item.audio_url || item.video_url);
+  const reportTarget = item.sower_id && item.sower_id !== user?.id ? reportTargetForKind(item.kind, item.id) : null;
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950">
@@ -1589,6 +1613,18 @@ function FeedCard({
         <RailButton icon={<Heart className="h-4 w-4" />} label="Heart" onClick={onGift} />
         <RailButton icon={<Radio className="h-4 w-4" />} label="Go Live" onClick={onGoLive} accent />
         <RailButton icon={<Share2 className="h-4 w-4" />} label="Share" onClick={onShare} />
+        {reportTarget && (
+          <div className="flex flex-col items-center gap-0.5 text-white/95">
+            <ReportButton
+              targetType={reportTarget.type}
+              targetId={reportTarget.id}
+              size="icon"
+              variant="ghost"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 hover:bg-black/65 hover:text-white text-white/95 backdrop-blur transition active:scale-90 sm:h-9 sm:w-9"
+            />
+            <span className="text-[8px] font-semibold drop-shadow leading-none sm:text-[9px]">Report</span>
+          </div>
+        )}
       </div>
 
       {/* Left content stack — compact identity only, no oversized seed title overlay */}

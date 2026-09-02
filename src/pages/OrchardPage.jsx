@@ -22,6 +22,7 @@ import { VideoPlayer } from '@/components/ui/VideoPlayer';
 import OrchardVideoManager from '@/components/orchard/OrchardVideoManager';
 import OrchardPaymentWidget from '@/components/orchard/OrchardPaymentWidget';
 import SignedImg from '@/components/media/SignedImg';
+import ReportButton from '@/components/moderation/ReportButton';
 
 const OrchardPage = () => {
   const { orchardId } = useParams();
@@ -209,10 +210,15 @@ const OrchardPage = () => {
               )}
               
               <CardHeader>
-                <CardTitle className="text-3xl font-bold text-orange-700 mb-4">
-                  {orchard.title}
-                </CardTitle>
-                
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <CardTitle className="text-3xl font-bold text-orange-700">
+                    {orchard.title}
+                  </CardTitle>
+                  {user?.id !== orchard.user_id && (
+                    <ReportButton targetType="orchard" targetId={orchard.id} variant="outline" size="icon" />
+                  )}
+                </div>
+
                 {/* Meta Information */}
                 <div className="flex flex-wrap items-center gap-4 text-sm text-orange-600 mb-4">
                   {orchard.location && (

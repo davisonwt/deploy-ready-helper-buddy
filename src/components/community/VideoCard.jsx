@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { formatDistanceToNow } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
 import VideoCommentsModal from './VideoCommentsModal.jsx'
+import ReportButton from '@/components/moderation/ReportButton'
 
 export default function VideoCard({ video, onVideoClick, showDeleteOption = false, onDelete }) {
   const [isPlaying, setIsPlaying] = useState(false)
@@ -259,6 +260,16 @@ export default function VideoCard({ video, onVideoClick, showDeleteOption = fals
               >
                 <MessageCircle className="h-4 w-4" />
               </Button>
+
+              {!isOwner && (
+                <ReportButton
+                  targetType="community_video"
+                  targetId={video.id}
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 px-2"
+                />
+              )}
 
               {/* Delete menu for video owner or if showDeleteOption is true */}
               {(isOwner || showDeleteOption) && (

@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { VideoPlayer } from '@/components/ui/VideoPlayer'
 import VideoGifting from '@/components/community/VideoGifting'
 import SignedImg from '@/components/media/SignedImg'
+import ReportButton from '@/components/moderation/ReportButton'
 import VideoCommentsSection from '@/components/community/VideoCommentsSection'
 import VideoSocialShare from '@/components/community/VideoSocialShare'
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel'
@@ -435,6 +436,16 @@ export default function MarketingVideosGallery() {
                                 <ExternalLink className='h-4 w-4 mr-1' />
                                 {video.orchard_id ? 'Visit Orchard' : 'Find Orchard'}
                               </Button>
+
+                              {user?.id !== video.uploader_id && (
+                                <ReportButton
+                                  targetType="community_video"
+                                  targetId={video.id}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-white hover:text-white hover:bg-white/20"
+                                />
+                              )}
                             </div>
 
                             {/* Free-Will Gift Button - Prominent */}

@@ -197,6 +197,23 @@ async function suspendTargetUploader(targetType: string, targetId: string) {
   } else if (targetType === 'chat_message') {
     const { data } = await supabase.from('chat_messages').select('sender_id').eq('id', targetId).maybeSingle();
     uploaderId = (data as any)?.sender_id ?? null;
+  } else if (targetType === 'seed') {
+    // The seeds table (Free-Will Gifting) -- gifter_id is the auth id directly.
+    const { data } = await supabase.from('seeds').select('gifter_id').eq('id', targetId).maybeSingle();
+    uploaderId = (data as any)?.gifter_id ?? null;
+  } else if (targetType === 'orchard') {
+    const { data } = await supabase.from('orchards').select('user_id').eq('id', targetId).maybeSingle();
+    uploaderId = (data as any)?.user_id ?? null;
+  } else if (targetType === 'community_video') {
+    const { data } = await supabase.from('community_videos').select('uploader_id').eq('id', targetId).maybeSingle();
+    uploaderId = (data as any)?.uploader_id ?? null;
+  } else if (targetType === 'library_item') {
+    // s2g_library_items -- a third, separate "book/ebook/course" table
+    // from products and sower_books, with its own direct user_id column.
+    const { data } = await supabase.from('s2g_library_items').select('user_id').eq('id', targetId).maybeSingle();
+    uploaderId = (data as any)?.user_id ?? null;
+  } else if (targetType === 'product') {
+    uploaderId = await resolveProductUploader(targetId);
   } else if (targetType === 'music_track') {
     // MusicTrackDetailPage's track.id can be either a products row or a
     // dj_music_tracks row (see its own normalization logic) -- and
@@ -204,12 +221,7 @@ async function suspendTargetUploader(targetType: string, targetId: string) {
     // the seller's auth id, so it must be resolved through sowers.user_id
     // rather than used directly (same bug class as product_bestowals
     // .sower_id, already fixed elsewhere this session -- see git log).
-    const { data: product } = await supabase
-      .from('products')
-      .select('sower_id, sowers:sower_id(user_id)')
-      .eq('id', targetId)
-      .maybeSingle();
-    uploaderId = (product as any)?.sowers?.user_id ?? null;
+    uploaderId = await resolveProductUploader(targetId);
     if (!uploaderId) {
       const { data: djTrack } = await supabase
         .from('dj_music_tracks')
@@ -218,8 +230,31 @@ async function suspendTargetUploader(targetType: string, targetId: string) {
         .maybeSingle();
       uploaderId = (djTrack as any)?.radio_djs?.user_id ?? null;
     }
+  } else if (targetType === 'book') {
+    // Same dual-source shape as music_track: TribalAliveFeedPage's 'book'
+    // kind can be a products row (type='book'/'ebook') or a sower_books
+    // row -- sower_books has its own user_id column directly, no
+    // sowers-table join needed there.
+    uploaderId = await resolveProductUploader(targetId);
+    if (!uploaderId) {
+      const { data: book } = await supabase.from('sower_books').select('user_id').eq('id', targetId).maybeSingle();
+      uploaderId = (book as any)?.user_id ?? null;
+    }
   }
   if (uploaderId) {
     await supabase.from('profiles').update({ suspended: true } as any).eq('user_id', uploaderId);
   }
+}
+
+// products.sower_id is a FK to sowers.id (that table's own PK), NOT the
+// seller's auth id -- must be resolved through sowers.user_id rather than
+// used directly (same bug class as product_bestowals.sower_id, already
+// fixed elsewhere this session -- see git log).
+async function resolveProductUploader(productId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('products')
+    .select('sower_id, sowers:sower_id(user_id)')
+    .eq('id', productId)
+    .maybeSingle();
+  return (data as any)?.sowers?.user_id ?? null;
 }
