@@ -6,10 +6,10 @@
  *   • LiveStage now-playing Bestow button (radio guest)
  *   • Tribe / grove feed Bestow button on every seed
  *
- * Provider selection (feature A): buyer picks NOWPayments (USDC-SOL) or PayPal
+ * Provider selection (feature A): buyer picks direct Solana USDC or PayPal
  * before confirming, with fee estimate shown per choice. The submit branches:
- *   • nowpayments → create-nowpayments-invoice (opens hosted invoice in new tab)
- *   • paypal      → create-paypal-order        (full-page redirect to approval)
+ *   • solana → create-solana-bestowal-order (QR/deep-link shown inline, no redirect)
+ *   • paypal → create-paypal-order          (full-page redirect to approval)
  * In both cases the bestowal row is created server-side with the buyer-side
  * processor fee broken out, and post-payment chat notes are pre-staged.
  */
@@ -20,10 +20,11 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
-import { useNowPayments } from '@/hooks/useNowPayments';
 import { usePaypal } from '@/hooks/usePaypal';
+import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { priceBreakdown, round2 } from '@/lib/pricing/platformFee';
 
 export interface QuickBestowModalProps {
@@ -45,8 +46,8 @@ export interface QuickBestowModalProps {
    * Basket checkout: locks the amount field to defaultAmount (no free typing,
    * no quick-amount buttons) and displays defaultAmount directly rather than
    * priceBreakdown(amount) — orchard pocket_price is already the full charge
-   * (see create-nowpayments-invoice/create-paypal-order, no separate gross-up
-   * applied), so grossing it up again here would show a total buyers aren't
+   * (see create-solana-bestowal-order/create-paypal-order, no separate
+   * gross-up applied), so grossing it up again here would show a total buyers aren't
    * actually charged.
    */
   lockAmount?: boolean;
@@ -68,18 +69,17 @@ export default function QuickBestowModal({
   onSuccess,
 }: QuickBestowModalProps) {
   const { user } = useAuth();
-  const { createInvoice } = useNowPayments();
   const { createOrder, redirectToApprove } = usePaypal();
   const [amount, setAmount] = useState<number>(defaultAmount);
   const [note, setNote] = useState('');
-  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     if (open) {
       setAmount(defaultAmount);
       setNote('');
-      setProvider('nowpayments');
+      setProvider('solana');
     }
   }, [open, defaultAmount]);
 
@@ -90,18 +90,17 @@ export default function QuickBestowModal({
 
     setProcessing(true);
     try {
-      if (effectiveProvider === 'nowpayments') {
-        const invoice = await createInvoice({
-          orchardId,
-          pocketsCount,
-          payCurrency: DEFAULT_CRYPTO_PAY_CURRENCY,
-          message: note || undefined,
-          growerId: hostUserId || undefined,
-        });
-        if (invoice.invoiceUrl) {
-          window.open(invoice.invoiceUrl, '_blank');
-          toast.message('Invoice opened.', { description: CRYPTO_ROUNDING_NOTICE });
+      if (effectiveProvider === 'solana') {
+        const data = await invokePaymentFunction<{ solanaPayment?: SolanaPaymentResponse }>(
+          'create-solana-bestowal-order',
+          { orchardId, pocketsCount, message: note || undefined },
+        );
+        if (data.solanaPayment) {
           onSuccess?.();
+          const resolution = await presentSolanaPayment(data.solanaPayment);
+          if (resolution === 'paid') {
+            toast.success('Bestowal complete!');
+          }
         }
       } else {
         const order = await createOrder({
@@ -130,7 +129,7 @@ export default function QuickBestowModal({
   };
 
   // The server grosses base up by S2G's 15% before charging (see
-  // create-nowpayments-invoice / create-paypal-order) — the processor fee
+  // create-solana-bestowal-order / create-paypal-order) — the processor fee
   // estimate and the amount shown here must be computed on that S2G-inclusive
   // total, not the raw base, or both numbers understate what's charged.
   const pricing = lockAmount

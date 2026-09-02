@@ -9,8 +9,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useCurrency } from '@/hooks/useCurrency';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 import { s2gFeeOn, round2 } from '@/lib/pricing/platformFee';
 import { WHISPER_FALLBACK_NOTE } from '@/lib/whisperer/policy';
 
@@ -23,7 +24,7 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
   const { user } = useAuth();
   const { formatAmount } = useCurrency();
   const [processing, setProcessing] = useState(false);
-  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const [provider, setProvider] = useState<PayoutProviderId>('solana');
 
   // Same breakdown shape as BestowalCheckout, computed from the selected
   // tracks' own prices — never a flat figure. An album build has no ref-code
@@ -51,8 +52,7 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
   }, [selectedTracks]);
 
-  const belowCryptoMin = albumPrice < MIN_CRYPTO_BESTOWAL_USD;
-  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+  const effectiveProvider: PayoutProviderId = provider;
   const feeQuote = quoteFee(effectiveProvider, albumPrice);
 
   const handleCheckout = async () => {
@@ -78,12 +78,14 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
         return;
       }
 
-      const data = await invokePaymentFunction('create-basket-bestowal-order', {
-        items: productItems,
-        provider: effectiveProvider,
-        payCurrency: effectiveProvider === 'nowpayments' ? DEFAULT_CRYPTO_PAY_CURRENCY : undefined,
-        redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
-      });
+      const data = await invokePaymentFunction<{ error?: string; approveUrl?: string; solanaPayment?: SolanaPaymentResponse }>(
+        'create-basket-bestowal-order',
+        {
+          items: productItems,
+          provider: effectiveProvider,
+          redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
+        },
+      );
 
       if (!data || data.error) throw new Error(data?.error || 'album_order_failed');
 
@@ -93,9 +95,11 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
         return;
       }
 
-      if (!data.invoiceUrl) throw new Error('No crypto invoice URL returned');
-      window.open(data.invoiceUrl, '_blank');
-      toast.success('Album invoice opened.', { description: CRYPTO_ROUNDING_NOTICE });
+      if (!data.solanaPayment) throw new Error('No Solana payment details returned');
+      const resolution = await presentSolanaPayment(data.solanaPayment);
+      if (resolution === 'paid') {
+        toast.success('Album bestowal complete!');
+      }
     } catch (error) {
       console.error('Purchase error:', error);
       toast.error(error instanceof Error ? error.message : 'Purchase failed. Please try again.');
@@ -205,18 +209,12 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
           {selectedTracks.length === 10 && (
             <div className="space-y-2">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
-              {belowCryptoMin && (
-                <p className="text-xs text-muted-foreground">
-                  Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
-                </p>
-              )}
               <ProviderPicker
                 value={effectiveProvider}
                 onChange={setProvider}
                 amount={albumPrice}
                 mode="buyer"
                 disabled={processing}
-                providers={belowCryptoMin ? ['paypal'] : undefined}
               />
               <div className="text-xs text-muted-foreground text-right">
                 Estimated processor fee on {formatAmount(albumPrice)}:{' '}

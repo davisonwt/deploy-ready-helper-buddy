@@ -4,47 +4,44 @@
  * Used by:
  *  - Payout onboarding (B) — "this is what it costs YOU to receive money"
  *  - Existing-user payout banner copy (C)
- *  - Checkout provider selector (A, when built) — "this is what it costs YOU to send money"
+ *  - Checkout provider selector (A) — "this is what it costs YOU to send money"
  *
  * Fees here are headline ranges. The exact fee on any individual transaction
  * comes from the provider at invoice/payout time and is persisted on the
  * `bestowals` row (processor_fee_amount / payout_fee_amount).
  */
 
-export type PayoutProviderId = 'nowpayments' | 'paypal';
+export type PayoutProviderId = 'solana' | 'paypal';
 
 /**
- * Below this, crypto is not offered as a bestowal option.
- *
- * This is a FEE-ECONOMICS floor, not a decimals fix. NOWPayments' own flat
- * network fee (~0.27 USDC) plus the buyer's exchange's flat withdrawal fee
- * (~0.50 USDC — e.g. VALR) together are 25%+ of a $2 bestowal and ~2.5% of a
- * $20 one; below this line the flat fees dominate the payment. PayPal has no
- * equivalent flat-fee floor at small amounts.
- *
- * It does NOT solve the amount-precision problem — a fixed-rate invoice
- * (see is_fixed_rate in the invoice-creation functions) still quotes an
- * 8-decimal crypto amount at ANY price, including above this floor, and a
- * wallet/exchange that can only send 2 decimals can still underpay and stall
- * the invoice. That's handled separately by CRYPTO_ROUNDING_NOTICE below,
- * shown at the point of redirect to NOWPayments' hosted invoice.
+ * Direct Solana pay-in has no fee-economics floor (spec-payments.md
+ * section 5) -- the old $10 minimum existed only because NOWPayments' own
+ * flat ~0.27 USDC network fee plus a sending exchange's ~0.50 USDC
+ * withdrawal fee together dominated a small bestowal. Going direct removes
+ * the first of those entirely; the second was never ours to control and
+ * still applies only if the sender funds from an exchange rather than a
+ * wallet they already hold USDC in. Kept at 0 (not deleted) so every call
+ * site's existing `amount < MIN_CRYPTO_BESTOWAL_USD` guard stays correct
+ * code rather than dead code -- it now simply never trips.
  */
-export const MIN_CRYPTO_BESTOWAL_USD = 10;
+export const MIN_CRYPTO_BESTOWAL_USD = 0;
 
 /**
- * Shown at every redirect to a NOWPayments-hosted invoiceUrl. NOWPayments'
- * own page renders the exact crypto amount to send (full precision, e.g. 8
- * decimals) — a wallet or exchange that can only send fewer decimals must
- * round UP, never down or to-nearest: underpaying by any fraction leaves the
- * invoice stuck Partially_paid; overpaying by a cent still completes it.
+ * Shown at the Solana payment screen. Unlike NOWPayments' fixed-rate
+ * invoices (which quoted an 8-decimal crypto amount that a 2-decimal
+ * wallet could underpay by rounding), a direct Solana Pay transfer is a
+ * plain USDC amount at USDC's own fixed 6 decimals -- there is no
+ * exchange-rate quote to round against. The risk that remains is sending
+ * a different amount than requested at all, not a rounding mismatch.
  */
 export const CRYPTO_ROUNDING_NOTICE =
-  "If your wallet or exchange limits decimals, round the amount UP. Overpaying by a cent completes the payment; underpaying by any fraction stalls it.";
+  'Send exactly the USDC amount shown. Underpaying by any amount will not complete the payment; overpaying completes it and the difference is recorded.';
 
 /**
- * Single crypto pay currency for every NOWPayments invoice — USDC on Solana.
- * Was inconsistently hardcoded per call site (some 'usdcsol', some the
- * legacy 'usdttrc20'); this is the one value every site should pass.
+ * Retained only for any historical NOWPayments invoice code path that
+ * still references it (see spec-payments.md section 6: NOWPayments code
+ * stays in place, unreachable from checkout, until both directions of the
+ * Solana migration are proven). No live checkout path uses this anymore.
  */
 export const DEFAULT_CRYPTO_PAY_CURRENCY = 'usdcsol';
 
@@ -68,13 +65,13 @@ export interface PayoutProviderInfo {
  */
 export const PAYOUT_PROVIDERS: PayoutProviderInfo[] = [
   {
-    id: 'nowpayments',
-    label: 'Crypto (USDC on Solana)',
-    feePct: [0.4, 1.0],
-    feeFixed: 0,
-    note: '≈ 0.4% – 1% added to your total. The sower receives the full amount.',
+    id: 'solana',
+    label: 'USDC (Solana) — pay from your own wallet',
+    feePct: [0, 0],
+    feeFixed: 0.01,
+    note: 'Network fee ~$0.01, paid by you. No minimum. The sower receives the full amount.',
     explainer:
-      'Cheapest option. USDC on Solana settles in seconds. The fee is added to your payment so the sower is never short-changed.',
+      'Send USDC directly from your own Solana wallet (Phantom or similar) — no processor in the middle, no minimum amount. A real Solana network fee is a fraction of a cent; Sow2Grow shows a flat ~$0.01 so the number at checkout is never an understatement.',
   },
   {
     id: 'paypal',

@@ -18,7 +18,7 @@ import { MediaUploadZone } from '@/components/live/media/MediaUploadZone';
 import { SetPriceModal } from '@/components/live/media/SetPriceModal';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { buyerTotal } from '@/lib/pricing/platformFee';
 import {
@@ -51,11 +51,10 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
   const [showPriceModal, setShowPriceModal] = useState(false);
   const { uploadMedia, uploading, progress } = useMediaUpload();
   const [pickerItem, setPickerItem] = useState<any | null>(null);
-  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const { purchase, isPending: purchasePending } = useContentPurchase();
   const pickerTotal = pickerItem ? buyerTotal((pickerItem.price_cents ?? 0) / 100) : 0;
-  const belowCryptoMin = pickerTotal < MIN_CRYPTO_BESTOWAL_USD;
-  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+  const effectiveProvider: PayoutProviderId = provider;
 
   // Fetch media and purchases
   useEffect(() => {
@@ -493,20 +492,14 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
           </DialogHeader>
           <div className="grid grid-cols-1 gap-3">
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
-            {belowCryptoMin && (
-              <p className="text-xs text-muted-foreground">
-                Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
-              </p>
-            )}
             <ProviderPicker
               value={effectiveProvider}
               onChange={setProvider}
               amount={pickerTotal}
               mode="buyer"
               disabled={purchasePending}
-              providers={belowCryptoMin ? ['paypal'] : undefined}
             />
-            {effectiveProvider === 'nowpayments' && (
+            {effectiveProvider === 'solana' && (
               <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
             )}
             <Button
@@ -517,7 +510,6 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
                   contentType: 'live_session_media',
                   contentId: pickerItem.id,
                   provider: effectiveProvider,
-                  payCurrency: effectiveProvider === 'nowpayments' ? DEFAULT_CRYPTO_PAY_CURRENCY : undefined,
                 })
               }
             >

@@ -1,9 +1,16 @@
 # spec-payments.md — Payment rails, fees, and the direct-Solana migration
 
-Status: **decided 2026-08-30, not yet built.** Supersedes the NOWPayments
-portions of the current payment implementation. Read alongside
-SESSION-STATE.md (current live state) and spec-service-seeds.md §9 (booking
-purchases).
+Status: **decided 2026-08-30, inbound pay-in built 2026-09-02.** Section 3
+(direct Solana payment detection) and the checkout-side migration (section
+6, steps 1–3) are live: NOWPayments crypto checkout is replaced by direct
+Solana USDC pay-in everywhere. NOWPayments code, secrets, and its webhook
+remain in place, unreachable from checkout, for any historical order (step
+5 of section 6 — full removal — is not done). Section 4 (rebuilding the
+Solana **payout** rail inside `payout-earnings`) is a separate, still-open
+piece of work — this build was inbound (pay-in) only. See "Implementation
+notes (2026-09-02)" at the end of section 3 for what shipped, what's still
+open, and exact human-test steps. Read alongside SESSION-STATE.md (current
+live state) and spec-service-seeds.md §9 (booking purchases).
 
 ---
 
@@ -216,6 +223,106 @@ PayPal (`09a56a94`): never expire a Solana order that has a real on-chain
 reference until the chain has been positively checked, not merely because
 time passed.
 
+### Implementation notes (2026-09-02)
+
+**Built:**
+- `solana_payment_intents` table (migration `20260902210000`) — one
+  polymorphic table keyed by `(order_kind, order_id)`, the same kind/id
+  pairing `paypal-webhook`'s `parseCustomId()` already uses, rather than
+  adding reference/expiry columns to each of `basket_orders`/
+  `content_purchases`/`bestowals`/`topups` individually.
+- `_shared/solanaPayIn.ts` — intent creation (`createSolanaIntent`,
+  Solana Pay reference-key pattern, reference private key never generated
+  as more than a discarded local variable) and verification
+  (`verifySolanaPayment`, `checkAndFinalizeSolanaIntent`). Requires a
+  `transferChecked` SPL instruction specifically (not the older `transfer`)
+  so the mint is confirmed from the instruction itself, no second RPC call
+  needed — a bare `transfer` is left `pending` rather than guessed at.
+- `check-solana-payment` (client poll, every 5s while the payment screen
+  is open) and `sweep-solana-payments` (cron, every 2 minutes — migration
+  `20260902211000`) both call the same `checkAndFinalizeSolanaIntent`, which
+  calls the exact same `finalizeCompletedOrder` PayPal capture already uses
+  — no forked finalize logic.
+- Idempotency: `processed_webhooks(provider='solana', webhook_id=<signature>)`
+  — the existing `UNIQUE(webhook_id, provider)` constraint is the actual
+  enforcement (insert fails closed on reuse), not a prior SELECT.
+- `expire_stale_orders()` now excludes `provider = 'solana'` rows from its
+  blanket 48h time-based expiry — a Solana order's own intent (30 min
+  expiry, one last positive chain check before `expired`) is authoritative
+  instead, per the lesson above.
+- Checkout: `create-basket-bestowal-order`, `create-content-purchase-order`,
+  `create-gift-bestowal-order`, and `create-wallet-topup` each got a
+  `'solana'` branch alongside their existing `nowpayments`/`paypal`
+  branches. New `create-solana-bestowal-order` replaces
+  `create-nowpayments-invoice` for orchard bestowals (mirrors its pricing
+  exactly, swaps the NOWPayments invoice call for a Solana intent).
+  NOWPayments functions/webhook untouched, just unreachable from checkout.
+- Client: `presentSolanaPayment()` (`src/lib/payments/solanaPaymentGate.ts`)
+  is an imperative "show the QR/deep-link screen from anywhere" call,
+  resolved by one `<SolanaPaymentHost/>` mounted at the app root (App.tsx)
+  — chosen so every checkout call site's existing `await
+  createOrder(...); window.location.href = ...` redirect pattern becomes
+  `await presentSolanaPayment(payment)` in place, without each of the ~20
+  checkout surfaces needing its own QR-rendering code.
+  `providerFees.ts`'s `PayoutProviderId` is `'solana' | 'paypal'` now — the
+  old `'nowpayments'` id and its $10 minimum are gone (`MIN_CRYPTO_BESTOWAL_USD`
+  is 0, not deleted, so every call site's existing `< MIN_CRYPTO_BESTOWAL_USD`
+  guard stays correct code, just permanently non-triggering).
+
+**Verified:** all 7 new/changed edge functions deployed cleanly (proves
+every import resolves and the TypeScript is valid — Supabase's own
+bundler would refuse a broken one). `npx tsc --noEmit` clean across the
+whole client. The `verifySolanaPayment` matching logic (transferChecked +
+mint + destination + amount, including the "wrong token"/legacy-`transfer`/
+wrong-destination/underpayment cases) was run against realistic mocked
+Solana RPC response shapes and confirmed correct in every case. A real,
+live HTTP round-trip against the deployed `check-solana-payment` (via a
+manually-inserted test `topups` + `solana_payment_intents` row for the
+disposable Thabo seed account, called with service-role auth) correctly
+made a real `getSignaturesForAddress` call to devnet, found no signatures
+(nothing was ever sent to the test reference), and returned `{status:
+"pending", amountUsdc: 2.01, ...}` — proving the full auth → DB lookup →
+live-RPC → JSON-response path works end to end. Test rows deleted after.
+
+**Not verified this session — genuinely open:** a full live devnet send
+(build a real Phantom-shaped transaction, submit, confirm
+`check-solana-payment` detects and finalizes a genuine payment) was
+attempted but `api.devnet.solana.com`'s SOL airdrop faucet returned 429
+("reached your airdrop limit today") on every attempt from this
+environment — there was no way to fund a test buyer keypair with devnet
+SOL, let alone devnet USDC (the hot wallet itself is also "not yet
+funded" per section 2, so there is currently no devnet USDC anywhere in
+this project's control to send from). The reference-account-inclusion +
+`getSignaturesForAddress` lookup mechanism itself is unchanged from the
+pattern already live and proven in `_shared/solanaPayout.ts` (used by
+`payout-earnings`), and is now also independently confirmed live per the
+paragraph above — but the actual *positive-match* path (a real
+transferChecked landing and getting detected/finalized) has not been
+proven with a real transaction.
+
+**Steps for a real Phantom-on-devnet human test (davison/Ed):**
+1. Get a Phantom wallet set to Devnet (Settings → Developer Settings →
+   Testnet Mode, then switch the network selector to Devnet).
+2. Fund it with devnet SOL via https://faucet.solana.com (for the
+   transaction fee) and devnet USDC — Circle's faucet at
+   https://faucet.circle.com supports Solana Devnet USDC directly to a
+   Phantom address; this is the actual devnet USDC mint checkout uses
+   (`4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`, confirmed in
+   `_shared/cryptoNetworks.ts`).
+3. On the live site, start any bestowal/purchase/top-up flow and pick
+   "USDC (Solana)". Scan the QR with Phantom's own scanner, or (on
+   mobile) tap "Open in Phantom" — Phantom recognizes the `solana:` URI
+   and pre-fills the exact amount/recipient/reference.
+4. Approve the send in Phantom. The payment screen should update within
+   ~5–10 seconds (its own poll) to "Payment confirmed" without any other
+   action.
+5. Confirm in the gosat treasury view (or a direct `solana_payment_intents`
+   / order-row query) that the signature landed and the order finalized —
+   same receipt/Books/escrow behavior as a PayPal order.
+6. Worth trying once deliberately: close the tab right after approving in
+   Phantom (before the 5s poll can fire) and confirm the order still
+   finalizes within 2 minutes via the `sweep-solana-payments` cron.
+
 ---
 
 ## 4. Outbound: rebuilding the crypto payout rail
@@ -264,6 +371,16 @@ or Binance for each bestowal still pays ~0.50.
 So: **recalculate the floor after the migration, don't just delete it.**
 It should come down, but not to zero. Document the new number's reasoning
 in the same place, as `3b4287c4` did.
+
+**Decided 2026-09-02, superseding the above:** the direct-Solana build's
+own task explicitly called for "no minimum" — `MIN_CRYPTO_BESTOWAL_USD` is
+now `0` in `providerFees.ts`, not deleted (every `< MIN_CRYPTO_BESTOWAL_USD`
+call site still compiles and behaves correctly, it just never trips). A
+grower funding their own Phantom wallet directly pays a fraction of a
+cent regardless of amount, so there is no fee-economics floor left to
+justify at any number above zero for that case — the exchange-withdrawal
+case above still applies, but that is the sender's exchange's fee, not a
+reason for Sow2Grow to refuse a small payment.
 
 ---
 

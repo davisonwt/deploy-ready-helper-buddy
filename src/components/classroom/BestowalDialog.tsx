@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useLiveBestowal } from '@/hooks/useLiveBestowal';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface Props {
   open: boolean;
@@ -24,10 +24,9 @@ export function BestowalDialog({ open, onOpenChange, sowerId, bestowerId, sessio
   const { sendBestowal, loading } = useLiveBestowal();
   const [amount, setAmount] = useState('5');
   const [note, setNote] = useState('');
-  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const numericAmount = Number(amount) || 0;
-  const belowCryptoMin = numericAmount < MIN_CRYPTO_BESTOWAL_USD;
-  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+  const effectiveProvider: PayoutProviderId = provider;
 
   const submit = async () => {
     const n = Number(amount);
@@ -90,11 +89,6 @@ export function BestowalDialog({ open, onOpenChange, sowerId, bestowerId, sessio
 
           <div>
             <label className="text-xs uppercase tracking-wider text-[#E8D9B5]/60">Payment method</label>
-            {belowCryptoMin && (
-              <p className="text-xs text-[#E8D9B5]/50 mt-1">
-                Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
-              </p>
-            )}
             <div className="mt-1">
               <ProviderPicker
                 value={effectiveProvider}
@@ -102,9 +96,8 @@ export function BestowalDialog({ open, onOpenChange, sowerId, bestowerId, sessio
                 amount={numericAmount}
                 mode="buyer"
                 disabled={loading}
-                providers={belowCryptoMin ? ['paypal'] : undefined}
               />
-              {effectiveProvider === 'nowpayments' && (
+              {effectiveProvider === 'solana' && (
                 <p className="text-xs text-[#E8D9B5]/50 mt-1">{CRYPTO_ROUNDING_NOTICE}</p>
               )}
             </div>

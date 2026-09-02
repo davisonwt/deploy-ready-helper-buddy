@@ -4,7 +4,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { buyerTotal } from '@/lib/pricing/platformFee';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -30,11 +30,10 @@ export function RoomAccessModal({
   const navigate = useNavigate();
   const { purchase, isPending } = useContentPurchase();
   const [processing, setProcessing] = useState(false);
-  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const isPaid = Number(room?.price ?? 0) > 0;
   const roomTotal = buyerTotal(Number(room?.price ?? 0));
-  const belowCryptoMin = roomTotal < MIN_CRYPTO_BESTOWAL_USD;
-  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+  const effectiveProvider: PayoutProviderId = provider;
 
   const handleFreeJoin = async () => {
     if (!user) { toast.error('Please log in to join'); navigate('/login'); return; }
@@ -62,7 +61,6 @@ export function RoomAccessModal({
       contentType: 'premium_room_access',
       contentId: room.id,
       provider: effectiveProvider,
-      payCurrency: effectiveProvider === 'nowpayments' ? DEFAULT_CRYPTO_PAY_CURRENCY : undefined,
     });
   };
 
@@ -73,7 +71,7 @@ export function RoomAccessModal({
           <DialogTitle>{isPaid ? 'Purchase Room Access' : 'Join Room'}</DialogTitle>
           <DialogDescription>
             {isPaid
-              ? "You'll be redirected to complete checkout. Access is granted automatically once payment is confirmed."
+              ? 'Access is granted automatically once payment is confirmed.'
               : 'Join this room to access all content'}
           </DialogDescription>
         </DialogHeader>
@@ -94,20 +92,14 @@ export function RoomAccessModal({
           {isPaid ? (
             <div className="grid gap-2">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
-              {belowCryptoMin && (
-                <p className="text-xs text-muted-foreground">
-                  Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
-                </p>
-              )}
               <ProviderPicker
                 value={effectiveProvider}
                 onChange={setProvider}
                 amount={roomTotal}
                 mode="buyer"
                 disabled={isPending}
-                providers={belowCryptoMin ? ['paypal'] : undefined}
               />
-              {effectiveProvider === 'nowpayments' && (
+              {effectiveProvider === 'solana' && (
                 <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
               )}
               <Button onClick={handlePaid} disabled={isPending}>

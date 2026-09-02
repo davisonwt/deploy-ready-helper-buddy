@@ -2600,6 +2600,105 @@ New `get-seed-file` edge function grants access to the caller only if they're th
 - `books_income` row for davison: `amount 2.00`, `platform_fee 0.30`, `buyer_reference "Ed"` — the sower's real net take-home, no stray expense rows (trigger's gone, nothing to leave behind).
 - Confirmed what Catalog would show (davison's session, simulated the same way as the earlier account-linking investigation, since minting a real session is still classifier-blocked): **1 sold** for "visions, dreams and riddles," `sower_amount 2.00` — exactly matching `CatalogTab.tsx`'s own query shape (`sower_earnings_v`, `source='product'`, `item_id` in his catalogued products).
 
+## Direct Solana USDC pay-in — built 2026-09-02
+
+Per `C:\Users\Ezra\Downloads\solana-payin.txt` and spec-payments.md section 3
+(decided 2026-08-30, never built until now). Replaces NOWPayments crypto
+checkout everywhere with direct wallet-to-wallet USDC-on-Solana pay-in,
+Solana Pay pattern (reference-key, QR + deep-link, no hosted invoice page).
+Full design detail lives in spec-payments.md section 3's "Implementation
+notes (2026-09-02)" — this entry is the session-log summary.
+
+**Backend, all deployed and confirmed live:**
+- Migration `20260902210000`: new `solana_payment_intents` table (keyed by
+  `order_kind`+`order_id`, same pairing `paypal-webhook`'s `parseCustomId`
+  already uses), `processed_webhooks`/`basket_orders`/`content_purchases`/
+  `topups` provider CHECK constraints widened to allow `'solana'`,
+  `expire_stale_orders()` taught to skip `provider='solana'` rows (their own
+  intent-level 30-min expiry + one last positive chain check is authoritative
+  instead — same lesson PayPal's `09a56a94` already learned).
+- Migration `20260902211000`: `sweep-solana-payments` cron, every 2 minutes
+  (cron job id 21), same `invoke_money_job`/`CRON_SECRET` mechanism as
+  `sweep-hot-wallet-daily`/`payout-earnings-weekly`.
+- New `_shared/solanaPayIn.ts`: intent creation + on-chain verification.
+  No `@solana/web3.js` — same `micro-sol-signer` + plain JSON-RPC pattern as
+  `_shared/solanaPayout.ts` (2s edge-runtime CPU ceiling). Requires a
+  `transferChecked` SPL instruction specifically (mint comes from the
+  instruction itself, no extra RPC call) — a bare `transfer` is left
+  `pending` rather than guessed at.
+- New `check-solana-payment` (client poll, 5s) and `sweep-solana-payments`
+  (cron backstop) both call one shared `checkAndFinalizeSolanaIntent`, which
+  calls the exact same `finalizeCompletedOrder` PayPal capture already
+  uses — no forked finalize logic, so escrow/whisperer split/S2G
+  fee/Books/notifications behave identically to a PayPal order.
+- Idempotency: `processed_webhooks(provider='solana', webhook_id=<signature>)`
+  — the existing `UNIQUE(webhook_id, provider)` constraint does the real
+  enforcement (insert fails closed on reuse), not a prior SELECT.
+- `create-basket-bestowal-order`, `create-content-purchase-order`,
+  `create-gift-bestowal-order`, `create-wallet-topup` each got a `'solana'`
+  branch. New `create-solana-bestowal-order` replaces
+  `create-nowpayments-invoice` for orchard bestowals (same pricing, swaps
+  the NOWPayments invoice call for a Solana intent). NOWPayments
+  functions/webhook left in place, just unreachable from checkout, per
+  spec-payments.md section 6's migration order.
+
+**Client, ~20 checkout surfaces touched:**
+- `providerFees.ts`: `PayoutProviderId` is `'solana' | 'paypal'` now (was
+  `'nowpayments' | 'paypal'`). `MIN_CRYPTO_BESTOWAL_USD` is `0`, not
+  deleted — every existing `< MIN_CRYPTO_BESTOWAL_USD` guard across ~15
+  files stays correct code, it just never trips, satisfying the "no
+  minimum" requirement without touching every call site's gating logic.
+- New `src/lib/payments/solanaPaymentGate.ts` (`presentSolanaPayment()`) +
+  `<SolanaPaymentHost/>` (mounted once in App.tsx, alongside Toaster/Sonner)
+  + `SolanaPaymentPanel.tsx` (QR via the new `qrcode` npm dep, `solana:`
+  deep-link button, copy fields, 5s poll, countdown). Every checkout call
+  site's old `window.location.href = redirectUrl` becomes `await
+  presentSolanaPayment(payment)` in place — one imperative call instead of
+  each surface growing its own QR-rendering code.
+- Fully wired: `QuickBestowModal.tsx`, `MusicTrackDetailPage.tsx` (also
+  fixed the reported bug: the Bestow button hardcoded "USDC" regardless of
+  selected provider — now shows the right currency/rail for whichever is
+  actually selected), `BestowalCheckout.tsx` (basket), `MyWalletPage.tsx`
+  (topup), `AlbumBuilderCart.tsx`, `useContentPurchase.ts`,
+  `useGiftBestowal.ts` (cascades to `useLiveBestowal`/`useRadioBestowal`
+  for free, both thin facades), `useMusicPurchase.jsx`.
+- Mechanically updated (same `'nowpayments'`→`'solana'` pattern, dead
+  `belowCryptoMin`/$10-minimum copy removed): `ConfirmBestowModal.tsx`,
+  `BestowalCoin.tsx`, `BestowalDialog.tsx`, `PurchaseModal.tsx`,
+  `PremiumItemPurchaseModal.tsx`, `PremiumRoomMedia.tsx`,
+  `RoomAccessModal.tsx`, `S2GCommunityLibraryPage.tsx`,
+  `S2GCommunityMusicPage.tsx`, `MusicLibraryTable.tsx`,
+  `TribalAliveFeedPage.tsx`.
+- Not touched (legitimately out of scope): `NowPaymentsTestPage.tsx`,
+  `PaypalTestPage.tsx` (dev-only test tooling for the retained
+  infrastructure), `AdminPayoutConfirmationsPage.tsx` (payout/admin side,
+  unrelated to buyer pay-in).
+
+**Verified:** all 7 new/changed edge functions deployed cleanly (proves
+every import/bundle is valid). `npx tsc --noEmit` clean across the whole
+client — the `PayoutProviderId` rename surfaced every stale `'nowpayments'`
+literal as a compile error, all fixed. `verifySolanaPayment`'s matching
+logic checked against realistic mocked Solana RPC shapes (correct match,
+wrong mint, wrong destination, legacy `transfer`, no spl-token instruction,
+underpayment amount accuracy — all pass). **A real live HTTP round-trip
+against the deployed `check-solana-payment`** (manually-inserted test
+`topups`+`solana_payment_intents` row for the disposable Thabo seed
+account, service-role auth) made a genuine `getSignaturesForAddress` call
+to devnet and correctly returned `pending` with the right amount/expiry —
+test rows deleted after.
+
+**Not verified — genuinely open:** a full live devnet send (real Phantom-
+shaped transaction landing and getting detected/finalized) — attempted,
+but `api.devnet.solana.com`'s airdrop faucet returned 429 ("reached your
+airdrop limit today") on every attempt, and the hot wallet itself has no
+devnet USDC yet either (per spec-payments.md section 2, "not yet funded").
+Exact steps for davison/Ed to do the real Phantom-on-devnet human test are
+in spec-payments.md section 3's implementation notes.
+
+**Out of scope this session, still open:** spec-payments.md section 4
+(rebuilding the Solana *payout* rail inside `payout-earnings`) — this
+build was inbound (pay-in) only.
+
 ## Known gotchas
 
 - **A plain `supabase functions deploy <name>` resets `verify_jwt` to `true` for any function with no `[functions.<name>]` entry in `supabase/config.toml`** — discovered when deploying the PayPal unification reset `create-gift-bestowal-order`, `create-wallet-topup`, and the new `capture-paypal-order` from `false` to `true`, silently, with no warning. Every function actually running with `verify_jwt = false` now has an explicit `config.toml` entry (added in one pass, cross-checked against the Management API's live list) specifically so this can't happen again on a future redeploy of any of them.

@@ -10,18 +10,19 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { WHISPER_SHARE_RATE, WHISPER_SHARE_PERCENT, WHISPER_FALLBACK_NOTE, WHISPER_STATUS_ACTIVE } from '@/lib/whisperer/policy';
 import { getWhispererCredit } from '@/lib/whisperer/attribution';
 
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 import { s2gFeeOn, round2 } from '@/lib/pricing/platformFee';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, totalAmount } = useProductBasket();
   const { user } = useAuth();
   const [processing, setProcessing] = useState(false);
-  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const [provider, setProvider] = useState<PayoutProviderId>('solana');
 
   // WHO gets the whisper share on each line?
   // A seed can have MANY approved whisperers — the share goes to the ONE whose
@@ -68,23 +69,24 @@ export default function BestowalCheckout() {
       });
 
 
-      const data = await invokePaymentFunction<any>('create-basket-bestowal-order', {
-        items,
-        provider: effectiveProvider,
-        payCurrency: effectiveProvider === 'nowpayments' ? DEFAULT_CRYPTO_PAY_CURRENCY : undefined,
-        redirectBaseUrl: window.location.origin,
-      });
+      const data = await invokePaymentFunction<{ solanaPayment?: SolanaPaymentResponse; approveUrl?: string }>(
+        'create-basket-bestowal-order',
+        {
+          items,
+          provider: effectiveProvider,
+          redirectBaseUrl: window.location.origin,
+        },
+      );
 
-      if (effectiveProvider === 'nowpayments') {
-        if (data.invoiceUrl) {
-          window.open(data.invoiceUrl, '_blank');
+      if (effectiveProvider === 'solana') {
+        if (!data.solanaPayment) throw new Error('No Solana payment details returned');
+        // Do NOT clear basket while the payment screen is open — items stay
+        // until it resolves 'paid' (or the buyer cancels/it expires) so a
+        // cancelled or expired attempt can simply be retried.
+        const resolution = await presentSolanaPayment(data.solanaPayment);
+        if (resolution === 'paid') {
+          toast.success('Bestowal complete!');
         }
-        toast.success('Invoice opened in a new tab', {
-          description: CRYPTO_ROUNDING_NOTICE,
-        });
-        // Do NOT clear basket — items stay until webhook-confirmed completion
-        // (visible on the success page) so the buyer can retry if they close
-        // the invoice tab without paying.
       } else {
         // PayPal: full-page redirect to hosted approval.
         if (data.approveUrl) {
@@ -124,8 +126,7 @@ export default function BestowalCheckout() {
     0,
   );
   const checkoutTotal = round2(baseSubtotal + s2gFee);
-  const belowCryptoMin = checkoutTotal < MIN_CRYPTO_BESTOWAL_USD;
-  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+  const effectiveProvider: PayoutProviderId = provider;
   const feeQuote = quoteFee(effectiveProvider, checkoutTotal);
 
   // Only lines credited to an ACTIVE whisperer carry a whisper share; the rest
@@ -223,18 +224,12 @@ export default function BestowalCheckout() {
 
         <div className="space-y-2">
           <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
-          {belowCryptoMin && (
-            <p className="text-xs text-muted-foreground">
-              Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
-            </p>
-          )}
           <ProviderPicker
             value={effectiveProvider}
             onChange={setProvider}
             amount={checkoutTotal}
             mode="buyer"
             disabled={processing}
-            providers={belowCryptoMin ? ['paypal'] : undefined}
           />
           <div className="text-xs text-muted-foreground text-right">
             Estimated processor fee on ${checkoutTotal.toFixed(2)}:{' '}
@@ -257,7 +252,7 @@ export default function BestowalCheckout() {
         </Button>
 
         <p className="text-xs text-center text-muted-foreground">
-          No bestowals are recorded until your payment is confirmed by {effectiveProvider === 'nowpayments' ? 'NOWPayments' : 'PayPal'}.
+          No bestowals are recorded until your payment is confirmed{effectiveProvider === 'paypal' ? ' by PayPal' : ' on-chain'}.
         </p>
       </CardContent>
     </Card>

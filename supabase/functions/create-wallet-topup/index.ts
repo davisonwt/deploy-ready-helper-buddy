@@ -8,11 +8,12 @@ import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
 import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
+import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
 interface Payload {
-  provider: "nowpayments" | "paypal";
+  provider: "nowpayments" | "paypal" | "solana";
   amount: number; // USD base amount the user wants credited
   payCurrency?: string; // for nowpayments, defaults to usdcsol
   redirectBaseUrl?: string;
@@ -50,7 +51,7 @@ Deno.serve(async (req) => {
     let payload: Payload;
     try { payload = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
 
-    if (!payload?.provider || !["nowpayments","paypal"].includes(payload.provider)) {
+    if (!payload?.provider || !["nowpayments","paypal","solana"].includes(payload.provider)) {
       return json({ error: "invalid_provider" }, 400);
     }
     const amount = Number(payload.amount);
@@ -122,6 +123,31 @@ Deno.serve(async (req) => {
         topupId: topup.id,
         provider: "nowpayments",
         invoiceUrl: invoice.invoice_url,
+        breakdown: { base, fee, buyerTotal, currency: "USD" },
+      });
+    }
+
+    // Solana (direct USDC pay-in)
+    if (payload.provider === "solana") {
+      let solanaPayment;
+      try {
+        solanaPayment = await createSolanaIntent(service, {
+          orderKind: "topup",
+          orderId: topup.id,
+          amountUsdc: buyerTotal,
+          label: "Sow2Grow",
+          message: "Sow2Grow wallet top-up",
+        });
+      } catch (err) {
+        console.error("solana intent creation failed", err);
+        await service.from("topups").update({ status: "failed", metadata: { error: String(err) } }).eq("id", topup.id);
+        return json({ error: "solana_intent_failed", detail: err instanceof Error ? err.message : String(err) }, 500);
+      }
+      await service.from("topups").update({ provider_order_id: solanaPayment.intentId }).eq("id", topup.id);
+      return json({
+        topupId: topup.id,
+        provider: "solana",
+        solanaPayment,
         breakdown: { base, fee, buyerTotal, currency: "USD" },
       });
     }

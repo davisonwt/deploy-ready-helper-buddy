@@ -11,11 +11,12 @@ import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { priceBreakdown, s2gFeeOn, S2G_FEE_RATE } from "../_shared/platformFee.ts";
+import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
 type GiftContext = "live_session" | "radio_session" | "chat_tip";
-type Provider = "nowpayments" | "paypal";
+type Provider = "nowpayments" | "paypal" | "solana";
 
 interface RequestPayload {
   recipientId: string;
@@ -77,7 +78,7 @@ Deno.serve(async (req) => {
     if (!["live_session", "radio_session", "chat_tip"].includes(payload.contextKind)) {
       return json({ error: "invalid_context_kind" }, 400);
     }
-    if (payload.provider !== "nowpayments" && payload.provider !== "paypal") {
+    if (payload.provider !== "nowpayments" && payload.provider !== "paypal" && payload.provider !== "solana") {
       return json({ error: "invalid_provider" }, 400);
     }
     if (payload.recipientId === bestowerId) {
@@ -205,6 +206,33 @@ Deno.serve(async (req) => {
         invoiceId: invoice.id,
         invoiceUrl: invoice.invoice_url,
         expiresAt: invoice.expiration_date ?? null,
+        breakdown: { baseAmount, s2gFee: pricing.s2gFee, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+      });
+    }
+
+    // --- Solana (direct USDC pay-in) -------------------------------------------
+    if (payload.provider === "solana") {
+      let solanaPayment;
+      try {
+        solanaPayment = await createSolanaIntent(service, {
+          orderKind: "gift",
+          orderId: bestowal.id,
+          amountUsdc: buyerTotal,
+          label: "Sow2Grow",
+          message: `Sow2Grow gift bestowal (${payload.contextKind})`,
+        });
+      } catch (err) {
+        console.error("solana intent creation failed", err);
+        await failBestowal(service, bestowal.id, "solana_intent_failed");
+        return json({ error: "solana_intent_failed", detail: err instanceof Error ? err.message : String(err) }, 500);
+      }
+      await service.from("bestowals")
+        .update({ provider_order_id: solanaPayment.intentId })
+        .eq("id", bestowal.id);
+      return json({
+        bestowalId: bestowal.id,
+        provider: "solana",
+        solanaPayment,
         breakdown: { baseAmount, s2gFee: pricing.s2gFee, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
       });
     }

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useMusicPurchase } from '@/hooks/useMusicPurchase';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 import { fetchSeedFileUrl } from '@/lib/media/getSeedFileUrl';
 import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,7 @@ import { toast } from 'sonner';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room', 'orchard-images', 'seed-previews'];
 
@@ -69,7 +70,7 @@ export default function MusicTrackDetailPage() {
   const [owned, setOwned] = useState(false);
   const [buyingProduct, setBuyingProduct] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const [provider, setProvider] = useState<PayoutProviderId>('solana');
 
   // Seed settings (spec-books.md §4) — owner-only (the uploader, not a
   // buyer; `owned` above means "this viewer bestowed", a different thing).
@@ -278,11 +279,9 @@ export default function MusicTrackDetailPage() {
 
   const handleBuy = async () => {
     if (!track || track.price == null) return;
-    const belowCryptoMin = priceBreakdown(track.price).total < MIN_CRYPTO_BESTOWAL_USD;
-    const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
 
     if (track.source === 'dj_track') {
-      purchaseTrack(track.id, track.price, { provider: effectiveProvider });
+      purchaseTrack(track.id, track.price, { provider });
       return;
     }
 
@@ -296,15 +295,20 @@ export default function MusicTrackDetailPage() {
     }
     setBuyingProduct(true);
     try {
-      const data = await invokePaymentFunction<any>('create-basket-bestowal-order', {
-        items: [{ productId: track.id, qty: 1 }],
-        provider: effectiveProvider,
-        payCurrency: effectiveProvider === 'nowpayments' ? DEFAULT_CRYPTO_PAY_CURRENCY : undefined,
-        redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
-      });
-      const redirectUrl = data?.invoiceUrl || data?.approveUrl;
-      if (!redirectUrl) throw new Error('Provider did not return a checkout URL');
-      window.location.href = redirectUrl;
+      const data = await invokePaymentFunction<{ solanaPayment?: SolanaPaymentResponse; approveUrl?: string }>(
+        'create-basket-bestowal-order',
+        {
+          items: [{ productId: track.id, qty: 1 }],
+          provider,
+          redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
+        },
+      );
+      if (data.solanaPayment) {
+        await presentSolanaPayment(data.solanaPayment);
+        return;
+      }
+      if (!data.approveUrl) throw new Error('Provider did not return a checkout URL');
+      window.location.href = data.approveUrl;
     } catch (error) {
       console.error('Product bestowal failed:', error);
       toast.error(error instanceof Error ? error.message : 'Bestowal failed. Please try again.');
@@ -338,8 +342,6 @@ export default function MusicTrackDetailPage() {
   const hasPrice = track.price != null;
   const { base, s2gFee, total } = hasPrice ? priceBreakdown(track.price) : { base: 0, s2gFee: 0, total: 0 };
   const isBuying = track.source === 'dj_track' ? purchasingTrack : buyingProduct;
-  const belowCryptoMin = total < MIN_CRYPTO_BESTOWAL_USD;
-  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 text-white p-4 md:p-8">
@@ -444,25 +446,19 @@ export default function MusicTrackDetailPage() {
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
                       Payment method
                     </div>
-                    {belowCryptoMin && (
-                      <p className="text-xs text-slate-400">
-                        Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
-                      </p>
-                    )}
                     <ProviderPicker
-                      value={effectiveProvider}
+                      value={provider}
                       onChange={setProvider}
                       amount={total}
                       mode="buyer"
                       disabled={isBuying}
-                      providers={belowCryptoMin ? ['paypal'] : undefined}
                     />
-                    {effectiveProvider === 'nowpayments' && (
+                    {provider === 'solana' && (
                       <p className="text-xs text-slate-400">{CRYPTO_ROUNDING_NOTICE}</p>
                     )}
                     <Button onClick={handleBuy} disabled={isBuying} className="bg-rose-500 hover:bg-rose-600">
                       {isBuying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Heart className="w-4 h-4 mr-2" />}
-                      Bestow ${total.toFixed(2)} USDC
+                      Bestow ${total.toFixed(2)} {provider === 'solana' ? 'USDC' : 'via PayPal'}
                     </Button>
                     <div className="text-xs text-slate-400">
                       ${base.toFixed(2)} to the sower + ${s2gFee.toFixed(2)} Sow2Grow 15% (carried by you).

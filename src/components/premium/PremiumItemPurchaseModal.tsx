@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { buyerTotal } from '@/lib/pricing/platformFee';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -30,10 +30,9 @@ export function PremiumItemPurchaseModal({
   const { user } = useAuth();
   const { formatAmount } = useCurrency();
   const { purchase, isPending } = useContentPurchase();
-  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const itemTotal = buyerTotal(Number(item?.price ?? 0));
-  const belowCryptoMin = itemTotal < MIN_CRYPTO_BESTOWAL_USD;
-  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+  const effectiveProvider: PayoutProviderId = provider;
 
   const start = () => {
     if (!user) { toast.error('Please log in to purchase'); return; }
@@ -42,7 +41,6 @@ export function PremiumItemPurchaseModal({
       contentType: 'premium_item',
       contentId: String(item.id),
       provider: effectiveProvider,
-      payCurrency: effectiveProvider === 'nowpayments' ? DEFAULT_CRYPTO_PAY_CURRENCY : undefined,
       metadata: { room_id: roomId, item_type: itemType },
     });
   };
@@ -53,7 +51,7 @@ export function PremiumItemPurchaseModal({
         <DialogHeader>
           <DialogTitle>Purchase {itemType}</DialogTitle>
           <DialogDescription>
-            You'll be redirected to complete checkout. Access is granted automatically once payment is confirmed.
+            Access is granted automatically once payment is confirmed.
           </DialogDescription>
         </DialogHeader>
 
@@ -74,20 +72,14 @@ export function PremiumItemPurchaseModal({
 
           <div className="grid gap-2">
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
-            {belowCryptoMin && (
-              <p className="text-xs text-muted-foreground">
-                Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
-              </p>
-            )}
             <ProviderPicker
               value={effectiveProvider}
               onChange={setProvider}
               amount={itemTotal}
               mode="buyer"
               disabled={isPending}
-              providers={belowCryptoMin ? ['paypal'] : undefined}
             />
-            {effectiveProvider === 'nowpayments' && (
+            {effectiveProvider === 'solana' && (
               <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
             )}
             <Button onClick={start} disabled={isPending}>

@@ -357,7 +357,7 @@ export function MusicLibraryTable({
     setConfirmAction({ track, kind: 'gift' });
   };
 
-  const confirmActionWithProvider = async (provider: 'nowpayments' | 'paypal') => {
+  const confirmActionWithProvider = async (provider: 'solana' | 'paypal') => {
     if (!confirmAction) return;
     const { track, kind } = confirmAction;
     setLocalProcessing(true);

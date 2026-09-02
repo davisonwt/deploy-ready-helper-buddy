@@ -32,6 +32,7 @@ import { NotificationBanner } from "@/components/NotificationBanner";
 import { PayoutSetupBanner } from "@/components/PayoutSetupBanner";
 import GroundskeeperWidget from "@/components/grove/GroundskeeperWidget";
 import AppRoutes, { LoadingFallback } from "./routes/AppRoutes";
+import SolanaPaymentHost from "@/components/payments/SolanaPaymentHost";
 
 function ReferralCaptureMount() {
   useReferralCapture();
@@ -57,6 +58,7 @@ const App = () => (
                 <DeadLinkDetector />
                 <Toaster />
                 <Sonner />
+                <SolanaPaymentHost />
                 <AudioUnlocker />
                 <SoundUnlockBanner />
                 <NotificationBanner />

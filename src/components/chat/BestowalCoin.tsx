@@ -7,7 +7,7 @@ import { useGiftBestowal } from '@/hooks/useGiftBestowal';
 import { toast } from 'sonner';
 import Confetti from 'react-confetti';
 import { launchConfetti } from '@/utils/confetti';
-import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface BestowalCoinProps {
   /** ID of the message/file/audio/image being tipped (passed back via onBestowalComplete). */
@@ -37,7 +37,7 @@ export function BestowalCoin({
 }: BestowalCoinProps) {
   const [showSlider, setShowSlider] = useState(false);
   const [sliderValue, setSliderValue] = useState([initialAmount || 0.5]);
-  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const [showConfetti, setShowConfetti] = useState(false);
   const [emojiRain, setEmojiRain] = useState<Array<{ id: number; x: number; y: number; emoji: string }>>([]);
   const { send, loading: processing } = useGiftBestowal();
@@ -61,8 +61,7 @@ export function BestowalCoin({
     }, 2000);
   };
 
-  const belowCryptoMin = sliderValue[0] < MIN_CRYPTO_BESTOWAL_USD;
-  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+  const effectiveProvider: PayoutProviderId = provider;
 
   const handleBestowal = async () => {
     const amount = sliderValue[0];
@@ -78,7 +77,6 @@ export function BestowalCoin({
       contextKind: 'chat_tip',
       contextId: roomId,
       provider: effectiveProvider,
-      payCurrency: DEFAULT_CRYPTO_PAY_CURRENCY,
       message: assetId ? `tip:${assetId}` : undefined,
     });
 
@@ -86,10 +84,12 @@ export function BestowalCoin({
       launchConfetti();
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3000);
-      toast.success(`Redirecting to checkout — ${senderName || 'recipient'} will receive ${amount} USDC`);
+      toast.success(`${senderName || 'recipient'} will receive ${amount} USDC`);
       setShowSlider(false);
       onBestowalComplete?.(amount);
-      // useGiftBestowal already redirects to the provider checkout URL.
+      // useGiftBestowal shows the Solana payment screen inline (solana) or
+      // redirects to the provider checkout URL (paypal) — either way, this
+      // only resolves 'success' once the payment actually landed.
     }
   };
 
@@ -197,12 +197,11 @@ export function BestowalCoin({
                 <Button
                   type="button"
                   size="sm"
-                  variant={effectiveProvider === 'nowpayments' ? 'default' : 'outline'}
-                  onClick={() => setProvider('nowpayments')}
-                  disabled={belowCryptoMin}
+                  variant={effectiveProvider === 'solana' ? 'default' : 'outline'}
+                  onClick={() => setProvider('solana')}
                   className="flex-1"
                 >
-                  Crypto
+                  USDC (Solana)
                 </Button>
                 <Button
                   type="button"
@@ -214,12 +213,7 @@ export function BestowalCoin({
                   PayPal
                 </Button>
               </div>
-              {belowCryptoMin && (
-                <p className="text-xs text-muted-foreground mb-3">
-                  Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
-                </p>
-              )}
-              {effectiveProvider === 'nowpayments' && (
+              {effectiveProvider === 'solana' && (
                 <p className="text-xs text-muted-foreground mb-3">{CRYPTO_ROUNDING_NOTICE}</p>
               )}
 

@@ -44,7 +44,7 @@ import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/W
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
-import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { LiveNowStrip } from '@/components/live/LiveNowStrip';
 import LiveStage from '@/components/live/LiveStage';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
@@ -1742,7 +1742,7 @@ function SeedActionPanel({
 }) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
-  const [giftProvider, setGiftProvider] = useState<PayoutProviderId>('nowpayments');
+  const [giftProvider, setGiftProvider] = useState<PayoutProviderId>('solana');
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -1826,9 +1826,7 @@ function SeedActionPanel({
     if (sending) return;
     setSending(true);
     try {
-      const effectiveProvider: PayoutProviderId =
-        typeof amount === 'number' && amount < MIN_CRYPTO_BESTOWAL_USD ? 'paypal' : giftProvider;
-      await onGift(amount, effectiveProvider);
+      await onGift(amount, giftProvider);
     } finally {
       setSending(false);
     }
@@ -1867,11 +1865,11 @@ function SeedActionPanel({
               <Button
                 type="button"
                 size="sm"
-                variant={giftProvider === 'nowpayments' ? 'default' : 'outline'}
-                onClick={() => setGiftProvider('nowpayments')}
+                variant={giftProvider === 'solana' ? 'default' : 'outline'}
+                onClick={() => setGiftProvider('solana')}
                 className="flex-1"
               >
-                Crypto
+                USDC (Solana)
               </Button>
               <Button
                 type="button"
@@ -1883,12 +1881,7 @@ function SeedActionPanel({
                 PayPal
               </Button>
             </div>
-            {giftProvider === 'nowpayments' && (
-              <p className="text-xs text-muted-foreground">
-                Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
-              </p>
-            )}
-            {giftProvider === 'nowpayments' && (
+            {giftProvider === 'solana' && (
               <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
             )}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -1898,19 +1891,16 @@ function SeedActionPanel({
                 { label: '$1', value: 1 },
                 { label: '$5', value: 5 },
                 { label: '$10', value: 10 },
-              ].map((gift) => {
-                const disabledByCryptoMin = giftProvider === 'nowpayments' && gift.value < MIN_CRYPTO_BESTOWAL_USD;
-                return (
+              ].map((gift) => (
                   <Button
                     key={gift.label}
-                    disabled={sending || disabledByCryptoMin}
+                    disabled={sending}
                     onClick={() => sendGift(gift.value)}
                     className="h-12 rounded-full"
                   >
                     {gift.label}
                   </Button>
-                );
-              })}
+              ))}
               <Button disabled={sending} variant="outline" onClick={() => sendGift('heart')} className="h-12 rounded-full gap-2">
                 <Heart className="h-4 w-4" /> Heart
               </Button>

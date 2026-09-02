@@ -15,6 +15,7 @@ import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { priceBreakdown } from "../_shared/platformFee.ts";
 import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
 import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
+import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -36,7 +37,7 @@ interface RequestItem {
 
 interface RequestPayload {
   items: RequestItem[];
-  provider: "nowpayments" | "paypal";
+  provider: "nowpayments" | "paypal" | "solana";
   payCurrency?: string;
   redirectBaseUrl?: string;
 }
@@ -92,7 +93,7 @@ Deno.serve(async (req) => {
     if (!payload?.items || !Array.isArray(payload.items) || payload.items.length === 0) {
       return json({ error: "empty_basket" }, 400);
     }
-    if (payload.provider !== "nowpayments" && payload.provider !== "paypal") {
+    if (payload.provider !== "nowpayments" && payload.provider !== "paypal" && payload.provider !== "solana") {
       return json({ error: "invalid_provider" }, 400);
     }
     if (payload.provider === "nowpayments" && !payload.payCurrency) {
@@ -296,6 +297,35 @@ Deno.serve(async (req) => {
         invoiceId: invoice.id,
         invoiceUrl: invoice.invoice_url,
         expiresAt: invoice.expiration_date ?? null,
+        breakdown: { subtotal, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+      });
+    }
+
+    // --- Solana (direct USDC pay-in) -------------------------------------------
+    if (payload.provider === "solana") {
+      let solanaPayment;
+      try {
+        solanaPayment = await createSolanaIntent(service, {
+          orderKind: "basket",
+          orderId: order.id,
+          amountUsdc: buyerTotal,
+          label: "Sow2Grow",
+          message: `Sow2Grow basket (${itemSnapshot.length} item${itemSnapshot.length === 1 ? "" : "s"})`,
+        });
+      } catch (err) {
+        console.error("solana intent creation failed", err);
+        await markFailed(service, order.id, "solana_intent_failed");
+        return json({ error: "solana_intent_failed", detail: err instanceof Error ? err.message : String(err) }, 500);
+      }
+      await service
+        .from("basket_orders")
+        .update({ provider_order_id: solanaPayment.intentId })
+        .eq("id", order.id);
+
+      return json({
+        basketOrderId: order.id,
+        provider: "solana",
+        solanaPayment,
         breakdown: { subtotal, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
       });
     }

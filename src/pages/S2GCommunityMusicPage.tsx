@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti } from '@/utils/confetti';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { buyerTotal } from '@/lib/pricing/platformFee';
 import { isAlbum } from '@/lib/products/isAlbum';
@@ -33,11 +33,10 @@ export default function S2GCommunityMusicPage() {
   const [audioRefs, setAudioRefs] = useState<Map<string, HTMLAudioElement>>(new Map());
   const [playbackPositions, setPlaybackPositions] = useState<Map<string, number>>(new Map());
   const [pickerItem, setPickerItem] = useState<any | null>(null);
-  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const { purchase, isPending: purchasePending } = useContentPurchase();
   const pickerTotal = pickerItem ? buyerTotal(pickerItem.price || 0) : 0;
-  const belowCryptoMin = pickerTotal < MIN_CRYPTO_BESTOWAL_USD;
-  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+  const effectiveProvider: PayoutProviderId = provider;
   const PREVIEW_DURATION = 30; // 30 seconds preview
 
   // Fetch music from BOTH s2g_library_items AND dj_music_tracks
@@ -594,20 +593,14 @@ export default function S2GCommunityMusicPage() {
           </DialogHeader>
           <div className="grid grid-cols-1 gap-3">
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
-            {belowCryptoMin && (
-              <p className="text-xs text-muted-foreground">
-                Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
-              </p>
-            )}
             <ProviderPicker
               value={effectiveProvider}
               onChange={setProvider}
               amount={pickerTotal}
               mode="buyer"
               disabled={purchasePending}
-              providers={belowCryptoMin ? ['paypal'] : undefined}
             />
-            {effectiveProvider === 'nowpayments' && (
+            {effectiveProvider === 'solana' && (
               <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
             )}
             <Button
@@ -618,7 +611,6 @@ export default function S2GCommunityMusicPage() {
                   contentType: pickerItem.source === 'library' ? 'library_item' : 'music_track',
                   contentId: pickerItem.id,
                   provider: effectiveProvider,
-                  payCurrency: effectiveProvider === 'nowpayments' ? DEFAULT_CRYPTO_PAY_CURRENCY : undefined,
                 })
               }
             >

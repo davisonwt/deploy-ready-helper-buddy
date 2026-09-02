@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 
 export type GiftContextKind = 'live_session' | 'radio_session' | 'chat_tip';
-export type GiftProvider = 'nowpayments' | 'paypal';
+export type GiftProvider = 'solana' | 'paypal';
 
 export interface GiftBestowalInput {
   recipientId: string;
@@ -11,7 +12,8 @@ export interface GiftBestowalInput {
   contextKind: GiftContextKind;
   contextId: string;
   provider: GiftProvider;
-  payCurrency?: string; // required when provider = 'nowpayments'
+  /** Unused (was NOWPayments-only). Kept optional so existing callers compile unchanged. */
+  payCurrency?: string;
   message?: string;
 }
 
@@ -28,10 +30,12 @@ interface GiftBestowalResult {
  *   - radio bestowals
  *   - in-chat tipping (BestowalCoin)
  *
- * Calls the create-gift-bestowal-order edge function which creates a
- * NOWPayments invoice OR PayPal order, then returns the buyer redirect URL.
- * The webhook (nowpayments-webhook / paypal-webhook) verifies payment and
- * dispatches the recipient + S2G splits via the existing dispatchPayouts().
+ * Calls the create-gift-bestowal-order edge function, which either creates
+ * a direct Solana payment intent (shown inline via presentSolanaPayment,
+ * no redirect) or a PayPal order (redirect to the hosted approval page).
+ * Payment confirmation (paypal-webhook, or check-solana-payment /
+ * sweep-solana-payments for Solana) verifies payment and dispatches the
+ * recipient + S2G splits via finalizeCompletedOrder.
  */
 export function useGiftBestowal() {
   const { toast } = useToast();
@@ -66,9 +70,18 @@ export function useGiftBestowal() {
         return { success: false, error: msg };
       }
 
-      const redirect = (data as { invoiceUrl?: string; approveUrl?: string }).invoiceUrl
-        ?? (data as { approveUrl?: string }).approveUrl;
+      const bestowalId = (data as { bestowalId?: string }).bestowalId;
+      const solanaPayment = (data as { solanaPayment?: SolanaPaymentResponse }).solanaPayment;
 
+      if (solanaPayment) {
+        const resolution = await presentSolanaPayment(solanaPayment);
+        if (resolution !== 'paid') {
+          return { success: false, error: resolution === 'expired' ? 'payment_expired' : 'cancelled' };
+        }
+        return { success: true, bestowalId };
+      }
+
+      const redirect = (data as { approveUrl?: string }).approveUrl;
       if (!redirect) {
         toast({
           title: 'Bestowal failed',
@@ -82,7 +95,7 @@ export function useGiftBestowal() {
 
       return {
         success: true,
-        bestowalId: (data as { bestowalId?: string }).bestowalId,
+        bestowalId,
         redirectUrl: redirect,
       };
     } catch (err) {

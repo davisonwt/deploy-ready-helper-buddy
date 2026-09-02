@@ -3,18 +3,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
-import { DEFAULT_CRYPTO_PAY_CURRENCY } from '@/lib/payments/providerFees';
+import { presentSolanaPayment } from '@/lib/payments/solanaPaymentGate';
 
 /**
  * Music purchase via the unified Shape-1 content_purchases pipeline.
- * Initiates a NOWPayments or PayPal checkout and redirects the buyer.
- * The webhook finalizes the music_purchases row + delivers a buyer notification.
+ * Solana payments are shown inline (presentSolanaPayment, no redirect);
+ * PayPal redirects to the hosted approval page. Payment confirmation
+ * finalizes the music_purchases row + delivers a buyer notification.
  *
  * Signatures supported (callers in the codebase vary):
  *   purchaseTrack(track, price, { provider })
  *   purchaseTrack(trackId, price, { provider })
  *
- * `opts.provider` is REQUIRED — 'nowpayments' or 'paypal', whichever the
+ * `opts.provider` is REQUIRED — 'solana' or 'paypal', whichever the
  * bestower actually picked. There is no default; a missing/invalid
  * provider is a caller bug, not something to silently paper over by
  * picking one for them.
@@ -40,12 +41,11 @@ export function useMusicPurchase() {
       return { success: false };
     }
 
-    if (opts.provider !== 'paypal' && opts.provider !== 'nowpayments') {
+    if (opts.provider !== 'paypal' && opts.provider !== 'solana') {
       toast({ title: 'Purchase failed', description: 'Choose a payment method first', variant: 'destructive' });
       return { success: false };
     }
     const provider = opts.provider;
-    const payCurrency = opts.payCurrency || DEFAULT_CRYPTO_PAY_CURRENCY;
 
     try {
       setLoading(true);
@@ -53,10 +53,16 @@ export function useMusicPurchase() {
         contentType: 'music_track',
         contentId: trackId,
         provider,
-        payCurrency: provider === 'nowpayments' ? payCurrency : undefined,
         redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
       });
-      const redirectUrl = data?.invoiceUrl || data?.approveUrl;
+
+      if (data?.solanaPayment) {
+        const resolution = await presentSolanaPayment(data.solanaPayment);
+        if (resolution !== 'paid') return { success: false };
+        return { success: true, data };
+      }
+
+      const redirectUrl = data?.approveUrl;
       if (!redirectUrl) throw new Error('Provider did not return a checkout URL');
       window.location.href = redirectUrl;
       return { success: true, data };

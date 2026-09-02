@@ -11,7 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 
 interface SowerBalance {
   available_balance: number;
@@ -81,7 +82,7 @@ export default function MyWalletPage() {
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
 
   // Top-up form
-  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const [amount, setAmount] = useState<string>('25');
   const [submitting, setSubmitting] = useState(false);
 
@@ -122,12 +123,21 @@ export default function MyWalletPage() {
         body: {
           provider,
           amount: amountNum,
-          payCurrency: DEFAULT_CRYPTO_PAY_CURRENCY,
           redirectBaseUrl: window.location.origin,
         },
       });
       if (error) throw error;
-      const url = (data as any)?.invoiceUrl ?? (data as any)?.approveUrl;
+      const solanaPayment = (data as { solanaPayment?: SolanaPaymentResponse })?.solanaPayment;
+      if (solanaPayment) {
+        const resolution = await presentSolanaPayment(solanaPayment);
+        if (resolution === 'paid') {
+          toast.success('Top-up complete!');
+          await load();
+        }
+        setSubmitting(false);
+        return;
+      }
+      const url = (data as any)?.approveUrl;
       if (!url) throw new Error('No payment URL returned.');
       window.location.href = url;
     } catch (err: any) {
@@ -198,7 +208,7 @@ export default function MyWalletPage() {
         <CardContent>
           {wallet ? (
             <div className="text-sm space-y-1">
-              <div><span className="text-muted-foreground">Method:</span> <strong>{wallet.wallet_type === 'paypal_email' ? 'PayPal' : 'NOWPayments (crypto)'}</strong></div>
+              <div><span className="text-muted-foreground">Method:</span> <strong>{wallet.wallet_type === 'paypal_email' ? 'PayPal' : 'USDC (Solana)'}</strong></div>
               <div className="truncate"><span className="text-muted-foreground">Destination:</span> <code className="text-xs">{wallet.wallet_address}</code></div>
               {wallet.payout_currency && (
                 <div><span className="text-muted-foreground">Currency:</span> {wallet.payout_currency.toUpperCase()}{wallet.network ? ` on ${wallet.network.toUpperCase()}` : ''}</div>
@@ -239,7 +249,7 @@ export default function MyWalletPage() {
             />
           </div>
           <ProviderPicker value={provider} onChange={setProvider} amount={amountNum || 0} mode="buyer" disabled={submitting} />
-          {provider === 'nowpayments' && (
+          {provider === 'solana' && (
             <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
           )}
           {feeQuote && (

@@ -14,6 +14,7 @@ import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { priceBreakdown } from "../_shared/platformFee.ts";
+import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -24,7 +25,7 @@ type ContentType =
   | "premium_item"
   | "premium_room_access";
 
-type Provider = "nowpayments" | "paypal";
+type Provider = "nowpayments" | "paypal" | "solana";
 
 interface RequestPayload {
   contentType: ContentType;
@@ -172,6 +173,32 @@ Deno.serve(async (req) => {
         invoiceId: invoice.id,
         invoiceUrl: invoice.invoice_url,
         expiresAt: invoice.expiration_date ?? null,
+        breakdown: { baseAmount, platformFee, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+      });
+    }
+
+    // --- Solana (direct USDC pay-in) -------------------------------------------
+    if (payload.provider === "solana") {
+      let solanaPayment;
+      try {
+        solanaPayment = await createSolanaIntent(service, {
+          orderKind: "content",
+          orderId: purchase.id,
+          amountUsdc: buyerTotal,
+          label: "Sow2Grow",
+          message: description,
+        });
+      } catch (err) {
+        console.error("solana intent creation failed", err);
+        await failPurchase(service, purchase.id, "solana_intent_failed");
+        return json({ error: "solana_intent_failed", detail: err instanceof Error ? err.message : String(err) }, 500);
+      }
+      await service.from("content_purchases")
+        .update({ provider_order_id: solanaPayment.intentId }).eq("id", purchase.id);
+      return json({
+        purchaseId: purchase.id,
+        provider: "solana",
+        solanaPayment,
         breakdown: { baseAmount, platformFee, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
       });
     }
