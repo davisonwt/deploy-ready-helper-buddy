@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
-  JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? ''
+  (JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) ?? ''
 );
 
 interface ShiftReminderRequest {
@@ -32,10 +32,10 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
     const token = authHeader.slice(7).trim();
-    const serviceKey = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? '';
+    const serviceKey = (JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) ?? '';
     const isServiceRole = token === serviceKey;
     if (!isServiceRole) {
-      const anonKey = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] ?? '';
+      const anonKey = (JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_ANON_KEY")) ?? '';
       const userClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', anonKey, {
         global: { headers: { Authorization: `Bearer ${token}` } },
       });

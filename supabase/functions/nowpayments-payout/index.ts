@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     return json({ status: "manual_required", error: "method_not_allowed" }, 405);
   }
 
-  const serviceRoleKey = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"];
+  const serviceRoleKey = (JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const apiKey = Deno.env.get("NOWPAYMENTS_API_KEY");
   const email = Deno.env.get("NOWPAYMENTS_EMAIL");

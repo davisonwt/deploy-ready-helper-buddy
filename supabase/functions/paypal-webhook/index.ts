@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceRoleKey = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"];
+  const serviceRoleKey = (JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
   const webhookId = Deno.env.get("PAYPAL_WEBHOOK_ID");
   if (!supabaseUrl || !serviceRoleKey || !webhookId) {
     return json({ error: "server_misconfigured" }, 500);

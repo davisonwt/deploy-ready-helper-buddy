@@ -37,7 +37,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? ''
+      (JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) ?? ''
     );
 
     const body = await req.json();
@@ -122,7 +122,7 @@ serve(async (req) => {
     if (usernameValid && emailValid) {
       const anonSupabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
-        JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] ?? ''
+        (JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_ANON_KEY")) ?? ''
       );
       
       const { error: signInError } = await anonSupabase.auth.signInWithPassword({

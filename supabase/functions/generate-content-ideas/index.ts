@@ -24,7 +24,7 @@ serve(async (req) => {
     // Initialize Supabase client
     console.log('🔧 Initializing Supabase client...');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"];
+    const supabaseKey = (JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
     
     if (!supabaseUrl || !supabaseKey) {
       console.error('❌ Missing Supabase environment variables');

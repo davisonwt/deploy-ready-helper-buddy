@@ -23,13 +23,13 @@ serve(async (req) => {
     // Create Supabase client for user authentication
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] ?? ""
+      (JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_ANON_KEY")) ?? ""
     );
 
     // Create service role client for privileged operations
     const supabaseService = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? "",
+      (JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) ?? "",
       { auth: { persistSession: false } }
     );
 

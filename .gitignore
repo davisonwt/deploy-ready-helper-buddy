@@ -29,6 +29,7 @@ dist-ssr
 !.env.example
 !.env.jitsi.example
 .s2g-service-role-key
+.s2g-keys.json
 
 # Supabase CLI local state (project ref, versions, pooler URL) — regenerated
 # on every `supabase` CLI command, not source

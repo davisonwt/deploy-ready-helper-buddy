@@ -50,12 +50,12 @@ serve(async (req) => {
 
     const userClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] ?? "",
+      (JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_ANON_KEY")) ?? "",
       { global: { headers: { Authorization: authHeader } } },
     );
     const service = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] ?? "",
+      (JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) ?? "",
       { auth: { persistSession: false } },
     );
 

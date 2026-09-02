@@ -13,8 +13,8 @@ Deno.serve(async (req) => {
 
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SERVICE_ROLE = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"]!;
-    const ANON_KEY = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"]!;
+    const SERVICE_ROLE = (JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"))!;
+    const ANON_KEY = (JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_ANON_KEY"))!;
     const GOSAT_USER_ID = Deno.env.get("GOSAT_USER_ID");
 
     if (!GOSAT_USER_ID) {

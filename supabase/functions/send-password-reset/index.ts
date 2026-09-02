@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Check environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"];
+    const supabaseServiceKey = (JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
     
     console.log('Supabase URL exists:', !!supabaseUrl);
     console.log('Service key exists:', !!supabaseServiceKey);

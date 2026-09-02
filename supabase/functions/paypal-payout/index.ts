@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     return new Response("method_not_allowed", { status: 405 });
   }
 
-  const serviceRoleKey = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"];
+  const serviceRoleKey = (JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
   const paypalClientId = Deno.env.get("PAYPAL_CLIENT_ID");
   const paypalSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
 
