@@ -105,12 +105,18 @@ async function callSightengine(blob: Blob, filename: string, kind: "image" | "vi
   form.append("api_secret", SIGHTENGINE_API_SECRET);
 
   const res = await fetch(endpoint, { method: "POST", body: form });
+  const bodyText = await res.text();
   if (!res.ok) {
-    throw new Error(`sightengine_http_${res.status}`);
+    throw new Error(`sightengine_http_${res.status}: ${bodyText.slice(0, 500)}`);
   }
-  const data = await res.json();
+  let data: any;
+  try {
+    data = JSON.parse(bodyText);
+  } catch {
+    throw new Error(`sightengine_unparseable_response: ${bodyText.slice(0, 500)}`);
+  }
   if (data?.status !== "success") {
-    throw new Error(`sightengine_status_${data?.status ?? "unknown"}`);
+    throw new Error(`sightengine_status_${data?.status ?? "unknown"}: ${bodyText.slice(0, 500)}`);
   }
   return data;
 }
@@ -258,6 +264,10 @@ Deno.serve(async (req) => {
       };
     } catch (scanErr) {
       // Scanner unavailable or errored -- reject, never let it through unscanned.
+      // The error message carries Sightengine's own response body (see
+      // callSightengine) so this log line alone is enough to diagnose a
+      // wrong-credentials / bad-request / non-200 failure without needing
+      // another temporary diagnostic round-trip.
       console.error("moderate-media: scan failed", scanErr);
       verdict = {
         verdict: "block",
