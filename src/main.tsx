@@ -53,8 +53,18 @@ if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
   // previous deploy's content-hashed chunk filenames. Reload once so an
   // already-open tab lands on the new build instead of later 404ing on a
   // lazy import() for a chunk that no longer exists on the server.
+  //
+  // controllerchange fires identically for that case AND for a brand-new
+  // visitor's very first SW install (navigator.serviceWorker.controller
+  // goes from null -> the new SW either way) -- a first visit has no
+  // stale JS to recover from, so this used to force an unwanted reload on
+  // every new visitor. Only reload when a controller already existed
+  // BEFORE this script ran, i.e. an old SW from a previous visit is being
+  // replaced, not installed for the first time.
+  const hadControllerAlready = !!navigator.serviceWorker.controller;
   let refreshingForNewServiceWorker = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadControllerAlready) return;
     if (refreshingForNewServiceWorker) return;
     refreshingForNewServiceWorker = true;
     window.location.reload();
