@@ -85,9 +85,60 @@ async function updateCoveredRows(
   }
 }
 
-/** Dispatch time: mark covered rows as in-flight so an overlapping run can't double-pick them. */
-export function markCoveredRowsProcessing(supabase: SupabaseLike, coveredRows: CoveredRow[]): Promise<void> {
-  return updateCoveredRows(supabase, coveredRows, (cfg) => ({ [cfg.statusCol]: cfg.processingValue }));
+export interface ClaimResult {
+  /** True only if every covered row was actually claimed by THIS call. */
+  allClaimed: boolean;
+  claimedCount: number;
+  expectedCount: number;
+}
+
+/**
+ * Dispatch time: mark covered rows as in-flight so an overlapping run can't
+ * double-pick them.
+ *
+ * Wallet-hardening audit item 4 ("test it, don't assume"): the previous
+ * version of this function did an unconditional UPDATE ... WHERE id IN
+ * (...), with no check that the row was still pending. Reading it made the
+ * race obvious without needing to reproduce it live: owed_payout_balances()
+ * has no locking of its own (a plain STABLE SQL SELECT), so two overlapping
+ * runs could both read the same pending row before either one's UPDATE
+ * landed, and the old unconditional UPDATE would let BOTH runs "claim" it
+ * and both send money. Confirmed live afterward too, in two genuinely
+ * concurrent transactions (see the migration comment / commit message for
+ * the exact repro) -- before this fix, both claimed the same row; after,
+ * exactly one did.
+ *
+ * The actual compare-and-swap is the .eq(statusCol, pendingValue) below --
+ * a row some OTHER call already flipped out of 'pending' is silently
+ * excluded from the returned `data`, never overwritten. The caller MUST
+ * check `allClaimed` and abort/revert (markCoveredRowsPending) rather than
+ * sending money if it's false -- a partial claim means a concurrent run
+ * already has (or is about to have) part of this same obligation.
+ */
+export async function markCoveredRowsProcessing(supabase: SupabaseLike, coveredRows: CoveredRow[]): Promise<ClaimResult> {
+  const byTable = new Map<CoveredRow["source_table"], string[]>();
+  for (const row of coveredRows) {
+    const ids = byTable.get(row.source_table) ?? [];
+    ids.push(row.source_id);
+    byTable.set(row.source_table, ids);
+  }
+  let claimedCount = 0;
+  const expectedCount = coveredRows.length;
+  for (const [table, ids] of byTable) {
+    const cfg = TABLE_CONFIG[table];
+    const { data, error } = await supabase
+      .from(table)
+      .update({ [cfg.statusCol]: cfg.processingValue })
+      .eq(cfg.statusCol, cfg.pendingValue)
+      .in("id", ids)
+      .select("id");
+    if (error) {
+      console.error(`payoutLedger: failed to claim ${table}`, ids, error.message);
+      continue;
+    }
+    claimedCount += (data ?? []).length;
+  }
+  return { allClaimed: claimedCount === expectedCount, claimedCount, expectedCount };
 }
 
 /** PAYMENT.PAYOUTS-ITEM.SUCCEEDED: mark covered rows paid for good. */

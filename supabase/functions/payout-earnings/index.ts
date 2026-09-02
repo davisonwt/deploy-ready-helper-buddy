@@ -451,9 +451,24 @@ Deno.serve(async (req) => {
                 console.error("payout-earnings: solana payouts insert failed", r.recipient_user_id, insErr?.message);
                 continue;
               }
-              // Lock the covered rows immediately so an overlapping run
-              // can't double-pick them, same pattern as the PayPal leg.
-              await markCoveredRowsProcessing(admin, r.covered_rows as CoveredRow[]);
+              // Claim the covered rows immediately so an overlapping run
+              // can't double-pick them -- same pattern as the PayPal leg.
+              // This is a real compare-and-swap now (wallet-hardening audit
+              // item 4): if another run already claimed part of this same
+              // obligation, allClaimed is false and NOTHING gets sent for
+              // it this run -- reverting whatever this run DID manage to
+              // claim back to pending so it isn't stranded, and marking
+              // this payouts row failed rather than leaving it processing.
+              const claim = await markCoveredRowsProcessing(admin, r.covered_rows as CoveredRow[]);
+              if (!claim.allClaimed) {
+                console.error(
+                  `payout-earnings: race detected — ${r.recipient_user_id} covered rows already claimed ` +
+                    `by another run (${claim.claimedCount}/${claim.expectedCount}); skipping send, reverting.`,
+                );
+                await markCoveredRowsPending(admin, r.covered_rows as CoveredRow[], "concurrent_run_claimed_first");
+                await admin.from("payouts").update({ status: "failed", error: "concurrent_run_claimed_first" }).eq("id", prow.id);
+                continue;
+              }
 
               try {
                 const { signature } = await sendUsdcPayout(sender, rail.address!, amount);
@@ -553,12 +568,39 @@ Deno.serve(async (req) => {
       return json({ error: "payouts_insert_failed", detail: insErr?.message }, 500);
     }
 
-    // Mark covered source rows in-flight so an overlapping run can't double-pick them.
+    // Claim covered source rows so an overlapping run can't double-pick
+    // them. Wallet-hardening audit item 4: a real compare-and-swap now,
+    // not an unconditional flip -- a recipient whose covered rows are
+    // partially claimed by another run is excluded from this batch
+    // entirely (reverted + marked failed) rather than risking PayPal
+    // being asked to pay an amount that overlaps another run's claim.
+    const claimedRows: typeof inserted = [];
     for (const row of inserted) {
-      await markCoveredRowsProcessing(admin, row.covered_rows as CoveredRow[]);
+      const claim = await markCoveredRowsProcessing(admin, row.covered_rows as CoveredRow[]);
+      if (!claim.allClaimed) {
+        console.error(
+          `payout-earnings: race detected — ${row.recipient_user_id} covered rows already claimed ` +
+            `by another run (${claim.claimedCount}/${claim.expectedCount}); excluding from this PayPal batch.`,
+        );
+        await markCoveredRowsPending(admin, row.covered_rows as CoveredRow[], "concurrent_run_claimed_first");
+        await admin.from("payouts").update({ status: "failed", error: "concurrent_run_claimed_first" }).eq("id", row.id);
+        continue;
+      }
+      claimedRows.push(row);
     }
 
-    const items = inserted.map((row: any) => ({
+    if (claimedRows.length === 0) {
+      return json({
+        success: true,
+        totalFloatUsd,
+        paid: solanaPaidCount,
+        skipped: outcomes.filter((o) => !o.eligible).length + inserted.length,
+        reason: "all_paypal_recipients_claimed_by_concurrent_run",
+        outcomes,
+      });
+    }
+
+    const items = claimedRows.map((row: any) => ({
       recipient_type: "EMAIL",
       receiver: emailByUser.get(row.recipient_user_id)!,
       sender_item_id: row.id,
@@ -584,17 +626,24 @@ Deno.serve(async (req) => {
 
       if (!ok) {
         console.error("payout-earnings: paypal batch create failed", status, data);
-        await admin.from("payouts").update({ status: "failed", error: `paypal_http_${status}` }).eq("run_id", runId);
-        for (const row of inserted) {
+        // Scoped to claimedRows' own ids, not the whole run_id -- a row
+        // already excluded above (concurrent_run_claimed_first) keeps that
+        // more specific reason rather than being overwritten here.
+        await admin.from("payouts").update({ status: "failed", error: `paypal_http_${status}` })
+          .in("id", claimedRows.map((r: any) => r.id));
+        for (const row of claimedRows) {
           await markCoveredRowsPending(admin, row.covered_rows as CoveredRow[], `paypal_http_${status}`);
         }
         return json({ error: "paypal_batch_failed", detail: data }, 502);
       }
 
       const batchId = data?.batch_header?.payout_batch_id ?? null;
-      await admin.from("payouts").update({ paypal_batch_id: batchId }).eq("run_id", runId);
+      // Scoped to claimedRows -- a row excluded above was never part of
+      // this batch and must not be stamped with its id.
+      await admin.from("payouts").update({ paypal_batch_id: batchId })
+        .in("id", claimedRows.map((r: any) => r.id));
 
-      for (const row of inserted) {
+      for (const row of claimedRows) {
         await deliverPayoutNotification(admin, row.recipient_user_id, {
           kind: "paid",
           amount: Number(row.amount),
@@ -607,15 +656,17 @@ Deno.serve(async (req) => {
         runId,
         batchId,
         totalFloatUsd,
-        paid: inserted.length + solanaPaidCount,
-        skipped: outcomes.filter((o) => !o.eligible).length,
+        paid: claimedRows.length + solanaPaidCount,
+        skipped: outcomes.filter((o) => !o.eligible).length + (inserted.length - claimedRows.length),
         outcomes,
       });
     } catch (err) {
       console.error("payout-earnings: paypal batch exception", err);
       const reason = err instanceof Error ? err.message : String(err);
-      await admin.from("payouts").update({ status: "failed", error: reason }).eq("run_id", runId);
-      for (const row of inserted) {
+      // Scoped to claimedRows -- same reasoning as the !ok branch above.
+      await admin.from("payouts").update({ status: "failed", error: reason })
+        .in("id", claimedRows.map((r: any) => r.id));
+      for (const row of claimedRows) {
         await markCoveredRowsPending(admin, row.covered_rows as CoveredRow[], reason);
       }
       return json({ error: "paypal_batch_exception", detail: reason }, 500);
