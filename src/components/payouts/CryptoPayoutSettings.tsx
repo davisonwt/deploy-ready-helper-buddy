@@ -42,6 +42,7 @@ export default function CryptoPayoutSettings() {
 
   const [address, setAddress] = useState('');
   const [confirmAddress, setConfirmAddress] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [acknowledged, setAcknowledged] = useState(false);
   // Separate from `acknowledged` (irreversibility) on purpose — this is the
   // explicit "yes, switch me off PayPal" consent. Saving an address must
@@ -84,7 +85,7 @@ export default function CryptoPayoutSettings() {
   const mismatch = confirmAddress.trim() !== address.trim();
   const alreadyActive = activeNetwork === PAYOUT_NETWORK;
 
-  const canSave = !!address && !addressError && !mismatch && acknowledged && activateAsRail && !saving;
+  const canSave = !!address && !addressError && !mismatch && acknowledged && activateAsRail && !!currentPassword && !saving;
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -97,6 +98,7 @@ export default function CryptoPayoutSettings() {
           payout_address_confirm: confirmAddress.trim(),
           payout_tag: null,
           payout_wallet_type: 'personal',
+          current_password: currentPassword,
         },
       });
       if (error) throw error;
@@ -104,9 +106,10 @@ export default function CryptoPayoutSettings() {
       setSaved({ payout_address: data.payout.payout_address });
       setActiveNetwork(PAYOUT_NETWORK);
       setConfirmAddress('');
+      setCurrentPassword('');
       setAcknowledged(false);
       setActivateAsRail(false);
-      toast.success('Solana USDC is now your active payout rail. Check your Sow2Grow notifications for a confirmation of the change.');
+      toast.success('Solana USDC is now your active payout rail. We emailed you a confirmation — a new address has a 48-hour holding period before it can be paid.');
     } catch (e: any) {
       console.error(e);
       toast.error(e?.message ?? 'Could not save payout destination');
@@ -227,6 +230,23 @@ export default function CryptoPayoutSettings() {
                 Make Solana USDC my active payout rail. I understand this switches future weekly
                 payouts to Solana and stops PayPal from paying me until I switch back.
               </Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="payout-current-password">Confirm your password</Label>
+              <Input
+                id="payout-current-password"
+                type="password"
+                value={currentPassword}
+                autoComplete="current-password"
+                placeholder="Your account password"
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Required to confirm it's really you — this is the single most common way marketplace
+                accounts get their payouts redirected. A new or changed address also has a 48-hour
+                holding period before it can be paid, and we'll email you when it changes.
+              </p>
             </div>
 
             <Button onClick={handleSave} disabled={!canSave} className="gap-2">

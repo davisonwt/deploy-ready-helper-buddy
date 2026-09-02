@@ -18,7 +18,12 @@
 //         the hot wallet (see _shared/solanaPayout.ts). NO minimum — a
 //         Solana transfer costs a fraction of a cent, so nothing is held
 //         back. Hard per-transaction/daily caps still apply (below) as the
-//         circuit breaker for a bug or a compromised key.
+//         circuit breaker for a bug or a compromised key. A 48h cooling-off
+//         also applies after any payout_details change (see
+//         PAYOUT_ADDRESS_COOLING_OFF_HOURS below) — the classic account-
+//         takeover payday is changing the payout address, so a freshly
+//         changed one doesn't get paid until the owner has had time to see
+//         update-crypto-payout's notification and react if it wasn't them.
 //       * everyone else → PayPal Payouts, unchanged: $20 minimum per
 //         recipient (PayPal charges a real per-item fee), requires an
 //         ACTIVE, VERIFIED PayPal email in user_wallets
@@ -112,6 +117,18 @@ const MIN_PAYOUT_USD = 20; // PayPal only — Solana has no minimum.
 const SOLANA_MAX_PER_TX_USD = Number(Deno.env.get("SOLANA_MAX_PER_TX_USD")) || 50;
 const SOLANA_MAX_DAILY_USD = Number(Deno.env.get("SOLANA_MAX_DAILY_USD")) || 200;
 
+// Wallet-hardening audit item 2: a freshly-changed payout address (the
+// classic account-takeover payday) doesn't become eligible for a payout
+// for this many hours after the change -- see update-crypto-payout, which
+// sets payout_details_updated_at on every change and now also requires a
+// fresh password re-check and emails the owner. 48h gives a real owner
+// time to see and react to that email if the change wasn't theirs; it
+// barely delays a legitimate change given payouts already run about
+// weekly. Applies to every eligible Solana recipient regardless of
+// whether this is their first payout on the address or their hundredth --
+// the risk is "was this address just changed," not "is it new."
+const PAYOUT_ADDRESS_COOLING_OFF_HOURS = Number(Deno.env.get("PAYOUT_ADDRESS_COOLING_OFF_HOURS")) || 48;
+
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
@@ -183,12 +200,16 @@ Deno.serve(async (req) => {
     const { data: profileRows } = allUserIds.length > 0
       ? await admin
         .from("profiles")
-        .select("user_id, payout_network, payout_address")
+        .select("user_id, payout_network, payout_address, payout_details_updated_at")
         .in("user_id", allUserIds)
       : { data: [] as any[] };
-    const railByUser = new Map<string, { network: string | null; address: string | null }>();
+    const railByUser = new Map<string, { network: string | null; address: string | null; updatedAt: string | null }>();
     for (const p of (profileRows ?? []) as any[]) {
-      railByUser.set(p.user_id, { network: p.payout_network ?? null, address: p.payout_address ?? null });
+      railByUser.set(p.user_id, {
+        network: p.payout_network ?? null,
+        address: p.payout_address ?? null,
+        updatedAt: p.payout_details_updated_at ?? null,
+      });
     }
 
     const solanaOwed = owed.filter((r) => railByUser.get(r.recipient_user_id)?.network === "solana_usdc");
@@ -264,6 +285,13 @@ Deno.serve(async (req) => {
         if (addrErr) {
           solanaOutcomes.push({ ...base, eligible: false, reason: "invalid_solana_address" });
           continue;
+        }
+        if (rail.updatedAt) {
+          const hoursSinceChange = (Date.now() - new Date(rail.updatedAt).getTime()) / (1000 * 60 * 60);
+          if (hoursSinceChange < PAYOUT_ADDRESS_COOLING_OFF_HOURS) {
+            solanaOutcomes.push({ ...base, eligible: false, reason: "payout_address_cooling_off" });
+            continue;
+          }
         }
         if (amount > SOLANA_MAX_PER_TX_USD) {
           solanaOutcomes.push({ ...base, eligible: false, reason: "exceeds_per_tx_cap_needs_squad_approval" });
