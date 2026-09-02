@@ -3,7 +3,6 @@ import { MainVideo } from "./MainVideo";
 import { TribeEconomyVideo } from "./tribe-economy/MainVideo";
 import { HookClip, TIMINGS } from "./hooks/HookClip";
 import { HOOK_SCRIPTS } from "./hooks/scripts";
-import { SamsonVideo, SAMSON_DURATION } from "./samson/MainVideo";
 
 
 export const RemotionRoot = () => (
@@ -12,14 +11,6 @@ export const RemotionRoot = () => (
       id="main"
       component={MainVideo}
       durationInFrames={2250}
-      fps={30}
-      width={1920}
-      height={1080}
-    />
-    <Composition
-      id="samson"
-      component={SamsonVideo}
-      durationInFrames={SAMSON_DURATION}
       fps={30}
       width={1920}
       height={1080}
