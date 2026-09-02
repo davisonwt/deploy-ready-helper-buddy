@@ -277,7 +277,7 @@ export default function MusicTrackDetailPage() {
   };
 
   const handleBuy = async () => {
-    if (!track) return;
+    if (!track || track.price == null) return;
     const belowCryptoMin = priceBreakdown(track.price).total < MIN_CRYPTO_BESTOWAL_USD;
     const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
 
@@ -330,7 +330,13 @@ export default function MusicTrackDetailPage() {
     );
   }
 
-  const { base, s2gFee, total } = priceBreakdown(track.price);
+  // priceBreakdown() deliberately throws on a missing price (platformFee.ts:
+  // "an invalid price is an error", no floor to substitute) -- correct for a
+  // sower-set price, but this page also renders tracks whose price is
+  // genuinely null (never priced / withdrawn from sale), which used to crash
+  // the whole page render instead of just hiding the purchase flow.
+  const hasPrice = track.price != null;
+  const { base, s2gFee, total } = hasPrice ? priceBreakdown(track.price) : { base: 0, s2gFee: 0, total: 0 };
   const isBuying = track.source === 'dj_track' ? purchasingTrack : buyingProduct;
   const belowCryptoMin = total < MIN_CRYPTO_BESTOWAL_USD;
   const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
@@ -429,6 +435,10 @@ export default function MusicTrackDetailPage() {
                       ✓ Bestowed — thank you for supporting this sower
                     </div>
                   )
+                ) : !hasPrice ? (
+                  <div className="text-sm text-slate-400">
+                    This seed isn't for sale right now — no price has been set.
+                  </div>
                 ) : (
                   <>
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
