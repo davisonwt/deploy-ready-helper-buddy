@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-const PRIVATE_BUCKETS = new Set(['music-tracks', 'dj-music', 'premium-room']);
+const PRIVATE_BUCKETS = new Set(['music-tracks', 'dj-music', 'premium-room', 'seed-previews']);
 
 function extractBucketAndPath(url: string): { bucket: string; path: string } | null {
   try {

@@ -10,6 +10,7 @@ import { MapPin, DollarSign, Eye, Users } from "lucide-react"
 import { Link } from "react-router-dom"
 import { GradientPlaceholder } from "@/components/ui/GradientPlaceholder"
 import { fetchTribeOrchards } from "@/api/sowerContent"
+import SignedImg from "@/components/media/SignedImg"
 
 interface SearchFilters {
   query: string
@@ -123,7 +124,7 @@ const AdvancedSearchPage = () => {
                   <Card key={orchard.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                     <div className="relative">
                       {orchard.images && orchard.images.length > 0 ? (
-                        <img
+                        <SignedImg
                           src={orchard.images[0]}
                           alt={orchard.title}
                           className="w-full h-48 object-cover"

@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Music, Image as ImageIcon, CheckCircle2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import SignedImg from '@/components/media/SignedImg';
 
 const STORAGE_BASE = `${import.meta.env.VITE_SUPABASE_URL || 'https://zuwkgasbkpjlxzsjzumu.supabase.co'}/storage/v1/object/public`;
 
@@ -314,7 +315,7 @@ export default function AdminAttachCoversPage() {
                 <div className="grid grid-cols-3 gap-2">
                   {images.map((img) => (
                     <div key={img.path} className="relative group rounded-lg overflow-hidden border border-border">
-                      <img
+                      <SignedImg
                         src={img.url}
                         alt={img.path}
                         className="w-full aspect-square object-cover"

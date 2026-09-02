@@ -13,6 +13,7 @@ import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
 import { formatCurrency } from '../utils/formatters'
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder'
+import SignedImg from '@/components/media/SignedImg'
 import { processOrchardsUrls } from '../utils/urlUtils'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import LivingButton from '../components/LivingButton'
@@ -644,7 +645,7 @@ export default function MyOrchardsPage() {
                         <Card className='backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 shadow-2xl hover:shadow-3xl transition-all flex flex-col'>
                           <div className="relative">
                             {seed.images?.[0] ? (
-                              <img src={seed.images[0]} alt={seed.title} className="w-full h-48 object-cover rounded-t-lg" />
+                              <SignedImg src={seed.images[0]} alt={seed.title} className="w-full h-48 object-cover rounded-t-lg" />
                             ) : (
                               <GradientPlaceholder type="orchard" title={seed.title} className="w-full h-48 rounded-t-lg" size="lg" />
                             )}

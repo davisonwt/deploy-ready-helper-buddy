@@ -9,6 +9,7 @@ import { useSacredNow } from '../hooks/useSacredNow'
 import { BeadPopup } from '../components/watch/BeadPopup'
 import SeedSlider from '../components/garden/SeedSlider'
 import LivingSeedCard from '../components/garden/LivingSeedCard'
+import SignedImg from '../components/media/SignedImg'
 import {
   buildSeedCard, buildOrchardCard, buildMusicCard,
   buildBookCard, buildVideoCard, deleteRow,
@@ -1063,7 +1064,7 @@ export default function SeedFlowDashboard() {
 
               <div style={styles.avatar}>
                 {profile?.avatar_url
-                  ? <img
+                  ? <SignedImg
                       src={profile.avatar_url}
                       alt="Your avatar"
                       loading="lazy"

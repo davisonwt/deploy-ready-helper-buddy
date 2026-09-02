@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, ShieldCheck, XCircle, ExternalLink, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import SignedImg from '@/components/media/SignedImg';
 
 interface PendingCred {
   id: string;
@@ -128,7 +129,7 @@ export default function AdminCredentialsPage() {
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-3">
                     {c.avatar_url ? (
-                      <img src={c.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover" />
+                      <SignedImg src={c.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover" />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-lg">
                         {(c.display_name || '?')[0]?.toUpperCase()}

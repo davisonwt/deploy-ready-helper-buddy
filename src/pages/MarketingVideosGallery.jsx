@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { VideoPlayer } from '@/components/ui/VideoPlayer'
 import VideoGifting from '@/components/community/VideoGifting'
+import SignedImg from '@/components/media/SignedImg'
 import VideoCommentsSection from '@/components/community/VideoCommentsSection'
 import VideoSocialShare from '@/components/community/VideoSocialShare'
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel'
@@ -363,8 +364,8 @@ export default function MarketingVideosGallery() {
                           {/* Creator Info */}
                           <div className='flex items-center gap-3'>
                             {video.profiles?.avatar_url ? (
-                              <img 
-                                src={video.profiles.avatar_url} 
+                              <SignedImg
+                                src={video.profiles.avatar_url}
                                 alt='Creator'
                                 className='w-8 h-8 rounded-full'
                               />

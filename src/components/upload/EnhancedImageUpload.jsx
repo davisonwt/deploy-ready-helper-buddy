@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import SignedImg from '@/components/media/SignedImg';
 
 const EnhancedImageUpload = ({ 
   onUpload, 
@@ -446,7 +447,7 @@ const EnhancedImageUpload = ({
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
               {existingImages.map((image, index) => (
                 <div key={index} className="aspect-square relative border rounded overflow-hidden">
-                  <img
+                  <SignedImg
                     src={image.url || image}
                     alt={`Existing image ${index + 1}`}
                     className="w-full h-full object-cover"

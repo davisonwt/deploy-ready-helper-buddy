@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SignedImg from '@/components/media/SignedImg';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -310,7 +311,7 @@ export function UserManagementDashboard() {
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           {user.avatar_url ? (
-                            <img src={user.avatar_url} alt={getDisplayName(user)} className="w-8 h-8 rounded-full object-cover border" />
+                            <SignedImg src={user.avatar_url} alt={getDisplayName(user)} className="w-8 h-8 rounded-full object-cover border" />
                           ) : (
                             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                               <User className="h-4 w-4 text-primary" />

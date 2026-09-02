@@ -18,7 +18,7 @@ import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 
-const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room'];
+const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room', 'orchard-images', 'seed-previews'];
 
 function extractBucketAndPath(url: string): { bucket: string; path: string } | null {
   try {

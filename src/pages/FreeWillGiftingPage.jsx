@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import SignedImg from '@/components/media/SignedImg'
 import BillingInfoForm from '@/components/BillingInfoForm'
 import PaymentModal from '@/components/PaymentModal'
 import { 
@@ -217,7 +218,7 @@ export default function FreeWillGiftingPage() {
             <div className="flex items-center gap-5">
               <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-cyan-400/40 shadow-[0_0_20px_rgba(34,211,238,0.35)]">
                 {user?.avatar_url ? (
-                  <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                  <SignedImg src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-cyan-500/40 to-violet-500/40 flex items-center justify-center"><User className="h-10 w-10 text-white" /></div>
                 )}

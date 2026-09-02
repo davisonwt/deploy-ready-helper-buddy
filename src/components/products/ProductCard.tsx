@@ -18,6 +18,7 @@ import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { formatCurrency } from '@/lib/utils';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 import { isAlbum as isAlbumProduct } from '@/lib/products/isAlbum';
+import SignedImg from '@/components/media/SignedImg';
 import PreviewPlayer from '@/components/media/PreviewPlayer';
 
 interface ProductCardProps {
@@ -218,7 +219,7 @@ export default function ProductCard({ product, featured, showActions = false, hi
                 className="w-full h-full"
               />
             ) : (
-              <img
+              <SignedImg
                 src={product.cover_image_url}
                 alt={product.title}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"

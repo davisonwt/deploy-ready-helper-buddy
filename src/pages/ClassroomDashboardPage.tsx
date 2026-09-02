@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Users, Clock, Hand, Send, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import SignedImg from '@/components/media/SignedImg';
 
 interface SessionRow {
   id: string;
@@ -246,7 +247,7 @@ function Avatar({ profile }: { profile?: ProfileLite }) {
   const initial = (profile?.display_name || profile?.username || 'S').slice(0, 1).toUpperCase();
   return (
     <div className="h-7 w-7 rounded-full bg-cyan-500/20 flex items-center justify-center text-[11px] font-bold overflow-hidden shrink-0">
-      {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" /> : initial}
+      {profile?.avatar_url ? <SignedImg src={profile.avatar_url} alt="" className="h-full w-full object-cover" /> : initial}
     </div>
   );
 }

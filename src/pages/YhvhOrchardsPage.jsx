@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder'
+import SignedImg from '@/components/media/SignedImg'
 import { SocialActionButtons } from '@/components/social/SocialActionButtons'
 import { formatCurrency } from '@/lib/utils'
 import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip'
@@ -311,7 +312,7 @@ export default function YhvhOrchardsPage() {
                         <CardContent className="pt-0 flex-1 flex flex-col">
                           <div className="mb-3 relative overflow-hidden rounded-lg">
                             {orchard.images && orchard.images.length > 0 ? (
-                              <img
+                              <SignedImg
                                 src={orchard.images[0]}
                                 alt={orchard.title}
                                 className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"

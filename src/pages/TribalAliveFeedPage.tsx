@@ -25,6 +25,7 @@ import {
   ChevronLeft, ChevronRight, ChevronDown,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useSignedImage } from '@/lib/storage/signedImage';
 import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { fetchActiveProductsForFeed } from '@/api/products';
 import { useAuth } from '@/hooks/useAuth';
@@ -1401,7 +1402,9 @@ function FeedCard({
     ? item.images
     : (item.image ? [item.image] : []);
   const hasGallery = gallery.length > 1;
-  const currentImg = gallery[imgIdx] || item.image || null;
+  const rawCurrentImg = gallery[imgIdx] || item.image || null;
+  const currentImg = useSignedImage(rawCurrentImg);
+  const sowerAvatar = useSignedImage(item.sower_avatar);
 
   // Reset to first image when card changes
   useEffect(() => { setImgIdx(0); }, [item.key]);
@@ -1596,7 +1599,7 @@ function FeedCard({
         <div className="flex max-w-md items-center gap-2 rounded-xl bg-black/55 p-2.5 backdrop-blur-md ring-1 ring-white/15">
           <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/10">
             {item.sower_avatar ? (
-              <img src={item.sower_avatar} alt="" className="h-full w-full object-cover" />
+              <img src={sowerAvatar ?? undefined} alt="" className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm font-semibold">{item.sower_name[0]}</div>
             )}

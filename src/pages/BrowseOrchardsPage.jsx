@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { processOrchardsUrls } from "../utils/urlUtils"
 import { GradientPlaceholder } from "@/components/ui/GradientPlaceholder"
+import SignedImg from "@/components/media/SignedImg"
 import { motion, AnimatePresence } from "framer-motion"
 import LivingButton from "../components/LivingButton"
 import PreviewPlayer from "@/components/media/PreviewPlayer"
@@ -186,7 +187,7 @@ function OrchardCard({ orchard, index }) {
     >
       <div style={{ position: 'relative', height: 200 }}>
         {orchard.main_image ? (
-          <img src={orchard.main_image} alt={orchard.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <SignedImg src={orchard.main_image} alt={orchard.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <GradientPlaceholder type="orchard" title={orchard.title} className="w-full h-full" size="lg" />
         )}

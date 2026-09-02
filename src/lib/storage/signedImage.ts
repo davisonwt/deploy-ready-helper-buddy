@@ -12,7 +12,6 @@ const PUBLIC_BUCKETS = new Set([
   'live-session-art',
   'memry-media',
   'orchard-audio',
-  'orchard-images',
   'orchard-videos',
   'product-videos',
   'provider-assets',

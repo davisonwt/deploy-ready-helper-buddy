@@ -26,7 +26,7 @@ import {
 } from '@/lib/media/previewPlaybackStore';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 
-const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room'];
+const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room', 'orchard-images', 'seed-previews'];
 const PRIVATE_COVER_BUCKETS = new Set(['music-tracks', 'dj-music', 'premium-room']);
 
 function extractBucketAndPath(url: string): { bucket: string; path: string } | null {

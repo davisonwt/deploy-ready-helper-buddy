@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, FileSpreadsheet, FileText, AlertCircle, CheckCircle2, ArrowLeft, Sprout, ImagePlus, X, Star, GripVertical, ChevronRight } from 'lucide-react';
+import SignedImg from '@/components/media/SignedImg';
 
 type ProductImage = { url: string; path: string };
 
@@ -444,7 +445,7 @@ function ImagesStep({
                       onDrop={() => { if (dragFrom !== null) moveImage(dragFrom, i); setDragFrom(null); }}
                       className="relative group aspect-square rounded-lg overflow-hidden border bg-muted"
                     >
-                      <img src={img.url} alt="" className="w-full h-full object-cover" />
+                      <SignedImg src={img.url} alt="" className="w-full h-full object-cover" />
                       {i === 0 && (
                         <Badge className="absolute top-1 left-1 gap-1"><Star className="h-3 w-3" /> Primary</Badge>
                       )}
@@ -670,7 +671,7 @@ function PublishStep({
             <div key={r.idx} className="rounded-lg border overflow-hidden">
               <div className="aspect-square bg-muted">
                 {r.images?.[0]?.url
-                  ? <img src={r.images[0].url} alt="" className="w-full h-full object-cover" />
+                  ? <SignedImg src={r.images[0].url} alt="" className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center text-muted-foreground"><ImagePlus className="h-6 w-6" /></div>}
               </div>
               <div className="p-2">

@@ -21,6 +21,7 @@ import { formatCurrency } from '../utils/formatters';
 import { VideoPlayer } from '@/components/ui/VideoPlayer';
 import OrchardVideoManager from '@/components/orchard/OrchardVideoManager';
 import OrchardPaymentWidget from '@/components/orchard/OrchardPaymentWidget';
+import SignedImg from '@/components/media/SignedImg';
 
 const OrchardPage = () => {
   const { orchardId } = useParams();
@@ -189,7 +190,7 @@ const OrchardPage = () => {
               {/* Orchard Image */}
               {orchard.images && orchard.images.length > 0 && (
                 <div className="relative h-64 md:h-80 overflow-hidden rounded-t-lg">
-                  <img
+                  <SignedImg
                     src={orchard.images[0]}
                     alt={orchard.title}
                     className="w-full h-full object-cover"

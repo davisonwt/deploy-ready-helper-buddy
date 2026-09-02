@@ -12,6 +12,7 @@ import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti
 import MarketplaceFilterBar from '@/components/marketplace/MarketplaceFilterBar';
 import WanderingBadgeBar, { type WanderingRole } from '@/components/marketplace/WanderingBadgeBar';
 import PreviewPlayer from '@/components/media/PreviewPlayer';
+import SignedImg from '@/components/media/SignedImg';
 import { isAlbum } from '@/lib/products/isAlbum';
 
 const ITEMS_PER_PAGE = 20;
@@ -348,8 +349,8 @@ export default function ProductsPage() {
                 className="bg-white/10 backdrop-blur-lg rounded-3xl overflow-hidden hover:scale-105 transition-all shadow-2xl"
               >
                 {product.cover_image_url ? (
-                  <img 
-                    src={product.cover_image_url} 
+                  <SignedImg
+                    src={product.cover_image_url}
                     alt={product.title}
                     className="w-full h-48 object-cover"
                     onError={(e) => {
@@ -446,7 +447,7 @@ export default function ProductsPage() {
             >
               <div className="relative">
                 {product.cover_image_url ? (
-                  <img
+                  <SignedImg
                     src={product.cover_image_url}
                     alt={product.title}
                     className="w-full h-64 object-cover"

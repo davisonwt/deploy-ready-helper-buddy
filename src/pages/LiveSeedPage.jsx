@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '../hooks/useAuth'
 import { toast } from 'sonner'
 import { Heart, Loader2 } from 'lucide-react'
+import SignedImg from '@/components/media/SignedImg'
 
 const SESSION_TYPES = [
   { value: 'training', label: 'Training', emoji: '🎓', color: '#6366f1', desc: 'Teach skills related to this seed' },
@@ -111,7 +112,7 @@ export default function LiveSeedPage() {
         <div style={{ background: 'linear-gradient(180deg, #0f172a 0%, #020617 100%)', borderLeft: '1px solid rgba(255,255,255,0.06)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           {seed?.images?.[0] && (
             <div style={{ position: 'relative', height: 180 }}>
-              <img src={seed.images[0]} alt={seed.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <SignedImg src={seed.images[0]} alt={seed.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0f172a, transparent)' }} />
             </div>
           )}

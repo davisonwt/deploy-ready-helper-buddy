@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "../hooks/useAuth"
 import { useToast } from "../hooks/use-toast"
 import { moderateBase64Upload, moderationRejectionMessage } from "@/lib/moderation/moderateUpload"
+import SignedImg from "@/components/media/SignedImg"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
@@ -565,9 +566,9 @@ export default function ProfilePage() {
                 <div className="relative group">
                   <div className="w-32 h-32 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20 transition-all duration-500 group-hover:scale-105 group-hover:shadow-3xl">
                     {formData.avatar_url ? (
-                      <img 
-                        src={formData.avatar_url} 
-                        alt="Profile" 
+                      <SignedImg
+                        src={formData.avatar_url}
+                        alt="Profile"
                         className="w-full h-full object-cover"
                       />
                     ) : (
