@@ -8,7 +8,17 @@ export interface DistributionData {
   holding_wallet: string;
   tithing_admin_wallet: string;
   tithing_admin_amount: number;
-  sower_wallet: string;
+  /**
+   * The owner's resolved payout address/email at snapshot time, informational
+   * only — nothing in the modern payout path (owed_payout_balances(),
+   * payout-earnings, credit_earning_for_gift_bestowal) reads this field, all
+   * of them resolve the rail fresh from profiles/user_wallets at payout
+   * time. Only the legacy Binance-only executeDistribution() actually pays
+   * out to this address. null when the owner hasn't configured any payout
+   * method yet — never a reason to block the sale (see resolveOwnerPayout
+   * below).
+   */
+  sower_wallet: string | null;
   sower_amount: number;
   sower_user_id?: string;
   mode: "automatic" | "manual";
@@ -71,7 +81,6 @@ export async function buildDistributionData(
   const wallets = await fetchOrganizationWallets(supabase, [
     "s2gholding",
     "s2gbestow",
-    "s2gdavison",
   ]);
 
   if (!wallets.s2gholding) {
@@ -82,16 +91,16 @@ export async function buildDistributionData(
     throw new Error("Tithing wallet (s2gbestow) is not configured");
   }
 
-  const sowerWallet = await resolveUserWallet(
-    supabase,
-    context.orchardUserId,
-  ) ?? wallets.s2gdavison;
-
-  if (!sowerWallet) {
-    throw new Error(
-      "Unable to determine sower Binance Pay wallet. Please configure a wallet for the orchard owner or set organization wallet s2gdavison.",
-    );
-  }
+  // Resolved the same way payout-earnings resolves a recipient's rail —
+  // profiles.payout_network/payout_address for Solana, else a verified
+  // PayPal email — not a Binance-only lookup (that dependency predates the
+  // Solana/PayPal era and, until this fix, hard-blocked checkout for any
+  // orchard owner without a binance_pay wallet row, which is effectively
+  // everyone today). Unlike the old Binance path, a missing payout method
+  // here is never a reason to fail the bestowal: null just means the owner
+  // hasn't configured one yet, same as payout-earnings' own "keeps accruing,
+  // never blocks a sale" rule for every other source table.
+  const sowerWallet = await resolveOwnerPayout(supabase, context.orchardUserId);
 
   // pocket_price is fee-inclusive — S2G's 15% is baked in at orchard-creation
   // time, not added on top at checkout. Back it out of what was actually
@@ -164,7 +173,7 @@ export async function executeDistribution(
     });
   }
 
-  if (distribution.sower_amount > 0) {
+  if (distribution.sower_amount > 0 && distribution.sower_wallet) {
     const response = await executeTransfer(binanceClient, {
       bestowalId,
       suffix: "sower",
@@ -189,6 +198,11 @@ export async function executeDistribution(
         distribution.sower_amount,
       );
     }
+  } else if (distribution.sower_amount > 0) {
+    console.warn(
+      `executeDistribution: sower ${distribution.sower_user_id ?? "unknown"} owed ${distribution.sower_amount} ` +
+        `but has no resolved payout wallet — skipping the legacy Binance leg (modern payout still reads sower_user_id/sower_amount via owed_payout_balances()).`,
+    );
   }
 
   await supabase
@@ -227,39 +241,41 @@ async function fetchOrganizationWallets(
   return result;
 }
 
-async function resolveUserWallet(
+/**
+ * Same resolution payout-earnings uses for a recipient's rail (see that
+ * function's own comment): profiles.payout_network==='solana_usdc' wins if
+ * an address is set; otherwise the most-primary-then-most-recently-updated
+ * verified PayPal email from user_wallets. Returns null rather than
+ * throwing when neither is configured — this is a snapshot for display/
+ * audit, not a gate on whether the bestowal can proceed.
+ */
+async function resolveOwnerPayout(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<string | null> {
-  const { data: wallet, error } = await supabase
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("payout_network, payout_address")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (profile?.payout_network === "solana_usdc" && profile?.payout_address) {
+    return profile.payout_address;
+  }
+
+  const { data: wallet } = await supabase
     .from("user_wallets")
     .select("wallet_address")
     .eq("user_id", userId)
-    .in("wallet_type", ["binance_pay", "binance", "binance_pay_id"])
+    .eq("wallet_type", "paypal_email")
     .eq("is_active", true)
+    .not("verified_at", "is", null)
     .order("is_primary", { ascending: false })
+    .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (error && error.code !== "PGRST116") {
-    console.error("Error fetching user wallet:", error);
-  }
-
-  if (wallet?.wallet_address) {
-    return wallet.wallet_address;
-  }
-
-  const { data: sowerWallet } = await supabase
-    .from("sower_payout_wallets")
-    .select("wallet_address")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (sowerWallet?.wallet_address) {
-    return sowerWallet.wallet_address;
-  }
-
-  return null;
+  return wallet?.wallet_address ?? null;
 }
 
 async function executeTransfer(
