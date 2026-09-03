@@ -9,23 +9,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "npm:zod@3.23.8";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { checkAndFinalizeSolanaIntent, type SolanaIntentRow, type SolanaOrderKind } from "../_shared/solanaPayIn.ts";
+import {
+  checkAndFinalizeSolanaIntent,
+  ORDER_OWNER_COLUMN,
+  ORDER_TABLE,
+  type SolanaIntentRow,
+  type SolanaOrderKind,
+} from "../_shared/solanaPayIn.ts";
 import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
 import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
 const BodySchema = z.object({ intentId: z.string().uuid() });
-
-interface OwnerConfig {
-  table: string;
-  ownerColumn: string;
-}
-const OWNER_CONFIG: Record<SolanaOrderKind, OwnerConfig> = {
-  basket: { table: "basket_orders", ownerColumn: "user_id" },
-  content: { table: "content_purchases", ownerColumn: "buyer_id" },
-  gift: { table: "bestowals", ownerColumn: "bestower_id" },
-  orchard: { table: "bestowals", ownerColumn: "bestower_id" },
-  topup: { table: "topups", ownerColumn: "user_id" },
-};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -70,20 +64,21 @@ Deno.serve(async (req) => {
 
   const { data: intent, error: intentErr } = await service
     .from("solana_payment_intents")
-    .select("id, order_kind, order_id, amount_usdc, reference_pubkey, hot_wallet_address, status, cluster, expires_at")
+    .select("id, order_kind, order_id, amount_usdc, reference_pubkey, hot_wallet_address, status, cluster, created_at, expires_at")
     .eq("id", parsed.intentId)
     .maybeSingle();
   if (intentErr) return json({ error: "intent_lookup_failed" }, 500);
   if (!intent) return json({ error: "intent_not_found" }, 404);
 
-  const ownerConfig = OWNER_CONFIG[intent.order_kind as SolanaOrderKind];
+  const orderKind = intent.order_kind as SolanaOrderKind;
+  const ownerColumn = ORDER_OWNER_COLUMN[orderKind];
   if (!isServiceRole) {
     const { data: order } = await service
-      .from(ownerConfig.table)
-      .select(ownerConfig.ownerColumn)
+      .from(ORDER_TABLE[orderKind])
+      .select(ownerColumn)
       .eq("id", intent.order_id)
       .maybeSingle();
-    const ownerId = (order as Record<string, unknown> | null)?.[ownerConfig.ownerColumn];
+    const ownerId = (order as Record<string, unknown> | null)?.[ownerColumn];
     if (ownerId !== callerId) {
       const [{ data: isAdmin }, { data: isGosat }] = await Promise.all([
         service.rpc("has_role", { _user_id: callerId, _role: "admin" }),

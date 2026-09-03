@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     // provider outage can't make a single sweep run indefinitely.
     const { data: intents, error } = await service
       .from("solana_payment_intents")
-      .select("id, order_kind, order_id, amount_usdc, reference_pubkey, hot_wallet_address, status, cluster, expires_at")
+      .select("id, order_kind, order_id, amount_usdc, reference_pubkey, hot_wallet_address, status, cluster, created_at, expires_at")
       .eq("status", "pending")
       .order("created_at", { ascending: true })
       .limit(200);
