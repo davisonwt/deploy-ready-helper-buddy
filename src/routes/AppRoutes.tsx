@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { RequireVerification } from '@/components/auth/RequireVerification';
 import Layout from '@/components/Layout';
+import { S2G_BALANCE_ENABLED } from '@/lib/featureFlags';
 import {
   Index,
   NotFound,
@@ -536,8 +537,13 @@ const AppRoutes = () => (
     <Route path="/books/catalog/:itemId" element={
       <ProtectedRoute><Layout><BooksCatalogItemPage /></Layout></ProtectedRoute>
     } />
+    {/* S2G Balance is feature-flagged off (non-custodial model, 2026-09-03
+        legal decision) -- route kept, page hidden behind the flag rather
+        than removed, so it can come back with one env var. */}
     <Route path="/wallet" element={
-      <ProtectedRoute><Layout><MyWalletPage /></Layout></ProtectedRoute>
+      S2G_BALANCE_ENABLED
+        ? <ProtectedRoute><Layout><MyWalletPage /></Layout></ProtectedRoute>
+        : <Navigate to="/dashboard" replace />
     } />
     <Route path="/dev/nowpay-test" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><NowPaymentsTestPage /></Layout></ProtectedRoute>

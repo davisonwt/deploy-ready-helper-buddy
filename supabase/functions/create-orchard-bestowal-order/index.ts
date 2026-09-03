@@ -19,6 +19,7 @@ import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
 import { finalizeCompletedOrder } from "../_shared/paypal/capture.ts";
+import { isS2GBalanceEnabled } from "../_shared/featureFlags.ts";
 
 interface RequestPayload {
   orchardId: string;
@@ -162,6 +163,7 @@ Deno.serve(async (req) => {
 
     // --- S2G Balance (one-tap, no wallet) --------------------------------------
     if (payload.provider === "balance") {
+      if (!isS2GBalanceEnabled()) return json({ error: "balance_disabled" }, 409);
       const { data: debitRow, error: debitError } = await service.rpc("debit_balance_ledger", {
         _user_id: userId,
         _amount: buyerTotal,

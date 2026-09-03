@@ -17,6 +17,7 @@ import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_s
 import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
 import { finalizeCompletedOrder } from "../_shared/paypal/capture.ts";
+import { isS2GBalanceEnabled } from "../_shared/featureFlags.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -307,6 +308,7 @@ Deno.serve(async (req) => {
 
     // --- S2G Balance (one-tap, no wallet) --------------------------------------
     if (payload.provider === "balance") {
+      if (!isS2GBalanceEnabled()) return json({ error: "balance_disabled" }, 409);
       const { data: debitRow, error: debitError } = await service.rpc("debit_balance_ledger", {
         _user_id: userId,
         _amount: buyerTotal,

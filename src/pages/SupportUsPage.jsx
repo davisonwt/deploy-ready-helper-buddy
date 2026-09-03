@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { S2G_BALANCE_ENABLED } from '@/lib/featureFlags';
 
 export default function SupportUsPage() {
   return (
@@ -24,9 +25,11 @@ export default function SupportUsPage() {
             <Button asChild variant="secondary">
               <Link to="/tithing">Platform Contribution</Link>
             </Button>
-            <Button asChild variant="outline">
-              <Link to="/wallet">Top Up Wallet</Link>
-            </Button>
+            {S2G_BALANCE_ENABLED && (
+              <Button asChild variant="outline">
+                <Link to="/wallet">Top Up Wallet</Link>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
