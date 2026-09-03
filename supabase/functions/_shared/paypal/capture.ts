@@ -124,10 +124,12 @@ async function finalize(
       break;
     }
     case "topup": {
-      // credit_sower_balance_from_topup is idempotent — locks the row,
-      // short-circuits if credited_at is already set.
-      const { error } = await supabase.rpc("credit_sower_balance_from_topup", { _topup_id: recordId });
-      if (error) throw new Error(`credit_sower_balance_from_topup_failed:${error.message}`);
+      // credit_balance_ledger_from_topup is idempotent — locks the row,
+      // short-circuits if credited_at is already set. Credits the S2G
+      // Balance ledger (balance_ledger), not sower_balances — see
+      // spec-payments.md's S2G Balance section.
+      const { error } = await supabase.rpc("credit_balance_ledger_from_topup", { _topup_id: recordId });
+      if (error) throw new Error(`credit_balance_ledger_from_topup_failed:${error.message}`);
       break;
     }
     case "gift":

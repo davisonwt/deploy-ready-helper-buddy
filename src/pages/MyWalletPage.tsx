@@ -9,18 +9,31 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Wallet, ArrowUpRight, ArrowDownLeft, PiggyBank, Settings2, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useBalance } from '@/hooks/useBalance';
 import { toast } from 'sonner';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { CRYPTO_ROUNDING_NOTICE, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 
-interface SowerBalance {
-  available_balance: number;
-  pending_balance: number;
-  total_earned: number;
-  total_withdrawn: number;
-  currency: string;
+interface LedgerRow {
+  id: string;
+  amount: number;
+  kind: string;
+  notes: string | null;
+  created_at: string;
 }
+
+const LEDGER_KIND_LABEL: Record<string, string> = {
+  topup_usdc: 'Top-up (USDC)',
+  topup_paypal: 'Top-up (PayPal)',
+  bestow_debit: 'Bestowal',
+  earning_credit: 'Earning',
+  refund: 'Refund',
+  withdrawal: 'Withdrawal',
+  adjustment: 'Adjustment',
+  escrow_hold: 'Held',
+  escrow_release: 'Released',
+};
 
 interface WalletRow {
   wallet_type: string;
@@ -74,12 +87,13 @@ function fmt(n: number | null | undefined, ccy = 'USD') {
 export default function MyWalletPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { available: balanceAvailable, loading: balanceLoading, refetch: refetchBalance } = useBalance();
   const [loading, setLoading] = useState(true);
-  const [balance, setBalance] = useState<SowerBalance | null>(null);
   const [wallet, setWallet] = useState<WalletRow | null>(null);
   const [topups, setTopups] = useState<TopupRow[]>([]);
   const [bestowals, setBestowals] = useState<BestowalRow[]>([]);
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
+  const [ledger, setLedger] = useState<LedgerRow[]>([]);
 
   // Top-up form
   const [provider, setProvider] = useState<PayoutProviderId>('solana');
@@ -89,18 +103,18 @@ export default function MyWalletPage() {
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [bal, wal, tops, bests, pays] = await Promise.all([
-      supabase.from('sower_balances').select('available_balance, pending_balance, total_earned, total_withdrawn, currency').eq('user_id', user.id).maybeSingle(),
+    const [wal, tops, bests, pays, ledg] = await Promise.all([
       supabase.from('user_wallets').select('wallet_type, wallet_address, payout_currency, network, verified_at').eq('user_id', user.id).eq('is_active', true).order('is_primary', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('topups' as any).select('id, provider, amount, fee_amount, currency, status, created_at, credited_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
       supabase.from('bestowals').select('id, amount, currency, payment_status, created_at').eq('bestower_id', user.id).order('created_at', { ascending: false }).limit(20),
       supabase.from('sower_payouts').select('id, amount, currency, status, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+      supabase.from('balance_ledger' as any).select('id, amount, kind, notes, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
     ]);
-    setBalance((bal.data as SowerBalance | null) ?? { available_balance: 0, pending_balance: 0, total_earned: 0, total_withdrawn: 0, currency: 'USD' });
     setWallet(wal.data as WalletRow | null);
     setTopups(((tops.data as any) ?? []) as TopupRow[]);
     setBestowals(((bests.data as any) ?? []) as BestowalRow[]);
     setPayouts(((pays.data as any) ?? []) as PayoutRow[]);
+    setLedger(((ledg.data as any) ?? []) as LedgerRow[]);
     setLoading(false);
   }, [user]);
 
@@ -132,7 +146,7 @@ export default function MyWalletPage() {
         const resolution = await presentSolanaPayment(solanaPayment);
         if (resolution === 'paid') {
           toast.success('Top-up complete!');
-          await load();
+          await Promise.all([load(), refetchBalance()]);
         }
         setSubmitting(false);
         return;
@@ -165,7 +179,6 @@ export default function MyWalletPage() {
     );
   }
 
-  const ccy = balance?.currency ?? 'USD';
   return (
     <div className="container max-w-4xl mx-auto py-8 space-y-6">
       <Button variant="ghost" onClick={() => navigate(-1)} className="-ml-2">
@@ -175,22 +188,21 @@ export default function MyWalletPage() {
       <header className="flex items-center gap-3">
         <Wallet className="h-7 w-7 text-primary" />
         <div>
-          <h1 className="text-2xl font-bold">My Wallet</h1>
-          <p className="text-sm text-muted-foreground">Your on-platform balance, top-ups, and payout destination.</p>
+          <h1 className="text-2xl font-bold">My S2G Balance</h1>
+          <p className="text-sm text-muted-foreground">Top up once, then bestow in one tap — no wallet popup per purchase.</p>
         </div>
       </header>
 
       {/* Balance */}
       <Card>
         <CardHeader>
-          <CardTitle>On-platform balance</CardTitle>
-          <CardDescription>What Sow2Grow holds for you. Top-ups credit here. Payouts withdraw from here.</CardDescription>
+          <CardTitle>Available balance</CardTitle>
+          <CardDescription>What Sow2Grow holds for you. Top-ups credit here; bestowals debit here.</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Stat label="Available" value={fmt(balance?.available_balance, ccy)} highlight />
-          <Stat label="Pending" value={fmt(balance?.pending_balance, ccy)} />
-          <Stat label="Total earned" value={fmt(balance?.total_earned, ccy)} />
-          <Stat label="Total withdrawn" value={fmt(balance?.total_withdrawn, ccy)} />
+        <CardContent className="space-y-2">
+          <div className="text-4xl font-bold text-primary">
+            {balanceLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : fmt(balanceAvailable)}
+          </div>
         </CardContent>
       </Card>
 
@@ -263,7 +275,39 @@ export default function MyWalletPage() {
         </CardContent>
       </Card>
 
-      {/* Activity */}
+      {/* S2G Balance ledger */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Balance ledger</CardTitle>
+          <CardDescription>Every movement in and out of your S2G Balance.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {ledger.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No balance movements yet.</p>
+          ) : (
+            <ul className="divide-y">
+              {ledger.map((row) => (
+                <li key={row.id} className="py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {row.amount >= 0
+                      ? <ArrowDownLeft className="h-4 w-4 text-green-500" />
+                      : <ArrowUpRight className="h-4 w-4 text-blue-500" />}
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium">{LEDGER_KIND_LABEL[row.kind] ?? row.kind}</div>
+                      <div className="text-xs text-muted-foreground">{new Date(row.created_at).toLocaleString()}</div>
+                    </div>
+                  </div>
+                  <div className={`text-sm font-semibold ${row.amount >= 0 ? 'text-green-600' : 'text-foreground'}`}>
+                    {row.amount >= 0 ? '+' : ''}{fmt(row.amount)}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Legacy activity (bestowals sent + prior payouts) */}
       <Card>
         <CardHeader>
           <CardTitle>Recent activity</CardTitle>
@@ -295,15 +339,6 @@ export default function MyWalletPage() {
           )}
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className={`rounded-md border p-3 ${highlight ? 'bg-primary/5 border-primary/30' : ''}`}>
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={`text-lg font-semibold ${highlight ? 'text-primary' : ''}`}>{value}</div>
     </div>
   );
 }
