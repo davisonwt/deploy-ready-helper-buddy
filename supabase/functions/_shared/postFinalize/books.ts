@@ -230,26 +230,12 @@ async function syncBestowal(supabase: SupabaseLike, bestowalId: string): Promise
   });
 }
 
-async function syncTopup(supabase: SupabaseLike, topupId: string): Promise<void> {
-  const { data: t } = await supabase
-    .from("topups")
-    .select("id, user_id, amount, fee_amount, provider, credited_at, created_at, status")
-    .eq("id", topupId)
-    .maybeSingle();
-  if (!t || t.status !== "completed") return;
-
-  // No sower/seed involved — self-funding. Expense only, buyer's default set.
-  const buyerCompany = await findDefaultBooksCompany(supabase, t.user_id);
-  await upsertExpense(supabase, buyerCompany?.id ?? null, {
-    description: "Wallet top-up",
-    amount: round2(Number(t.amount || 0) + Number(t.fee_amount || 0)),
-    category: "Other",
-    merchant: "Sow2Grow",
-    spent_on: t.credited_at ?? t.created_at,
-    source_table: "topups",
-    source_id: t.id,
-  });
-}
+// A top-up moves money into the member's own S2G Balance — it hasn't been
+// spent yet, so it must never appear in Books. Only the bestowals later made
+// FROM that balance are real expenses, and those already sync themselves
+// (syncBasketOrder/syncBestowal/syncContentPurchase) keyed off their own
+// source row, not off the topup. Intentionally a no-op.
+async function syncTopup(_supabase: SupabaseLike, _topupId: string): Promise<void> {}
 
 /**
  * A paid booking, spec-service-seeds.md §7 step 3-4. finalizeBooking
