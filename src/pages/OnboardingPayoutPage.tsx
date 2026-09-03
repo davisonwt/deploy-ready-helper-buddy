@@ -1,21 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Wallet, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { PAYOUT_PROVIDERS } from '@/lib/payments/providerFees';
 import PayoutSettingsPage from '@/pages/PayoutSettingsPage';
 import { readPendingReturn, clearPendingReturn } from '@/lib/returnTo';
 
 /**
  * Onboarding step shown right after security questions.
  *
- * Wraps the existing PayoutSettingsPage with intro copy explaining the
- * per-transaction cost ranges (paid by the user, not by Sow2Grow), and
- * a Continue / Skip footer. Skipping is allowed — the existing-user
- * banner will keep nudging until they finish.
+ * Wraps the existing PayoutSettingsPage with intro copy and a Continue /
+ * Skip footer. Skipping is allowed — the existing-user banner will keep
+ * nudging until they finish. Deliberately does NOT render its own
+ * provider-list preview any more (it used to loop over PAYOUT_PROVIDERS
+ * directly, which still includes the feature-flagged-off 'balance' entry
+ * — "S2G Balance — one tap" showing up here was that loop, not a second
+ * copy of the settings page) -- PayoutSettingsPage below is the one and
+ * only place that explains the two active rails.
  */
 export default function OnboardingPayoutPage() {
   const navigate = useNavigate();
@@ -72,25 +75,10 @@ export default function OnboardingPayoutPage() {
             </div>
             <CardTitle className="text-2xl">How do you want to be paid?</CardTitle>
             <p className="text-sm text-muted-foreground mt-2 max-w-xl mx-auto">
-              When someone bestows on your seeds, the money is routed through one of two
-              processors. <strong>You pay the processor fee, not Sow2Grow.</strong> Pick whichever
-              suits you — you can change it any time.
+              A Solana wallet (USDC) or PayPal — pick whichever suits you below. You can change
+              it any time.
             </p>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {PAYOUT_PROVIDERS.map((p) => (
-                <div
-                  key={p.id}
-                  className="rounded-md border p-3 bg-muted/30 text-sm"
-                >
-                  <div className="font-semibold mb-1">{p.label}</div>
-                  <div className="text-xs text-muted-foreground mb-2">{p.note}</div>
-                  <div className="text-xs text-muted-foreground">{p.explainer}</div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
         </Card>
 
         {/* Reuse the full settings page so the actual add-wallet UX is identical. */}

@@ -567,12 +567,9 @@ export default function ProfilePage() {
             <CardHeader>
               <CardTitle className="text-foreground text-xl">💳 Wallet &amp; Payments</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Button variant="default" onClick={() => navigate('/wallet')}>
                 Top up my wallet
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/wallet-settings')}>
-                Wallet info &amp; addresses
               </Button>
               <Button variant="outline" onClick={() => navigate('/settings/payouts')}>
                 Payout preferences

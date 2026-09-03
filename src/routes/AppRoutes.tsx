@@ -68,7 +68,6 @@ import {
   
   RadioPage,
   CreatePremiumRoomPage,
-  WalletSettingsPage,
   PayoutSettingsPage,
   PaypalConnectedPage,
   SowIndexPage,
@@ -517,9 +516,10 @@ const AppRoutes = () => (
     <Route path="/profile/:userId" element={
       <ProtectedRoute><MemberProfilePage /></ProtectedRoute>
     } />
-    <Route path="/wallet-settings" element={
-      <ProtectedRoute><Layout><WalletSettingsPage /></Layout></ProtectedRoute>
-    } />
+    {/* Was its own stale wallet/payout stub (Binance Pay copy, a link-through
+        to Payout Settings) -- there is exactly one payout settings page now,
+        see /settings/payouts. */}
+    <Route path="/wallet-settings" element={<Navigate to="/settings/payouts" replace />} />
     <Route path="/settings/payouts" element={
       <ProtectedRoute><Layout><PayoutSettingsPage /></Layout></ProtectedRoute>
     } />
