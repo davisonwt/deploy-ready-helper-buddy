@@ -734,7 +734,18 @@ the second factor.
 
 ---
 
-## 13. S2G Balance (built 2026-09-03)
+## 13. S2G Balance (built 2026-09-03, PARKED 2026-09-03 pending legal)
+
+**PARKED.** Feature-flagged off (`S2G_BALANCE_ENABLED`, off by default)
+the same day it was finished, per legal's decision — see section 14 for
+what replaced it as the live operating model. Nothing below was deleted:
+tables, RPCs, the wallet page, and every checkout branch are intact and
+functional, just unreachable while the flag is off. `credit_earning_for_
+bestowal` (the one function that would move a released earning into
+`balance_ledger`) checks `app_settings.s2g_balance_enabled` and no-ops
+when it's false, leaving `payout_status`/`status` at their pre-credit
+value so `owed_payout_balances()` sees it instead — the entire mechanism
+is one flag flip to reverse, in both directions, once legal clears it.
 
 **Problem.** Per-purchase wallet approval (Phantom popup / QR) proved too
 fragile for small ($2) bestowals — wrong wallet app, unrecognized tokens,
@@ -846,3 +857,95 @@ Resolved 2026-09-03 (were listed here, now shipped): orchard bestowals'
 `'balance'` option (`create-orchard-bestowal-order`), and
 content_purchases/bestowals (gift/orchard) earnings crediting the ledger
 at their finalize point.
+
+---
+
+## 14. Non-custodial operating model (live, 2026-09-03)
+
+Decided with legal 2026-09-03, same day section 13 was parked. Sow2Grow
+does not hold a member's spending funds at all — a grower pays directly
+from their own wallet, and Sow2Grow holds only what it must: sale
+proceeds awaiting payout, and orchard funds under the existing orchard
+rules (section 10).
+
+**Terms disclosure** (`src/pages/TermsPage.tsx`): *"Your funds stay in
+your own wallet. Sow2Grow holds only sale proceeds awaiting payout (paid
+out automatically at $20) and orchard funds under the orchard rules."*
+
+### Feature flag
+
+`S2G_BALANCE_ENABLED` (client: `VITE_S2G_BALANCE_ENABLED`, server:
+`S2G_BALANCE_ENABLED`, both `=== 'true'` to turn on — off by default when
+unset, so no config is needed to keep it off) plus
+`app_settings.s2g_balance_enabled` (checked from SQL, since a Postgres
+function can't read a Deno env var) gate every S2G Balance code path from
+section 13 without deleting any of it:
+
+- `src/hooks/useBalanceProvider.ts` is the single choke point every
+  checkout call site reads from — gated to a no-op, it removes `'balance'`
+  from every `ProviderPicker` and "top up to pay this way" banner at once.
+- `/wallet` (`MyWalletPage`) redirects to `/dashboard` instead of
+  rendering.
+- The 4 `create-*-order` functions reject `provider:'balance'`
+  server-side (409) independent of the client flag.
+- `credit_earning_for_bestowal` no-ops when `app_settings.
+  s2g_balance_enabled` is false, leaving a released earning's
+  `payout_status`/`status` at its pre-credit value — exactly the
+  pre-S2G-Balance behavior, so `owed_payout_balances()` sees it again.
+
+### My Wallet (dashboard)
+
+A card (`src/components/dashboard/MyWalletCard.tsx`) shows the member's
+own connected Solana address and its **live, real on-chain USDC
+balance** — public mainnet RPC, read-only, 60s in-memory cache, always
+mainnet regardless of `SOLANA_CLUSTER` (this is the member's real
+wallet, not the platform's own pay-in/payout rail). Under $5: a banner
+pointing at Phantom's own Buy feature. Connect flow: Phantom extension
+(desktop), Phantom's documented `browse` universal link (mobile — opens
+the page inside Phantom's in-app browser so `window.solana` becomes
+available), or paste an address directly. All three save to
+`profiles.solana_wallet_address` via the same `updateProfile`/
+`validateSolanaAddress` path `ProfilePage` already used.
+
+### Payment path — unchanged
+
+Grower's Phantom → hot wallet, one transaction, exactly the direct
+Solana pay-in built in section 3 (PayPal remains the non-crypto
+alternative). Sower share, whisperer share, and the 15% `s2g_fee` are
+recorded at finalize exactly as before section 13 — none of that logic
+changed; only the now-removed `'balance'` provider touched it.
+
+### Payout threshold — unified across both rails
+
+`payout-earnings`: `PAYOUT_THRESHOLD_USD` (env-overridable, default 20,
+renamed from the PayPal-only `MIN_PAYOUT_USD`) now gates **both** rails
+on the automatic weekly run. Solana previously had no minimum at all on
+this run — that stopped fitting the non-custodial model once nothing is
+supposed to sit held indefinitely below a real threshold, but a
+recipient also shouldn't be paid automatically in a stream of sub-dollar
+sends.
+
+New `request-earnings-payout`: the actual "no minimum" path, on demand.
+A sower/whisperer on the Solana rail can pull whatever they're currently
+owed early, any amount ≥ $1 (rate-limited) — a USDC transfer costs a
+fraction of a cent, so there's no reason to make them wait for $20. Same
+source of truth as `payout-earnings` (`owed_payout_balances()`), same
+claim/send/finalize shape as its Solana leg (`markCoveredRowsProcessing`'s
+compare-and-swap keeps concurrent runs safe). PayPal recipients get an
+honest status instead of a fake instant send — PayPal's own per-item fee
+is exactly why $20 exists, and no button waives that; below $20 they're
+told plainly they'll be paid automatically once they cross it. A
+`preview:true` call powers the "Your earnings" card on
+`PayoutSettingsPage` without exposing `owed_payout_balances()` (service-
+role only) to the client directly.
+
+Orchards' Uplift/Launch hold rules (section 10) are untouched — out of
+scope for this cutover.
+
+### Still open
+
+- Same legal-review note as section 13 doesn't apply here — this model
+  *is* the one legal signed off on 2026-09-03. What's still open:
+  whether `PAYOUT_THRESHOLD_USD`'s default ($20) is the right number
+  long-term, and the same Squad-balance blind spot noted in section 13's
+  sentinel check (hot wallet only, not the 2-of-3 Squad).
