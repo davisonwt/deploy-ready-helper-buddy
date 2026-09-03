@@ -942,6 +942,30 @@ role only) to the client directly.
 Orchards' Uplift/Launch hold rules (section 10) are untouched — out of
 scope for this cutover.
 
+### Settlement consent
+
+A sower must accept a required checkbox — *"I understand Sow2Grow holds
+my sale proceeds only until they reach $20 (or on my request), then pays
+them to my own wallet. My funds otherwise stay in my wallet."* — before
+they can list a seed or have one sold. `settlement_consents` (user_id,
+version, accepted_at, ip) is an append-only acceptance log, written only
+by the `accept-settlement-consent` edge function (no client INSERT
+policy, so `accepted_at`/`ip` can't be spoofed). Enforced at two layers:
+a `BEFORE INSERT` trigger on `products`/`orchards` (new listings) and a
+check in `create-basket-bestowal-order`/`create-orchard-bestowal-order`
+before any order or payment is created (a sale on a listing that
+pre-dates this feature) — never at finalize, since rejecting after a
+real payment would strand the buyer's money. Gosats see who's accepted
+at `/admin/settlement-consents`.
+
+**To change the wording**: edit `SETTLEMENT_CONSENT_TEXT` in
+`src/components/payouts/SettlementConsentPrompt.tsx`, then bump
+`app_settings.settlement_consent_version` (`UPDATE app_settings SET
+value = to_jsonb(<n+1>) WHERE key = 'settlement_consent_version'`).
+That's the whole re-prompt mechanism — `has_accepted_settlement_consent()`
+stops matching every existing acceptance the moment the version moves,
+no other code change needed.
+
 ### Still open
 
 - Same legal-review note as section 13 doesn't apply here — this model
@@ -949,3 +973,6 @@ scope for this cutover.
   whether `PAYOUT_THRESHOLD_USD`'s default ($20) is the right number
   long-term, and the same Squad-balance blind spot noted in section 13's
   sentinel check (hot wallet only, not the 2-of-3 Squad).
+- Settlement consent is scoped to products/orchards only — plain P2P
+  gifts and content_purchases (premium rooms/library, no company/listing
+  concept) don't gate on it yet.
