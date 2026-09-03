@@ -2,27 +2,23 @@
 // Solana wallet -- always mainnet, regardless of SOLANA_CLUSTER (the
 // platform's own pay-in/payout rail may still be on devnet while this
 // displays the member's real wallet, which only exists for real on
-// mainnet). Public RPC, no wallet connection or signature needed.
+// mainnet).
 //
-// Deliberately NOT @solana/web3.js / @solana/spl-token here: both pull in
-// Node's `Buffer` global internally (PublicKey.toBuffer/findProgramAddress,
-// getAssociatedTokenAddress), which doesn't exist in a Vite browser bundle
-// with no polyfill -- this crashed the dashboard for every logged-in user
-// ("ReferenceError: Buffer is not defined") the moment this file's
-// useEffect ran on mount, unlike solanaWallet.ts's use of the same
-// libraries, which only executes inside a deliberate "Pay with Phantom"
-// click. Uses micro-sol-signer instead -- the same Buffer-free library
-// already proven in production for this exact operation server-side
-// (_shared/solanaPayout.ts's getHotWalletUsdcBalance, byte-for-byte the
-// same ATA-derive + getAccountInfo + decode shape, just over a browser
-// fetch() instead of Deno's).
+// Routed through the get-wallet-balance edge function, not a direct
+// browser fetch() to Solana's public RPC -- api.mainnet-beta.solana.com
+// does not send CORS headers permitting requests from an arbitrary
+// origin. A direct fetch() from here used to fail with the standard
+// opaque CORS-block error ("TypeError: Failed to fetch", no further
+// detail) on every single call, silently caught below and reported as a
+// real, valid-looking $0.00 balance for every member, every time --
+// confirmed by reproducing the exact failure in a real browser. Edge
+// functions aren't subject to CORS (it's a browser-only mechanism), so
+// the RPC call now happens there instead; see
+// supabase/functions/_shared/liveBalance.ts.
 import { useEffect, useState } from 'react';
-import * as sol from 'micro-sol-signer';
-import { USDC_MINTS } from './solanaNetworks';
+import { invokePaymentFunction } from './invokeFunction';
 
-const MAINNET_RPC = 'https://api.mainnet-beta.solana.com';
 const CACHE_MS = 60_000;
-const USDC_DECIMALS = 6;
 
 interface CacheEntry {
   balance: number;
@@ -31,33 +27,10 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 const inflight = new Map<string, Promise<number>>();
 
-async function rpc<T>(method: string, params: unknown[]): Promise<T> {
-  const res = await fetch(MAINNET_RPC, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-  });
-  const body = await res.json();
-  if (body.error) {
-    throw new Error(`Solana RPC ${method} failed: ${body.error.message ?? JSON.stringify(body.error)}`);
-  }
-  return body.result as T;
-}
-
 async function fetchBalance(address: string): Promise<number> {
   try {
-    const mint = USDC_MINTS['mainnet-beta'];
-    const ata = sol.tokenAddress({ mint, owner: address, tokenProgram: sol.TOKEN_PROGRAM });
-    const info = await rpc<{ value: { data: [string, string] } | null }>('getAccountInfo', [
-      ata,
-      { encoding: 'base64', commitment: 'confirmed' },
-    ]);
-    if (!info.value) return 0; // No token account yet == a real, valid zero -- not an error.
-    const [b64] = info.value.data;
-    const raw = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-    const decoded = sol.TokenAccount(raw);
-    if (decoded.TAG !== 'token') return 0;
-    return Number(decoded.data.amount) / 10 ** USDC_DECIMALS;
+    const { balance } = await invokePaymentFunction<{ balance: number }>('get-wallet-balance', { address });
+    return balance;
   } catch (err) {
     console.error('liveWalletBalance: fetchBalance failed', address, err);
     return 0;

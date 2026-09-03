@@ -2,10 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Users, Coins, MessageCircle } from "lucide-react";
+import { useLiveWalletBalance } from "@/lib/payments/liveWalletBalance";
+import { Users, Coins, MessageCircle, Wallet } from "lucide-react";
+
+const WALLET_LOW_BALANCE_THRESHOLD = 5;
 
 /**
- * Three-tile dashboard widget: Tribe size · Bestowals (received + given) · Unread messages.
+ * Four-tile dashboard widget: Tribe size · Bestowals (received + given) ·
+ * Unread messages · My Wallet (live USDC balance, non-custodial model).
  * Each tile is a Link. Real-time refreshes via Supabase Realtime.
  */
 export default function DashboardTribeStats() {
@@ -15,6 +19,8 @@ export default function DashboardTribeStats() {
   const [bestowals, setBestowals] = useState({ count: 0, total: 0 });
   const [purchases, setPurchases] = useState({ count: 0, total: 0 });
   const [unread, setUnread] = useState(0);
+  const walletAddress: string | null = user?.solana_wallet_address || null;
+  const { balance: walletBalance, loading: walletBalanceLoading } = useLiveWalletBalance(walletAddress);
 
   const reload = React.useCallback(async () => {
     if (!user?.id) return;
@@ -164,6 +170,21 @@ export default function DashboardTribeStats() {
         </>
       ), "#f59e0b")}
       {tile("/chatapp?filter=unread", <MessageCircle size={20} />, "Unread", unread, <div style={subLine}>{unread ? "tap to read" : "all caught up"}</div>, "#22d3ee")}
+      {tile("/wallet-settings", <Wallet size={20} />, "My Wallet",
+        !walletAddress
+          ? "Connect"
+          : walletBalanceLoading && walletBalance === null
+            ? "…"
+            : `$${(walletBalance ?? 0).toFixed(2)}`,
+        (
+          <div style={subLine}>
+            {!walletAddress
+              ? "no wallet linked yet"
+              : walletBalance !== null && walletBalance < WALLET_LOW_BALANCE_THRESHOLD
+                ? "low — top up in Phantom"
+                : "USDC, live"}
+          </div>
+        ), "#a78bfa")}
     </div>
   );
 }

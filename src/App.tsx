@@ -16,6 +16,7 @@ import { AuthProvider } from "./hooks/useAuth";
 import { BasketProvider } from "./hooks/useBasket";
 import { ProductBasketProvider } from "./contexts/ProductBasketContext";
 import FloatingBasketButton from "./components/products/FloatingBasketButton";
+import WalletBalanceChip from "./components/payments/WalletBalanceChip";
 
 import { AlbumBuilderProvider } from "./contexts/AlbumBuilderContext";
 import { LiveSessionPlaylistProvider } from "./contexts/LiveSessionPlaylistContext";
@@ -72,6 +73,7 @@ const App = () => (
                       <ResponsiveLayout>
                         <AppRoutes />
                         <FloatingBasketButton />
+                        <WalletBalanceChip />
                         <GroundskeeperWidget />
                       </ResponsiveLayout>
 

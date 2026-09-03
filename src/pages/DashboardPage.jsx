@@ -24,7 +24,6 @@ import SacredDayBanner from '@/components/SacredDayBanner'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
 import { useProductBasket } from '@/contexts/ProductBasketContext'
-import MyWalletCard from '@/components/dashboard/MyWalletCard'
 import SettlementConsentBanner from '@/components/dashboard/SettlementConsentBanner'
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
@@ -1392,7 +1391,6 @@ export default function SeedFlowDashboard() {
             </Link>
           </div>
           <OmerBadge omer={sacredDate.omer} omerTotal={sacredDate.omerTotal} nextFeast={sacredDate.nextFeast} />
-          <MyWalletCard />
           <div style={styles.panelSection}>
             <div style={styles.panelTitle}>🌱 YOUR GROWTH</div>
             <div style={styles.growthCard}>
