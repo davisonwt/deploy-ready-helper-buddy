@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "../hooks/useAuth"
 import { useToast } from "../hooks/use-toast"
 import { moderateBase64Upload, moderationRejectionMessage } from "@/lib/moderation/moderateUpload"
+import { validateSolanaAddress } from "@/lib/payments/cryptoAddress"
 import SignedImg from "@/components/media/SignedImg"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
@@ -44,7 +45,8 @@ import {
   Check,
   Loader2,
   LogOut,
-  ArrowLeft
+  ArrowLeft,
+  Wallet
 } from "lucide-react"
 import { QuickProfileSetup } from "../components/profile/QuickProfileSetup"
 import MyBusinessesSection from "../components/profile/MyBusinessesSection"
@@ -61,6 +63,7 @@ export default function ProfilePage() {
   const [uploadingPicture, setUploadingPicture] = useState(false)
   const [pictureError, setPictureError] = useState("")
   const [socialLinksError, setSocialLinksError] = useState({})
+  const [solanaWalletError, setSolanaWalletError] = useState("")
   const [mounted, setMounted] = useState(false)
   const [showQuickSetup, setShowQuickSetup] = useState(false)
   const [activeTab, setActiveTab] = useState("profile")
@@ -117,7 +120,8 @@ export default function ProfilePage() {
     avatar_url: user?.avatar_url || null,
     preferred_currency: user?.preferred_currency || "USD",
     country: user?.country || "",
-    timezone: user?.timezone || ""
+    timezone: user?.timezone || "",
+    solana_wallet_address: user?.solana_wallet_address || ""
   })
 
   const profileUser = user || {}
@@ -171,7 +175,8 @@ export default function ProfilePage() {
         avatar_url: user?.avatar_url || null,
         preferred_currency: user?.preferred_currency || "USD",
         country: user?.country || "",
-        timezone: user?.timezone || ""
+        timezone: user?.timezone || "",
+        solana_wallet_address: user?.solana_wallet_address || ""
       })
       ensureProfileRow().catch((error) => console.warn('Profile row repair failed:', error))
     }
@@ -313,11 +318,29 @@ export default function ProfilePage() {
         return
       }
 
-      const result = await updateProfile(formData)
+      // Solana wallet address is optional, but if entered it must decode to
+      // a real 32-byte key -- a bad address here means S2G can never
+      // recognise payments sent from it.
+      const trimmedWallet = formData.solana_wallet_address.trim()
+      if (trimmedWallet) {
+        const walletErr = validateSolanaAddress(trimmedWallet)
+        if (walletErr) {
+          setSolanaWalletError(walletErr)
+          setLoading(false)
+          return
+        }
+      }
+      setSolanaWalletError("")
+
+      const result = await updateProfile({
+        ...formData,
+        solana_wallet_address: trimmedWallet || null,
+      })
       if (result.success) {
         setEditing(false)
         setPictureError("")
         setSocialLinksError({})
+        setSolanaWalletError("")
       } else {
         // Surface the real reason instead of silently failing
         const msg = result?.error || "Failed to save profile"
@@ -356,11 +379,13 @@ export default function ProfilePage() {
       avatar_url: user?.avatar_url || null,
       preferred_currency: user?.preferred_currency || "USD",
       country: user?.country || "",
-      timezone: user?.timezone || ""
+      timezone: user?.timezone || "",
+      solana_wallet_address: user?.solana_wallet_address || ""
     })
     setEditing(false)
     setPictureError("")
     setSocialLinksError({})
+    setSolanaWalletError("")
   }
   
   const removePicture = () => {
@@ -552,6 +577,45 @@ export default function ProfilePage() {
               <Button variant="outline" onClick={() => navigate('/settings/payouts')}>
                 Payout preferences
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* My Solana Wallet Address */}
+          <Card className="bg-card/95 backdrop-blur-md border-border/30 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-foreground text-xl flex items-center gap-3">
+                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Wallet className="h-5 w-5 text-primary" />
+                </div>
+                My Solana Wallet Address
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Save the Solana wallet you pay from — it lets Sow2Grow recognise USDC payments sent directly from that wallet.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {editing ? (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    name="solana_wallet_address"
+                    value={formData.solana_wallet_address}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60 font-mono text-sm"
+                    placeholder="Your Solana wallet address"
+                  />
+                  {solanaWalletError && (
+                    <p className="text-destructive text-xs flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {solanaWalletError}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-foreground py-3 px-4 bg-muted/30 rounded-xl font-mono text-sm break-all">
+                  {user?.solana_wallet_address || "Not set"}
+                </p>
+              )}
             </CardContent>
           </Card>
 

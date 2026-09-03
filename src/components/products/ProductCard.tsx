@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,7 @@ import { isAlbum as isAlbumProduct } from '@/lib/products/isAlbum';
 import SignedImg from '@/components/media/SignedImg';
 import PreviewPlayer from '@/components/media/PreviewPlayer';
 import ReportButton from '@/components/moderation/ReportButton';
+import { isDigitalSeed, hasCompletedPurchase } from '@/lib/products/ownership';
 
 interface ProductCardProps {
   product: any;
@@ -37,6 +38,7 @@ export default function ProductCard({ product, featured, showActions = false, hi
   const [deleting, setDeleting] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [ownerWallet, setOwnerWallet] = useState<string | undefined>(undefined);
+  const [alreadyOwned, setAlreadyOwned] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { addToBasket } = useProductBasket();
   const { user } = useAuth();
@@ -78,6 +80,21 @@ export default function ProductCard({ product, featured, showActions = false, hi
     })();
     return () => { cancelled = true; };
   }, [product.sowers?.user_id]);
+
+  // Digital seeds (music/book/art/video) can't be bestowed on twice by the
+  // same buyer — physical products are excluded (a repeat physical order is
+  // legitimate). Skipped entirely for the owner viewing their own listing.
+  useEffect(() => {
+    if (isOwner || !user?.id || !product.id || !isDigitalSeed(product)) {
+      setAlreadyOwned(false);
+      return;
+    }
+    let cancelled = false;
+    hasCompletedPurchase(user.id, product.id).then((owned) => {
+      if (!cancelled) setAlreadyOwned(owned);
+    });
+    return () => { cancelled = true; };
+  }, [isOwner, user?.id, product.id, product.delivery_type]);
 
   const formatCount = (count: number) => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
@@ -370,13 +387,26 @@ export default function ProductCard({ product, featured, showActions = false, hi
               ) : showActions ? null : (
                 <>
                   {product.license_type === 'bestowal' ? (
-                    <Button
-                      onClick={handleBestow}
-                      className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
-                    >
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      Bestow {formatCurrency(product.price || product.bestow || 0)}
-                    </Button>
+                    alreadyOwned ? (
+                      <Button
+                        asChild
+                        variant="secondary"
+                        className="flex-1 bg-emerald-500/90 hover:bg-emerald-500 text-white"
+                      >
+                        <Link to={`/bulk/products/${product.slug || product.id}`}>
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          You already own this
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={handleBestow}
+                        className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Bestow {formatCurrency(product.price || product.bestow || 0)}
+                      </Button>
+                    )
                   ) : (
                     <Button
                       onClick={handleDownload}

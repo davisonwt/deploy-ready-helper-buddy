@@ -11,9 +11,10 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import ProductCard from '@/components/products/ProductCard';
+import { isDigitalSeed, hasCompletedPurchase } from '@/lib/products/ownership';
 import {
   ArrowLeft, Share2, ShoppingCart, Megaphone, Loader2, ImageIcon,
-  Package, Tag, ChevronRight, Download,
+  Package, Tag, ChevronRight, Download, CheckCircle2,
 } from 'lucide-react';
 
 export default function BulkProductDetailPage() {
@@ -73,6 +74,21 @@ export default function BulkProductDetailPage() {
       if (!alive) return;
       setFullResEntitled(!!data);
     })();
+    return () => { alive = false; };
+  }, [product, user]);
+
+  // General "already own this digital seed" check — every non-physical
+  // type (not just art/ebook above), used to hide the re-purchase button.
+  const [alreadyOwnsDigital, setAlreadyOwnsDigital] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    if (!product || !user || product.sowers?.user_id === user.id || !isDigitalSeed(product)) {
+      setAlreadyOwnsDigital(false);
+      return;
+    }
+    hasCompletedPurchase(user.id, product.id).then((owned) => {
+      if (alive) setAlreadyOwnsDigital(owned);
+    });
     return () => { alive = false; };
   }, [product, user]);
 
@@ -291,15 +307,21 @@ export default function BulkProductDetailPage() {
             )}
 
             <div className="grid grid-cols-2 gap-2 pt-2">
-              <Button size="lg" onClick={handleAdd} disabled={(product.stock ?? 1) === 0}>
-                <ShoppingCart className="h-4 w-4 mr-1" /> Add to basket
-              </Button>
+              {alreadyOwnsDigital ? (
+                <div className="flex items-center gap-2 text-sm font-medium text-emerald-600 rounded-md border border-emerald-600/30 px-3">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" /> You already own this
+                </div>
+              ) : (
+                <Button size="lg" onClick={handleAdd} disabled={(product.stock ?? 1) === 0}>
+                  <ShoppingCart className="h-4 w-4 mr-1" /> Add to basket
+                </Button>
+              )}
               <Button size="lg" variant="outline" onClick={share}>
                 <Share2 className="h-4 w-4 mr-1" /> Share
               </Button>
             </div>
 
-            {['art', 'ebook'].includes(product.type) && fullResEntitled && (
+            {(fullResEntitled || alreadyOwnsDigital) && (
               <Button size="lg" variant="secondary" onClick={handleDownloadFullRes} disabled={downloadingFullRes} className="w-full">
                 {downloadingFullRes ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
                 {product.type === 'art' ? 'Download full resolution' : 'Download'}

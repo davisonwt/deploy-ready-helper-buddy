@@ -294,7 +294,7 @@ export class AuthProviderClass extends React.Component {
         'first_name', 'last_name', 'display_name', 'avatar_url', 'bio',
         'location', 'preferred_currency', 'timezone', 'country', 'phone',
         'website', 'tiktok_url', 'instagram_url', 'facebook_url',
-        'twitter_url', 'youtube_url', 'show_social_media',
+        'twitter_url', 'youtube_url', 'show_social_media', 'solana_wallet_address',
       ]
       const validFields = {}
       for (const key of FIELD_KEYS) {

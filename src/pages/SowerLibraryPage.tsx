@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import ReportButton from '@/components/moderation/ReportButton';
+import { isDigitalSeed, fetchOwnedProductIds } from '@/lib/products/ownership';
 
 const PRIVATE_COVER_BUCKETS = new Set(['premium-room', 'music-tracks', 'dj-music']);
 
@@ -110,6 +111,8 @@ type Row = {
   sower_name: string;
   category: string | null;
   created_at: string;
+  slug: string | null;
+  delivery_type: string | null;
 };
 
 type SowerOption = { userId: string; name: string; count: number };
@@ -173,7 +176,7 @@ export default function SowerLibraryPage() {
     queryFn: async (): Promise<Row[]> => {
       const { data: products, error } = await supabase
         .from('products')
-        .select('id, title, description, type, price, cover_image_url, image_urls, sower_id, category, created_at')
+        .select('id, title, description, type, price, cover_image_url, image_urls, sower_id, category, created_at, slug, delivery_type')
         .or('status.is.null,status.neq.archived')
         .order('created_at', { ascending: false })
         .limit(500);
@@ -207,6 +210,8 @@ export default function SowerLibraryPage() {
           sower_name: s?.display_name || displayProfileName(prof) || 'Sower',
           category: p.category || p.type || null,
           created_at: p.created_at,
+          slug: p.slug || null,
+          delivery_type: p.delivery_type || null,
         };
       });
     },
@@ -227,6 +232,19 @@ export default function SowerLibraryPage() {
     if (!selectedSowerUserId) return rows;
     return rows.filter((r) => r.sower_user_id === selectedSowerUserId);
   }, [rows, selectedSowerUserId]);
+
+  // Digital seeds can't be bestowed on twice by the same buyer — physical
+  // products are excluded.
+  const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user?.id || rows.length === 0) { setOwnedIds(new Set()); return; }
+    let cancelled = false;
+    fetchOwnedProductIds(user.id, rows.map((r) => r.id)).then((ids) => {
+      if (!cancelled) setOwnedIds(ids);
+    });
+    return () => { cancelled = true; };
+  }, [user?.id, rows]);
+  const isOwned = (r: Row) => ownedIds.has(r.id) && isDigitalSeed({ delivery_type: r.delivery_type });
 
   const selectedSowerName = useMemo(() => {
     if (!selectedSowerUserId) return null;
@@ -373,7 +391,13 @@ export default function SowerLibraryPage() {
                           {user?.id !== r.sower_user_id && (
                             <ReportButton targetType="product" targetId={r.id} size="icon" variant="ghost" />
                           )}
-                          <Button size="sm" onClick={() => handleBestow(r)}>Bestow</Button>
+                          {isOwned(r) ? (
+                            <Button size="sm" variant="secondary" className="bg-emerald-500/90 hover:bg-emerald-500 text-white" asChild>
+                              <Link to={`/bulk/products/${r.slug || r.id}`}>You already own this</Link>
+                            </Button>
+                          ) : (
+                            <Button size="sm" onClick={() => handleBestow(r)}>Bestow</Button>
+                          )}
                         </div>
                       </div>
                     </div>

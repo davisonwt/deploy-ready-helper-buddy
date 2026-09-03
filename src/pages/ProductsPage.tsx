@@ -3,7 +3,9 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchProductsPage } from '@/api/products';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { isDigitalSeed, fetchOwnedProductIds } from '@/lib/products/ownership';
 import { Loader2, Music, Book, Image, Video, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -75,6 +77,7 @@ export default function ProductsPage() {
   const [selectedSort, setSelectedSort] = useState<string>(getInitialSort());
   const [activeFilter, setActiveFilter] = useState<string>(filterParam);
   const { addToBasket } = useProductBasket();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   // Universal marketplace filters (category + tag combination)
@@ -136,6 +139,21 @@ export default function ProductsPage() {
 
   const allProducts = data?.pages.flatMap(page => page) || [];
   const quickPicks = allProducts.slice(0, 4);
+
+  // Digital seeds can't be bestowed on twice by the same buyer — physical
+  // products are excluded. Refetched (cheap, id-batch query) whenever more
+  // products load in.
+  const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user?.id || allProducts.length === 0) { setOwnedIds(new Set()); return; }
+    let cancelled = false;
+    fetchOwnedProductIds(user.id, allProducts.map((p: any) => p.id)).then((ids) => {
+      if (!cancelled) setOwnedIds(ids);
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, allProducts.length]);
+  const isOwned = (product: any) => ownedIds.has(product.id) && isDigitalSeed(product);
 
   const handleFilter = (filterType: string) => {
     setActiveFilter(filterType);
@@ -373,12 +391,21 @@ export default function ProductsPage() {
                     <span className="text-2xl font-bold text-yellow-400">
                       {formatCurrency(product.price || 0)}
                     </span>
-                    <button
-                      onClick={(e) => handleBestow(product, e)}
-                      className="bg-gradient-to-r from-teal-500 to-cyan-400 px-6 py-3 rounded-full font-bold hover:scale-110 transition"
-                    >
-                      Bestow Now
-                    </button>
+                    {isOwned(product) ? (
+                      <Link
+                        to={`/bulk/products/${product.slug || product.id}`}
+                        className="bg-emerald-500 px-6 py-3 rounded-full font-bold hover:scale-110 transition inline-block text-center"
+                      >
+                        Owned ✓
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={(e) => handleBestow(product, e)}
+                        className="bg-gradient-to-r from-teal-500 to-cyan-400 px-6 py-3 rounded-full font-bold hover:scale-110 transition"
+                      >
+                        Bestow Now
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -484,14 +511,23 @@ export default function ProductsPage() {
                     <div className="text-3xl font-bold text-yellow-400">
                       {formatCurrency(product.price || 0)}
                     </div>
-                    <div className="text-sm opacity-70">to download</div>
+                    <div className="text-sm opacity-70">{isOwned(product) ? 'You already own this' : 'to download'}</div>
                   </div>
-                  <button
-                    onClick={(e) => handleBestow(product, e)}
-                    className="bg-gradient-to-r from-teal-500 to-cyan-400 px-8 py-4 rounded-full font-bold text-xl hover:scale-110 transition shadow-lg"
-                  >
-                    Bestow
-                  </button>
+                  {isOwned(product) ? (
+                    <Link
+                      to={`/bulk/products/${product.slug || product.id}`}
+                      className="bg-emerald-500 px-8 py-4 rounded-full font-bold text-xl hover:scale-110 transition shadow-lg inline-block text-center"
+                    >
+                      Owned ✓
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={(e) => handleBestow(product, e)}
+                      className="bg-gradient-to-r from-teal-500 to-cyan-400 px-8 py-4 rounded-full font-bold text-xl hover:scale-110 transition shadow-lg"
+                    >
+                      Bestow
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
