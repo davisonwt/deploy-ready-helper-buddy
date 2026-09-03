@@ -1,4 +1,4 @@
-# Session State — 2026-09-02
+# Session State — 2026-09-03
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
 
@@ -2474,10 +2474,15 @@ deliberately short and forward-looking, not a full archive.
    own downtime; external uptime monitoring is still needed and not set
    up.
 2. **End-to-end core-loop test on mainnet** — everything Solana-related
-   this session (hot wallet, sweep, payout rail, anomaly alerting) is
-   verified on **devnet only**. Nothing has moved real money yet. Needs a
-   deliberate, supervised first mainnet run before any of it is trusted
-   with live funds.
+   this session (hot wallet, sweep, payout rail, anomaly alerting, and as
+   of 2026-09-03 the whole S2G Balance build) is verified on **devnet
+   only**. Nothing has moved real money yet. Needs a deliberate,
+   supervised first mainnet run before any of it is trusted with live
+   funds.
+2a. **S2G Balance legal review** — it's custodial (balances are USD
+   ledger entries backed by pooled USDC/PayPal funds, not segregated
+   per-member accounts). Not reviewed by counsel. Get a real opinion
+   before any of it touches real money — see spec-payments.md section 13.
 3. **7 remaining Lovable-flagged bugs** — not yet triaged in this log.
 4. **Wandering Hearts Phase 2** — JaaS JWT call rooms, gated on both
    members having paid the $5/$10 one-time unlock fee (decision recorded
@@ -2687,17 +2692,193 @@ account, service-role auth) made a genuine `getSignaturesForAddress` call
 to devnet and correctly returned `pending` with the right amount/expiry —
 test rows deleted after.
 
-**Not verified — genuinely open:** a full live devnet send (real Phantom-
-shaped transaction landing and getting detected/finalized) — attempted,
-but `api.devnet.solana.com`'s airdrop faucet returned 429 ("reached your
-airdrop limit today") on every attempt, and the hot wallet itself has no
-devnet USDC yet either (per spec-payments.md section 2, "not yet funded").
-Exact steps for davison/Ed to do the real Phantom-on-devnet human test are
-in spec-payments.md section 3's implementation notes.
+**Update 2026-09-03 — a full live devnet send DID land, and exposed a real
+gap: a manual (no-reference) wallet send.** davison sent USDC directly
+from his own Phantom "Send" UI rather than scanning the QR/using the
+`solana:` deep-link — copying the hot wallet address with no Solana Pay
+reference attached. `checkAndFinalizeSolanaIntent` could never match it
+(no reference on-chain to find), so the intent sat `pending` until it
+expired. Root-caused via direct on-chain inspection (zero signatures for
+the reference pubkey; one real matching `transferChecked` with no
+reference account). Fixed by adding a **fallback wallet-identity
+matcher** (`findFallbackWalletMatch` in `_shared/solanaPayIn.ts`): when
+no transaction references the intent's reference key, scan the hot
+wallet's USDC token account for a finalized `transferChecked` received
+after `intent.created_at`, amount ≥ requested, whose sender's *canonical
+token-account owner* (read via `getAccountInfo`, not just instruction
+metadata — handles both single-owner and multisig-authority instruction
+shapes) matches a Solana address saved on the buyer's own profile. New
+`profiles.solana_wallet_address` column (migration `20260903080000`,
+distinct from `payout_address` — "wallet this person pays FROM" vs.
+"wallet S2G pays them TO", deliberately two separate fields since they
+can differ per user) plus a validated "My Solana Wallet Address" field on
+`/profile`. Same idempotency via `processed_webhooks` on the signature;
+exact-amount match preferred; a signature already used by another intent
+is never matched again. Verified live: davison's real stuck payment (a
+manual $2.31 send from the night before) was found and finalized by the
+fallback matcher on the first real call — intent `paid`, basket order
+`completed`, `product_bestowals` row correct (`s2g_fee`/`sower_amount`
+math verified), escrow released. In-app notification delivery was
+checked but not confirmed either way (wrong table guessed, not
+re-attempted). Only ever activates for a still-`pending` intent — never
+auto-reopens an already-`expired` one; spec-payments.md's "credit-and-
+reopen or refund an expired-but-later-paid intent?" question is still
+open.
 
 **Out of scope this session, still open:** spec-payments.md section 4
 (rebuilding the Solana *payout* rail inside `payout-earnings`) — this
 build was inbound (pay-in) only.
+
+## S2G Balance — built 2026-09-03 (prepaid custodial member balance)
+
+Per a user-supplied spec file (`s2g-balance.txt`) and now spec-payments.md
+section 13. The core idea: top up once (USDC via Phantom, or PayPal),
+then every bestowal is one tap, no wallet popup, no per-purchase Solana/
+PayPal round trip. Sowers'/whisperers' earnings land in the same balance
+and can be withdrawn on demand. Built as 7 stages plus a same-day 2-part
+follow-up, each independently committed, pushed, and verified live
+against real accounts on devnet before moving on — full detail in
+spec-payments.md section 13; this is the session-log summary.
+
+**Stage 1 — ledger core** (`56c66ad2`): `balance_ledger` (append-only,
+one row per movement — `user_id`, signed `amount`, `kind`, a reference
+back to what caused it, an `idempotency_key`), `balance_available_v`
+(computed view, balance = `SUM(amount)`, never a stored mutable number).
+`credit_balance_ledger`/`debit_balance_ledger` RPCs (`SECURITY DEFINER`,
+service-role only) serialize concurrent moves per user via
+`pg_advisory_xact_lock`, idempotent on `(user_id, kind, idempotency_key)`
+— a debit that would overdraw raises `insufficient_balance:<available>`
+instead of racing. `sower_balances` (the pre-existing table) is
+untouched — it turned out, on inspection, to be topup-only and to have
+never actually tracked sower earnings at all; not reused, not forked.
+
+**Stage 2 — top-ups credit the ledger** (`e199399e`): new
+`credit_balance_ledger_from_topup` RPC, same lock/idempotency shape as
+the pre-existing `credit_sower_balance_from_topup`. One-line repoint in
+`_shared/paypal/capture.ts`'s `finalize()` (`case "topup"`) — the
+Solana/PayPal top-up intent/finalize plumbing itself is unchanged.
+`MyWalletPage` → "My S2G Balance": available balance + a ledger list.
+
+**Stage 3 — bestow with balance** (`e77608ca`): new zero-fee `'balance'`
+provider alongside `solana`/`paypal`, wired into `create-basket-
+bestowal-order`/`create-content-purchase-order`/`create-gift-bestowal-
+order`. Each debits the buyer's ledger (idempotent on the order id) then
+calls `finalizeCompletedOrder` directly — same escrow/15% fee/whisperer
+split/Books/receipts as any other provider. Shared `useBalanceProvider()`
+hook (offers `'balance'` only when it covers the total, preselects it
+once affordable, never overrides a manual choice, surfaces "top up $X to
+continue" when short) wired into every `ProviderPicker` call site via
+`useContentPurchase`/`useGiftBestowal`/`useMusicPurchase` (shared hooks,
+so their many callers inherit it) plus `BestowalCheckout`,
+`AlbumBuilderCart`, `MusicTrackDetailPage` directly.
+
+**Stage 4 — earnings credit the ledger on release** (`d6a20b18`, the
+highest-risk stage — edits the protected escrow/finalize functions
+directly): `release_status` becomes `'released'` in two different
+places — `finalize_basket_order` immediately for a digital seed,
+`escrow_release_bestowal` later for a physical one — and both now call a
+new shared `credit_earning_for_bestowal`, crediting `sower_amount` (and
+any linked whisperer commission) and flipping `payout_status` to a new
+`'credited_to_balance'` value. That flip is load-bearing: it's the only
+way to stop the old automatic weekly `payout-earnings` cron (reads
+`owed_payout_balances()`, which filters on `payout_status='pending'`)
+from paying the same earning a second time on top of the new on-demand
+withdrawal. One-time backfill credited the 6 real rows ($12.00 total,
+sized and checked before running) already released-but-unpaid at
+cutover.
+
+**Stage 5 — on-demand withdrawal** (`96f6869b`): new `request-balance-
+withdrawal` — any amount up to available, ledger debited before any send
+is attempted. Solana sends instantly and synchronously, reusing
+`payout-earnings`' exact hot-wallet primitive (`sendUsdcPayout`) and
+circuit breakers (per-tx/daily caps, 48h cooling-off) — no changes to
+`_shared/solanaPayout.ts`, just a second caller. PayPal doesn't send
+synchronously ("batched" per spec) — queues into the existing weekly
+`payout-earnings` PayPal batch (own $20 minimum enforced at request
+time); `payout-earnings` and `paypal-webhook`'s async item-failure
+handler both refund the ledger on failure, since a withdrawal has no
+source row to revert to the way an owed-balance payout does.
+
+**Stage 6 — accounting, sentinel, spec doc** (`5af0beee`): `AdminPayoutsPage`
+gains a third figure — S2G Balance liability (new admin/gosat-only
+`total_balance_ledger_liability()` RPC) — kept visibly separate from the
+old unpaid-earnings float. `GosatTreasuryPage`'s "on-platform reserved"
+figure was **silently wrong** (sourced from `sower_balances`, which per
+Stage 1 never reflected sower earnings) — corrected to read the ledger
+sum. New sentinel check (`balance_ledger`): alerts if the hot wallet's
+on-chain USDC balance falls below the total ledger liability — explicitly
+does not check the 2-of-3 Squad's balance (no multisig balance-read
+exists anywhere in this codebase) and says so in its own alert copy.
+spec-payments.md section 13 written, including the required custodial /
+"not reviewed by counsel" flag.
+
+**Stage 7 — end-to-end devnet verification** (no code, verification
+only): two real accounts, davison (buyer) and Amber Wheeles (sower/gosat
+— turned out to also hold admin+gosat roles, discovered mid-session; the
+"non-admin" framing was about exercising real RLS-scoped JWT auth rather
+than a service-role bypass, not literally excluding anyone with any
+role) — $10 top-up → $2.30 balance bestowal → escrow release → real
+on-chain $1.95 Solana withdrawal → ledger reconciled to the cent
+(10 − 2.30 = 7.70) → overdraft correctly rejected, double-submit
+correctly idempotent (concurrent testing done sequentially-but-provably-
+safe after the CLI itself raced on its own temp-role auth when tried
+literally in parallel — the safety guarantee is a standard Postgres
+advisory lock, not a property of the test technique). All test data
+cleaned up; real pre-existing balances untouched. Two adaptations
+disclosed at the time: this Supabase project hit a platform-level rate
+limit from the session's own call volume partway through (a couple of
+steps verified via direct RPC instead of HTTP, already proven separately
+in earlier stages), and true millisecond-concurrent testing wasn't
+achievable via the CLI.
+
+**Same-day follow-up, 2 parts** (`f5254797`, `5a7f0ab7`) — closed the two
+items Stage 3/4 had explicitly left open:
+
+- **Part 1 — orchard bestowals get `'balance'` too.** New `create-
+  orchard-bestowal-order` replaces `create-solana-bestowal-order`
+  (Solana-only) and `create-paypal-order` (PayPal-only) with one provider
+  switch, same pattern as basket — pocket pricing preserved exactly (no
+  gross-up; `orchards.pocket_price` stays fee-inclusive). Both
+  predecessor functions left in place, unreachable from checkout, same
+  retirement pattern as `create-nowpayments-invoice`. `QuickBestowModal`
+  (the only real call site — `BasketPage.jsx`'s orchard-pocket basket and
+  every feed/live-stage Bestow button) repointed and given the same
+  `useBalanceProvider` wiring. Verified live against a temporary
+  throwaway orchard (none exist in production yet) — surfaced a genuine
+  **pre-existing**, unrelated gap while testing: `buildDistributionData`
+  (the legacy Binance-Pay distribution builder, still called by every
+  orchard-order function including the two originals) hard-requires the
+  orchard owner to have a `binance_pay`/`binance`/`binance_pay_id`
+  `user_wallets` row or a configured `organization_wallets.s2gdavison`
+  fallback — neither existed for the test sower, so the *existing*
+  Solana/PayPal orchard paths would already fail identically for any real
+  orchard owner without one. Not fixed (out of scope for this task); a
+  temporary wallet row was added just to complete the test, then removed.
+  Worth its own follow-up.
+- **Part 2 — content_purchases and gift/orchard earnings credit the
+  ledger too**, same shape as Stage 4's product_bestowals treatment.
+  `finalize_content_purchase` (the existing idempotent RPC) now also
+  credits the seller and flips `payout_status`, atomically in the same
+  transaction as its existing finalize step. New `credit_earning_for_
+  gift_bestowal` RPC for `bestowals` (gift/orchard — no existing RPC for
+  their finalize step; wired into `capture.ts`'s `finalizeBestowal`,
+  called unconditionally rather than gated behind the payment_status
+  early-return, so a retry after a mid-way failure still reaches it).
+  Same recipient/amount resolution `owed_payout_balances()` already uses
+  for both tables. Neither table ever has a linked `whisperer_earnings`
+  row. Backfill: 0 rows existed for either table at cutover (checked
+  before running). Verified live — the content path via a synthetic
+  library-item purchase (including a re-finalize idempotency check); the
+  gift/orchard path via Part 1's same live orchard-bestowal test (shares
+  the identical `finalizeBestowal` code path for both kinds).
+
+**Still open (spec-payments.md section 13's own list, kept in sync
+here):**
+- **Legal review** — the actual blocker before any of this touches real
+  money. Not reviewed by counsel; built and shipped on devnet/sandbox
+  rails under an explicit instruction to treat it as such.
+- Mainnet — like the rest of this session's Solana work, S2G Balance is
+  devnet/sandbox-only. Nothing here has moved real money.
 
 ## Known gotchas
 

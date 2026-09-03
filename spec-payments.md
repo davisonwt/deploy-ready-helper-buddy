@@ -773,26 +773,43 @@ instruction to treat it as such; it has not been cleared for real funds.**
   by this section) to `balance_ledger`, via a new
   `credit_balance_ledger_from_topup` RPC.
 - **Bestow with balance** — a new `'balance'` provider alongside
-  `solana`/`paypal` at every checkout surface (basket, content, gift; see
-  "Still open" below for orchard). `create-basket-bestowal-order`/
-  `create-content-purchase-order`/`create-gift-bestowal-order` each debit
-  the buyer's ledger (idempotent on the order id) then call
-  `finalizeCompletedOrder` directly — the exact function every other
-  provider already converges on, so escrow, the 15% fee, whisperer
-  split, Books, and receipts behave identically regardless of how the
-  buyer paid. No processor fee (there is no processor in the middle).
-- **Earnings credit the ledger on release.** A bestowal's `release_status`
-  becomes `'released'` in two different places — `finalize_basket_order`
-  immediately for a digital seed, `escrow_release_bestowal` later for a
-  physical one — and both now call a shared `credit_earning_for_bestowal`,
-  which credits `sower_amount` (and any linked whisperer commission) and
-  flips `payout_status` to a new `'credited_to_balance'` value. That flip
+  `solana`/`paypal` at every checkout surface: basket, content, gift, and
+  (2026-09-03) orchard. `create-basket-bestowal-order`/
+  `create-content-purchase-order`/`create-gift-bestowal-order`/
+  `create-orchard-bestowal-order` each debit the buyer's ledger (idempotent
+  on the order id) then call `finalizeCompletedOrder` directly — the exact
+  function every other provider already converges on, so escrow, the 15%
+  fee, whisperer split, Books, and receipts behave identically regardless
+  of how the buyer paid. No processor fee (there is no processor in the
+  middle). `create-orchard-bestowal-order` replaced two predecessor
+  functions (`create-solana-bestowal-order`, Solana-only;
+  `create-paypal-order`, PayPal-only) with one provider switch, same
+  pattern as basket — both predecessors are left in place, unreachable
+  from checkout, same retirement pattern as `create-nowpayments-invoice`.
+- **Earnings credit the ledger on release/finalize.** A `product_bestowals`
+  row's `release_status` becomes `'released'` in two different places —
+  `finalize_basket_order` immediately for a digital seed,
+  `escrow_release_bestowal` later for a physical one — and both call a
+  shared `credit_earning_for_bestowal`, which credits `sower_amount` (and
+  any linked whisperer commission) and flips `payout_status` to a new
+  `'credited_to_balance'` value. `content_purchases` and `bestowals`
+  (gift/orchard) — which have no escrow/release concept, paying out
+  immediately on completion — get the identical treatment at their own
+  finalize point instead: `finalize_content_purchase` credits atomically
+  in the same transaction as its existing idempotent finalize step, and a
+  new `credit_earning_for_gift_bestowal` RPC (wired into `finalizeBestowal`
+  in `capture.ts`) does the same for gift/orchard, resolving
+  recipient/amount exactly as `owed_payout_balances()` already does
+  (`distribution_data->>'sower_user_id'`/`'sower_amount'`, falling back to
+  the orchard owner/`base_amount`). Neither table ever has a linked
+  whisperer_earnings row. The `payout_status`/`status` flip in every case
   is load-bearing: `owed_payout_balances()` (what the old automatic weekly
-  `payout-earnings` cron reads) filters on `payout_status='pending'`, so a
+  `payout-earnings` cron reads) filters on the pre-credit value, so a
   credited row becomes invisible to it — the only way to avoid paying the
   same earning twice, once via on-demand withdrawal and once via the old
-  weekly sweep. A one-time backfill migrated the handful of
-  already-released-but-unpaid rows at cutover.
+  weekly sweep. One-time backfills migrated already-completed-but-unpaid
+  rows at each cutover (product_bestowals: 6 rows/$12.00; content_purchases
+  and bestowals: 0 rows, checked before running).
 - **Withdraw** — `request-balance-withdrawal`: any amount up to available,
   debited from the ledger before any send is attempted. Solana sends
   instantly, synchronously, reusing `payout-earnings`' exact hot-wallet
@@ -822,17 +839,10 @@ instruction to treat it as such; it has not been cleared for real funds.**
 
 ### Still open
 
-- **Orchard bestowals** have no `'balance'` option yet. Unlike
-  basket/content/gift, they're created by a Solana-only function
-  (`create-solana-bestowal-order`, no `provider` parameter at all) plus a
-  separate PayPal-only path — not the same provider-switch shape, so
-  wiring balance in was left for a follow-up rather than forced into this
-  pass.
-- **content_purchases and bestowals (gift/orchard) earnings** don't credit
-  the ledger yet — only `product_bestowals` does. They pay out
-  immediately on completion today (no escrow/release concept), so the
-  double-pay risk that forced the `product_bestowals` timing doesn't apply
-  the same way, but they're still on the old `owed_payout_balances()` rail
-  until a fast-follow moves them.
 - **Legal review**, per the custodial note above — the actual blocker
   before any of this touches real money.
+
+Resolved 2026-09-03 (were listed here, now shipped): orchard bestowals'
+`'balance'` option (`create-orchard-bestowal-order`), and
+content_purchases/bestowals (gift/orchard) earnings crediting the ledger
+at their finalize point.
