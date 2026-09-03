@@ -6,11 +6,14 @@
  *   • LiveStage now-playing Bestow button (radio guest)
  *   • Tribe / grove feed Bestow button on every seed
  *
- * Provider selection (feature A): buyer picks direct Solana USDC or PayPal
- * before confirming, with fee estimate shown per choice. The submit branches:
- *   • solana → create-solana-bestowal-order (QR/deep-link shown inline, no redirect)
- *   • paypal → create-paypal-order          (full-page redirect to approval)
- * In both cases the bestowal row is created server-side with the buyer-side
+ * Provider selection: buyer picks S2G Balance, direct Solana USDC, or
+ * PayPal before confirming, with fee estimate shown per choice. All three
+ * go through the single create-orchard-bestowal-order function (provider
+ * switch, same pattern as create-basket-bestowal-order):
+ *   • balance → debited + finalized synchronously, no wallet, no redirect
+ *   • solana  → QR/deep-link shown inline, no redirect
+ *   • paypal  → full-page redirect to approval
+ * In every case the bestowal row is created server-side with the buyer-side
  * processor fee broken out, and post-payment chat notes are pre-staged.
  */
 import { useEffect, useState } from 'react';
@@ -20,12 +23,12 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
-import { usePaypal } from '@/hooks/usePaypal';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { priceBreakdown, round2 } from '@/lib/pricing/platformFee';
+import { useBalanceProvider, isBalanceSuccess } from '@/hooks/useBalanceProvider';
 
 export interface QuickBestowModalProps {
   open: boolean;
@@ -69,11 +72,24 @@ export default function QuickBestowModal({
   onSuccess,
 }: QuickBestowModalProps) {
   const { user } = useAuth();
-  const { createOrder, redirectToApprove } = usePaypal();
   const [amount, setAmount] = useState<number>(defaultAmount);
   const [note, setNote] = useState('');
-  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const [processing, setProcessing] = useState(false);
+
+  // The server grosses base up by S2G's 15% before charging (see
+  // create-orchard-bestowal-order) — the processor fee estimate and the
+  // amount shown here must be computed on that S2G-inclusive total, not the
+  // raw base, or both numbers understate what's charged. Computed above the
+  // useBalanceProvider call (a hook) so it stays unconditional per the
+  // Rules of Hooks.
+  const pricing = lockAmount
+    ? { base: defaultAmount, s2gFee: 0, total: round2(defaultAmount) }
+    : priceBreakdown(amount);
+  const belowCryptoMin = pricing.total < MIN_CRYPTO_BESTOWAL_USD;
+  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(pricing.total);
+  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+  const effectiveProviders = belowCryptoMin ? ['paypal'] : providers;
+  const feePreview = quoteFee(effectiveProvider, pricing.total);
 
   useEffect(() => {
     if (open) {
@@ -90,11 +106,24 @@ export default function QuickBestowModal({
 
     setProcessing(true);
     try {
-      if (effectiveProvider === 'solana') {
-        const data = await invokePaymentFunction<{ solanaPayment?: SolanaPaymentResponse }>(
-          'create-solana-bestowal-order',
-          { orchardId, pocketsCount, message: note || undefined },
-        );
+      const data = await invokePaymentFunction<{
+        solanaPayment?: SolanaPaymentResponse;
+        approveUrl?: string;
+        balance?: { debited: true };
+      }>(
+        'create-orchard-bestowal-order',
+        { orchardId, pocketsCount, provider: effectiveProvider, message: note || undefined, redirectBaseUrl: window.location.origin },
+      );
+
+      if (effectiveProvider === 'balance') {
+        if (isBalanceSuccess(data)) {
+          onSuccess?.();
+          toast.success('Bestowal complete!');
+          refetchBalance();
+        } else {
+          throw new Error('Balance payment did not complete.');
+        }
+      } else if (effectiveProvider === 'solana') {
         if (data.solanaPayment) {
           onSuccess?.();
           const resolution = await presentSolanaPayment(data.solanaPayment);
@@ -103,18 +132,12 @@ export default function QuickBestowModal({
           }
         }
       } else {
-        const order = await createOrder({
-          orchardId,
-          pocketsCount,
-          message: note || undefined,
-          growerId: hostUserId || undefined,
-        });
-        if (order.approveUrl) {
+        if (data.approveUrl) {
           // Post-bestowal chat notes (thank-yous + receipt) are posted
           // server-side once the order actually finalizes — see
           // supabase/functions/_shared/postFinalize/messaging.ts.
           onSuccess?.();
-          redirectToApprove(order.approveUrl);
+          window.location.href = data.approveUrl;
           return;
         }
       }
@@ -122,22 +145,15 @@ export default function QuickBestowModal({
       onClose();
     } catch (err: any) {
       console.error('Bestowal initiation failed:', err);
-      toast.error(err?.message ?? 'Could not start the bestowal. Please try again.');
+      if (err?.message === 'insufficient_balance') {
+        toast.error(`Your S2G Balance is short — top up $${balanceShortBy.toFixed(2)} to pay this way.`);
+      } else {
+        toast.error(err?.message ?? 'Could not start the bestowal. Please try again.');
+      }
     } finally {
       setProcessing(false);
     }
   };
-
-  // The server grosses base up by S2G's 15% before charging (see
-  // create-solana-bestowal-order / create-paypal-order) — the processor fee
-  // estimate and the amount shown here must be computed on that S2G-inclusive
-  // total, not the raw base, or both numbers understate what's charged.
-  const pricing = lockAmount
-    ? { base: defaultAmount, s2gFee: 0, total: round2(defaultAmount) }
-    : priceBreakdown(amount);
-  const belowCryptoMin = pricing.total < MIN_CRYPTO_BESTOWAL_USD;
-  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
-  const feePreview = quoteFee(effectiveProvider, pricing.total);
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -199,9 +215,14 @@ export default function QuickBestowModal({
                 amount={pricing.total}
                 mode="buyer"
                 disabled={processing}
-                providers={belowCryptoMin ? ['paypal'] : undefined}
+                providers={effectiveProviders}
               />
             </div>
+            {!belowCryptoMin && balanceShortBy > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Not enough in your S2G Balance — top up ${balanceShortBy.toFixed(2)} to pay this way.
+              </p>
+            )}
           </div>
 
           <div>
