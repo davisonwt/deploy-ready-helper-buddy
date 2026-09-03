@@ -278,14 +278,14 @@ export default function LoginPage() {
               
               {/* Security Status Indicator */}
               {securityViolations > 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
                   <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-yellow-600" />
-                    <span className="text-xs text-yellow-700 font-medium">
+                    <Shield className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                    <span className="text-xs text-yellow-700 dark:text-yellow-300 font-medium">
                       Security Enhanced Mode Active
                     </span>
                   </div>
-                  <p className="text-xs text-yellow-600 mt-1">
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
                     Additional validation is being performed to protect your account.
                   </p>
                 </div>

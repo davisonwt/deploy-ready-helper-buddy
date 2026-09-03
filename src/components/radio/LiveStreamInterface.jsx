@@ -586,7 +586,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
   return (
     <div className="space-y-6">
       {/* Live Status Header */}
-      <Card className={isLive ? "border-red-500 bg-red-50" : "border-yellow-500 bg-yellow-50"}>
+      <Card className={isLive ? "border-red-500 bg-red-50 dark:bg-red-950/30 text-red-950 dark:text-red-50" : "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30 text-yellow-950 dark:text-yellow-50"}>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

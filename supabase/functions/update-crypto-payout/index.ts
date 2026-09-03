@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     if (req.method === "GET") {
       const { data, error } = await userClient
         .from("profiles")
-        .select("payout_network, payout_address, payout_tag, payout_wallet_type, payout_details_updated_at")
+        .select("payout_network, payout_address, payout_tag, payout_wallet_type, payout_details_updated_at, solana_wallet_address")
         .eq("user_id", user.id)
         .maybeSingle();
       if (error) throw error;
@@ -188,6 +188,19 @@ Deno.serve(async (req) => {
       .select("payout_network, payout_address, payout_tag, payout_wallet_type, payout_details_updated_at")
       .maybeSingle();
     if (updErr) return json({ error: updErr.message }, 400);
+
+    // "One address everywhere" (non-custodial model, 2026-09-03): the same
+    // Solana address a member sets here is also what MyWalletCard/checkout
+    // recognise as their own wallet -- keep profiles.solana_wallet_address
+    // in sync so there's exactly one field to maintain, not two that can
+    // drift. Never blocks the save if this fails.
+    if (payload.payout_network === "solana_usdc") {
+      const { error: syncErr } = await userClient
+        .from("profiles")
+        .update({ solana_wallet_address: address })
+        .eq("user_id", user.id);
+      if (syncErr) console.warn("update-crypto-payout: solana_wallet_address sync failed", syncErr.message);
+    }
 
     // Notify the owner, in-app only -- same as every other notification in
     // this app (see the file header: the email exception this used to carry

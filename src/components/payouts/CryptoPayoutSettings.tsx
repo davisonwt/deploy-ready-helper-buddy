@@ -77,11 +77,17 @@ export default function CryptoPayoutSettings() {
       const p = data?.payout;
       setActiveNetwork(p?.payout_network ?? null);
       // Only prefill from a Solana-configured payout — this card no longer
-      // has a way to show/edit anything else.
+      // has a way to show/edit anything else. Falls back to
+      // profiles.solana_wallet_address (set via the dashboard's My Wallet
+      // card or Profile) when a payout address hasn't been activated yet —
+      // "one address everywhere" means a member who already connected a
+      // wallet elsewhere shouldn't have to retype it here.
       if (p?.payout_network === PAYOUT_NETWORK && p?.payout_address) {
         setSaved({ payout_address: p.payout_address });
         setAddress(p.payout_address);
         setConfirmAddress('');
+      } else if (p?.solana_wallet_address) {
+        setAddress(p.solana_wallet_address);
       }
     } catch (e: any) {
       console.error('crypto payout load failed', e);
@@ -150,17 +156,17 @@ export default function CryptoPayoutSettings() {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Wallet className="h-4 w-4 text-primary" />
-          Crypto payout wallet
+          Solana wallet (USDC)
           {saved && (
             <Badge variant="secondary" className="text-[10px]">
-              USDC (Solana) · {maskAddress(saved.payout_address)}
+              {maskAddress(saved.payout_address)}
             </Badge>
           )}
         </CardTitle>
         <CardDescription>
-          Where we send your on-chain payouts. USDC on the Solana network — a fraction of a cent
-          to send, so once it's your active rail, you're paid immediately, any amount, no
-          threshold. This is a separate, exclusive rail from PayPal: only one pays you at a time.
+          Where we send your on-chain payouts. Paid automatically when you reach $20, or request
+          any time from $1. This is a separate, exclusive rail from PayPal: only one pays you at
+          a time.
         </CardDescription>
       </CardHeader>
 

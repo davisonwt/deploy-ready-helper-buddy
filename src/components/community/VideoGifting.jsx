@@ -88,10 +88,10 @@ export default function VideoGifting({ video, onGiftSent }) {
             </div>
           ) : (
             <div className="space-y-4">
-              <Card className="border-amber-200 bg-amber-50">
+              <Card className="border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30">
                 <CardContent className="p-4 text-center">
-                  <Wallet className="h-8 w-8 mx-auto mb-2 text-amber-600" />
-                  <p className="text-amber-800 mb-3">Video gifting requires wallet setup</p>
+                  <Wallet className="h-8 w-8 mx-auto mb-2 text-amber-600 dark:text-amber-400" />
+                  <p className="text-amber-800 dark:text-amber-200 mb-3">Video gifting requires wallet setup</p>
                   <p className="text-sm text-muted-foreground">
                     Configure your Binance Pay wallet in Wallet Settings to send gifts
                   </p>

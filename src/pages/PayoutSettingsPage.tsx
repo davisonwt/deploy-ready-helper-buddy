@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -13,18 +12,22 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import ConnectPaypalButton from '@/components/payouts/ConnectPaypalButton';
 import CryptoPayoutSettings from '@/components/payouts/CryptoPayoutSettings';
-import { PAYOUT_PROVIDERS } from '@/lib/payments/providerFees';
 import EarningsPayoutCard from '@/components/payouts/EarningsPayoutCard';
 import { SettlementConsentPrompt } from '@/components/payouts/SettlementConsentPrompt';
 import { useSettlementConsent } from '@/hooks/useSettlementConsent';
 
 /**
- * Sower payout-method settings.
+ * Sower payout-method settings — non-custodial model (legal, 2026-09-03).
  *
- * Lets sowers add NOWPayments crypto wallets and/or PayPal emails that
- * incoming bestowals will pay out to. Routed at /settings/payouts.
+ * Exactly two rails: a Solana wallet (USDC, one address, shared with
+ * profiles.solana_wallet_address so it's the same address everywhere —
+ * see CryptoPayoutSettings) and PayPal (connect/email). NOWPayments is
+ * gone from this page entirely; see the code comment on `preferred` below
+ * for the one place a pre-existing NOWPayments wallet can still matter.
  *
- * Tiebreaker (mirrors supabase/functions/_shared/resolveSowerPayout.ts):
+ * Tiebreaker for `preferred` (mirrors supabase/functions/_shared/
+ * resolveSowerPayout.ts, used at sale time — not the same routing as the
+ * weekly payout-earnings run, which reads payout_network directly):
  *   1. profiles.preferred_payout_method matches wallet_type
  *   2. is_primary = true
  *   3. most recently updated
@@ -44,19 +47,18 @@ interface WalletRow {
   updated_at: string | null;
 }
 
-const NOWPAY_TYPE = 'nowpayments_crypto';
 const PAYPAL_TYPE = 'paypal_email';
+const SOLANA_TYPE = 'solana_usdc';
 
-type PreferredRail = typeof NOWPAY_TYPE | typeof PAYPAL_TYPE | null;
+type PreferredRail = typeof SOLANA_TYPE | typeof PAYPAL_TYPE | null;
 
 export default function PayoutSettingsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [wallets, setWallets] = useState<WalletRow[]>([]);
+  const [paypalWallets, setPaypalWallets] = useState<WalletRow[]>([]);
   const [preferred, setPreferred] = useState<PreferredRail>(null);
   const [savingPreferred, setSavingPreferred] = useState(false);
-  const [activeTab, setActiveTab] = useState<'crypto' | 'paypal'>('crypto');
   const [solanaAddress, setSolanaAddress] = useState<string | null>(null);
   const { hasAccepted: consentAccepted, loading: consentLoading, refetch: refetchConsent } = useSettlementConsent();
 
@@ -71,7 +73,7 @@ export default function PayoutSettingsPage() {
             'id, user_id, wallet_type, wallet_address, payout_currency, network, is_primary, is_active, verified_at, verification_method, updated_at' as any
           )
           .eq('user_id', user.id)
-          .in('wallet_type', [NOWPAY_TYPE, PAYPAL_TYPE])
+          .eq('wallet_type', PAYPAL_TYPE)
           .order('created_at', { ascending: false }),
         supabase
           .from('profiles')
@@ -80,14 +82,14 @@ export default function PayoutSettingsPage() {
           .maybeSingle(),
       ]);
       if (walletsRes.error) throw walletsRes.error;
-      setWallets((walletsRes.data ?? []) as any as WalletRow[]);
+      setPaypalWallets((walletsRes.data ?? []) as any as WalletRow[]);
       const pref = (profileRes.data as any)?.preferred_payout_method ?? null;
-      setPreferred(pref === NOWPAY_TYPE || pref === PAYPAL_TYPE ? pref : null);
+      setPreferred(pref === SOLANA_TYPE || pref === PAYPAL_TYPE ? pref : null);
       const p = profileRes.data as any;
-      setSolanaAddress(p?.payout_network === 'solana_usdc' && p?.payout_address ? p.payout_address : null);
+      setSolanaAddress(p?.payout_network === SOLANA_TYPE && p?.payout_address ? p.payout_address : null);
     } catch (e: any) {
       console.error('PayoutSettings load error', e);
-      toast.error(e?.message ?? 'Failed to load payout wallets');
+      toast.error(e?.message ?? 'Failed to load payout settings');
     } finally {
       setLoading(false);
     }
@@ -95,37 +97,25 @@ export default function PayoutSettingsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const cryptoWallets = useMemo(
-    () => wallets.filter((w) => w.wallet_type === NOWPAY_TYPE),
-    [wallets]
-  );
-  const paypalWallets = useMemo(
-    () => wallets.filter((w) => w.wallet_type === PAYPAL_TYPE),
-    [wallets]
-  );
-
-  const hasCrypto = cryptoWallets.some((w) => w.is_active !== false);
   const hasPaypal = paypalWallets.some((w) => w.is_active !== false);
-  // Payouts now run weekly via PayPal Payouts only (see payout-earnings) —
-  // a wallet has to be both active AND verified to actually get paid;
-  // "Unverified" isn't enough, even though it still shows in the list below.
+  // Payouts run via PayPal Payouts weekly — a wallet has to be both active
+  // AND verified to actually get paid; "Unverified" isn't enough, even
+  // though it still shows in the list below.
   const hasVerifiedPaypal = paypalWallets.some((w) => w.is_active !== false && !!w.verified_at);
 
-  /** Mirrors resolveSowerPayout.ts. Returns the wallet that would actually receive the next payout. */
+  /** Mirrors resolveSowerPayout.ts. Returns the PayPal wallet that would receive a sale-time distribution, if PayPal is the active rail. */
   const activeDefaultWalletId = useMemo(() => {
-    const candidates = wallets.filter((w) => w.is_active !== false && !!w.wallet_address);
+    const candidates = paypalWallets.filter((w) => w.is_active !== false && !!w.wallet_address);
     if (candidates.length === 0) return null;
     const scored = candidates.map((w) => ({
       w,
-      pref: preferred && w.wallet_type === preferred ? 1 : 0,
+      pref: preferred === PAYPAL_TYPE ? 1 : 0,
       primary: w.is_primary ? 1 : 0,
       updated: w.updated_at ? new Date(w.updated_at).getTime() : 0,
     }));
-    scored.sort(
-      (a, b) => b.pref - a.pref || b.primary - a.primary || b.updated - a.updated
-    );
+    scored.sort((a, b) => b.pref - a.pref || b.primary - a.primary || b.updated - a.updated);
     return scored[0]?.w.id ?? null;
-  }, [wallets, preferred]);
+  }, [paypalWallets, preferred]);
 
   const updatePreferred = async (next: PreferredRail) => {
     if (!user) return;
@@ -140,7 +130,7 @@ export default function PayoutSettingsPage() {
       toast.success(
         next === null
           ? 'Cleared preferred rail — falling back to primary'
-          : `Preferred rail set to ${next === PAYPAL_TYPE ? 'PayPal' : 'Crypto (NOWPayments)'}`
+          : `Preferred rail set to ${next === PAYPAL_TYPE ? 'PayPal' : 'Solana USDC'}`
       );
     } catch (e: any) {
       console.error(e);
@@ -153,7 +143,6 @@ export default function PayoutSettingsPage() {
   const setPrimary = async (row: WalletRow) => {
     if (!user) return;
     try {
-      // Clear current primary for this wallet_type, then set this one.
       const { error: clearErr } = await supabase
         .from('user_wallets')
         .update({ is_primary: false } as any)
@@ -166,7 +155,7 @@ export default function PayoutSettingsPage() {
         .update({ is_primary: true } as any)
         .eq('id', row.id);
       if (error) throw error;
-      toast.success('Primary payout wallet updated');
+      toast.success('Primary PayPal account updated');
       load();
     } catch (e: any) {
       console.error(e);
@@ -176,11 +165,11 @@ export default function PayoutSettingsPage() {
 
   const removeWallet = async (row: WalletRow) => {
     if (!user) return;
-    if (!confirm('Remove this payout method?')) return;
+    if (!confirm('Remove this PayPal account?')) return;
     try {
       const { error } = await supabase.from('user_wallets').delete().eq('id', row.id);
       if (error) throw error;
-      toast.success('Payout method removed');
+      toast.success('PayPal account removed');
       load();
     } catch (e: any) {
       console.error(e);
@@ -203,15 +192,9 @@ export default function PayoutSettingsPage() {
       <div>
         <h1 className="text-2xl font-bold">Payout Settings</h1>
         <p className="text-muted-foreground text-sm">
-          Choose where bestowals are paid out. <strong>You pay your chosen processor&apos;s fee, not Sow2Grow.</strong>
+          Two ways to get paid: a Solana wallet (USDC) or PayPal. Paid automatically when you
+          reach $20, or request any time from $1 on Solana.
         </p>
-        <ul className="mt-2 text-xs text-muted-foreground space-y-1">
-          {PAYOUT_PROVIDERS.map((p) => (
-            <li key={p.id}>
-              <span className="font-medium text-foreground">{p.label}:</span> {p.note}
-            </li>
-          ))}
-        </ul>
       </div>
 
       {!user && (
@@ -225,13 +208,12 @@ export default function PayoutSettingsPage() {
         <SettlementConsentPrompt onAccepted={refetchConsent} />
       )}
 
-      {user && !loading && !hasVerifiedPaypal && (
-        <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/30">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          <AlertDescription>
-            <strong>Connect with PayPal to get paid.</strong> Sow2Grow now pays sowers and
-            whisperers weekly (Fridays) via PayPal Payouts — PayPal itself supplies your verified
-            email, nothing to type. Balances under $20 carry over to the next week.
+      {user && !loading && !hasVerifiedPaypal && !solanaAddress && (
+        <Alert className="border-amber-500/40 bg-amber-500/10">
+          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-amber-800 dark:text-amber-200">
+            <strong>Set up a payout method to get paid.</strong> Connect PayPal or add your
+            Solana wallet below — nothing will pay out until one of them is active.
           </AlertDescription>
         </Alert>
       )}
@@ -241,12 +223,10 @@ export default function PayoutSettingsPage() {
           <CardHeader>
             <CardTitle className="text-base">Your payout rail</CardTitle>
             <CardDescription>
-              This is exactly what the weekly payout run uses to decide where your money goes —
-              whichever one is marked "Active now" below is the only one that pays you. Both
-              rails pay automatically once your owed total reaches $20 — PayPal because it
-              charges a fee per transfer, Solana so you're not paid in a stream of sub-dollar
-              sends. On Solana you can also pull whatever you're owed early, any amount $1 or
-              more, any time — see "Your earnings" below.
+              Whichever one is marked "Active now" is the only one that pays you — only one rail
+              pays at a time. Paid automatically when you reach $20, or request any time from $1
+              on Solana (PayPal keeps its own $20 minimum — that's PayPal's real per-transfer
+              fee, not something we can waive).
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col sm:flex-row gap-3">
@@ -264,12 +244,12 @@ export default function PayoutSettingsPage() {
                   ? 'Connected, but not paying you — Solana USDC is your active rail below.'
                   : hasVerifiedPaypal
                     ? 'Connected and verified — this is what pays you today.'
-                    : 'Not connected yet — nothing will pay you until you connect PayPal or switch to Solana.'}
+                    : 'Not connected yet — nothing will pay you until you connect PayPal or add a Solana wallet.'}
               </p>
             </div>
             <div className="flex-1 rounded-md border p-3">
               <div className="flex items-center gap-2 font-medium">
-                Solana USDC
+                Solana wallet (USDC)
                 {solanaAddress && (
                   <Badge className="text-[10px] bg-primary/15 text-primary border border-primary/30">
                     Active now
@@ -296,9 +276,8 @@ export default function PayoutSettingsPage() {
               Preferred payout rail
             </CardTitle>
             <CardDescription>
-              When you have both a crypto wallet and a PayPal email configured, payouts go to
-              your preferred rail&apos;s primary wallet. If no preference is set, we use the most
-              recently updated primary.
+              If you have both PayPal and a Solana wallet configured, payouts go to your
+              preferred rail. If no preference is set, we use whichever was set up most recently.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -311,9 +290,9 @@ export default function PayoutSettingsPage() {
               className="space-y-2"
             >
               <div className="flex items-center gap-2">
-                <RadioGroupItem value={NOWPAY_TYPE} id="pref-crypto" disabled={!hasCrypto} />
-                <Label htmlFor="pref-crypto" className={!hasCrypto ? 'text-muted-foreground' : ''}>
-                  Crypto (NOWPayments) {!hasCrypto && <span className="text-xs">— add a wallet first</span>}
+                <RadioGroupItem value={SOLANA_TYPE} id="pref-solana" disabled={!solanaAddress} />
+                <Label htmlFor="pref-solana" className={!solanaAddress ? 'text-muted-foreground' : ''}>
+                  Solana wallet (USDC) {!solanaAddress && <span className="text-xs">— add an address first</span>}
                 </Label>
               </div>
               <div className="flex items-center gap-2">
@@ -324,132 +303,72 @@ export default function PayoutSettingsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="auto" id="pref-auto" />
-                <Label htmlFor="pref-auto">Auto (use my most recent primary)</Label>
+                <Label htmlFor="pref-auto">Auto (use my most recent setup)</Label>
               </div>
             </RadioGroup>
           </CardContent>
         </Card>
       )}
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="crypto">
-            Crypto (NOWPayments)
-            {preferred === NOWPAY_TYPE && <Badge className="ml-2 text-[10px]">Preferred</Badge>}
-          </TabsTrigger>
-          <TabsTrigger value="paypal">
-            PayPal
-            {preferred === PAYPAL_TYPE && <Badge className="ml-2 text-[10px]">Preferred</Badge>}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="crypto" className="space-y-4 mt-4">
-          <WalletList
-            title="Your NOWPayments wallets"
-            loading={loading}
-            rows={cryptoWallets}
-            activeDefaultId={activeDefaultWalletId}
-            onSetPrimary={setPrimary}
-            onRemove={removeWallet}
-            emptyText="No crypto payout wallets yet."
-          />
-        </TabsContent>
-
-        <TabsContent value="paypal" className="space-y-4 mt-4">
-          <WalletList
-            title="Your PayPal account"
-            loading={loading}
-            rows={paypalWallets}
-            activeDefaultId={activeDefaultWalletId}
-            onSetPrimary={setPrimary}
-            onRemove={removeWallet}
-            emptyText="No PayPal account connected yet."
-          />
-          <ConnectPaypalButton />
-        </TabsContent>
-      </Tabs>
-
       {user && <CryptoPayoutSettings />}
-    </div>
-  );
-}
 
-function WalletList({
-  title,
-  loading,
-  rows,
-  activeDefaultId,
-  onSetPrimary,
-  onRemove,
-  emptyText,
-}: {
-  title: string;
-  loading: boolean;
-  rows: WalletRow[];
-  activeDefaultId: string | null;
-  onSetPrimary: (r: WalletRow) => void;
-  onRemove: (r: WalletRow) => void;
-  emptyText: string;
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-        <CardDescription>
-          Set one as primary within this rail. The <em>Active default</em> badge marks the wallet
-          that will actually receive the next payout, based on your preferred rail above.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="flex items-center justify-center py-6 text-muted-foreground">
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading…
-          </div>
-        ) : rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-3">{emptyText}</p>
-        ) : (
-          <ul className="space-y-2">
-            {rows.map((r) => (
-              <li
-                key={r.id}
-                className="flex items-center gap-3 p-3 rounded-md border bg-muted/30"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-sm truncate">{r.wallet_address}</span>
-                    {r.payout_currency && (
-                      <Badge variant="secondary" className="text-xs">{r.payout_currency}</Badge>
-                    )}
-                    {r.is_primary && (
-                      <Badge className="text-xs"><Star className="w-3 h-3 mr-1" />Primary</Badge>
-                    )}
-                    {activeDefaultId === r.id && (
-                      <Badge className="text-xs bg-primary/15 text-primary border border-primary/30">
-                        <CheckCircle2 className="w-3 h-3 mr-1" />Active default
-                      </Badge>
-                    )}
-                    {r.verified_at ? (
-                      <Badge variant="outline" className="text-xs">Verified</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
-                        Unverified
-                      </Badge>
-                    )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Your PayPal account</CardTitle>
+          <CardDescription>
+            Set one as primary if you ever connect more than one. The <em>Active default</em>{' '}
+            badge marks the account a sale-time distribution would use today.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-6 text-muted-foreground">
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading…
+            </div>
+          ) : paypalWallets.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-3">No PayPal account connected yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {paypalWallets.map((r) => (
+                <li
+                  key={r.id}
+                  className="flex items-center gap-3 p-3 rounded-md border bg-muted/30"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-sm truncate">{r.wallet_address}</span>
+                      {r.is_primary && (
+                        <Badge className="text-xs"><Star className="w-3 h-3 mr-1" />Primary</Badge>
+                      )}
+                      {activeDefaultWalletId === r.id && (
+                        <Badge className="text-xs bg-primary/15 text-primary border border-primary/30">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />Active default
+                        </Badge>
+                      )}
+                      {r.verified_at ? (
+                        <Badge variant="outline" className="text-xs">Verified</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700">
+                          Unverified
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
-                {!r.is_primary && (
-                  <Button size="sm" variant="outline" onClick={() => onSetPrimary(r)}>
-                    Make primary
+                  {!r.is_primary && (
+                    <Button size="sm" variant="outline" onClick={() => setPrimary(r)}>
+                      Make primary
+                    </Button>
+                  )}
+                  <Button size="icon" variant="ghost" onClick={() => removeWallet(r)} aria-label="Remove">
+                    <Trash2 className="w-4 h-4" />
                   </Button>
-                )}
-                <Button size="icon" variant="ghost" onClick={() => onRemove(r)} aria-label="Remove">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
+                </li>
+              ))}
+            </ul>
+          )}
+          <ConnectPaypalButton />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

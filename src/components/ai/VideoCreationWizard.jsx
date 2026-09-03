@@ -380,13 +380,13 @@ export const VideoCreationWizard = () => {
               </div>
             </div>
 
-            <Card className="bg-yellow-50 border-yellow-200">
+            <Card className="bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <Lightbulb className="w-5 h-5 text-yellow-600 mt-0.5" />
+                  <Lightbulb className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-yellow-900">💡 Creative Inspiration</h4>
-                    <p className="text-sm text-yellow-700 mt-1">
+                    <h4 className="font-medium text-yellow-900 dark:text-yellow-200">💡 Creative Inspiration</h4>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
                       Great videos combine emotion with simplicity. Think about what makes your orchard special and 
                       how it makes bestowers feel. Authenticity beats perfection every time!
                     </p>

@@ -191,7 +191,7 @@ export const SecurityMonitor: React.FC = () => {
         )}
         
         {securityStatus === 'warning' && (
-          <div className="text-xs text-yellow-600 bg-yellow-50 p-2 rounded">
+          <div className="text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/30 p-2 rounded">
             Monitoring unusual activity patterns
           </div>
         )}

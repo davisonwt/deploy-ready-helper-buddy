@@ -262,7 +262,7 @@ export function ClubhouseLiveSession({ roomData, onLeave }) {
 
       {/* Host Controls Panel */}
       {isHostControlsOpen && (
-        <div className="bg-yellow-50 border-b p-4">
+        <div className="bg-yellow-50 dark:bg-yellow-950/30 text-yellow-950 dark:text-yellow-100 border-b p-4">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Speaking Time:</label>

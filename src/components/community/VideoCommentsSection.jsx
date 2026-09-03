@@ -161,13 +161,13 @@ export default function VideoCommentsSection({ video }) {
               </div>
             </form>
           ) : (
-            <Card className="border-amber-200 bg-amber-50">
+            <Card className="border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30">
               <CardContent className="p-4 text-center">
-                <MessageCircle className="h-8 w-8 mx-auto mb-2 text-amber-600" />
-                <p className="text-amber-800 mb-3">Sign in to join the conversation</p>
-                <Button 
-                  variant="outline" 
-                  className="border-amber-600 text-amber-600"
+                <MessageCircle className="h-8 w-8 mx-auto mb-2 text-amber-600 dark:text-amber-400" />
+                <p className="text-amber-800 dark:text-amber-200 mb-3">Sign in to join the conversation</p>
+                <Button
+                  variant="outline"
+                  className="border-amber-600 dark:border-amber-500 text-amber-600 dark:text-amber-400"
                   onClick={() => window.location.href = '/login'}
                 >
                   Sign In

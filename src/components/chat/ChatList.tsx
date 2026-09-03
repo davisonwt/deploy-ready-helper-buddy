@@ -441,7 +441,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
                           e.stopPropagation();
                           handleLeaveRoom(room.id);
                         }}
-                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                        className="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40"
                         title="Leave chat"
                       >
                         <LogOut className="h-4 w-4" />

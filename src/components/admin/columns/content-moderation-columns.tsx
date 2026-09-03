@@ -81,7 +81,7 @@ export const contentModerationColumns: ColumnDef<ContentData>[] = [
       return (
         <div className="text-center">
           {count > 0 ? (
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+            <Badge variant="outline" className="bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700">
               {count}
             </Badge>
           ) : (

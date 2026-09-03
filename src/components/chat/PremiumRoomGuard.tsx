@@ -173,7 +173,7 @@ const PremiumRoomGuard = ({ roomId, children }: PremiumRoomGuardProps) => {
             <Button 
               variant="outline" 
               onClick={() => window.location.href = '/chatapp'}
-              className="w-full border-amber-300 text-amber-700 hover:bg-amber-50"
+              className="w-full border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
             >
               Back to Chat Rooms
             </Button>

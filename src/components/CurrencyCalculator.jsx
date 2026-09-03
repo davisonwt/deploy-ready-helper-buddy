@@ -207,9 +207,9 @@ export default function CurrencyCalculator({ onUseAmount }) {
           </div>
         )}
 
-        <div className="text-xs text-gray-500 mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-          <p className="font-medium text-yellow-800 mb-1">⚠️ Disclaimer:</p>
-          <p>Exchange rates are approximate and for estimation purposes only. 
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-4 p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
+          <p className="font-medium text-yellow-800 dark:text-yellow-300 mb-1">⚠️ Disclaimer:</p>
+          <p>Exchange rates are approximate and for estimation purposes only.
           Actual rates may vary. Please verify current exchange rates before finalizing your seed value.</p>
         </div>
       </CardContent>
