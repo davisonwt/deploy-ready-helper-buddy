@@ -15,18 +15,22 @@
 //     (spec-payments.md section 4: "recipient rail comes from their own
 //     stored payout config", never a second place to configure it):
 //       * payout_network = 'solana_usdc' → Solana USDC, sent directly from
-//         the hot wallet (see _shared/solanaPayout.ts). NO minimum — a
-//         Solana transfer costs a fraction of a cent, so nothing is held
-//         back. Hard per-transaction/daily caps still apply (below) as the
-//         circuit breaker for a bug or a compromised key. A 48h cooling-off
-//         also applies after any payout_details change (see
+//         the hot wallet (see _shared/solanaPayout.ts). Same
+//         $PAYOUT_THRESHOLD_USD minimum as PayPal now (non-custodial model,
+//         legal 2026-09-03) — a Solana transfer itself costs a fraction of
+//         a cent, but this automatic run still waits for the threshold so a
+//         recipient isn't paid in a stream of sub-dollar sends; request-
+//         earnings-payout is the separate on-demand path with no minimum
+//         (any amount >= $1). Hard per-transaction/daily caps still apply
+//         (below) as the circuit breaker for a bug or a compromised key. A
+//         48h cooling-off also applies after any payout_details change (see
 //         PAYOUT_ADDRESS_COOLING_OFF_HOURS below) — the classic account-
 //         takeover payday is changing the payout address, so a freshly
 //         changed one doesn't get paid until the owner has had time to see
 //         update-crypto-payout's notification and react if it wasn't them.
-//       * everyone else → PayPal Payouts, unchanged: $20 minimum per
-//         recipient (PayPal charges a real per-item fee), requires an
-//         ACTIVE, VERIFIED PayPal email in user_wallets
+//       * everyone else → PayPal Payouts, unchanged: $PAYOUT_THRESHOLD_USD
+//         minimum per recipient (PayPal charges a real per-item fee),
+//         requires an ACTIVE, VERIFIED PayPal email in user_wallets
 //         (wallet_type='paypal_email', verified_at IS NOT NULL). No email,
 //         or an unverified one, skips with a reason — never blocks the sale.
 //   - A recipient with no payout method configured at all keeps accruing;
@@ -104,7 +108,13 @@ const SUPABASE_ANON_KEY = (JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") 
 const SERVICE_ROLE_KEY = (JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) ?? "";
 const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
-const MIN_PAYOUT_USD = 20; // PayPal only — Solana has no minimum.
+// Non-custodial model (legal, 2026-09-03): earnings accumulate per
+// recipient until this threshold, then pay out automatically -- applies
+// to BOTH rails now (Solana used to have no minimum at all; that's still
+// true for an explicit on-demand request, see request-earnings-payout,
+// but the automatic weekly run now waits for the same threshold either
+// way, so a recipient isn't surprised by a stream of sub-dollar sends).
+const PAYOUT_THRESHOLD_USD = Number(Deno.env.get("PAYOUT_THRESHOLD_USD")) || 20;
 
 // Hard circuit-breaker caps for the Solana leg, per spec-payments.md
 // section 2. Anything over either cap does NOT send; it's flagged for
@@ -360,12 +370,15 @@ Deno.serve(async (req) => {
         amount_usd: amount,
         rail: "paypal" as const,
       };
-      if (amount < MIN_PAYOUT_USD) return { ...base, eligible: false, reason: "below_minimum" };
+      if (amount < PAYOUT_THRESHOLD_USD) return { ...base, eligible: false, reason: "below_minimum" };
       if (!emailByUser.has(r.recipient_user_id)) return { ...base, eligible: false, reason: "no_verified_paypal_email" };
       return { ...base, eligible: true };
     });
 
-    // --- Solana eligibility: no minimum, but hard per-tx/daily caps -------
+    // --- Solana eligibility: same $PAYOUT_THRESHOLD_USD as PayPal for the
+    // automatic weekly run, plus hard per-tx/daily caps. An explicit
+    // on-demand request (request-earnings-payout) is the only path with no
+    // minimum -- this automatic run always waits for the threshold. -------
     // Daily headroom is computed against everything already marked paid on
     // this rail today (across any earlier run today, not just this one),
     // then reserved provisionally as each recipient in this run is approved
@@ -389,6 +402,10 @@ Deno.serve(async (req) => {
           amount_usd: amount,
           rail: "solana_usdc" as const,
         };
+        if (amount < PAYOUT_THRESHOLD_USD) {
+          solanaOutcomes.push({ ...base, eligible: false, reason: "below_minimum" });
+          continue;
+        }
         const rail = railByUser.get(r.recipient_user_id);
         if (!rail?.address) {
           solanaOutcomes.push({ ...base, eligible: false, reason: "no_solana_address" });
@@ -496,7 +513,7 @@ Deno.serve(async (req) => {
 
     const eligiblePaypal = paypalOwed.filter((r) => {
       const amount = round2(Number(r.amount_usd || 0));
-      return amount >= MIN_PAYOUT_USD && emailByUser.has(r.recipient_user_id);
+      return amount >= PAYOUT_THRESHOLD_USD && emailByUser.has(r.recipient_user_id);
     });
     const eligibleSolana = solanaOwed.filter(
       (r) => solanaOutcomes.find((o) => o.recipient_user_id === r.recipient_user_id)?.eligible,

@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import ConnectPaypalButton from '@/components/payouts/ConnectPaypalButton';
 import CryptoPayoutSettings from '@/components/payouts/CryptoPayoutSettings';
 import { PAYOUT_PROVIDERS } from '@/lib/payments/providerFees';
+import EarningsPayoutCard from '@/components/payouts/EarningsPayoutCard';
 
 /**
  * Sower payout-method settings.
@@ -234,10 +235,11 @@ export default function PayoutSettingsPage() {
             <CardTitle className="text-base">Your payout rail</CardTitle>
             <CardDescription>
               This is exactly what the weekly payout run uses to decide where your money goes —
-              whichever one is marked "Active now" below is the only one that pays you. PayPal
-              payouts are batched to a $20 minimum because PayPal charges a fee per transfer.
-              USDC on Solana costs a fraction of a cent to send, so Solana recipients are paid
-              immediately — any amount, no threshold.
+              whichever one is marked "Active now" below is the only one that pays you. Both
+              rails pay automatically once your owed total reaches $20 — PayPal because it
+              charges a fee per transfer, Solana so you're not paid in a stream of sub-dollar
+              sends. On Solana you can also pull whatever you're owed early, any amount $1 or
+              more, any time — see "Your earnings" below.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col sm:flex-row gap-3">
@@ -276,6 +278,8 @@ export default function PayoutSettingsPage() {
           </CardContent>
         </Card>
       )}
+
+      {user && <EarningsPayoutCard />}
 
       {user && (
         <Card>
