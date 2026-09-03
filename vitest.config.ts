@@ -9,6 +9,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // tests/payments/**/*.spec.ts is the Playwright suite (npm run
+    // test:payments) -- it imports `test`/`expect` from @playwright/test,
+    // not vitest, and matches Vitest's default *.spec.ts glob by accident.
+    exclude: ['**/node_modules/**', '**/tests/payments/**'],
     coverage: {
       reporter: ['text', 'json', 'html'],
       exclude: [
