@@ -1,3 +1,17 @@
+// Must run before anything else -- @solana/web3.js and @solana/spl-token
+// (used by src/lib/payments/solanaWallet.ts's "Pay with Phantom" transaction
+// builder) call Node's global `Buffer` internally (PublicKey associated-
+// token-address derivation, SPL instruction encoding), which does not exist
+// in a browser bundle on its own. vite.config.ts already aliases the
+// `buffer` npm package and defines `global: 'globalThis'` for these
+// libraries to resolve against, but that alone doesn't put a `Buffer` value
+// on the global object -- this import is the one line that actually does,
+// via the same 'buffer' package. Without it, any code path that reaches
+// those libraries throws "ReferenceError: Buffer is not defined" the
+// moment it runs -- which is exactly what happened to the desktop Phantom
+// pay button (buildUsdcTransferTransaction), since that path is only
+// exercised on a real "Pay with Phantom" click, not at page load.
+import "./buffer-polyfill";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";

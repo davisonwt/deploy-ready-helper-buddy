@@ -34,3 +34,9 @@ dist-ssr
 # Supabase CLI local state (project ref, versions, pooler URL) — regenerated
 # on every `supabase` CLI command, not source
 supabase/.temp/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
