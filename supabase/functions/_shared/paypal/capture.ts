@@ -179,14 +179,26 @@ async function finalizeBestowal(
     console.warn("finalizeBestowal: bestowal not found", bestowalId);
     return;
   }
-  if (bestowal.payment_status === "completed" || bestowal.payment_status === "distributed") {
-    return;
+
+  if (bestowal.payment_status !== "completed" && bestowal.payment_status !== "distributed") {
+    await supabase
+      .from("bestowals")
+      .update({ payment_status: "completed", payment_reference: paymentReference })
+      .eq("id", bestowalId);
   }
 
-  await supabase
-    .from("bestowals")
-    .update({ payment_status: "completed", payment_reference: paymentReference })
-    .eq("id", bestowalId);
+  // Always attempted, regardless of whether payment_status was already
+  // completed above — idempotent via its own payout_status='pending' check,
+  // so a retry after a mid-way failure (payment_status flipped, credit
+  // call never reached) still reaches this instead of the early return
+  // above permanently skipping it.
+  const { error: creditError } = await supabase.rpc("credit_earning_for_gift_bestowal", {
+    _bestowal_id: bestowalId,
+    _actor_id: null,
+  });
+  if (creditError) {
+    throw new Error(`credit_earning_for_gift_bestowal_failed:${creditError.message}`);
+  }
 }
 
 /**
