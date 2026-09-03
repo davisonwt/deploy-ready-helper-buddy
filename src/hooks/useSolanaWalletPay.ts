@@ -22,14 +22,31 @@ export type WalletPayErrorKind =
   | 'rejected'
   | 'insufficient-funds'
   | 'wrong-network'
+  | 'simulation-failed'
   | 'unknown';
 
 export interface WalletPayError {
   kind: WalletPayErrorKind;
   message: string;
+  /**
+   * Raw technical detail (Phantom's own nested error data, or the
+   * simulation's on-chain error + logs) -- never shown as the primary
+   * message, but surfaced in an expandable section so a real cause is
+   * reportable instead of just Phantom's generic "An internal error has
+   * occurred".
+   */
+  detail?: string;
   /** insufficient-funds only. */
   balance?: number;
   shortfall?: number;
+}
+
+class SimulationFailedError extends Error {
+  detail: string;
+  constructor(detail: string) {
+    super('Transaction simulation failed before signing.');
+    this.detail = detail;
+  }
 }
 
 /**
@@ -99,12 +116,29 @@ export function useSolanaWalletPay(payment: SolanaPaymentResponse, onSubmitted?:
         cluster: payment.cluster,
       });
 
+      // Known-good before the user ever sees Phantom's approve dialog --
+      // Phantom's own failure mode for a bad transaction is an opaque "An
+      // internal error has occurred" with no detail. Simulating against
+      // the same RPC first turns any real on-chain problem (missing
+      // account, bad instruction, insufficient rent, etc.) into the
+      // actual error + program logs instead of that black box.
+      const sim = await connection.simulateTransaction(tx);
+      if (sim.value.err) {
+        throw new SimulationFailedError(
+          `${JSON.stringify(sim.value.err)}${sim.value.logs?.length ? `\n\n${sim.value.logs.join('\n')}` : ''}`,
+        );
+      }
+
       setPhase('awaiting-approval');
       const { signature } = await provider.signAndSendTransaction(tx);
 
       setPhase('submitted');
       onSubmitted?.(signature);
     } catch (err) {
+      // Log the raw error object, not just its message -- Phantom nests
+      // the actually-useful detail (originalError, logs) under properties
+      // classifyError's pattern-matching alone would otherwise discard.
+      console.error('[SolanaPay] pay() failed', err);
       setPhase('error');
       setError(classifyError(err));
     } finally {
@@ -116,9 +150,27 @@ export function useSolanaWalletPay(payment: SolanaPaymentResponse, onSubmitted?:
 }
 
 function classifyError(err: unknown): WalletPayError {
-  const anyErr = err as { code?: number; message?: string } | undefined;
+  if (err instanceof SimulationFailedError) {
+    return {
+      kind: 'simulation-failed',
+      message: "This payment didn't pass a pre-flight check, so it was never sent to Phantom to sign.",
+      detail: err.detail,
+    };
+  }
+
+  // Phantom (and most injected wallets) nest the actually-useful cause
+  // under `data`/`data.originalError` rather than putting it in the
+  // top-level message -- that's the detail Phantom's own generic "An
+  // internal error has occurred" hides. Pull whatever's there.
+  const anyErr = err as { code?: number; message?: string; data?: { originalError?: { message?: string } } } | undefined;
+  const nestedMessage = anyErr?.data?.originalError?.message;
   const message = anyErr?.message ?? (err instanceof Error ? err.message : String(err));
   const lower = message.toLowerCase();
+  const detail = nestedMessage && nestedMessage !== message
+    ? `${message} — ${nestedMessage}`
+    : anyErr?.data
+      ? `${message} ${JSON.stringify(anyErr.data)}`
+      : message;
 
   // Phantom's standard user-rejection code (matches the wallet-adapter
   // convention every Solana wallet follows).
@@ -140,12 +192,13 @@ function classifyError(err: unknown): WalletPayError {
     return {
       kind: 'wrong-network',
       message: "Your wallet's network doesn't match this payment (devnet vs. mainnet). Switch Phantom's network and try again.",
+      detail,
     };
   }
 
   if (lower.includes('insufficient')) {
-    return { kind: 'insufficient-funds', message: 'Not enough USDC (or SOL for the network fee) in this wallet.' };
+    return { kind: 'insufficient-funds', message: 'Not enough USDC (or SOL for the network fee) in this wallet.', detail };
   }
 
-  return { kind: 'unknown', message: message || 'Something went wrong sending this payment.' };
+  return { kind: 'unknown', message: message || 'Something went wrong sending this payment.', detail };
 }

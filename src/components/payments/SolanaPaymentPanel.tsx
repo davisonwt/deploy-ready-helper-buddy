@@ -77,6 +77,7 @@ function WalletErrorPanel({
     rejected: 'You declined the request in Phantom.',
     'insufficient-funds': `You have ${(error.balance ?? 0).toFixed(2)} USDC — you need ${(error.shortfall ?? amountUsdc).toFixed(2)} more to complete this payment.`,
     'wrong-network': error.message,
+    'simulation-failed': error.message,
     unknown: error.message,
   };
 
@@ -84,6 +85,16 @@ function WalletErrorPanel({
     <div className="space-y-3 rounded-lg border border-orange-500/40 bg-orange-500/10 p-4 text-center">
       <AlertTriangle className="mx-auto h-6 w-6 text-orange-500" />
       <p className="text-sm text-orange-700 dark:text-orange-300">{copy[error.kind]}</p>
+      {error.detail && (
+        <details className="text-left">
+          <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+            Technical details
+          </summary>
+          <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-left text-xs text-muted-foreground">
+            {error.detail}
+          </pre>
+        </details>
+      )}
       <Button variant="outline" onClick={onRetry} className="w-full">Try again</Button>
     </div>
   );
