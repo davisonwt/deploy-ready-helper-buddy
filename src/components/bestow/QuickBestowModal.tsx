@@ -29,6 +29,7 @@ import ProviderPicker from '@/components/payments/ProviderPicker';
 import { MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { priceBreakdown, round2 } from '@/lib/pricing/platformFee';
 import { useBalanceProvider, isBalanceSuccess } from '@/hooks/useBalanceProvider';
+import { useExchangeRates, formatConvertedWithUsd } from '@/lib/currency/rates';
 
 export interface QuickBestowModalProps {
   open: boolean;
@@ -72,6 +73,8 @@ export default function QuickBestowModal({
   onSuccess,
 }: QuickBestowModalProps) {
   const { user } = useAuth();
+  const { rates } = useExchangeRates();
+  const displayCurrency = (user?.preferred_currency || 'USD').toUpperCase();
   const [amount, setAmount] = useState<number>(defaultAmount);
   const [note, setNote] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -242,6 +245,11 @@ export default function QuickBestowModal({
           <div className="text-xs text-muted-foreground text-right">
             Estimated processor fee: <span className="font-medium text-foreground">{feePreview.display}</span>
           </div>
+          {displayCurrency !== 'USD' && (
+            <div className="text-xs text-muted-foreground text-right">
+              You'll pay <span className="font-medium text-foreground">{formatConvertedWithUsd(pricing.total, displayCurrency, rates)}</span>
+            </div>
+          )}
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={onClose} disabled={processing}>Cancel</Button>
             <Button onClick={handleBestow} disabled={processing || amount <= 0} className="gap-2">

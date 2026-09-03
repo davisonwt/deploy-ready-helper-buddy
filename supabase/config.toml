@@ -460,4 +460,7 @@ verify_jwt = false
 [functions.sentinel]
 verify_jwt = false
 
+[functions.refresh-exchange-rates]
+verify_jwt = false
+
 

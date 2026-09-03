@@ -4,6 +4,8 @@ import { Separator } from '@/components/ui/separator';
 import { ReceiptText, PlayCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { resolveItemLink } from '@/lib/media/resolveItemLink';
+import { useAuth } from '@/hooks/useAuth';
+import { useExchangeRates, formatConvertedWithUsd } from '@/lib/currency/rates';
 
 interface SeedLine {
   title: string;
@@ -40,6 +42,15 @@ export function BestowalReceiptMessage({ metadata }: { metadata: BestowalReceipt
     processor_fee, buyer_total, topup_amount,
   } = metadata || {};
 
+  // Every amount on this receipt is stored/sent in USD (messaging.ts always
+  // sets metadata.currency: "USD") -- convert to the viewer's own preferred
+  // display currency here, same as every other money display in the app.
+  const { user } = useAuth();
+  const { rates } = useExchangeRates();
+  const displayCurrency = (user?.preferred_currency || 'USD').toUpperCase();
+  const dual = (n: number | null | undefined) =>
+    typeof n === 'number' ? formatConvertedWithUsd(n, displayCurrency, rates) : '—';
+
   const isTopup = !seed_lines || seed_lines.length === 0;
   const dateLabel = date ? format(new Date(date), 'PP') : '';
   const providerLabel = provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : 'processor';
@@ -66,7 +77,7 @@ export function BestowalReceiptMessage({ metadata }: { metadata: BestowalReceipt
           subtotal. */}
       <div className="flex justify-between text-sm font-bold">
         <span>Total paid</span>
-        <span>{usd(buyer_total)}</span>
+        <span>{dual(buyer_total)}</span>
       </div>
       {!!processor_fee && (
         <div className="flex justify-between text-xs text-muted-foreground">
@@ -80,7 +91,7 @@ export function BestowalReceiptMessage({ metadata }: { metadata: BestowalReceipt
       {isTopup ? (
         <div className="flex justify-between text-sm">
           <span>Amount credited to your wallet</span>
-          <span className="font-medium">{usd(topup_amount)}</span>
+          <span className="font-medium">{dual(topup_amount)}</span>
         </div>
       ) : (
         <>

@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { CRYPTO_ROUNDING_NOTICE, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
+import { useExchangeRates, formatConvertedWithUsd } from '@/lib/currency/rates';
 
 interface LedgerRow {
   id: string;
@@ -88,6 +89,8 @@ export default function MyWalletPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { available: balanceAvailable, loading: balanceLoading, refetch: refetchBalance } = useBalance();
+  const { rates } = useExchangeRates();
+  const displayCurrency = (user?.preferred_currency || 'USD').toUpperCase();
   const [loading, setLoading] = useState(true);
   const [wallet, setWallet] = useState<WalletRow | null>(null);
   const [topups, setTopups] = useState<TopupRow[]>([]);
@@ -201,7 +204,7 @@ export default function MyWalletPage() {
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="text-4xl font-bold text-primary">
-            {balanceLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : fmt(balanceAvailable)}
+            {balanceLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : formatConvertedWithUsd(balanceAvailable ?? 0, displayCurrency, rates)}
           </div>
         </CardContent>
       </Card>
@@ -298,7 +301,7 @@ export default function MyWalletPage() {
                     </div>
                   </div>
                   <div className={`text-sm font-semibold ${row.amount >= 0 ? 'text-green-600' : 'text-foreground'}`}>
-                    {row.amount >= 0 ? '+' : ''}{fmt(row.amount)}
+                    {row.amount >= 0 ? '+' : ''}{formatConvertedWithUsd(row.amount, displayCurrency, rates)}
                   </div>
                 </li>
               ))}
