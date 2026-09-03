@@ -328,7 +328,7 @@ async function handleEvent(
 
     const { data: payout, error: payoutErr } = await supabase
       .from("payouts")
-      .select("id, covered_rows, status")
+      .select("id, covered_rows, status, recipient_type, recipient_user_id, amount")
       .eq("id", senderItemId)
       .maybeSingle();
     if (payoutErr || !payout) {
@@ -362,6 +362,27 @@ async function handleEvent(
         .update({ status: "failed", paypal_item_id: itemId, error: reason })
         .eq("id", senderItemId);
       await markCoveredRowsPending(supabase, coveredRows, reason);
+      // An S2G Balance withdrawal has no source row for the line above to
+      // revert -- request-balance-withdrawal already debited the ledger at
+      // request time, so a failure here refunds it instead.
+      if (payout.recipient_type === "member") {
+        const { error: refundErr } = await supabase.rpc("credit_balance_ledger", {
+          _user_id: payout.recipient_user_id,
+          _amount: Number(payout.amount),
+          _kind: "refund",
+          _reference_table: "payouts",
+          _reference_id: payout.id,
+          _idempotency_key: payout.id,
+          _created_by: null,
+          _notes: `withdrawal refund: ${reason}`,
+        });
+        if (refundErr) {
+          console.error(
+            `paypal-webhook: NEEDS A HUMAN — refund FAILED for payouts.id=${payout.id} ` +
+              `user=${payout.recipient_user_id} amount=${payout.amount}: ${refundErr.message}`,
+          );
+        }
+      }
     } else if (status === "unclaimed" || status === "held" || status === "onhold") {
       // Still in flight — leave the payouts row and covered rows as-is
       // ('processing'), just record the item id once we have it.

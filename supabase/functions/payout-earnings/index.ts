@@ -135,6 +135,35 @@ function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
+/**
+ * A member-initiated S2G Balance withdrawal already debited the ledger at
+ * request time (request-balance-withdrawal) -- unlike an owed_payout_
+ * balances()-sourced row, there's no source row to revert to 'pending' on
+ * failure. Credit it back instead, same idempotency-key shape as every
+ * other ledger write (safe to call more than once for the same payoutId).
+ */
+async function refundWithdrawal(
+  admin: ReturnType<typeof import("https://esm.sh/@supabase/supabase-js@2.45.0").createClient>,
+  payoutId: string,
+  userId: string,
+  amount: number,
+  reason: string,
+): Promise<void> {
+  const { error } = await admin.rpc("credit_balance_ledger", {
+    _user_id: userId,
+    _amount: amount,
+    _kind: "refund",
+    _reference_table: "payouts",
+    _reference_id: payoutId,
+    _idempotency_key: payoutId,
+    _created_by: null,
+    _notes: `withdrawal refund: ${reason}`,
+  });
+  if (error) {
+    console.error(`payout-earnings: NEEDS A HUMAN — refund FAILED for payouts.id=${payoutId} user=${userId} amount=${amount}: ${error.message}`);
+  }
+}
+
 async function alertGosatsPayoutAnomaly(
   admin: ReturnType<typeof import("https://esm.sh/@supabase/supabase-js@2.45.0").createClient>,
   recipientUserId: string,
@@ -274,6 +303,52 @@ Deno.serve(async (req) => {
         bestByUser.set(w.user_id, score);
         emailByUser.set(w.user_id, w.wallet_address);
       }
+    }
+
+    // --- S2G Balance: pending member withdrawal requests on the PayPal rail
+    // (request-balance-withdrawal already debited the ledger and inserted
+    // these rows at 'processing' -- there is no owed_payout_balances() row
+    // for them, so they'd never otherwise be picked up). Their recipient
+    // may never have been a sower/whisperer at all (a topup-only member),
+    // so their verified PayPal email needs its own resolution, merged into
+    // the same emailByUser map used below.
+    const { data: memberWithdrawalRows } = await admin
+      .from("payouts")
+      .select("id, recipient_user_id, amount, covered_rows")
+      .eq("recipient_type", "member")
+      .eq("rail", "paypal")
+      .eq("status", "processing");
+    const memberWithdrawals = (memberWithdrawalRows ?? []) as
+      { id: string; recipient_user_id: string; amount: number; covered_rows: unknown }[];
+    const withdrawalUserIds = memberWithdrawals
+      .map((w) => w.recipient_user_id)
+      .filter((id) => !emailByUser.has(id));
+    if (withdrawalUserIds.length > 0) {
+      const { data: withdrawalWallets } = await admin
+        .from("user_wallets")
+        .select("user_id, wallet_address, is_primary, updated_at")
+        .in("user_id", [...new Set(withdrawalUserIds)])
+        .eq("wallet_type", "paypal_email")
+        .eq("is_active", true)
+        .not("verified_at", "is", null);
+      for (const w of (withdrawalWallets ?? []) as any[]) {
+        const score = { primary: w.is_primary ? 1 : 0, updated: w.updated_at ? new Date(w.updated_at).getTime() : 0 };
+        const cur = bestByUser.get(w.user_id);
+        if (!cur || score.primary > cur.primary || (score.primary === cur.primary && score.updated > cur.updated)) {
+          bestByUser.set(w.user_id, score);
+          emailByUser.set(w.user_id, w.wallet_address);
+        }
+      }
+    }
+    // A withdrawal request already validated a verified email before
+    // inserting its payouts row -- one going missing between then and now
+    // (email unverified/deactivated since) is refunded rather than sent
+    // with no destination.
+    const withdrawalsWithEmail = memberWithdrawals.filter((w) => emailByUser.has(w.recipient_user_id));
+    const withdrawalsMissingEmail = memberWithdrawals.filter((w) => !emailByUser.has(w.recipient_user_id));
+    for (const w of withdrawalsMissingEmail) {
+      await admin.from("payouts").update({ status: "failed", error: "no_verified_paypal_email" }).eq("id", w.id);
+      await refundWithdrawal(admin, w.id, w.recipient_user_id, Number(w.amount), "no_verified_paypal_email");
     }
 
     // --- PayPal eligibility: $20 minimum, verified PayPal email required --
@@ -585,7 +660,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (eligiblePaypal.length === 0) {
+    if (eligiblePaypal.length === 0 && withdrawalsWithEmail.length === 0) {
       return json({
         success: true,
         totalFloatUsd,
@@ -619,10 +694,12 @@ Deno.serve(async (req) => {
       covered_rows: r.covered_rows,
     }));
 
-    const { data: inserted, error: insErr } = await admin
-      .from("payouts")
-      .insert(inserts)
-      .select("id, recipient_type, recipient_user_id, amount, covered_rows");
+    const { data: inserted, error: insErr } = eligiblePaypal.length > 0
+      ? await admin
+        .from("payouts")
+        .insert(inserts)
+        .select("id, recipient_type, recipient_user_id, amount, covered_rows")
+      : { data: [] as any[], error: null };
     if (insErr || !inserted) {
       return json({ error: "payouts_insert_failed", detail: insErr?.message }, 500);
     }
@@ -633,6 +710,9 @@ Deno.serve(async (req) => {
     // partially claimed by another run is excluded from this batch
     // entirely (reverted + marked failed) rather than risking PayPal
     // being asked to pay an amount that overlaps another run's claim.
+    // S2G Balance withdrawal rows have no covered_rows to claim -- the
+    // ledger debit at request time already was their claim -- so they
+    // skip this loop entirely and join the batch directly below.
     const claimedRows: typeof inserted = [];
     for (const row of inserted) {
       const claim = await markCoveredRowsProcessing(admin, row.covered_rows as CoveredRow[]);
@@ -648,7 +728,7 @@ Deno.serve(async (req) => {
       claimedRows.push(row);
     }
 
-    if (claimedRows.length === 0) {
+    if (claimedRows.length === 0 && withdrawalsWithEmail.length === 0) {
       return json({
         success: true,
         totalFloatUsd,
@@ -659,13 +739,22 @@ Deno.serve(async (req) => {
       });
     }
 
-    const items = claimedRows.map((row: any) => ({
-      recipient_type: "EMAIL",
-      receiver: emailByUser.get(row.recipient_user_id)!,
-      sender_item_id: row.id,
-      note: "Sow2Grow weekly payout",
-      amount: { value: Number(row.amount).toFixed(2), currency: "USD" },
-    }));
+    const items = [
+      ...claimedRows.map((row: any) => ({
+        recipient_type: "EMAIL",
+        receiver: emailByUser.get(row.recipient_user_id)!,
+        sender_item_id: row.id,
+        note: "Sow2Grow weekly payout",
+        amount: { value: Number(row.amount).toFixed(2), currency: "USD" },
+      })),
+      ...withdrawalsWithEmail.map((w) => ({
+        recipient_type: "EMAIL",
+        receiver: emailByUser.get(w.recipient_user_id)!,
+        sender_item_id: w.id,
+        note: "Sow2Grow S2G Balance withdrawal",
+        amount: { value: Number(w.amount).toFixed(2), currency: "USD" },
+      })),
+    ];
 
     try {
       const { ok, status, data } = await paypalFetch<{ batch_header?: { payout_batch_id?: string } }>(
@@ -693,14 +782,21 @@ Deno.serve(async (req) => {
         for (const row of claimedRows) {
           await markCoveredRowsPending(admin, row.covered_rows as CoveredRow[], `paypal_http_${status}`);
         }
+        // Withdrawal rows have no source row to revert to -- refund the
+        // ledger instead, same as any other failed withdrawal send.
+        for (const w of withdrawalsWithEmail) {
+          await admin.from("payouts").update({ status: "failed", error: `paypal_http_${status}` }).eq("id", w.id);
+          await refundWithdrawal(admin, w.id, w.recipient_user_id, Number(w.amount), `paypal_http_${status}`);
+        }
         return json({ error: "paypal_batch_failed", detail: data }, 502);
       }
 
       const batchId = data?.batch_header?.payout_batch_id ?? null;
       // Scoped to claimedRows -- a row excluded above was never part of
       // this batch and must not be stamped with its id.
+      const batchedIds = [...claimedRows.map((r: any) => r.id), ...withdrawalsWithEmail.map((w) => w.id)];
       await admin.from("payouts").update({ paypal_batch_id: batchId })
-        .in("id", claimedRows.map((r: any) => r.id));
+        .in("id", batchedIds);
 
       for (const row of claimedRows) {
         await deliverPayoutNotification(admin, row.recipient_user_id, {
@@ -715,7 +811,7 @@ Deno.serve(async (req) => {
         runId,
         batchId,
         totalFloatUsd,
-        paid: claimedRows.length + solanaPaidCount,
+        paid: claimedRows.length + withdrawalsWithEmail.length + solanaPaidCount,
         skipped: outcomes.filter((o) => !o.eligible).length + (inserted.length - claimedRows.length),
         outcomes,
       });
@@ -727,6 +823,10 @@ Deno.serve(async (req) => {
         .in("id", claimedRows.map((r: any) => r.id));
       for (const row of claimedRows) {
         await markCoveredRowsPending(admin, row.covered_rows as CoveredRow[], reason);
+      }
+      for (const w of withdrawalsWithEmail) {
+        await admin.from("payouts").update({ status: "failed", error: reason }).eq("id", w.id);
+        await refundWithdrawal(admin, w.id, w.recipient_user_id, Number(w.amount), reason);
       }
       return json({ error: "paypal_batch_exception", detail: reason }, 500);
     }
