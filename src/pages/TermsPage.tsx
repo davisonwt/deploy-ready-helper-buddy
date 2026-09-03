@@ -32,10 +32,13 @@ export default function TermsPage() {
 
           <h2 className="text-lg font-semibold">Payments and payouts</h2>
           <p>
-            Bestowals are processed by PayPal or NOWPayments, depending on the option you choose at
-            checkout. Sower and whisperer payouts are sent via PayPal Payouts to a PayPal account
-            you connect yourself, weekly, subject to a minimum payout threshold. You're responsible
-            for any fee your payment processor or bank charges on your end.
+            Bestowals are processed by PayPal or directly on-chain in USDC (Solana), depending on
+            the option you choose at checkout. <strong>Your funds stay in your own wallet.</strong>{' '}
+            Sow2Grow holds only sale proceeds awaiting payout (paid out automatically once your
+            owed balance reaches $20, or on request for any amount $1 or more if you're paid in
+            USDC) and orchard funds under the orchard rules. Sower and whisperer payouts are sent
+            to the PayPal account or Solana wallet you connect yourself. You're responsible for any
+            fee your payment processor, wallet, or bank charges on your end.
           </p>
 
           <h2 className="text-lg font-semibold">Acceptable use</h2>
