@@ -24,7 +24,7 @@
 // Both rates are overridable via env vars for future tuning without a code
 // change, but the defaults reflect real-world rails.
 
-export type BuyerFeeProvider = "paypal" | "nowpayments" | "solana";
+export type BuyerFeeProvider = "paypal" | "nowpayments" | "solana" | "balance";
 
 export interface BuyerFeeQuote {
   /** Base amount before processor fee. */
@@ -59,6 +59,12 @@ export function computeBuyerFee(
       feePct: pct,
       feeFixed: fixed,
     };
+  }
+
+  if (provider === "balance") {
+    // Debited from the buyer's own S2G Balance -- no processor in the
+    // middle at all, so no fee to pass through.
+    return { base: safeBase, fee: 0, total: safeBase, feePct: 0, feeFixed: 0 };
   }
 
   if (provider === "solana") {

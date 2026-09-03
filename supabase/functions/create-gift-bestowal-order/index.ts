@@ -12,11 +12,12 @@ import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { priceBreakdown, s2gFeeOn, S2G_FEE_RATE } from "../_shared/platformFee.ts";
 import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
+import { finalizeCompletedOrder } from "../_shared/paypal/capture.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
 type GiftContext = "live_session" | "radio_session" | "chat_tip";
-type Provider = "nowpayments" | "paypal" | "solana";
+type Provider = "nowpayments" | "paypal" | "solana" | "balance";
 
 interface RequestPayload {
   recipientId: string;
@@ -78,7 +79,10 @@ Deno.serve(async (req) => {
     if (!["live_session", "radio_session", "chat_tip"].includes(payload.contextKind)) {
       return json({ error: "invalid_context_kind" }, 400);
     }
-    if (payload.provider !== "nowpayments" && payload.provider !== "paypal" && payload.provider !== "solana") {
+    if (
+      payload.provider !== "nowpayments" && payload.provider !== "paypal" &&
+      payload.provider !== "solana" && payload.provider !== "balance"
+    ) {
       return json({ error: "invalid_provider" }, 400);
     }
     if (payload.recipientId === bestowerId) {
@@ -206,6 +210,48 @@ Deno.serve(async (req) => {
         invoiceId: invoice.id,
         invoiceUrl: invoice.invoice_url,
         expiresAt: invoice.expiration_date ?? null,
+        breakdown: { baseAmount, s2gFee: pricing.s2gFee, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+      });
+    }
+
+    // --- S2G Balance (one-tap, no wallet) --------------------------------------
+    if (payload.provider === "balance") {
+      const { data: debitRow, error: debitError } = await service.rpc("debit_balance_ledger", {
+        _user_id: bestowerId,
+        _amount: buyerTotal,
+        _kind: "bestow_debit",
+        _reference_table: "bestowals",
+        _reference_id: bestowal.id,
+        _idempotency_key: bestowal.id,
+        _created_by: bestowerId,
+        _notes: `gift bestowal (${payload.contextKind})`,
+      });
+      if (debitError) {
+        if (debitError.message?.startsWith("insufficient_balance")) {
+          const available = Number(debitError.message.split(":")[1] ?? 0);
+          await failBestowal(service, bestowal.id, "insufficient_balance");
+          return json({ error: "insufficient_balance", available, shortBy: round2(buyerTotal - available) }, 402);
+        }
+        console.error("balance debit failed", debitError);
+        await failBestowal(service, bestowal.id, "balance_debit_failed");
+        return json({ error: "balance_debit_failed", detail: debitError.message }, 500);
+      }
+
+      await service.from("bestowals")
+        .update({ provider_order_id: debitRow.id })
+        .eq("id", bestowal.id);
+
+      try {
+        await finalizeCompletedOrder(service, "gift", bestowal.id, debitRow.id);
+      } catch (err) {
+        console.error("balance finalize failed", err);
+        return json({ error: "finalize_failed", detail: err instanceof Error ? err.message : String(err) }, 500);
+      }
+
+      return json({
+        bestowalId: bestowal.id,
+        provider: "balance",
+        balance: { debited: true, ledgerId: debitRow.id },
         breakdown: { baseAmount, s2gFee: pricing.s2gFee, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
       });
     }

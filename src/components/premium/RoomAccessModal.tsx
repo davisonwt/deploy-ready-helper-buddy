@@ -4,8 +4,9 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 import ProviderPicker from '@/components/payments/ProviderPicker';
+import { useBalanceProvider } from '@/hooks/useBalanceProvider';
 import { buyerTotal } from '@/lib/pricing/platformFee';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -30,10 +31,10 @@ export function RoomAccessModal({
   const navigate = useNavigate();
   const { purchase, isPending } = useContentPurchase();
   const [processing, setProcessing] = useState(false);
-  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const isPaid = Number(room?.price ?? 0) > 0;
   const roomTotal = buyerTotal(Number(room?.price ?? 0));
-  const effectiveProvider: PayoutProviderId = provider;
+  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(roomTotal);
+  const effectiveProvider = provider;
 
   const handleFreeJoin = async () => {
     if (!user) { toast.error('Please log in to join'); navigate('/login'); return; }
@@ -55,13 +56,14 @@ export function RoomAccessModal({
     }
   };
 
-  const handlePaid = () => {
+  const handlePaid = async () => {
     if (!user) { toast.error('Please log in to purchase'); navigate('/login'); return; }
-    purchase({
+    const result = await purchase({
       contentType: 'premium_room_access',
       contentId: room.id,
       provider: effectiveProvider,
     });
+    if (result && effectiveProvider === 'balance') refetchBalance();
   };
 
   return (
@@ -98,7 +100,13 @@ export function RoomAccessModal({
                 amount={roomTotal}
                 mode="buyer"
                 disabled={isPending}
+                providers={providers}
               />
+              {balanceShortBy > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Not enough in your S2G Balance — top up ${balanceShortBy.toFixed(2)} to pay this way.
+                </p>
+              )}
               {effectiveProvider === 'solana' && (
                 <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
               )}

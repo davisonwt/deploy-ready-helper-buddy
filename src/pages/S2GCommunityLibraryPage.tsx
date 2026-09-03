@@ -13,8 +13,9 @@ import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti } from '@/utils/confetti';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 import ProviderPicker from '@/components/payments/ProviderPicker';
+import { useBalanceProvider } from '@/hooks/useBalanceProvider';
 import ReportButton from '@/components/moderation/ReportButton';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 import {
@@ -31,10 +32,10 @@ export default function S2GCommunityLibraryPage() {
   const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<string>('all');
   const [pickerItem, setPickerItem] = useState<any | null>(null);
-  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const { purchase, isPending } = useContentPurchase();
   const pickerTotal = pickerItem ? priceBreakdown(pickerItem.price).total : 0;
-  const effectiveProvider: PayoutProviderId = provider;
+  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(pickerTotal);
+  const effectiveProvider = provider;
 
   const { data: libraryItems, isLoading } = useQuery({
     queryKey: ['s2g-community-library'],
@@ -417,20 +418,27 @@ export default function S2GCommunityLibraryPage() {
               amount={pickerTotal}
               mode="buyer"
               disabled={isPending}
+              providers={providers}
             />
+            {balanceShortBy > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Not enough in your S2G Balance — top up ${balanceShortBy.toFixed(2)} to pay this way.
+              </p>
+            )}
             {effectiveProvider === 'solana' && (
               <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
             )}
             <Button
               disabled={isPending}
-              onClick={() =>
-                pickerItem &&
-                purchase({
+              onClick={async () => {
+                if (!pickerItem) return;
+                const result = await purchase({
                   contentType: 'library_item',
                   contentId: pickerItem.id,
                   provider: effectiveProvider,
-                })
-              }
+                });
+                if (result && effectiveProvider === 'balance') refetchBalance();
+              }}
             >
               {isPending ? 'Processing...' : `Pay ${formatCurrency(pickerTotal)}`}
             </Button>

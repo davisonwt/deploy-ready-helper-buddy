@@ -15,8 +15,8 @@ import { presentSolanaPayment } from '@/lib/payments/solanaPaymentGate';
  *   purchaseTrack(track, price, { provider })
  *   purchaseTrack(trackId, price, { provider })
  *
- * `opts.provider` is REQUIRED — 'solana' or 'paypal', whichever the
- * bestower actually picked. There is no default; a missing/invalid
+ * `opts.provider` is REQUIRED — 'solana', 'paypal', or 'balance', whichever
+ * the bestower actually picked. There is no default; a missing/invalid
  * provider is a caller bug, not something to silently paper over by
  * picking one for them.
  */
@@ -41,7 +41,7 @@ export function useMusicPurchase() {
       return { success: false };
     }
 
-    if (opts.provider !== 'paypal' && opts.provider !== 'solana') {
+    if (opts.provider !== 'paypal' && opts.provider !== 'solana' && opts.provider !== 'balance') {
       toast({ title: 'Purchase failed', description: 'Choose a payment method first', variant: 'destructive' });
       return { success: false };
     }
@@ -56,6 +56,11 @@ export function useMusicPurchase() {
         redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
       });
 
+      if (data?.balance?.debited) {
+        // Debited and finalized synchronously — no wallet, no redirect.
+        return { success: true, data };
+      }
+
       if (data?.solanaPayment) {
         const resolution = await presentSolanaPayment(data.solanaPayment);
         if (resolution !== 'paid') return { success: false };
@@ -67,6 +72,10 @@ export function useMusicPurchase() {
       window.location.href = redirectUrl;
       return { success: true, data };
     } catch (error) {
+      if (error.message === 'insufficient_balance') {
+        toast({ title: 'S2G Balance is short', description: 'Top up to pay with your balance.', variant: 'destructive' });
+        return { success: false, insufficientBalance: true };
+      }
       console.error('Music purchase failed:', error);
       toast({
         title: 'Purchase Failed',

@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useLiveBestowal } from '@/hooks/useLiveBestowal';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
+import { useBalanceProvider } from '@/hooks/useBalanceProvider';
 
 interface Props {
   open: boolean;
@@ -24,9 +25,9 @@ export function BestowalDialog({ open, onOpenChange, sowerId, bestowerId, sessio
   const { sendBestowal, loading } = useLiveBestowal();
   const [amount, setAmount] = useState('5');
   const [note, setNote] = useState('');
-  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const numericAmount = Number(amount) || 0;
-  const effectiveProvider: PayoutProviderId = provider;
+  const { provider, setProvider, providers, balanceShortBy } = useBalanceProvider(numericAmount);
+  const effectiveProvider = provider;
 
   const submit = async () => {
     const n = Number(amount);
@@ -96,7 +97,13 @@ export function BestowalDialog({ open, onOpenChange, sowerId, bestowerId, sessio
                 amount={numericAmount}
                 mode="buyer"
                 disabled={loading}
+                providers={providers}
               />
+              {balanceShortBy > 0 && (
+                <p className="text-xs text-[#E8D9B5]/50 mt-1">
+                  Not enough in your S2G Balance — top up ${balanceShortBy.toFixed(2)} to pay this way.
+                </p>
+              )}
               {effectiveProvider === 'solana' && (
                 <p className="text-xs text-[#E8D9B5]/50 mt-1">{CRYPTO_ROUNDING_NOTICE}</p>
               )}

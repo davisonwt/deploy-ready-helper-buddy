@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,19 +11,19 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { quoteFee } from '@/lib/payments/providerFees';
 import { WHISPER_SHARE_RATE, WHISPER_SHARE_PERCENT, WHISPER_FALLBACK_NOTE, WHISPER_STATUS_ACTIVE } from '@/lib/whisperer/policy';
 import { getWhispererCredit } from '@/lib/whisperer/attribution';
 
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 import { s2gFeeOn, round2 } from '@/lib/pricing/platformFee';
+import { useBalanceProvider, isBalanceSuccess } from '@/hooks/useBalanceProvider';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, totalAmount } = useProductBasket();
   const { user } = useAuth();
   const [processing, setProcessing] = useState(false);
-  const [provider, setProvider] = useState<PayoutProviderId>('solana');
 
   // WHO gets the whisper share on each line?
   // A seed can have MANY approved whisperers — the share goes to the ONE whose
@@ -45,7 +46,24 @@ export default function BestowalCheckout() {
     setCredited(next);
   }, [basketItems]);
 
-
+  // Platform fee applies to every line, regardless of product type — the
+  // sower sets the price (item.price), Sow2Grow's 15% is added on top.
+  // Computed above the empty-basket early return below so useBalanceProvider
+  // (a hook) is always called unconditionally, per the Rules of Hooks.
+  const baseSubtotal = basketItems.reduce(
+    (sum: number, item: any) => sum + Number(item.price || 0) * Math.max(1, Number(item.quantity ?? 1)),
+    0,
+  );
+  const s2gFee = basketItems.reduce(
+    (sum: number, item: any) => sum + s2gFeeOn(Number(item.price || 0)) * Math.max(1, Number(item.quantity ?? 1)),
+    0,
+  );
+  const checkoutTotal = round2(baseSubtotal + s2gFee);
+  const {
+    provider, setProvider, providers, balanceShortBy, refetchBalance,
+  } = useBalanceProvider(checkoutTotal);
+  const effectiveProvider = provider;
+  const feeQuote = quoteFee(effectiveProvider, checkoutTotal);
 
   const handleBestow = async () => {
     if (!user) {
@@ -69,7 +87,7 @@ export default function BestowalCheckout() {
       });
 
 
-      const data = await invokePaymentFunction<{ solanaPayment?: SolanaPaymentResponse; approveUrl?: string }>(
+      const data = await invokePaymentFunction<{ solanaPayment?: SolanaPaymentResponse; approveUrl?: string; balance?: { debited: true } }>(
         'create-basket-bestowal-order',
         {
           items,
@@ -78,7 +96,15 @@ export default function BestowalCheckout() {
         },
       );
 
-      if (effectiveProvider === 'solana') {
+      if (effectiveProvider === 'balance') {
+        // Debited and finalized synchronously — no wallet popup, no redirect.
+        if (isBalanceSuccess(data)) {
+          toast.success('Bestowal complete!');
+          refetchBalance();
+        } else {
+          throw new Error('Balance payment did not complete.');
+        }
+      } else if (effectiveProvider === 'solana') {
         if (!data.solanaPayment) throw new Error('No Solana payment details returned');
         // Do NOT clear basket while the payment screen is open — items stay
         // until it resolves 'paid' (or the buyer cancels/it expires) so a
@@ -97,7 +123,11 @@ export default function BestowalCheckout() {
       }
     } catch (err: any) {
       console.error('Basket bestowal error:', err);
-      toast.error(err?.message || 'Bestowal failed. Please try again.');
+      if (err?.message === 'insufficient_balance') {
+        toast.error(`Your S2G Balance is short — top up $${balanceShortBy.toFixed(2)} to pay this way.`);
+      } else {
+        toast.error(err?.message || 'Bestowal failed. Please try again.');
+      }
     } finally {
       setProcessing(false);
     }
@@ -114,20 +144,6 @@ export default function BestowalCheckout() {
       </Card>
     );
   }
-
-  // Platform fee applies to every line, regardless of product type — the
-  // sower sets the price (item.price), Sow2Grow's 15% is added on top.
-  const baseSubtotal = basketItems.reduce(
-    (sum: number, item: any) => sum + Number(item.price || 0) * Math.max(1, Number(item.quantity ?? 1)),
-    0,
-  );
-  const s2gFee = basketItems.reduce(
-    (sum: number, item: any) => sum + s2gFeeOn(Number(item.price || 0)) * Math.max(1, Number(item.quantity ?? 1)),
-    0,
-  );
-  const checkoutTotal = round2(baseSubtotal + s2gFee);
-  const effectiveProvider: PayoutProviderId = provider;
-  const feeQuote = quoteFee(effectiveProvider, checkoutTotal);
 
   // Only lines credited to an ACTIVE whisperer carry a whisper share; the rest
   // of the 15% stays with the sower.
@@ -230,7 +246,14 @@ export default function BestowalCheckout() {
             amount={checkoutTotal}
             mode="buyer"
             disabled={processing}
+            providers={providers}
           />
+          {balanceShortBy > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Not enough in your S2G Balance to cover this —{' '}
+              <Link to="/wallet" className="underline text-foreground">top up ${balanceShortBy.toFixed(2)} to pay this way</Link>.
+            </p>
+          )}
           <div className="text-xs text-muted-foreground text-right">
             Estimated processor fee on ${checkoutTotal.toFixed(2)}:{' '}
             <span className="font-medium text-foreground">{feeQuote.display}</span>
@@ -252,7 +275,9 @@ export default function BestowalCheckout() {
         </Button>
 
         <p className="text-xs text-center text-muted-foreground">
-          No bestowals are recorded until your payment is confirmed{effectiveProvider === 'paypal' ? ' by PayPal' : ' on-chain'}.
+          {effectiveProvider === 'balance'
+            ? 'Debited instantly from your S2G Balance — no wallet, no redirect.'
+            : `No bestowals are recorded until your payment is confirmed${effectiveProvider === 'paypal' ? ' by PayPal' : ' on-chain'}.`}
         </p>
       </CardContent>
     </Card>

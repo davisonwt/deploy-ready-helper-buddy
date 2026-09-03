@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 
 export type GiftContextKind = 'live_session' | 'radio_session' | 'chat_tip';
-export type GiftProvider = 'solana' | 'paypal';
+export type GiftProvider = 'solana' | 'paypal' | 'balance';
 
 export interface GiftBestowalInput {
   recipientId: string;
@@ -66,11 +66,21 @@ export function useGiftBestowal() {
       if ((data as { error?: string }).error) {
         const msg = (data as { error: string; message?: string }).message
           ?? (data as { error: string }).error;
-        toast({ title: 'Bestowal failed', description: msg, variant: 'destructive' });
+        if ((data as { error: string }).error === 'insufficient_balance') {
+          toast({ title: 'S2G Balance is short', description: 'Top up to pay this way.', variant: 'destructive' });
+        } else {
+          toast({ title: 'Bestowal failed', description: msg, variant: 'destructive' });
+        }
         return { success: false, error: msg };
       }
 
       const bestowalId = (data as { bestowalId?: string }).bestowalId;
+
+      if ((data as { balance?: { debited: true } }).balance?.debited) {
+        // Debited and finalized synchronously — no wallet, no redirect.
+        return { success: true, bestowalId };
+      }
+
       const solanaPayment = (data as { solanaPayment?: SolanaPaymentResponse }).solanaPayment;
 
       if (solanaPayment) {

@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Loader2, Heart } from 'lucide-react';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { useBalanceProvider } from '@/hooks/useBalanceProvider';
 
 interface ConfirmBestowModalProps {
   isOpen: boolean;
@@ -33,8 +33,8 @@ export function ConfirmBestowModal({
   confirming = false,
   actionLabel = 'Bestow',
 }: ConfirmBestowModalProps) {
-  const [provider, setProvider] = useState<PayoutProviderId>('solana');
-  const effectiveProvider: PayoutProviderId = provider;
+  const { provider, setProvider, providers, balanceShortBy } = useBalanceProvider(amount);
+  const effectiveProvider = provider;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && !confirming && onClose()}>
@@ -53,7 +53,13 @@ export function ConfirmBestowModal({
             amount={amount}
             mode="buyer"
             disabled={confirming}
+            providers={providers}
           />
+          {balanceShortBy > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Not enough in your S2G Balance — top up ${balanceShortBy.toFixed(2)} to pay this way.
+            </p>
+          )}
           {effectiveProvider === 'solana' && (
             <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
           )}

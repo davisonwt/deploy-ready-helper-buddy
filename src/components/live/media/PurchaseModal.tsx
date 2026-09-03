@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 import ProviderPicker from '@/components/payments/ProviderPicker';
+import { useBalanceProvider } from '@/hooks/useBalanceProvider';
 import { buyerTotal } from '@/lib/pricing/platformFee';
 import {
   Dialog,
@@ -26,18 +26,19 @@ interface PurchaseModalProps {
 export function PurchaseModal({ open, onOpenChange, mediaItem }: PurchaseModalProps) {
   const { user } = useAuth();
   const { purchase, isPending } = useContentPurchase();
-  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const priceUSD = (mediaItem?.price_cents || 0) / 100;
   const total = buyerTotal(priceUSD);
+  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(total);
 
-  const start = () => {
+  const start = async () => {
     if (!user) { toast.error('Please log in to purchase'); return; }
     if (!mediaItem?.id) { toast.error('Media item missing identifier'); return; }
-    purchase({
+    const result = await purchase({
       contentType: 'live_session_media',
       contentId: mediaItem.id,
       provider,
     });
+    if (result && provider === 'balance') refetchBalance();
   };
 
   return (
@@ -61,7 +62,13 @@ export function PurchaseModal({ open, onOpenChange, mediaItem }: PurchaseModalPr
             amount={total}
             mode="buyer"
             disabled={isPending}
+            providers={providers}
           />
+          {balanceShortBy > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Not enough in your S2G Balance — top up ${balanceShortBy.toFixed(2)} to pay this way.
+            </p>
+          )}
           {provider === 'solana' && (
             <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
           )}

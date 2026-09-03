@@ -11,7 +11,7 @@
  * `bestowals` row (processor_fee_amount / payout_fee_amount).
  */
 
-export type PayoutProviderId = 'solana' | 'paypal';
+export type PayoutProviderId = 'solana' | 'paypal' | 'balance';
 
 /**
  * Direct Solana pay-in has no fee-economics floor (spec-payments.md
@@ -64,6 +64,15 @@ export interface PayoutProviderInfo {
  * are what the buyer sees in the picker before confirming.
  */
 export const PAYOUT_PROVIDERS: PayoutProviderInfo[] = [
+  {
+    id: 'balance',
+    label: 'S2G Balance — one tap, no wallet',
+    feePct: [0, 0],
+    feeFixed: 0,
+    note: 'No processor fee. Debited instantly from your S2G Balance.',
+    explainer:
+      'Spend from the balance you already topped up — one tap, no wallet popup, no processor fee. Only shown when your balance covers the full amount.',
+  },
   {
     id: 'solana',
     label: 'USDC (Solana) — pay from your own wallet',

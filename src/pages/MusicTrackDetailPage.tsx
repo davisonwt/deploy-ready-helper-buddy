@@ -17,7 +17,8 @@ import { toast } from 'sonner';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
+import { useBalanceProvider, isBalanceSuccess } from '@/hooks/useBalanceProvider';
 
 const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room', 'orchard-images', 'seed-previews'];
 
@@ -70,7 +71,14 @@ export default function MusicTrackDetailPage() {
   const [owned, setOwned] = useState(false);
   const [buyingProduct, setBuyingProduct] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [provider, setProvider] = useState<PayoutProviderId>('solana');
+  // priceBreakdown() deliberately throws on a missing price -- track.price
+  // can genuinely be null (never priced / withdrawn from sale), so this is
+  // computed with a safe fallback and BEFORE the loading/!track early
+  // returns below, since useBalanceProvider (a hook) must be called
+  // unconditionally on every render per the Rules of Hooks.
+  const hasPrice = track?.price != null;
+  const { total } = hasPrice ? priceBreakdown(track!.price as number) : { base: 0, s2gFee: 0, total: 0 };
+  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(total);
 
   // Seed settings (spec-books.md §4) — owner-only (the uploader, not a
   // buyer; `owned` above means "this viewer bestowed", a different thing).
@@ -281,7 +289,11 @@ export default function MusicTrackDetailPage() {
     if (!track || track.price == null) return;
 
     if (track.source === 'dj_track') {
-      purchaseTrack(track.id, track.price, { provider });
+      const result = await purchaseTrack(track.id, track.price, { provider });
+      if (result?.success && provider === 'balance') {
+        toast.success('Bestowal complete!');
+        refetchBalance();
+      }
       return;
     }
 
@@ -295,7 +307,7 @@ export default function MusicTrackDetailPage() {
     }
     setBuyingProduct(true);
     try {
-      const data = await invokePaymentFunction<{ solanaPayment?: SolanaPaymentResponse; approveUrl?: string }>(
+      const data = await invokePaymentFunction<{ solanaPayment?: SolanaPaymentResponse; approveUrl?: string; balance?: { debited: true } }>(
         'create-basket-bestowal-order',
         {
           items: [{ productId: track.id, qty: 1 }],
@@ -303,6 +315,15 @@ export default function MusicTrackDetailPage() {
           redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
         },
       );
+      if (provider === 'balance') {
+        if (isBalanceSuccess(data)) {
+          toast.success('Bestowal complete!');
+          refetchBalance();
+        } else {
+          throw new Error('Balance payment did not complete.');
+        }
+        return;
+      }
       if (data.solanaPayment) {
         await presentSolanaPayment(data.solanaPayment);
         return;
@@ -311,7 +332,11 @@ export default function MusicTrackDetailPage() {
       window.location.href = data.approveUrl;
     } catch (error) {
       console.error('Product bestowal failed:', error);
-      toast.error(error instanceof Error ? error.message : 'Bestowal failed. Please try again.');
+      if (error instanceof Error && error.message === 'insufficient_balance') {
+        toast.error(`Your S2G Balance is short — top up $${balanceShortBy.toFixed(2)} to pay this way.`);
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Bestowal failed. Please try again.');
+      }
     } finally {
       setBuyingProduct(false);
     }
@@ -334,13 +359,7 @@ export default function MusicTrackDetailPage() {
     );
   }
 
-  // priceBreakdown() deliberately throws on a missing price (platformFee.ts:
-  // "an invalid price is an error", no floor to substitute) -- correct for a
-  // sower-set price, but this page also renders tracks whose price is
-  // genuinely null (never priced / withdrawn from sale), which used to crash
-  // the whole page render instead of just hiding the purchase flow.
-  const hasPrice = track.price != null;
-  const { base, s2gFee, total } = hasPrice ? priceBreakdown(track.price) : { base: 0, s2gFee: 0, total: 0 };
+  const { base, s2gFee } = hasPrice ? priceBreakdown(track.price as number) : { base: 0, s2gFee: 0 };
   const isBuying = track.source === 'dj_track' ? purchasingTrack : buyingProduct;
 
   return (
@@ -452,13 +471,20 @@ export default function MusicTrackDetailPage() {
                       amount={total}
                       mode="buyer"
                       disabled={isBuying}
+                      providers={providers}
                     />
+                    {balanceShortBy > 0 && (
+                      <p className="text-xs text-slate-400">
+                        Not enough in your S2G Balance —{' '}
+                        <Link to="/wallet" className="underline text-white">top up ${balanceShortBy.toFixed(2)} to pay this way</Link>.
+                      </p>
+                    )}
                     {provider === 'solana' && (
                       <p className="text-xs text-slate-400">{CRYPTO_ROUNDING_NOTICE}</p>
                     )}
                     <Button onClick={handleBuy} disabled={isBuying} className="bg-rose-500 hover:bg-rose-600">
                       {isBuying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Heart className="w-4 h-4 mr-2" />}
-                      Bestow ${total.toFixed(2)} {provider === 'solana' ? 'USDC' : 'via PayPal'}
+                      Bestow ${total.toFixed(2)} {provider === 'balance' ? 'from S2G Balance' : provider === 'solana' ? 'USDC' : 'via PayPal'}
                     </Button>
                     <div className="text-xs text-slate-400">
                       ${base.toFixed(2)} to the sower + ${s2gFee.toFixed(2)} Sow2Grow 15% (carried by you).

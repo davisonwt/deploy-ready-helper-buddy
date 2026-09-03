@@ -18,8 +18,9 @@ import { MediaUploadZone } from '@/components/live/media/MediaUploadZone';
 import { SetPriceModal } from '@/components/live/media/SetPriceModal';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 import ProviderPicker from '@/components/payments/ProviderPicker';
+import { useBalanceProvider } from '@/hooks/useBalanceProvider';
 import { buyerTotal } from '@/lib/pricing/platformFee';
 import {
   Dialog,
@@ -51,10 +52,10 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
   const [showPriceModal, setShowPriceModal] = useState(false);
   const { uploadMedia, uploading, progress } = useMediaUpload();
   const [pickerItem, setPickerItem] = useState<any | null>(null);
-  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const { purchase, isPending: purchasePending } = useContentPurchase();
   const pickerTotal = pickerItem ? buyerTotal((pickerItem.price_cents ?? 0) / 100) : 0;
-  const effectiveProvider: PayoutProviderId = provider;
+  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(pickerTotal);
+  const effectiveProvider = provider;
 
   // Fetch media and purchases
   useEffect(() => {
@@ -498,20 +499,27 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
               amount={pickerTotal}
               mode="buyer"
               disabled={purchasePending}
+              providers={providers}
             />
+            {balanceShortBy > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Not enough in your S2G Balance — top up ${balanceShortBy.toFixed(2)} to pay this way.
+              </p>
+            )}
             {effectiveProvider === 'solana' && (
               <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
             )}
             <Button
               disabled={purchasePending}
-              onClick={() =>
-                pickerItem &&
-                purchase({
+              onClick={async () => {
+                if (!pickerItem) return;
+                const result = await purchase({
                   contentType: 'live_session_media',
                   contentId: pickerItem.id,
                   provider: effectiveProvider,
-                })
-              }
+                });
+                if (result && effectiveProvider === 'balance') refetchBalance();
+              }}
             >
               {purchasePending ? 'Processing...' : `Pay ${formatAmount(pickerTotal)}`}
             </Button>

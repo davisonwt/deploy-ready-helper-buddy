@@ -9,11 +9,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useCurrency } from '@/hooks/useCurrency';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { quoteFee } from '@/lib/payments/providerFees';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 import { s2gFeeOn, round2 } from '@/lib/pricing/platformFee';
 import { WHISPER_FALLBACK_NOTE } from '@/lib/whisperer/policy';
+import { useBalanceProvider, isBalanceSuccess } from '@/hooks/useBalanceProvider';
 
 interface AlbumBuilderCartProps {
   scopeName?: string;
@@ -24,7 +25,6 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
   const { user } = useAuth();
   const { formatAmount } = useCurrency();
   const [processing, setProcessing] = useState(false);
-  const [provider, setProvider] = useState<PayoutProviderId>('solana');
 
   // Same breakdown shape as BestowalCheckout, computed from the selected
   // tracks' own prices — never a flat figure. An album build has no ref-code
@@ -52,7 +52,8 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
   }, [selectedTracks]);
 
-  const effectiveProvider: PayoutProviderId = provider;
+  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(albumPrice);
+  const effectiveProvider = provider;
   const feeQuote = quoteFee(effectiveProvider, albumPrice);
 
   const handleCheckout = async () => {
@@ -78,7 +79,7 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
         return;
       }
 
-      const data = await invokePaymentFunction<{ error?: string; approveUrl?: string; solanaPayment?: SolanaPaymentResponse }>(
+      const data = await invokePaymentFunction<{ error?: string; approveUrl?: string; solanaPayment?: SolanaPaymentResponse; balance?: { debited: true } }>(
         'create-basket-bestowal-order',
         {
           items: productItems,
@@ -88,6 +89,16 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
       );
 
       if (!data || data.error) throw new Error(data?.error || 'album_order_failed');
+
+      if (effectiveProvider === 'balance') {
+        if (isBalanceSuccess(data)) {
+          toast.success('Album bestowal complete!');
+          refetchBalance();
+        } else {
+          throw new Error('Balance payment did not complete.');
+        }
+        return;
+      }
 
       if (effectiveProvider === 'paypal') {
         if (!data.approveUrl) throw new Error('No PayPal checkout URL returned');
@@ -102,7 +113,11 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
       }
     } catch (error) {
       console.error('Purchase error:', error);
-      toast.error(error instanceof Error ? error.message : 'Purchase failed. Please try again.');
+      if (error instanceof Error && error.message === 'insufficient_balance') {
+        toast.error(`Your S2G Balance is short — top up $${balanceShortBy.toFixed(2)} to pay this way.`);
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Purchase failed. Please try again.');
+      }
     } finally {
       setProcessing(false);
     }
@@ -215,7 +230,13 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
                 amount={albumPrice}
                 mode="buyer"
                 disabled={processing}
+                providers={providers}
               />
+              {balanceShortBy > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Not enough in your S2G Balance — top up ${balanceShortBy.toFixed(2)} to pay this way.
+                </p>
+              )}
               <div className="text-xs text-muted-foreground text-right">
                 Estimated processor fee on {formatAmount(albumPrice)}:{' '}
                 <span className="font-medium text-foreground">{feeQuote.display}</span>

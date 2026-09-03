@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 import ProviderPicker from '@/components/payments/ProviderPicker';
+import { useBalanceProvider } from '@/hooks/useBalanceProvider';
 import { buyerTotal } from '@/lib/pricing/platformFee';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -30,19 +30,20 @@ export function PremiumItemPurchaseModal({
   const { user } = useAuth();
   const { formatAmount } = useCurrency();
   const { purchase, isPending } = useContentPurchase();
-  const [provider, setProvider] = useState<PayoutProviderId>('solana');
   const itemTotal = buyerTotal(Number(item?.price ?? 0));
-  const effectiveProvider: PayoutProviderId = provider;
+  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(itemTotal);
+  const effectiveProvider = provider;
 
-  const start = () => {
+  const start = async () => {
     if (!user) { toast.error('Please log in to purchase'); return; }
     if (!item?.id) { toast.error('Item missing identifier'); return; }
-    purchase({
+    const result = await purchase({
       contentType: 'premium_item',
       contentId: String(item.id),
       provider: effectiveProvider,
       metadata: { room_id: roomId, item_type: itemType },
     });
+    if (result && effectiveProvider === 'balance') refetchBalance();
   };
 
   return (
@@ -78,7 +79,13 @@ export function PremiumItemPurchaseModal({
               amount={itemTotal}
               mode="buyer"
               disabled={isPending}
+              providers={providers}
             />
+            {balanceShortBy > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Not enough in your S2G Balance — top up ${balanceShortBy.toFixed(2)} to pay this way.
+              </p>
+            )}
             {effectiveProvider === 'solana' && (
               <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
             )}

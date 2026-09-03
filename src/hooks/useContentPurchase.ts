@@ -15,7 +15,7 @@ export type ContentType =
   | 'premium_item'
   | 'premium_room_access';
 
-export type PurchaseProvider = 'solana' | 'paypal';
+export type PurchaseProvider = 'solana' | 'paypal' | 'balance';
 
 interface PurchaseArgs {
   contentType: ContentType;
@@ -41,6 +41,12 @@ export function useContentPurchase() {
         },
       );
 
+      if ((data as { balance?: { debited: true } })?.balance?.debited) {
+        // Debited and finalized synchronously — no wallet, no redirect.
+        toast.success('Bestowal complete!');
+        return data as { purchaseId: string };
+      }
+
       const solanaPayment = (data as { solanaPayment?: SolanaPaymentResponse })?.solanaPayment;
       if (solanaPayment) {
         const resolution = await presentSolanaPayment(solanaPayment);
@@ -57,7 +63,11 @@ export function useContentPurchase() {
       return data as { purchaseId: string };
     } catch (err: any) {
       console.error('useContentPurchase failed', err);
-      toast.error(err?.message ?? 'Checkout failed.');
+      if (err?.message === 'insufficient_balance') {
+        toast.error('Your S2G Balance is short. Top up to pay this way.');
+      } else {
+        toast.error(err?.message ?? 'Checkout failed.');
+      }
       return null;
     } finally {
       setIsPending(false);

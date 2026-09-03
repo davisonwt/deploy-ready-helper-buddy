@@ -16,6 +16,7 @@ import { priceBreakdown } from "../_shared/platformFee.ts";
 import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
 import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
+import { finalizeCompletedOrder } from "../_shared/paypal/capture.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -37,7 +38,7 @@ interface RequestItem {
 
 interface RequestPayload {
   items: RequestItem[];
-  provider: "nowpayments" | "paypal" | "solana";
+  provider: "nowpayments" | "paypal" | "solana" | "balance";
   payCurrency?: string;
   redirectBaseUrl?: string;
 }
@@ -93,7 +94,10 @@ Deno.serve(async (req) => {
     if (!payload?.items || !Array.isArray(payload.items) || payload.items.length === 0) {
       return json({ error: "empty_basket" }, 400);
     }
-    if (payload.provider !== "nowpayments" && payload.provider !== "paypal" && payload.provider !== "solana") {
+    if (
+      payload.provider !== "nowpayments" && payload.provider !== "paypal" &&
+      payload.provider !== "solana" && payload.provider !== "balance"
+    ) {
       return json({ error: "invalid_provider" }, 400);
     }
     if (payload.provider === "nowpayments" && !payload.payCurrency) {
@@ -297,6 +301,46 @@ Deno.serve(async (req) => {
         invoiceId: invoice.id,
         invoiceUrl: invoice.invoice_url,
         expiresAt: invoice.expiration_date ?? null,
+        breakdown: { subtotal, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+      });
+    }
+
+    // --- S2G Balance (one-tap, no wallet) --------------------------------------
+    if (payload.provider === "balance") {
+      const { data: debitRow, error: debitError } = await service.rpc("debit_balance_ledger", {
+        _user_id: userId,
+        _amount: buyerTotal,
+        _kind: "bestow_debit",
+        _reference_table: "basket_orders",
+        _reference_id: order.id,
+        _idempotency_key: order.id,
+        _created_by: userId,
+        _notes: `basket ${order.id}`,
+      });
+      if (debitError) {
+        if (debitError.message?.startsWith("insufficient_balance")) {
+          const available = Number(debitError.message.split(":")[1] ?? 0);
+          await markFailed(service, order.id, "insufficient_balance");
+          return json({ error: "insufficient_balance", available, shortBy: round2(buyerTotal - available) }, 402);
+        }
+        console.error("balance debit failed", debitError);
+        await markFailed(service, order.id, "balance_debit_failed");
+        return json({ error: "balance_debit_failed", detail: debitError.message }, 500);
+      }
+
+      await service.from("basket_orders").update({ provider_order_id: debitRow.id }).eq("id", order.id);
+
+      try {
+        await finalizeCompletedOrder(service, "basket", order.id, debitRow.id);
+      } catch (err) {
+        console.error("balance finalize failed", err);
+        return json({ error: "finalize_failed", detail: err instanceof Error ? err.message : String(err) }, 500);
+      }
+
+      return json({
+        basketOrderId: order.id,
+        provider: "balance",
+        balance: { debited: true, ledgerId: debitRow.id },
         breakdown: { subtotal, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
       });
     }
