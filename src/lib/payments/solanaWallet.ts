@@ -19,29 +19,14 @@ import {
   getAssociatedTokenAddress,
 } from '@solana/spl-token';
 import { USDC_MINTS, getSolanaRpcUrl, type SolanaCluster } from './solanaNetworks';
+// Re-exported for every existing call site -- the actual definitions live
+// in phantomDetect.ts, which has no @solana/web3.js or @solana/spl-token
+// runtime import, so a page that only needs Phantom detection/connect
+// (the dashboard's My Wallet card) can import from there directly and
+// never pull those Buffer-dependent libraries into its bundle at all.
+export { getPhantomProvider, isMobileDevice, PHANTOM_INSTALL_URL, type PhantomProvider } from './phantomDetect';
 
 const USDC_DECIMALS = 6;
-
-export interface PhantomProvider {
-  isPhantom?: boolean;
-  publicKey?: { toString(): string } | null;
-  connect(opts?: { onlyIfTrusted?: boolean }): Promise<{ publicKey: { toString(): string } }>;
-  signAndSendTransaction(transaction: Transaction): Promise<{ signature: string }>;
-}
-
-/** Phantom's own injected provider -- null if the extension isn't installed. */
-export function getPhantomProvider(): PhantomProvider | null {
-  const w = window as unknown as { solana?: PhantomProvider; phantom?: { solana?: PhantomProvider } };
-  const candidate = w.phantom?.solana ?? w.solana;
-  return candidate?.isPhantom ? candidate : null;
-}
-
-/** True on a mobile browser -- used to decide whether "install Phantom" points at an app store or the extension page. */
-export function isMobileDevice(): boolean {
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
-export const PHANTOM_INSTALL_URL = 'https://phantom.app/download';
 
 /**
  * The connected wallet's USDC balance, in whole USDC. Mirrors

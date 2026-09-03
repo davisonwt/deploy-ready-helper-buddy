@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useLiveWalletBalance } from '@/lib/payments/liveWalletBalance';
 import { validateSolanaAddress } from '@/lib/payments/cryptoAddress';
-import { getPhantomProvider, isMobileDevice, PHANTOM_INSTALL_URL } from '@/lib/payments/solanaWallet';
+import { getPhantomProvider, isMobileDevice, PHANTOM_INSTALL_URL } from '@/lib/payments/phantomDetect';
 
 const LOW_BALANCE_THRESHOLD = 5;
 
