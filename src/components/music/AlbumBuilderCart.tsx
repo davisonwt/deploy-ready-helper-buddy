@@ -15,6 +15,7 @@ import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments
 import { s2gFeeOn, round2 } from '@/lib/pricing/platformFee';
 import { WHISPER_FALLBACK_NOTE } from '@/lib/whisperer/policy';
 import { useBalanceProvider, isBalanceSuccess } from '@/hooks/useBalanceProvider';
+import { checkoutErrorMessage, isBlockingCheckoutError } from '@/lib/payments/checkoutErrors';
 
 interface AlbumBuilderCartProps {
   scopeName?: string;
@@ -25,6 +26,7 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
   const { user } = useAuth();
   const { formatAmount } = useCurrency();
   const [processing, setProcessing] = useState(false);
+  const [sellerBlocked, setSellerBlocked] = useState(false);
 
   // Same breakdown shape as BestowalCheckout, computed from the selected
   // tracks' own prices — never a flat figure. An album build has no ref-code
@@ -67,6 +69,7 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
       return;
     }
 
+    setSellerBlocked(false);
     setProcessing(true);
     try {
       const productItems = selectedTracks
@@ -115,8 +118,11 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
       console.error('Purchase error:', error);
       if (error instanceof Error && error.message === 'insufficient_balance') {
         toast.error(`Your S2G Balance is short — top up $${balanceShortBy.toFixed(2)} to pay this way.`);
+      } else if (isBlockingCheckoutError(error)) {
+        setSellerBlocked(true);
+        toast.error(checkoutErrorMessage(error));
       } else {
-        toast.error(error instanceof Error ? error.message : 'Purchase failed. Please try again.');
+        toast.error(checkoutErrorMessage(error) || 'Purchase failed. Please try again.');
       }
     } finally {
       setProcessing(false);
@@ -241,13 +247,18 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
                 Estimated processor fee on {formatAmount(albumPrice)}:{' '}
                 <span className="font-medium text-foreground">{feeQuote.display}</span>
               </div>
+              {sellerBlocked && (
+                <p className="text-xs text-orange-600 dark:text-orange-400">
+                  {checkoutErrorMessage(new Error('sower_settlement_consent_pending'))}
+                </p>
+              )}
             </div>
           )}
 
           {selectedTracks.length === 10 ? (
             <Button
               onClick={handleCheckout}
-              disabled={processing}
+              disabled={processing || sellerBlocked}
               className="w-full"
               size="lg"
             >

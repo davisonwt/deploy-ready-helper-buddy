@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
 import { useProductBasket } from '@/contexts/ProductBasketContext'
 import MyWalletCard from '@/components/dashboard/MyWalletCard'
+import SettlementConsentBanner from '@/components/dashboard/SettlementConsentBanner'
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
@@ -1275,6 +1276,10 @@ export default function SeedFlowDashboard() {
           </div>
 
           <div className="s2g-dashboard-content" style={styles.content}>
+            {/* ── Settlement consent nag — existing sowers with live listings
+                who haven't accepted the payout terms yet ── */}
+            <SettlementConsentBanner />
+
             {/* ── Live now strip — anyone going live shows up here instantly ── */}
             <LiveNowStrip className="mb-3" />
 

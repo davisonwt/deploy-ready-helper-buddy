@@ -19,6 +19,7 @@ import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 import { useBalanceProvider, isBalanceSuccess } from '@/hooks/useBalanceProvider';
+import { checkoutErrorMessage, isBlockingCheckoutError } from '@/lib/payments/checkoutErrors';
 
 const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room', 'orchard-images', 'seed-previews'];
 
@@ -70,6 +71,7 @@ export default function MusicTrackDetailPage() {
   const [djAudioUrl, setDjAudioUrl] = useState<string | null>(null);
   const [owned, setOwned] = useState(false);
   const [buyingProduct, setBuyingProduct] = useState(false);
+  const [sellerBlocked, setSellerBlocked] = useState(false);
   const [downloading, setDownloading] = useState(false);
   // priceBreakdown() deliberately throws on a missing price -- track.price
   // can genuinely be null (never priced / withdrawn from sale), so this is
@@ -305,6 +307,7 @@ export default function MusicTrackDetailPage() {
       toast.error('Please log in to bestow');
       return;
     }
+    setSellerBlocked(false);
     setBuyingProduct(true);
     try {
       const data = await invokePaymentFunction<{ solanaPayment?: SolanaPaymentResponse; approveUrl?: string; balance?: { debited: true } }>(
@@ -334,8 +337,11 @@ export default function MusicTrackDetailPage() {
       console.error('Product bestowal failed:', error);
       if (error instanceof Error && error.message === 'insufficient_balance') {
         toast.error(`Your S2G Balance is short — top up $${balanceShortBy.toFixed(2)} to pay this way.`);
+      } else if (isBlockingCheckoutError(error)) {
+        setSellerBlocked(true);
+        toast.error(checkoutErrorMessage(error));
       } else {
-        toast.error(error instanceof Error ? error.message : 'Bestowal failed. Please try again.');
+        toast.error(checkoutErrorMessage(error) || 'Bestowal failed. Please try again.');
       }
     } finally {
       setBuyingProduct(false);
@@ -482,7 +488,12 @@ export default function MusicTrackDetailPage() {
                     {provider === 'solana' && (
                       <p className="text-xs text-slate-400">{CRYPTO_ROUNDING_NOTICE}</p>
                     )}
-                    <Button onClick={handleBuy} disabled={isBuying} className="bg-rose-500 hover:bg-rose-600">
+                    {sellerBlocked && (
+                      <p className="text-xs text-orange-400">
+                        {checkoutErrorMessage(new Error('sower_settlement_consent_pending'))}
+                      </p>
+                    )}
+                    <Button onClick={handleBuy} disabled={isBuying || sellerBlocked} className="bg-rose-500 hover:bg-rose-600">
                       {isBuying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Heart className="w-4 h-4 mr-2" />}
                       Bestow ${total.toFixed(2)} {provider === 'balance' ? 'from S2G Balance' : provider === 'solana' ? 'USDC' : 'via PayPal'}
                     </Button>

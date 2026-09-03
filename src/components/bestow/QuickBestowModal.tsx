@@ -30,6 +30,7 @@ import { MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/
 import { priceBreakdown, round2 } from '@/lib/pricing/platformFee';
 import { useBalanceProvider, isBalanceSuccess } from '@/hooks/useBalanceProvider';
 import { useExchangeRates, formatConvertedWithUsd } from '@/lib/currency/rates';
+import { checkoutErrorMessage, isBlockingCheckoutError } from '@/lib/payments/checkoutErrors';
 
 export interface QuickBestowModalProps {
   open: boolean;
@@ -78,6 +79,7 @@ export default function QuickBestowModal({
   const [amount, setAmount] = useState<number>(defaultAmount);
   const [note, setNote] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [sellerBlocked, setSellerBlocked] = useState(false);
 
   // The server grosses base up by S2G's 15% before charging (see
   // create-orchard-bestowal-order) — the processor fee estimate and the
@@ -99,6 +101,7 @@ export default function QuickBestowModal({
       setAmount(defaultAmount);
       setNote('');
       setProvider('solana');
+      setSellerBlocked(false);
     }
   }, [open, defaultAmount]);
 
@@ -150,8 +153,11 @@ export default function QuickBestowModal({
       console.error('Bestowal initiation failed:', err);
       if (err?.message === 'insufficient_balance') {
         toast.error(`Your S2G Balance is short — top up $${balanceShortBy.toFixed(2)} to pay this way.`);
+      } else if (isBlockingCheckoutError(err)) {
+        setSellerBlocked(true);
+        toast.error(checkoutErrorMessage(err));
       } else {
-        toast.error(err?.message ?? 'Could not start the bestowal. Please try again.');
+        toast.error(checkoutErrorMessage(err) ?? 'Could not start the bestowal. Please try again.');
       }
     } finally {
       setProcessing(false);
@@ -242,6 +248,11 @@ export default function QuickBestowModal({
         </div>
 
         <div className="flex flex-col gap-2">
+          {sellerBlocked && (
+            <p className="text-xs text-orange-600 dark:text-orange-400 text-right">
+              {checkoutErrorMessage(new Error('sower_settlement_consent_pending'))}
+            </p>
+          )}
           <div className="text-xs text-muted-foreground text-right">
             Estimated processor fee: <span className="font-medium text-foreground">{feePreview.display}</span>
           </div>
@@ -252,7 +263,7 @@ export default function QuickBestowModal({
           )}
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={onClose} disabled={processing}>Cancel</Button>
-            <Button onClick={handleBestow} disabled={processing || amount <= 0} className="gap-2">
+            <Button onClick={handleBestow} disabled={processing || sellerBlocked || amount <= 0} className="gap-2">
               {processing && <Loader2 className="h-4 w-4 animate-spin" />}
               Bestow ${pricing.total.toFixed(2)}
             </Button>

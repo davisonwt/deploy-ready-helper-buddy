@@ -19,11 +19,13 @@ import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 import { s2gFeeOn, round2 } from '@/lib/pricing/platformFee';
 import { useBalanceProvider, isBalanceSuccess } from '@/hooks/useBalanceProvider';
+import { checkoutErrorMessage, isBlockingCheckoutError } from '@/lib/payments/checkoutErrors';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, totalAmount } = useProductBasket();
   const { user } = useAuth();
   const [processing, setProcessing] = useState(false);
+  const [sellerBlocked, setSellerBlocked] = useState(false);
 
   // WHO gets the whisper share on each line?
   // A seed can have MANY approved whisperers — the share goes to the ONE whose
@@ -35,6 +37,7 @@ export default function BestowalCheckout() {
 
   useEffect(() => {
     console.log('🛒 BestowalCheckout: Basket items', basketItems);
+    setSellerBlocked(false);
   }, [basketItems]);
 
   useEffect(() => {
@@ -72,6 +75,7 @@ export default function BestowalCheckout() {
     }
     if (basketItems.length === 0) return;
 
+    setSellerBlocked(false);
     setProcessing(true);
     try {
       const items = basketItems.map((it: any) => {
@@ -125,8 +129,11 @@ export default function BestowalCheckout() {
       console.error('Basket bestowal error:', err);
       if (err?.message === 'insufficient_balance') {
         toast.error(`Your S2G Balance is short — top up $${balanceShortBy.toFixed(2)} to pay this way.`);
+      } else if (isBlockingCheckoutError(err)) {
+        setSellerBlocked(true);
+        toast.error(checkoutErrorMessage(err));
       } else {
-        toast.error(err?.message || 'Bestowal failed. Please try again.');
+        toast.error(checkoutErrorMessage(err) || 'Bestowal failed. Please try again.');
       }
     } finally {
       setProcessing(false);
@@ -258,9 +265,14 @@ export default function BestowalCheckout() {
             Estimated processor fee on ${checkoutTotal.toFixed(2)}:{' '}
             <span className="font-medium text-foreground">{feeQuote.display}</span>
           </div>
+          {sellerBlocked && (
+            <p className="text-xs text-orange-600 dark:text-orange-400">
+              {checkoutErrorMessage(new Error('sower_settlement_consent_pending'))}
+            </p>
+          )}
         </div>
 
-        <Button onClick={handleBestow} disabled={processing} className="w-full" size="lg">
+        <Button onClick={handleBestow} disabled={processing || sellerBlocked} className="w-full" size="lg">
           {processing ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

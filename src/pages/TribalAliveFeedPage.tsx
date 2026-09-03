@@ -44,6 +44,7 @@ import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/W
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
+import { checkoutErrorMessage, isBlockingCheckoutError } from '@/lib/payments/checkoutErrors';
 import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
@@ -207,6 +208,7 @@ export default function TribalAliveFeedPage() {
   const [actionPanel, setActionPanel] = useState<ActionPanelState>(null);
   const [confirmBestow, setConfirmBestow] = useState<{ item: FeedItem; kind: 'music' | 'radio_recorded' } | null>(null);
   const [bestowing, setBestowing] = useState(false);
+  const [sellerBlockedMessage, setSellerBlockedMessage] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -1001,6 +1003,7 @@ export default function TribalAliveFeedPage() {
   const confirmBestowWithProvider = async (provider: PayoutProviderId) => {
     if (!confirmBestow) return;
     const { item, kind } = confirmBestow;
+    setSellerBlockedMessage(null);
     setBestowing(true);
     try {
       if (kind === 'music' && item.contentSource === 'product') {
@@ -1042,9 +1045,12 @@ export default function TribalAliveFeedPage() {
       // failure, unlike purchaseTrack/sendGift which catch and toast
       // internally -- surface it the same way so a failure here isn't silent.
       console.error('confirmBestowWithProvider failed', err);
+      if (isBlockingCheckoutError(err)) {
+        setSellerBlockedMessage(checkoutErrorMessage(err));
+      }
       toast({
         title: 'Bestowal failed',
-        description: err instanceof Error ? err.message : 'Please try again.',
+        description: checkoutErrorMessage(err) || 'Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -1340,11 +1346,12 @@ export default function TribalAliveFeedPage() {
       {confirmBestow && (
         <ConfirmBestowModal
           isOpen
-          onClose={() => setConfirmBestow(null)}
+          onClose={() => { setConfirmBestow(null); setSellerBlockedMessage(null); }}
           title={confirmBestow.item.title}
           amount={Number(confirmBestow.item.price ?? 2)}
           confirming={bestowing}
           onConfirm={confirmBestowWithProvider}
+          blockedMessage={sellerBlockedMessage}
         />
       )}
 

@@ -16,6 +16,8 @@ interface ConfirmBestowModalProps {
   confirming?: boolean;
   /** Defaults to "Bestow". Pass "Gift" for the gift-flavored call sites. */
   actionLabel?: string;
+  /** Set after a create-*-order call returns sower_settlement_consent_pending -- disables the pay button and shows why, until the caller resets it (e.g. on retry or closing the modal). */
+  blockedMessage?: string | null;
 }
 
 /**
@@ -32,6 +34,7 @@ export function ConfirmBestowModal({
   onConfirm,
   confirming = false,
   actionLabel = 'Bestow',
+  blockedMessage = null,
 }: ConfirmBestowModalProps) {
   const { provider, setProvider, providers, balanceShortBy } = useBalanceProvider(amount);
   const effectiveProvider = provider;
@@ -63,10 +66,13 @@ export function ConfirmBestowModal({
           {effectiveProvider === 'solana' && (
             <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
           )}
+          {blockedMessage && (
+            <p className="text-xs text-orange-600 dark:text-orange-400">{blockedMessage}</p>
+          )}
 
           <Button
             className="w-full"
-            disabled={confirming}
+            disabled={confirming || !!blockedMessage}
             onClick={() => onConfirm(effectiveProvider)}
           >
             {confirming ? (
