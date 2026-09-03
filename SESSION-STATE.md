@@ -2473,16 +2473,22 @@ deliberately short and forward-looking, not a full archive.
    actually fired** — worth checking directly. Sentinel cannot detect its
    own downtime; external uptime monitoring is still needed and not set
    up.
-2. **End-to-end core-loop test on mainnet** — everything Solana-related
-   this session (hot wallet, sweep, payout rail, anomaly alerting, and as
-   of 2026-09-03 the whole S2G Balance build) is verified on **devnet
-   only**. Nothing has moved real money yet. Needs a deliberate,
-   supervised first mainnet run before any of it is trusted with live
-   funds.
-2a. **S2G Balance legal review** — it's custodial (balances are USD
-   ledger entries backed by pooled USDC/PayPal funds, not segregated
-   per-member accounts). Not reviewed by counsel. Get a real opinion
-   before any of it touches real money — see spec-payments.md section 13.
+2. **End-to-end core-loop test on mainnet — partially done, 2026-09-03
+   end of day.** `SOLANA_CLUSTER=mainnet-beta` is now genuinely set (it
+   wasn't, all day, despite the 2026-09-01 cutover work — see "Fixed —
+   2026-09-03, end of day" above) and one real payment has landed and been
+   independently verified on-chain (intent `44ea0a44…`, $2.31). That
+   payment went through the fallback wallet-matcher, not the in-app
+   button/QR flow — a real Phantom-extension click-to-pay on mainnet is
+   still unverified. Payout rail (sending real money out) and S2G Balance
+   are both still untested on mainnet.
+2a. **S2G Balance legal review — still not done; the feature is parked,
+   not shipped.** `app_settings.s2g_balance_enabled = false`, confirmed
+   live 2026-09-03 — the non-custodial (pending/$20-threshold weekly payout)
+   model is what's actually active, on legal advice. The code from the
+   2026-09-03 build (see its section above) is intact and gated behind the
+   flag, not deleted, so it can come back once reviewed. See
+   spec-payments.md section 13.
 3. **7 remaining Lovable-flagged bugs** — not yet triaged in this log.
 4. **Wandering Hearts Phase 2** — JaaS JWT call rooms, gated on both
    members having paid the $5/$10 one-time unlock fee (decision recorded
@@ -2879,6 +2885,186 @@ here):**
   rails under an explicit instruction to treat it as such.
 - Mainnet — like the rest of this session's Solana work, S2G Balance is
   devnet/sandbox-only. Nothing here has moved real money.
+
+## Fixed — 2026-09-03, end of day (mainnet cutover, first real payment, S2G Balance parked, bug roundup)
+
+**Correcting the record before writing it down**: this update was requested
+with an intent id (`bde83d15`) and a signature (`4X8NUGYP…`) for "the first
+real mainnet payment" — neither exists anywhere in this database (checked
+`solana_payment_intents.id`, every `product_bestowals`/`basket_orders`
+id/reference column, `balance_ledger`, `escrow_events`, `whisperer_earnings`,
+and a signature-prefix search — all empty). The actual, only, real paid
+mainnet Solana intent that exists is documented below with its real id and
+signature. Also correcting "Amber $2.00 pending payout" — the real number is
+$1.95, and why is its own bug, below.
+
+**Mainnet cutover — genuinely landed at 15:54 UTC, not 17:55, and an earlier
+"cutover complete" claim earlier today was false.** `_shared/cryptoNetworks.ts`'s
+`getSolanaCluster()` defaults to `devnet` unless `SOLANA_CLUSTER=mainnet-beta`
+is explicitly set — by design, so nothing flips to real money by accident. It
+was never actually set: `SOLANA_HOT_WALLET_ADDRESS`/`SOLANA_HOT_WALLET_SECRET_KEY`
+were configured 2026-09-01 (real mainnet-cutover work happened then), but the
+cluster secret itself was missing, silently, the whole time — every Solana Pay
+URL built since then embedded the **devnet** USDC mint
+(`4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`) in a link served to real
+phones, which is exactly what Phantom's "Invalid link — contains a token you
+don't own" was. Root-caused by reconstructing a real intent's URL and running
+it through the official `@solana/pay` `parseURL`/`createTransfer` reference
+implementation against live mainnet RPC (see below) — confirmed the URL
+*builder* was correct and had been all along; the missing secret was the only
+problem. `npx supabase secrets set SOLANA_CLUSTER=mainnet-beta` confirmed live
+via `secrets list`'s `updated_at: 2026-09-03T15:54:29.280Z`. First intent
+created after that timestamp correctly carries `cluster: mainnet-beta` and the
+real mainnet mint (`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`).
+
+**First real mainnet payment, verified on-chain — intent `44ea0a44-26af-4585-8456-688b980ff478`**,
+order `31d3420c-37e7-41db-92e1-41c0c343b994`, signature
+`2ZGvGvx56F2ymu4JEQhhE6Cf7C9fzhyzxf7k7A7dRha53yDuDs7SQvk711tnyMRq6yizyMzqK38R1rSfLUgbQhER`,
+$2.31. Independently confirmed directly against mainnet RPC (not just this
+codebase's own record of itself): `getParsedTransaction` shows a real
+`transferChecked`, `err: null`, mint = the real mainnet USDC mint, amount
+2,310,000 raw units (2.31 USDC), destination = the hot wallet's real USDC ATA
+(`CASgQXLdB324DHRVVAU3PftCcFGMvxGDq2KLYJh4HjH5`, confirmed to exist,
+initialized, not frozen). Buyer: davison (self-test). Sower: Amber Wheeles,
+for "The Psalms Project (VOL 1) — The Shira Collective." **One real gap found
+by checking this specific transaction**: the Solana Pay *reference* pubkey is
+**not** present as an account key in the on-chain transaction — this payment
+was matched by the fallback wallet-identity matcher
+(`findFallbackWalletMatch`, built 2026-09-02), not the reference-based flow.
+The `source` account carries a `multisigAuthority`/`signers` shape, meaning it
+was sent by hand from a wallet, not through the app's own "Pay with
+Phantom"/QR button. **This proves the fallback-matching path and the mint/
+cluster fix work on real mainnet money — it does not yet prove the in-app
+button/QR flow has completed a real mainnet payment end to end.**
+
+**Bug found by this transaction: `finalize_basket_order` overcharges the
+platform fee on every fee-inclusive sale, shorting the sower.** The buyer-side
+price model (`priceBreakdown()`) builds `line_total = unit_price + 15%`
+(client charged $2.30 for a $2.00 item) and stamps `fee_inclusive: true` on
+the basket item snapshot — but `finalize_basket_order`'s SQL always computes
+`s2g_fee = round(line_total * 0.15, 2)` regardless, ignoring `unit_price`/
+`fee_inclusive` entirely. For this sale: `s2g_fee 0.35` / `sower_amount 1.95`
+instead of the correct `0.30` / `2.00` — the platform effectively takes
+~15.2% of the base price, not 15%. This is why Amber's owed amount from this
+specific transaction is **$1.95, not $2.00** — flagged when found; **not
+fixed yet, pending a decision on whether/how to correct it** (see Open below).
+The receipt chat message posted to both parties also carries the wrong
+numbers, same root cause.
+
+**S2G Balance: built 2026-09-03 (see its own section above), then parked the
+same day pending legal review — non-custodial model is what's actually live.**
+`app_settings.s2g_balance_enabled = false`, confirmed directly; `credit_
+earning_for_bestowal`'s live source (not just the migration file — pulled via
+`pg_get_functiondef` against the running database) early-returns when that
+flag is false, leaving `payout_status`/`whisperer_earnings.status` at
+`pending`/`payable` so the old $20-threshold `owed_payout_balances()` →
+weekly `payout-earnings` path is what actually pays people. **Verified this
+is correctly gated for both flag states today**, not just read: new
+`scripts/s2g-balance-flag-tests.sql` inserts a throwaway fixture bestowal
+inside `BEGIN…ROLLBACK` (confirmed zero trace left afterward), calls `credit_
+earning_for_bestowal` with the flag off (asserts `payout_status` stays
+`pending`, no ledger row) and then on (asserts `credited_to_balance`, one
+ledger row) — both pass against the live function today.
+
+**Bug found: two of Amber's bestowals are stuck in the disabled ledger
+system.** `credit_earning_for_bestowal`'s flag-gate above was added later
+(`20260903150000_non_custodial_cutover.sql`) than the original Stage-4
+backfill migration that first populated `balance_ledger`
+(`20260903093500`, ran ~09:12 UTC) — two of Amber's real bestowals
+(`f119e2a6-09fa-494f-8696-1ce5976d54e1`, `acc9074c-f0c8-48b1-9cd3-c90158859768`,
+$2.00 sower_amount each) were credited during that window, before the gate
+existed, and were never reverted when the feature was subsequently disabled.
+They're stuck at `payout_status = 'credited_to_balance'`, invisible to
+`owed_payout_balances()` — this is stale **data** from a timing gap, not an
+ongoing bug in `finalize` today (see the flag test above). **A system-wide
+check found 7 such stuck rows total, $13.95 sower_amount, across other
+sowers too — only Amber's two were addressed; the rest are still open.**
+Migration `20260903170000_revert_stale_s2g_balance_credits_amber.sql`
+reverts her two via `debit_balance_ledger` (an `'adjustment'` entry, not a
+delete — keeps both the credit and the reversal in the audit trail) and
+restores `payout_status = 'pending'`. **Written and committed, NOT applied
+to the live database** — the write was blocked by the environment's own
+safety classifier (a real financial-ledger mutation), needs to be run by
+hand:
+```
+npx supabase db query --linked --project-ref zuwkgasbkpjlxzsjzumu -f supabase/migrations/20260903170000_revert_stale_s2g_balance_credits_amber.sql
+```
+Once run, `owed_payout_balances()` will show Amber at **$4.00** (both
+reverted rows, not $2.00), surfaced on her Payout Settings page via the
+existing `EarningsPayoutCard` → `request-earnings-payout` preview call,
+which already reads `owed_payout_balances()` directly — no UI change
+needed, confirmed by reading that code path.
+
+**Other bugs found and fixed today:**
+- **Desktop Phantom "Buffer is not defined."** `solanaWallet.ts`'s
+  transaction builder uses `@solana/web3.js`/`@solana/spl-token`, which
+  reference Node's `Buffer` global internally — `vite.config.ts` already had
+  the full polyfill setup (alias, `global: 'globalThis'` define,
+  `optimizeDeps`) and `src/buffer-polyfill.ts` already existed to finish the
+  job, it was just never imported anywhere. One-line fix: import it first in
+  `main.tsx`. Added `tests/payments/solana-phantom.spec.ts` (Playwright,
+  `npm run test:payments`) — loads the real production build, stubs
+  `window.phantom.solana`, drives a real music-seed checkout through the real
+  "Pay with Phantom" button, asserts the built transaction reaches the
+  provider with the mainnet USDC mint and zero console errors. **Confirmed it
+  actually catches the regression**: reverted the fix, rebuilt, reran — failed
+  exactly as expected; restored, reran — passed. This verifies the code path
+  in a real headless-Chromium browser against a **stubbed** Phantom provider —
+  a real Phantom extension install in a real browser is still open (Open
+  item below).
+- **`useLiveWalletBalance` silently showed $0.00 to every member, always** —
+  found while making the My Wallet tile actually visible (below). It called
+  `api.mainnet-beta.solana.com` directly from the browser; that endpoint
+  sends no CORS headers for arbitrary origins, so the fetch failed with the
+  standard opaque CORS error and the hook's own catch block reported a
+  valid-looking zero. This was live before today, just unnoticed because the
+  card wasn't visible anywhere. Fixed by proxying through a new same-origin
+  edge function (`get-wallet-balance`, calling new `_shared/liveBalance.ts`)
+  — edge functions aren't subject to CORS. Deployed; confirmed reachable and
+  correctly auth-gated (401 on an invalid token). The RPC/decode logic itself
+  was independently verified against real mainnet data (davison's real
+  wallet, $21.58991 USDC, matching what the fixed UI then rendered).
+- **My Wallet card wasn't a bug, just buried** — it rendered fine, just in
+  the dashboard's collapsible-on-mobile right sidebar. Added as a 4th tile
+  in the top stats row (`DashboardTribeStats`: My Tribe · Bestowals · Unread
+  · My Wallet), removed the old sidebar placement (moved, not duplicated —
+  full connect/change-wallet UI already lives in exactly one place,
+  `/settings/payouts`). Added a persistent header-area balance chip
+  (`WalletBalanceChip`, mounted globally next to the floating basket button
+  — the only sitewide "Basket" UI this app has; there's no traditional
+  header/nav bar to attach to, flagged rather than silently building one).
+  Verified both render correctly and wrap 2×2 on a 390px mobile viewport via
+  screenshot, with davison's real balance ($21.59) fed through.
+- **`vitest.config.ts` (the config Vitest actually uses over `vite.config.ts`'s
+  `test` block — a real gotcha, see below) had no exclusion for
+  `tests/payments/`** — the Playwright suite added earlier today was being
+  picked up and run (and failing) under `vitest run` by accident, since it
+  matches the default `*.spec.ts` glob. Fixed.
+
+**Open items, end of day:**
+1. **Desktop Phantom in a real browser extension** — still not done. The
+   Playwright regression test (above) proves the code path works against a
+   stubbed provider; nobody has clicked "Pay with Phantom" with a real
+   Phantom extension installed and watched it succeed.
+2. **Hot wallet USDC ATA on mainnet — confirmed to exist**, not open
+   anymore: `CASgQXLdB324DHRVVAU3PftCcFGMvxGDq2KLYJh4HjH5`, initialized, not
+   frozen, real balance, verified directly against mainnet RPC today.
+3. **PayPal** — unchanged from the existing "PayPal integration" section
+   above: code-verified, never exercised against a real live PayPal payment.
+   Nothing new checked today.
+4. **A member message to Amber** — she's owed real money across two
+   separate issues found today (the $0.05/sale fee bug, and the $4.00
+   stuck-ledger backfill once it's applied) — worth a direct explanation,
+   not sent yet.
+5. **Wandering Hearts Phase 2, legacy API key cleanup, the remaining
+   walkthrough** — unchanged from the existing Open list above; nothing new
+   to report on any of these today.
+6. **7 stuck `credited_to_balance` bestowals system-wide ($13.95), minus
+   Amber's 2 above** — found today, not investigated or fixed for the other
+   sowers involved.
+7. **`finalize_basket_order`'s fee-inclusive double-charge** — found today
+   (see above), not fixed. Affects every basket sale with a `fee_inclusive`
+   line item, not just Amber's.
 
 ## Known gotchas
 
