@@ -15,6 +15,8 @@ import ConnectPaypalButton from '@/components/payouts/ConnectPaypalButton';
 import CryptoPayoutSettings from '@/components/payouts/CryptoPayoutSettings';
 import { PAYOUT_PROVIDERS } from '@/lib/payments/providerFees';
 import EarningsPayoutCard from '@/components/payouts/EarningsPayoutCard';
+import { SettlementConsentPrompt } from '@/components/payouts/SettlementConsentPrompt';
+import { useSettlementConsent } from '@/hooks/useSettlementConsent';
 
 /**
  * Sower payout-method settings.
@@ -56,6 +58,7 @@ export default function PayoutSettingsPage() {
   const [savingPreferred, setSavingPreferred] = useState(false);
   const [activeTab, setActiveTab] = useState<'crypto' | 'paypal'>('crypto');
   const [solanaAddress, setSolanaAddress] = useState<string | null>(null);
+  const { hasAccepted: consentAccepted, loading: consentLoading, refetch: refetchConsent } = useSettlementConsent();
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -216,6 +219,10 @@ export default function PayoutSettingsPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>Please sign in to manage payout methods.</AlertDescription>
         </Alert>
+      )}
+
+      {user && !consentLoading && consentAccepted === false && (
+        <SettlementConsentPrompt onAccepted={refetchConsent} />
       )}
 
       {user && !loading && !hasVerifiedPaypal && (

@@ -4,6 +4,7 @@ const TrustPage = lazy(() => import('@/pages/TrustPage'));
 import { Card, CardContent } from '@/components/ui/card';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { RequireVerification } from '@/components/auth/RequireVerification';
+import { RequireSettlementConsent } from '@/components/auth/RequireSettlementConsent';
 import Layout from '@/components/Layout';
 import { S2G_BALANCE_ENABLED } from '@/lib/featureFlags';
 import {
@@ -130,6 +131,7 @@ import {
   AdminDashboardPage,
   AdminRadioPage,
   AdminSeedsPage,
+  AdminSettlementConsentsPage,
   
   AuthDebugPage,
   LiveSeedPage,
@@ -172,19 +174,19 @@ const AppRoutes = () => (
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowIndexPage /></Suspense></ProtectedRoute>
     } />
     <Route path="/sow/music" element={
-      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowMusicPage /></Suspense></ProtectedRoute>
+      <ProtectedRoute><RequireSettlementConsent><Suspense fallback={<LoadingFallback />}><SowMusicPage /></Suspense></RequireSettlementConsent></ProtectedRoute>
     } />
     <Route path="/sow/art" element={
-      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowArtPage /></Suspense></ProtectedRoute>
+      <ProtectedRoute><RequireSettlementConsent><Suspense fallback={<LoadingFallback />}><SowArtPage /></Suspense></RequireSettlementConsent></ProtectedRoute>
     } />
     <Route path="/sow/book" element={
-      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowBookPage /></Suspense></ProtectedRoute>
+      <ProtectedRoute><RequireSettlementConsent><Suspense fallback={<LoadingFallback />}><SowBookPage /></Suspense></RequireSettlementConsent></ProtectedRoute>
     } />
     <Route path="/sow/product" element={
-      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowProductPage /></Suspense></ProtectedRoute>
+      <ProtectedRoute><RequireSettlementConsent><Suspense fallback={<LoadingFallback />}><SowProductPage /></Suspense></RequireSettlementConsent></ProtectedRoute>
     } />
     <Route path="/sow/hand" element={
-      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowHandPage /></Suspense></ProtectedRoute>
+      <ProtectedRoute><RequireSettlementConsent><Suspense fallback={<LoadingFallback />}><SowHandPage /></Suspense></RequireSettlementConsent></ProtectedRoute>
     } />
     <Route path="/seed/hand/:id" element={
       <Suspense fallback={<LoadingFallback />}><HandSeedDetailPage /></Suspense>
@@ -226,7 +228,9 @@ const AppRoutes = () => (
     <Route path="/dashboard/sower/upload" element={
       <ProtectedRoute>
         <RequireVerification>
-          <Suspense fallback={<LoadingFallback />}><BulkUploadWizardPage /></Suspense>
+          <RequireSettlementConsent>
+            <Suspense fallback={<LoadingFallback />}><BulkUploadWizardPage /></Suspense>
+          </RequireSettlementConsent>
         </RequireVerification>
       </ProtectedRoute>
     } />
@@ -294,10 +298,10 @@ const AppRoutes = () => (
       <ProtectedRoute><RequireVerification><Layout><OrchardErrorPage /></Layout></RequireVerification></ProtectedRoute>
     } />
     <Route path="/create-orchard" element={
-      <ProtectedRoute><RequireVerification><CreateOrchardPage /></RequireVerification></ProtectedRoute>
+      <ProtectedRoute><RequireVerification><RequireSettlementConsent><CreateOrchardPage /></RequireSettlementConsent></RequireVerification></ProtectedRoute>
     } />
     <Route path="/plant-new-seed" element={
-      <ProtectedRoute><RequireVerification><CreateOrchardPage /></RequireVerification></ProtectedRoute>
+      <ProtectedRoute><RequireVerification><RequireSettlementConsent><CreateOrchardPage /></RequireSettlementConsent></RequireVerification></ProtectedRoute>
     } />
     <Route path="/edit-orchard/:orchardId" element={
       <ProtectedRoute><Layout><EditOrchardPage /></Layout></ProtectedRoute>
@@ -575,6 +579,11 @@ const AppRoutes = () => (
     <Route path="/admin/seeds" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}>
         <Layout><Suspense fallback={<LoadingFallback />}><AdminSeedsPage /></Suspense></Layout>
+      </ProtectedRoute>
+    } />
+    <Route path="/admin/settlement-consents" element={
+      <ProtectedRoute allowedRoles={['admin', 'gosat']}>
+        <Layout><Suspense fallback={<LoadingFallback />}><AdminSettlementConsentsPage /></Suspense></Layout>
       </ProtectedRoute>
     } />
     <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />

@@ -20,6 +20,7 @@ import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
 import { finalizeCompletedOrder } from "../_shared/paypal/capture.ts";
 import { isS2GBalanceEnabled } from "../_shared/featureFlags.ts";
+import { hasAcceptedSettlementConsent } from "../_shared/settlementConsent.ts";
 
 interface RequestPayload {
   orchardId: string;
@@ -89,6 +90,13 @@ Deno.serve(async (req) => {
       .single();
     if (orchardError || !orchard) return json({ error: "orchard_not_found" }, 404);
     if (orchard.status !== "active") return json({ error: "orchard_inactive" }, 400);
+
+    // Settlement consent: block a sale on an orchard whose owner hasn't
+    // accepted yet -- new orchards are already blocked at creation by a DB
+    // trigger; this is the "first sale" half for anything pre-existing.
+    if (orchard.user_id && !(await hasAcceptedSettlementConsent(service, orchard.user_id))) {
+      return json({ error: "sower_settlement_consent_pending" }, 409);
+    }
 
     const pocketPrice = Number(orchard.pocket_price);
     if (!Number.isFinite(pocketPrice) || pocketPrice <= 0) {

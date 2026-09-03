@@ -18,6 +18,7 @@ import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
 import { finalizeCompletedOrder } from "../_shared/paypal/capture.ts";
 import { isS2GBalanceEnabled } from "../_shared/featureFlags.ts";
+import { hasAcceptedSettlementConsent } from "../_shared/settlementConsent.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -126,6 +127,22 @@ Deno.serve(async (req) => {
       return json({ error: "products_lookup_failed" }, 500);
     }
     const byId = new Map(products.map((p) => [p.id, p]));
+
+    // --- Settlement consent: block a sale on a listing whose sower hasn't
+    // accepted yet (the "first sale" half of the requirement -- new
+    // listings are already blocked at creation by a DB trigger). Checked
+    // before any order row exists, so the buyer is never asked to pay for
+    // something that can't actually finalize. ---------------------------
+    const sowerIds = Array.from(new Set(products.map((p) => (p as any).sower_id).filter(Boolean)));
+    if (sowerIds.length > 0) {
+      const { data: sowerRows } = await service.from("sowers").select("id, user_id").in("id", sowerIds);
+      const sowerUserIds = Array.from(new Set((sowerRows ?? []).map((s: any) => s.user_id).filter(Boolean)));
+      for (const sowerUserId of sowerUserIds) {
+        if (!(await hasAcceptedSettlementConsent(service, sowerUserId))) {
+          return json({ error: "sower_settlement_consent_pending" }, 409);
+        }
+      }
+    }
 
     const itemSnapshot: Array<{
       product_id: string;
