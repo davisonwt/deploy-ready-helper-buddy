@@ -396,3 +396,48 @@ export async function checkDataSanity(admin: SupabaseClient): Promise<Condition[
 
   return conditions;
 }
+
+// ── 9. S2G Balance ledger ─────────────────────────────────────────────────
+// spec-payments.md's S2G Balance section: balance_ledger is custodial --
+// every dollar in it is backed by pooled USDC/PayPal funds, and the hot
+// wallet's own on-chain balance must never fall below the total the ledger
+// says Sow2Grow owes members. Note this checks the hot wallet only, not the
+// 2-of-3 Squad -- the Squad's balance isn't queryable from here today (no
+// multisig balance-read wired up anywhere in this codebase); flagged as an
+// open gap rather than silently treated as covered.
+export async function checkBalanceLedger(admin: SupabaseClient): Promise<Condition[]> {
+  const conditions: Condition[] = [];
+
+  const { data: ledgerRows, error: e1 } = await admin.from("balance_ledger").select("amount");
+  if (e1) throw e1;
+  const totalLiability = (ledgerRows ?? []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+
+  if (totalLiability > 0) {
+    let seed: Uint8Array;
+    try {
+      seed = loadHotWalletKeypair();
+      verifyHotWallet(seed);
+    } catch (e) {
+      conditions.push({
+        subject: "balance_ledger_hot_wallet_config", severity: "critical",
+        message: `Cannot verify hot wallet covers the ${totalLiability.toFixed(2)} USD S2G Balance liability -- hot wallet not configured: ${e instanceof Error ? e.message : String(e)}`,
+      });
+      return conditions;
+    }
+    const cluster = getSolanaCluster();
+    const usdcBalance = await getHotWalletUsdcBalance(seed, cluster);
+    if (usdcBalance < totalLiability) {
+      conditions.push({
+        subject: "balance_ledger_underfunded", severity: "critical",
+        message: `Hot wallet USDC balance (${usdcBalance.toFixed(2)}) is below the S2G Balance liability (${totalLiability.toFixed(2)}) -- members could be owed more than Sow2Grow currently holds on this rail. Squad balance is not included in this check (not queryable from here) -- verify it directly too.`,
+        detail: { usdc_balance: usdcBalance, total_liability: totalLiability, cluster },
+      });
+    }
+  }
+
+  // Withdrawal-sourced payouts stuck 'processing' past an hour are already
+  // caught by checkStuckMoney's generic payouts scan above -- not
+  // duplicated here.
+
+  return conditions;
+}

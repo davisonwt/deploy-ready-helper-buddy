@@ -222,11 +222,11 @@ export default function GosatTreasuryPage() {
         <Card>
           <CardHeader>
             <CardTitle>On-platform reserved</CardTitle>
-            <CardDescription>Sum of all sower_balances rows. Sow2Grow owes this out to sowers.</CardDescription>
+            <CardDescription>What Sow2Grow owes out — members' S2G Balance, plus earnings still working through the payout pipeline.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
-            <Stat label="Available" value={fmtUsd(data.reserved.available)} />
-            <Stat label="Pending" value={fmtUsd(data.reserved.pending)} />
+            <Stat label="S2G Balance (withdrawable now)" value={fmtUsd(data.reserved.available)} />
+            <Stat label="Pending payout (not yet in a balance)" value={fmtUsd(data.reserved.pending)} />
           </CardContent>
         </Card>
       )}

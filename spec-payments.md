@@ -1,16 +1,20 @@
 # spec-payments.md — Payment rails, fees, and the direct-Solana migration
 
-Status: **decided 2026-08-30, inbound pay-in built 2026-09-02.** Section 3
-(direct Solana payment detection) and the checkout-side migration (section
-6, steps 1–3) are live: NOWPayments crypto checkout is replaced by direct
-Solana USDC pay-in everywhere. NOWPayments code, secrets, and its webhook
-remain in place, unreachable from checkout, for any historical order (step
-5 of section 6 — full removal — is not done). Section 4 (rebuilding the
-Solana **payout** rail inside `payout-earnings`) is a separate, still-open
-piece of work — this build was inbound (pay-in) only. See "Implementation
-notes (2026-09-02)" at the end of section 3 for what shipped, what's still
-open, and exact human-test steps. Read alongside SESSION-STATE.md (current
-live state) and spec-service-seeds.md §9 (booking purchases).
+Status: **decided 2026-08-30, inbound pay-in built 2026-09-02, S2G Balance
+built 2026-09-03.** Section 3 (direct Solana payment detection) and the
+checkout-side migration (section 6, steps 1–3) are live: NOWPayments
+crypto checkout is replaced by direct Solana USDC pay-in everywhere.
+NOWPayments code, secrets, and its webhook remain in place, unreachable
+from checkout, for any historical order (step 5 of section 6 — full
+removal — is not done). Section 4 (rebuilding the Solana **payout** rail
+inside `payout-earnings`) is a separate, still-open piece of work — this
+build was inbound (pay-in) only. Section 13 (S2G Balance) is the newest
+build: a prepaid custodial member balance, now the default checkout
+option, sower/whisperer earnings crediting it on release, and on-demand
+withdrawal. See "Implementation notes (2026-09-02)" at the end of section
+3 and section 13's own implementation notes for what shipped, what's
+still open, and exact human-test steps. Read alongside SESSION-STATE.md
+(current live state) and spec-service-seeds.md §9 (booking purchases).
 
 ---
 
@@ -727,3 +731,108 @@ a normal session token:
 If a member hasn't set up security questions, `CryptoPayoutSettings` blocks
 the form and sends them to set that up first — there's no path that skips
 the second factor.
+
+---
+
+## 13. S2G Balance (built 2026-09-03)
+
+**Problem.** Per-purchase wallet approval (Phantom popup / QR) proved too
+fragile for small ($2) bestowals — wrong wallet app, unrecognized tokens,
+missing Solana Pay references, managed browsers blocking extensions. The
+fix: top up once (USDC via Phantom, or PayPal), then bestow in one tap —
+no wallet interaction per purchase. Sowers' (and whisperers') earnings
+land in the same balance and can be withdrawn on demand. This is now the
+*default* checkout option; Solana-per-purchase and PayPal-per-purchase
+remain as alternatives.
+
+**This is custodial.** A balance is a USD-denominated ledger entry backed
+by pooled USDC/PayPal funds, not a segregated per-member account —
+exactly the "held balances" concern section 9 already named for
+individual payout balances, now extended to cover top-ups too. **Not
+reviewed by counsel. Get a real legal opinion before real-money launch —
+this was built and shipped on devnet/sandbox rails under an explicit
+instruction to treat it as such; it has not been cleared for real funds.**
+
+### Design
+
+- **`balance_ledger`** — append-only, one row per movement (`user_id`,
+  signed `amount`, `kind`, a reference back to the order/topup/payout that
+  caused it, an `idempotency_key`). Balance = `SUM(amount)`, exposed via
+  the computed `balance_available_v` view — never a stored mutable number,
+  the same anti-pattern section 9 implicitly warns against for held
+  balances generally. `credit_balance_ledger`/`debit_balance_ledger`
+  (`SECURITY DEFINER`, service-role only) serialize concurrent moves per
+  user via `pg_advisory_xact_lock` and are idempotent on
+  `(user_id, kind, idempotency_key)` — a debit that would overdraw raises
+  `insufficient_balance:<available>` rather than allowing a race.
+- **Top-up** reuses the existing `topups` table and Solana/PayPal
+  intent/finalize plumbing (`_shared/solanaPayIn.ts`,
+  `_shared/paypal/capture.ts`) unchanged — only the credit target
+  changed, from `sower_balances` (a mutable-column table that never
+  actually tracked sower earnings, only topups — effectively superseded
+  by this section) to `balance_ledger`, via a new
+  `credit_balance_ledger_from_topup` RPC.
+- **Bestow with balance** — a new `'balance'` provider alongside
+  `solana`/`paypal` at every checkout surface (basket, content, gift; see
+  "Still open" below for orchard). `create-basket-bestowal-order`/
+  `create-content-purchase-order`/`create-gift-bestowal-order` each debit
+  the buyer's ledger (idempotent on the order id) then call
+  `finalizeCompletedOrder` directly — the exact function every other
+  provider already converges on, so escrow, the 15% fee, whisperer
+  split, Books, and receipts behave identically regardless of how the
+  buyer paid. No processor fee (there is no processor in the middle).
+- **Earnings credit the ledger on release.** A bestowal's `release_status`
+  becomes `'released'` in two different places — `finalize_basket_order`
+  immediately for a digital seed, `escrow_release_bestowal` later for a
+  physical one — and both now call a shared `credit_earning_for_bestowal`,
+  which credits `sower_amount` (and any linked whisperer commission) and
+  flips `payout_status` to a new `'credited_to_balance'` value. That flip
+  is load-bearing: `owed_payout_balances()` (what the old automatic weekly
+  `payout-earnings` cron reads) filters on `payout_status='pending'`, so a
+  credited row becomes invisible to it — the only way to avoid paying the
+  same earning twice, once via on-demand withdrawal and once via the old
+  weekly sweep. A one-time backfill migrated the handful of
+  already-released-but-unpaid rows at cutover.
+- **Withdraw** — `request-balance-withdrawal`: any amount up to available,
+  debited from the ledger before any send is attempted. Solana sends
+  instantly, synchronously, reusing `payout-earnings`' exact hot-wallet
+  primitive and circuit breakers (per-tx/daily caps, 48h cooling-off — see
+  section 12). PayPal doesn't send synchronously — queued as a
+  `payouts` row that the existing weekly `payout-earnings` PayPal batch
+  now also picks up (its own $20 minimum enforced at request time, no
+  aggregation of smaller requests). A withdrawal has no source row to
+  revert on failure the way an owed-balance payout does, so
+  `payout-earnings` and `paypal-webhook`'s async item-failure handler both
+  refund the ledger instead.
+- **Accounting.** `AdminPayoutsPage` shows the S2G Balance liability
+  (`total_balance_ledger_liability()`, admin/gosat-only) as its own figure,
+  kept visibly separate from the old unpaid-earnings float — per section
+  9's "never merged into one undifferentiated pile" rule, they're
+  different liabilities now that released earnings move out of
+  `owed_payout_balances()` into the ledger. `GosatTreasuryPage`'s
+  "on-platform reserved" figure, previously sourced from the
+  topup-only `sower_balances`, now reads the ledger sum for "available"
+  and `owed_payout_balances()` for "pending" (earnings still working
+  through the old pipeline). Sentinel's new `balance_ledger` check alerts
+  if the hot wallet's on-chain USDC balance falls below the total ledger
+  liability — it does **not** check the 2-of-3 Squad's balance (no
+  multisig balance-read exists anywhere in this codebase today); that gap
+  is explicit in the check's own alert copy, not silently treated as
+  covered.
+
+### Still open
+
+- **Orchard bestowals** have no `'balance'` option yet. Unlike
+  basket/content/gift, they're created by a Solana-only function
+  (`create-solana-bestowal-order`, no `provider` parameter at all) plus a
+  separate PayPal-only path — not the same provider-switch shape, so
+  wiring balance in was left for a follow-up rather than forced into this
+  pass.
+- **content_purchases and bestowals (gift/orchard) earnings** don't credit
+  the ledger yet — only `product_bestowals` does. They pay out
+  immediately on completion today (no escrow/release concept), so the
+  double-pay risk that forced the `product_bestowals` timing doesn't apply
+  the same way, but they're still on the old `owed_payout_balances()` rail
+  until a fast-follow moves them.
+- **Legal review**, per the custodial note above — the actual blocker
+  before any of this touches real money.

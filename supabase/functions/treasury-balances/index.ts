@@ -170,16 +170,25 @@ Deno.serve(async (req) => {
       paypal = { ok: false, error: err instanceof Error ? err.message : String(err) };
     }
 
-    // ---- Reserved for sowers (sum of on-platform balances) ----
-    const { data: balRows } = await service
-      .from("sower_balances")
-      .select("available_balance, pending_balance, currency");
-    let reservedAvailable = 0;
-    let reservedPending = 0;
-    for (const r of balRows ?? []) {
-      reservedAvailable += Number(r.available_balance ?? 0);
-      reservedPending += Number(r.pending_balance ?? 0);
-    }
+    // ---- Reserved for sowers ----
+    // "Available" = the real member-balance liability: every dollar sitting
+    // in balance_ledger (topups + released earnings, minus spends/
+    // withdrawals) that a member could ask to withdraw right now. This
+    // replaces the old sower_balances sum, which was topup-only and never
+    // actually reflected sower earnings (see spec-payments.md's S2G
+    // Balance section). "Pending" = owed_payout_balances()'s total --
+    // earnings still working through the OLD pipeline (e.g. a physical
+    // product still held in escrow) that haven't reached the ledger yet.
+    const { data: ledgerRows } = await service
+      .from("balance_available_v")
+      .select("available_balance");
+    const reservedAvailable = (ledgerRows ?? []).reduce(
+      (sum: number, r: any) => sum + Number(r.available_balance ?? 0), 0,
+    );
+    const { data: owedRows } = await service.rpc("owed_payout_balances");
+    const reservedPending = (owedRows ?? []).reduce(
+      (sum: number, r: any) => sum + Number(r.amount_usd ?? 0), 0,
+    );
 
     // Rough USD custody total (sums numeric values across currencies — display only).
     const npUsdLike = (nowpayments.currencies ?? [])

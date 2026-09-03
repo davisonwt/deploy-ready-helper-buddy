@@ -47,14 +47,19 @@ export default function AdminPayoutsPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<PreviewResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [balanceLiability, setBalanceLiability] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase.functions.invoke('payout-earnings', { body: { dry_run: true } });
+      const [{ data, error }, liabilityRes] = await Promise.all([
+        supabase.functions.invoke('payout-earnings', { body: { dry_run: true } }),
+        supabase.rpc('total_balance_ledger_liability' as any),
+      ]);
       if (error) throw error;
       setData(data as PreviewResponse);
+      setBalanceLiability(Number((liabilityRes.data as any) ?? 0));
     } catch (err: any) {
       console.error('payout-earnings preview failed', err);
       setError(err?.message ?? 'Failed to load payout preview.');
@@ -108,15 +113,26 @@ export default function AdminPayoutsPage() {
         </div>
       ) : data ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground font-normal">Current float (all unpaid balances)</CardTitle>
+                <CardTitle className="text-sm text-muted-foreground font-normal">Current float (unpaid earnings, old pipeline)</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold">{fmtUsd(data.totalFloatUsd)}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {data.recipients.length} recipient{data.recipients.length === 1 ? '' : 's'} with an owed balance
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground font-normal">S2G Balance liability</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{balanceLiability == null ? '—' : fmtUsd(balanceLiability)}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  What every member could withdraw right now — released earnings + top-ups, minus spends/withdrawals.
                 </p>
               </CardContent>
             </Card>

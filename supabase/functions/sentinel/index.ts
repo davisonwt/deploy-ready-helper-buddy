@@ -18,6 +18,7 @@ import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimiter.
 import {
   checkCronHealth, checkStuckMoney, checkHotWallet, checkFunctionHealth,
   checkQueues, checkThirdPartyUsage, checkConfigDrift, checkDataSanity,
+  checkBalanceLedger,
 } from "./checks.ts";
 import { reconcileCheck, maybeDailyAllClear, type Condition } from "./report.ts";
 
@@ -56,6 +57,7 @@ const CHECKS: { name: string; run: (admin: ReturnType<typeof createClient>) => P
   { name: "third_party_usage", run: checkThirdPartyUsage },
   { name: "config_drift", run: checkConfigDrift },
   { name: "data_sanity", run: checkDataSanity },
+  { name: "balance_ledger", run: checkBalanceLedger },
 ];
 
 Deno.serve(async (req) => {
