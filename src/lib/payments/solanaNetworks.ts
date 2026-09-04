@@ -13,10 +13,9 @@ export const USDC_MINTS: Record<SolanaCluster, string> = {
   devnet: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
 };
 
-export function getSolanaRpcUrl(cluster: SolanaCluster): string {
-  const custom = import.meta.env.VITE_SOLANA_RPC_URL as string | undefined;
-  if (custom) return custom;
-  return cluster === 'mainnet-beta'
-    ? 'https://api.mainnet-beta.solana.com'
-    : 'https://api.devnet.solana.com';
-}
+// getSolanaRpcUrl (the client-default RPC URL helper: VITE_SOLANA_RPC_URL
+// override + hardcoded api.*.solana.com hosts) was removed 2026-09-04.
+// Public Solana RPC hosts CORS-block browser origins, so every direct
+// client call quietly failed; all chain reads now go through edge
+// functions (get-wallet-balance, solana-rpc-proxy) that use the
+// server-config RPC URL. Only the mint map below is client-side data.

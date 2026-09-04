@@ -18,7 +18,8 @@ import {
   createTransferCheckedInstruction,
   getAssociatedTokenAddress,
 } from '@solana/spl-token';
-import { USDC_MINTS, getSolanaRpcUrl, type SolanaCluster } from './solanaNetworks';
+import { USDC_MINTS, type SolanaCluster } from './solanaNetworks';
+import { supabase } from '@/integrations/supabase/client';
 // Re-exported for every existing call site -- the actual definitions live
 // in phantomDetect.ts, which has no @solana/web3.js or @solana/spl-token
 // runtime import, so a page that only needs Phantom detection/connect
@@ -85,6 +86,31 @@ export async function buildUsdcTransferTransaction(params: {
   return tx;
 }
 
-export function usdcConnection(cluster: SolanaCluster): Connection {
-  return new Connection(getSolanaRpcUrl(cluster), 'confirmed');
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL || 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
+const SUPABASE_ANON_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1d2tnYXNia3BqbHh6c2p6dW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDk4MjEsImV4cCI6MjA2ODQyNTgyMX0.ffH_7MzNCgyjXf8BFzGDCiVE7Qjptqb9qKBkq3gVbiU';
+
+/**
+ * A web3.js Connection whose endpoint is the solana-rpc-proxy edge
+ * function, not a public RPC host. api.mainnet-beta.solana.com sends no
+ * CORS headers for browser origins, so every direct call from the page
+ * (getLatestBlockhash for the transaction builder, simulateTransaction
+ * for the pre-flight check) failed exactly the way the fake-0.00 balance
+ * bug did. The proxy authenticates the caller, forwards only those two
+ * methods, and reads its RPC URL/cluster from the same server config
+ * every other Solana function uses -- no client default anywhere.
+ */
+export async function proxiedSolanaConnection(): Promise<Connection> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (!token) {
+    throw new Error('Your session expired — please sign in again to complete this bestowal.');
+  }
+  return new Connection(`${SUPABASE_URL}/functions/v1/solana-rpc-proxy`, {
+    commitment: 'confirmed',
+    httpHeaders: { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+  });
 }

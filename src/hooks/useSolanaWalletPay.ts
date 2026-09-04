@@ -3,7 +3,7 @@ import { PublicKey } from '@solana/web3.js';
 import {
   buildUsdcTransferTransaction,
   getPhantomProvider,
-  usdcConnection,
+  proxiedSolanaConnection,
 } from '@/lib/payments/solanaWallet';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import type { SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
@@ -90,7 +90,7 @@ export function useSolanaWalletPay(payment: SolanaPaymentResponse, onSubmitted?:
         pubkeyStr = resp.publicKey.toString();
       }
       const payer = new PublicKey(pubkeyStr);
-      const connection = usdcConnection(payment.cluster);
+      const connection = await proxiedSolanaConnection();
 
       setPhase('building');
       // Balance pre-check via the get-wallet-balance edge function -- the

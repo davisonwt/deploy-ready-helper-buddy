@@ -186,9 +186,11 @@ async function stubPhantom(page: import('@playwright/test').Page, buyerWallet: s
   );
 }
 
-/** The Solana JSON-RPC calls the transaction builder makes (blockhash + simulate). */
+/** The Solana JSON-RPC calls the transaction builder makes (blockhash +
+ * simulate) -- served by the solana-rpc-proxy edge function now, never a
+ * *.solana.com host (public RPC hosts CORS-block browser origins). */
 async function stubSolanaRpc(page: import('@playwright/test').Page) {
-  await page.route('https://api.mainnet-beta.solana.com/**', async (route) => {
+  await page.route(`${SUPABASE_URL}/functions/v1/solana-rpc-proxy`, async (route) => {
     const body = route.request().postDataJSON() as { method: string; id: number };
     const respond = (result: unknown) =>
       route.fulfill({ json: { jsonrpc: '2.0', id: body.id, result } });
@@ -252,26 +254,16 @@ test('desktop Phantom pay button builds a mainnet-USDC transaction with no conso
     }),
   );
 
-  // --- Solana RPC calls buildUsdcTransferTransaction/pay() make against
-  // getSolanaRpcUrl('mainnet-beta') -- getTokenAccountBalance (wallet
-  // balance check), getLatestBlockhash, simulateTransaction. ---
-  await page.route('https://api.mainnet-beta.solana.com/**', async (route) => {
-    const body = route.request().postDataJSON() as { method: string; id: number };
-    const respond = (result: unknown) =>
-      route.fulfill({ json: { jsonrpc: '2.0', id: body.id, result } });
-
-    switch (body.method) {
-      case 'getTokenAccountBalance':
-        return respond({
-          context: { slot: 1 },
-          value: { amount: '1000000000', decimals: 6, uiAmount: 1000, uiAmountString: '1000' },
-        });
-      case 'getLatestBlockhash':
-        return respond({ context: { slot: 1 }, value: { blockhash: FAKE_BLOCKHASH, lastValidBlockHeight: 1_000_000 } });
-      case 'simulateTransaction':
-        return respond({ context: { slot: 1 }, value: { err: null, logs: [], accounts: null, unitsConsumed: 0 } });
-      default:
-        return respond(null);
+  // Blockhash + simulate now go through the solana-rpc-proxy edge
+  // function; nothing on the page may talk to a *.solana.com host at all.
+  await stubSolanaRpc(page);
+  const solanaHostRequests: string[] = [];
+  const proxyMethods: string[] = [];
+  page.on('request', (req) => {
+    if (req.url().includes('.solana.com')) solanaHostRequests.push(req.url());
+    if (req.url().includes('/functions/v1/solana-rpc-proxy')) {
+      const body = req.postDataJSON() as { method?: string } | null;
+      if (body?.method) proxyMethods.push(body.method);
     }
   });
 
@@ -299,6 +291,12 @@ test('desktop Phantom pay button builds a mainnet-USDC transaction with no conso
   expect(mintCandidates, 'transaction sent to Phantom must reference the mainnet USDC mint').toContain(
     MAINNET_USDC_MINT,
   );
+
+  // The CORS invariant: zero requests to any *.solana.com host from the
+  // page, and the builder's RPC calls all went through the proxy.
+  expect(solanaHostRequests, 'no page request may hit a public Solana RPC host').toEqual([]);
+  expect(proxyMethods).toContain('getLatestBlockhash');
+  expect(proxyMethods).toContain('simulateTransaction');
 
   expect(consoleErrors, `console errors during checkout:\n${consoleErrors.join('\n')}`).toEqual([]);
 });
