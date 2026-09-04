@@ -181,7 +181,16 @@ export default function CryptoPayoutSettings() {
           </Alert>
         )}
 
-        {mode?.is_testnet && (
+        {/* Solana-only card -- key off solana_cluster directly, not the
+            combined mode.is_testnet flag. is_testnet is
+            solana_cluster !== 'mainnet-beta' || xrp_network !== 'mainnet'
+            (_shared/cryptoNetworks.ts) -- XRP isn't offered anywhere in
+            this component (or funded anywhere in this app; see the file
+            header) and its network defaults to testnet permanently, so
+            the OR'd flag stayed true forever regardless of Solana's real
+            cluster. This showed "pointed at a test network (Solana
+            mainnet-beta)" even once mainnet-beta was genuinely live. */}
+        {mode && mode.solana_cluster !== 'mainnet-beta' && (
           <Alert>
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle>Test mode</AlertTitle>
