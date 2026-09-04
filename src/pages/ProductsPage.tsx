@@ -10,6 +10,7 @@ import { Loader2, Music, Book, Image, Video, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 import MarketplaceFilterBar from '@/components/marketplace/MarketplaceFilterBar';
 import WanderingBadgeBar, { type WanderingRole } from '@/components/marketplace/WanderingBadgeBar';
@@ -389,7 +390,7 @@ export default function ProductsPage() {
                   <p className="text-sm opacity-80">{product.sowers?.display_name || 'Unknown Creator'}</p>
                   <div className="flex items-center justify-between mt-4">
                     <span className="text-2xl font-bold text-yellow-400">
-                      {formatCurrency(product.price || 0)}
+                      {formatCurrency(priceBreakdown(product.price || 0).total)}
                     </span>
                     {isOwned(product) ? (
                       <Link
@@ -509,7 +510,7 @@ export default function ProductsPage() {
                 <div className="flex items-center justify-between mt-6">
                   <div>
                     <div className="text-3xl font-bold text-yellow-400">
-                      {formatCurrency(product.price || 0)}
+                      {formatCurrency(priceBreakdown(product.price || 0).total)}
                     </div>
                     <div className="text-sm opacity-70">{isOwned(product) ? 'You already own this' : 'to download'}</div>
                   </div>

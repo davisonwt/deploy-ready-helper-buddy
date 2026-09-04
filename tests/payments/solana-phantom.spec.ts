@@ -54,6 +54,10 @@ async function stubAuthSession(page: import('@playwright/test').Page) {
   await page.addInitScript(
     ({ storageKey, session }) => {
       window.localStorage.setItem(storageKey, JSON.stringify(session));
+      // SoundUnlockBanner overlays the page bottom (z-110) and intercepts
+      // clicks on anything under it -- it stays hidden once audio is
+      // marked unlocked for the session.
+      window.sessionStorage.setItem('audioUnlocked', '1');
     },
     {
       storageKey: `sb-${SUPABASE_PROJECT_REF}-auth-token`,
@@ -121,7 +125,7 @@ async function stubRest(
       ]);
     }
     if (table === 'sowers') {
-      return reply([{ display_name: 'Test Sower' }]);
+      return reply([{ id: 'test-sower-row-id', user_id: sowerUserId, display_name: 'Test Sower' }]);
     }
     if (table === 'profiles' && method === 'GET') {
       // security_setup_complete keeps RequireSecuritySetup (wrapped around
@@ -133,7 +137,10 @@ async function stubRest(
     }
     return reply([]); // product_bestowals, balance_available_v, etc.
   });
-  await page.route(`${SUPABASE_URL}/rest/v1/rpc/**`, (route) => route.fulfill({ json: {} }));
+  // null, not {}: scalar-returning rpcs (get_sower_wallet_public -> text,
+  // etc.) must see "no value", or a truthy {} leaks into string handling
+  // (ProductCard passes it to DonateModal, which calls .slice on it).
+  await page.route(`${SUPABASE_URL}/rest/v1/rpc/**`, (route) => route.fulfill({ json: null }));
 }
 
 test('desktop Phantom pay button builds a mainnet-USDC transaction with no console errors', async ({ page }) => {
@@ -360,11 +367,22 @@ test('a $2.00 seed shows Bestow $2.30, sends no amount in the request, and the p
 // ~$<price/1.15> after Sow2Grow's 15% fee" -- the fee-DEDUCTED model --
 // which taught Louw to store a buyer total in the base-price column,
 // and checkout then grossed it up again ($2.66 for a $2.00 seed).
-test('product editor speaks the base-price model: type 2.00, helper says bestowers pay $2.30 and you receive $2.00', async ({ page }) => {
+test('product editor speaks the base-price model: type 2.00, helper says bestowers pay $2.30 and you receive $2.00, PATCH saves 2', async ({ page }) => {
   await stubAuthSession(page);
   // Owner must match the signed-in fake user or EditForm bounces on its
   // ownership check.
   await stubRest(page, { price: 2.3, sowerUserId: FAKE_BUYER_USER_ID });
+
+  // Registered after stubRest, so this runs first (LIFO): capture the
+  // PATCH body, let everything else fall through to stubRest.
+  let patchBody: Record<string, unknown> | null = null;
+  await page.route(`${SUPABASE_URL}/rest/v1/products*`, async (route) => {
+    if (route.request().method() === 'PATCH') {
+      patchBody = route.request().postDataJSON() as Record<string, unknown>;
+      return route.fulfill({ json: [{}] });
+    }
+    return route.fallback();
+  });
 
   await page.goto(`/products/edit/${TRACK_ID}`);
 
@@ -385,4 +403,89 @@ test('product editor speaks the base-price model: type 2.00, helper says bestowe
   // "You receive ~$1.74" helper -- it must not appear anywhere.
   await expect(page.locator('body')).not.toContainText('1.74');
   await expect(page.locator('body')).not.toContainText('Total Charged to Bestower');
+
+  // Save: the PATCH must carry the base price exactly as typed -- 2, not 2.3.
+  await page.getByRole('button', { name: 'Update Product' }).click();
+  await expect.poll(() => patchBody, { timeout: 15_000, message: 'PATCH /rest/v1/products never fired' }).not.toBeNull();
+  expect((patchBody as unknown as Record<string, unknown>).price).toBe(2);
+});
+
+// The creation flow must also store the base: /sow/music previously saved
+// priceBreakdown(price).total into products.price (the write-time half of
+// the double fee). Drives the real form end to end -- real file drops into
+// the real dropzones, real client-side upload/moderation/preview flow
+// against stubbed endpoints -- and asserts the POST carries price: 2.
+test('/sow/music: type 2.00, split reads $2.30/$2.00, POST saves price 2 (not 2.3)', async ({ page }) => {
+  await stubAuthSession(page);
+  await stubRest(page, { price: 2.0, sowerUserId: FAKE_BUYER_USER_ID });
+
+  // RequireSettlementConsent gates every /sow route on this rpc.
+  await page.route(`${SUPABASE_URL}/rest/v1/rpc/has_accepted_settlement_consent`, (route) =>
+    route.fulfill({ json: true }),
+  );
+  // SeedDropZone/CoverDropZone upload straight to storage, then scan.
+  await page.route(`${SUPABASE_URL}/storage/v1/object/**`, (route) =>
+    route.fulfill({ json: { Key: 'premium-room/test' } }),
+  );
+  await page.route(`${SUPABASE_URL}/functions/v1/moderate-media`, (route) =>
+    route.fulfill({ json: { verdict: 'allow', reason: null } }),
+  );
+  await page.route(`${SUPABASE_URL}/functions/v1/generate-preview`, (route) =>
+    route.fulfill({ json: { previewUrl: 'https://example.com/preview.mp3' } }),
+  );
+
+  let postBody: Record<string, unknown> | null = null;
+  await page.route(`${SUPABASE_URL}/rest/v1/products*`, async (route) => {
+    if (route.request().method() === 'POST') {
+      postBody = route.request().postDataJSON() as Record<string, unknown>;
+      return route.fulfill({
+        json: { id: TRACK_ID, ...postBody },
+        headers: { 'content-type': 'application/vnd.pgrst.object+json' },
+      });
+    }
+    return route.fallback();
+  });
+
+  await page.goto('/sow/music');
+
+  // Track: the audio dropzone's hidden input (accept=".wav,.mp3").
+  const audioInput = page.locator('input[type="file"][accept=".wav,.mp3"]');
+  await expect(audioInput).toBeAttached({ timeout: 15_000 });
+  await audioInput.setInputFiles({
+    name: 'test-track.mp3',
+    mimeType: 'audio/mpeg',
+    buffer: Buffer.from('ID3 fake mp3 payload for upload-path testing only'),
+  });
+
+  // Cover: the image dropzone (accept="image/*") -- needs a real,
+  // decodable image since CoverDropZone center-crops it on a canvas.
+  const PNG_1X1 = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+    'base64',
+  );
+  const imageInput = page.locator('input[type="file"][accept="image/*"]');
+  await imageInput.setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: PNG_1X1 });
+
+  await page.locator('#sow-title').fill('Playwright Sow Test');
+  await page.locator('#sow-price').fill('2.00');
+
+  // Live split must show the buyer total and the sower's full base.
+  const split = page.getByText(/Bestowers pay/);
+  await expect(split).toContainText('$2.30');
+  await expect(split).toContainText('You receive the full $2.00');
+
+  // Genre via OnePicker: open the chooser, take the first option.
+  await page.getByRole('button', { name: /Choose a genre/i }).click();
+  await page.locator('ul li button').first().click();
+
+  await page.locator('#sow-description').fill('Playwright description');
+
+  const plant = page.getByRole('button', { name: /Plant/i });
+  await expect(plant).toBeEnabled({ timeout: 20_000 });
+  await plant.click();
+
+  await expect.poll(() => postBody, { timeout: 20_000, message: 'POST /rest/v1/products never fired' }).not.toBeNull();
+  const body = postBody as unknown as Record<string, unknown>;
+  expect(body.price, 'products.price must be the BASE the sower typed').toBe(2);
+  expect(body.license_type).toBe('bestowal');
 });

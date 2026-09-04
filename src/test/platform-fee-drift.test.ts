@@ -8,7 +8,7 @@ import * as client from '@/lib/pricing/platformFee';
 // changes without the other, this fails.
 import * as server from '../../supabase/functions/_shared/platformFee';
 
-const PRICE_TABLE = [0.99, 1.0, 2.0, 2.3, 9.99, 10.0, 19.99, 100.0];
+const PRICE_TABLE = [0.99, 1.0, 2.0, 2.3, 9.99, 10.0, 12.0, 19.99, 100.0];
 
 describe('client and server platform-fee rules never drift', () => {
   it.each(PRICE_TABLE)('price $%s -> identical base/fee/total on both sides', (price) => {

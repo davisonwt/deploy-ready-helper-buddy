@@ -45,6 +45,7 @@ import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
 import { checkoutErrorMessage, isBlockingCheckoutError } from '@/lib/payments/checkoutErrors';
+import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
@@ -1719,7 +1720,7 @@ function FeedCard({
               )}
               {showBestow && (
                 <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold leading-none text-amber-200 ring-1 ring-amber-400/50">
-                  <Gift className="h-3 w-3" /> R{Number(item.price ?? 2).toFixed(0)}
+                  <Gift className="h-3 w-3" /> R{priceBreakdown(Number(item.price ?? 2)).total.toFixed(0)}
                 </span>
               )}
             </div>

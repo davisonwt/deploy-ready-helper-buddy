@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { fetchProductBySlugOrId, fetchRelatedProductsBySower } from '@/api/products';
 import { fetchSeedFileUrl } from '@/lib/media/getSeedFileUrl';
 import { useAuth } from '@/hooks/useAuth';
@@ -141,7 +142,7 @@ export default function BulkProductDetailPage() {
       offers: {
         '@type': 'Offer',
         priceCurrency: 'USD',
-        price: Number(product.price ?? 0).toFixed(2),
+        price: priceBreakdown(Number(product.price ?? 0)).total.toFixed(2),
         availability: (product.stock ?? 1) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
         url: window.location.href,
       },
@@ -267,7 +268,7 @@ export default function BulkProductDetailPage() {
             </div>
 
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold">${Number(product.price ?? 0).toFixed(2)}</span>
+              <span className="text-3xl font-bold">${priceBreakdown(Number(product.price ?? 0)).total.toFixed(2)}</span>
               <span className="text-xs text-muted-foreground">USD</span>
             </div>
 

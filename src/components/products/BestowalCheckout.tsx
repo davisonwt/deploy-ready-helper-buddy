@@ -17,7 +17,7 @@ import { getWhispererCredit } from '@/lib/whisperer/attribution';
 
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
-import { s2gFeeOn, round2 } from '@/lib/pricing/platformFee';
+import { s2gFeeOn, round2, buyerTotal as buyerTotalOf } from '@/lib/pricing/platformFee';
 import { useBalanceProvider, isBalanceSuccess } from '@/hooks/useBalanceProvider';
 import { checkoutErrorMessage, isBlockingCheckoutError } from '@/lib/payments/checkoutErrors';
 
@@ -199,8 +199,9 @@ export default function BestowalCheckout() {
               </div>
               <div className="text-right">
                 <p className="font-semibold">
-                  ${Number(item.price || 0).toFixed(2)}
+                  ${(buyerTotalOf(Number(item.price || 0)) * Math.max(1, Number(item.quantity ?? 1))).toFixed(2)}
                 </p>
+                <p className="text-xs text-muted-foreground">incl. 15% fee</p>
               </div>
               <Button size="icon" variant="ghost" onClick={() => removeFromBasket(item.id)} className="flex-shrink-0">
                 <Trash2 className="w-4 h-4" />

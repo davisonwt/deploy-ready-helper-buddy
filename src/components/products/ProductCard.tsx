@@ -16,6 +16,7 @@ import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { formatCurrency } from '@/lib/utils';
+import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 import { isAlbum as isAlbumProduct } from '@/lib/products/isAlbum';
 import SignedImg from '@/components/media/SignedImg';
@@ -321,7 +322,7 @@ export default function ProductCard({ product, featured, showActions = false, hi
                 </h3>
                 {(product.price > 0 || product.bestow > 0) && (
                   <Badge className="bg-purple-500/30 text-white border-purple-400/50 whitespace-nowrap">
-                    {formatCurrency(product.price || product.bestow || 0)}
+                    {formatCurrency(priceBreakdown(product.price || product.bestow || 0).total)}
                   </Badge>
                 )}
               </div>
@@ -404,7 +405,7 @@ export default function ProductCard({ product, featured, showActions = false, hi
                         className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
                       >
                         <ShoppingCart className="w-4 h-4 mr-2" />
-                        Bestow {formatCurrency(product.price || product.bestow || 0)}
+                        Bestow {formatCurrency(priceBreakdown(product.price || product.bestow || 0).total)}
                       </Button>
                     )
                   ) : (

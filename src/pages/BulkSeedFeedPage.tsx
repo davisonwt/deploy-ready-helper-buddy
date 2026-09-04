@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import useEmblaCarousel from 'embla-carousel-react';
 import { supabase } from '@/integrations/supabase/client';
+import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { fetchProductsBySowerPaginated } from '@/api/products';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -241,7 +242,7 @@ function FeedCard({ product, onShare, onMarket, onAdd }: {
             </div>
           )}
           <div className="flex items-center justify-between">
-            <div className="text-xl font-bold">${Number(product.price ?? 0).toFixed(2)}</div>
+            <div className="text-xl font-bold">${priceBreakdown(Number(product.price ?? 0)).total.toFixed(2)}</div>
             <Link to={`/bulk/sower/${product.sowers?.slug ?? ''}`} className="text-xs text-muted-foreground hover:text-foreground">
               by {product.sowers?.display_name ?? 'Sower'}
             </Link>
