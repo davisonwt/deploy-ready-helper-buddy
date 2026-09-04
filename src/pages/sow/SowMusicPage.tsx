@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { insertProduct } from '@/api/products';
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
-import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { launchConfetti } from '@/utils/confetti';
 import { toast } from 'sonner';
 
@@ -188,7 +187,12 @@ export default function SowMusicPage() {
 
       const companyId = selectedCompanyId ?? (await getDefaultCompanyId(sowerId));
 
-      const totalPrice = isFree ? 0 : priceBreakdown(price!).total;
+      // products.price stores the sower's BASE price -- checkout grosses it
+      // up by 15% itself (create-basket-bestowal-order). Saving
+      // priceBreakdown().total here (as this page originally did) made the
+      // fee apply twice: once at save, once at charge -- the 2026-09-04
+      // "$2.66 for a $2.00 seed" incident.
+      const basePrice = isFree ? 0 : price!;
       const metadata: Record<string, unknown> = {};
       if (explicit) metadata.explicit = true;
       if (releaseDate) metadata.release_date = releaseDate;
@@ -232,7 +236,7 @@ export default function SowMusicPage() {
         category: genre,
         music_genre: genre,
         license_type: isFree ? 'free' : 'bestowal',
-        price: totalPrice,
+        price: basePrice,
         cover_image_url: cover.fileUrl,
         file_url: fileUrl,
         preview_url: previewUrl,
@@ -366,7 +370,7 @@ export default function SowMusicPage() {
             isFree={isFree}
             onChangePrice={setPrice}
             onChangeFree={setIsFree}
-            label={mode === 'album' ? 'Album price' : 'Price'}
+            label={mode === 'album' ? 'Album price — what you receive' : 'Your price (USDC) — what you receive'}
           />
 
           <OnePicker

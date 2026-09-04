@@ -9,7 +9,7 @@ interface Props {
   isFree: boolean;
   onChangePrice: (base: number | null) => void;
   onChangeFree: (free: boolean) => void;
-  /** Defaults to "Price" — e.g. "Album price" when the whole form is priced as one unit. */
+  /** Defaults to "Your price (USDC) — what you receive" — e.g. "Album price — what you receive" when the whole form is priced as one unit. */
   label?: string;
 }
 
@@ -19,7 +19,7 @@ interface Props {
  * with live split". Always priceBreakdown(); never a second copy of the
  * maths.
  */
-export default function PriceWithSplit({ price, isFree, onChangePrice, onChangeFree, label = 'Price' }: Props) {
+export default function PriceWithSplit({ price, isFree, onChangePrice, onChangeFree, label = 'Your price (USDC) — what you receive' }: Props) {
   const split = !isFree && price != null && price > 0 ? priceBreakdown(price) : null;
 
   return (
@@ -56,8 +56,8 @@ export default function PriceWithSplit({ price, isFree, onChangePrice, onChangeF
         {isFree
           ? 'Free — no charge to the grower, nothing to split.'
           : split
-          ? `Buyer pays $${split.total.toFixed(2)} · you receive $${split.base.toFixed(2)} · Sow2Grow $${split.s2gFee.toFixed(2)}`
-          : 'Set a price to see what you’ll receive.'}
+          ? `Bestowers pay $${split.total.toFixed(2)} (Sow2Grow's 15% fee is added on top, plus a small network fee). You receive the full $${split.base.toFixed(2)}.`
+          : 'Set a price to see what bestowers will pay.'}
       </p>
     </div>
   );

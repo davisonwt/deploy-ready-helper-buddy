@@ -405,8 +405,8 @@ export default function SowHandPage() {
             </div>
             <p className="mt-1.5 text-xs text-muted-foreground">
               {rateSplit
-                ? `Buyer pays $${rateSplit.total.toFixed(2)} · you receive $${rateSplit.base.toFixed(2)} · Sow2Grow $${rateSplit.s2gFee.toFixed(2)}`
-                : 'Set a rate to see what you’ll receive.'}
+                ? `Bestowers pay $${rateSplit.total.toFixed(2)} (Sow2Grow's 15% fee is added on top, plus a small network fee). You receive the full $${rateSplit.base.toFixed(2)}.`
+                : 'Set a rate to see what bestowers will pay.'}
             </p>
           </div>
 

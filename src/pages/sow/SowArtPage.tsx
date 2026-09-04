@@ -6,7 +6,6 @@ import { insertProduct } from '@/api/products';
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
 import { generateWatermarkedPreview } from '@/lib/media/generateWatermarkedPreview';
 import { moderateStorageUpload } from '@/lib/moderation/moderateUpload';
-import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { launchConfetti } from '@/utils/confetti';
 import { toast } from 'sonner';
 
@@ -188,7 +187,12 @@ export default function SowArtPage() {
 
       const companyId = selectedCompanyId ?? (await getDefaultCompanyId(sowerId));
 
-      const totalPrice = isFree ? 0 : priceBreakdown(price!).total;
+      // products.price stores the sower's BASE price -- checkout grosses it
+      // up by 15% itself (create-basket-bestowal-order). Saving
+      // priceBreakdown().total here (as this page originally did) made the
+      // fee apply twice: once at save, once at charge -- the 2026-09-04
+      // "$2.66 for a $2.00 seed" incident.
+      const basePrice = isFree ? 0 : price!;
       const metadata: Record<string, unknown> = { usage_license: licence };
       if (medium.trim()) metadata.medium = medium.trim();
       if (dimensions.trim()) metadata.dimensions = dimensions.trim();
@@ -211,7 +215,7 @@ export default function SowArtPage() {
         kind: 'art',
         category,
         license_type: isFree ? 'free' : 'bestowal',
-        price: totalPrice,
+        price: basePrice,
         cover_image_url: previewUrl,
         image_urls: previewUrl ? [previewUrl] : [],
         file_url: seedFile.fileUrl,
@@ -307,7 +311,7 @@ export default function SowArtPage() {
             isFree={isFree}
             onChangePrice={setPrice}
             onChangeFree={setIsFree}
-            label="Price"
+            label="Your price (USDC) — what you receive"
           />
 
           <OnePicker

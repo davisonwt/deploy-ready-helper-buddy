@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchProductForEdit, updateProduct } from '@/api/products';
 import { isAlbum } from '@/lib/products/isAlbum';
+import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,11 +52,15 @@ export default function EditForm() {
           type: data.type || 'music',
           category: data.category || '',
           license_type: data.license_type || 'free',
-          // The field shows and saves the total charged to the bestower,
-          // unchanged — matching what products.price already means
-          // everywhere else it's read (checkout, product cards, the music
-          // detail page). No conversion happens on load or on save; that
-          // mismatch is what silently compounded this by 15% on every save.
+          // products.price is the sower's BASE price — what they receive.
+          // Checkout adds Sow2Grow's 15% on top (create-basket-bestowal-order
+          // / MusicTrackDetailPage both run priceBreakdown() on this value).
+          // This form previously labeled the field "Total Charged to
+          // Bestower" and showed "you receive ~price/1.15" — the fee-
+          // DEDUCTED model — which taught sowers to type the buyer total
+          // into the base-price column, and checkout then grossed it up
+          // AGAIN (the real cause of the 2026-09-04 "$2.66 for a $2.00
+          // seed" incident). Shown and saved as-is: base in, base out.
           price: data.price || 0,
           tags: Array.isArray(data.tags) ? data.tags.join(', ') : ''
         });
@@ -202,7 +207,7 @@ export default function EditForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="price">Total Charged to Bestower (USDC)</Label>
+                  <Label htmlFor="price">Your price (USDC) — what you receive</Label>
                   <Input
                     id="price"
                     type="number"
@@ -212,9 +217,11 @@ export default function EditForm() {
                     onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                   />
                   <p className="text-xs text-muted-foreground">
-                    {formData.license_type === 'bestowal'
-                      ? `You receive ~$${((formData.price || 0) / 1.15).toFixed(2)} after Sow2Grow's 15% fee.`
-                      : "Only applies while License Type is Bestowal (Paid)."}
+                    {formData.license_type !== 'bestowal'
+                      ? 'Only applies while License Type is Bestowal (Paid).'
+                      : (formData.price || 0) > 0
+                        ? `Bestowers pay $${priceBreakdown(formData.price).total.toFixed(2)} (Sow2Grow's 15% fee is added on top, plus a small network fee). You receive the full $${priceBreakdown(formData.price).base.toFixed(2)}.`
+                        : 'Set a price to see what bestowers will pay.'}
                   </p>
                 </div>
               </div>

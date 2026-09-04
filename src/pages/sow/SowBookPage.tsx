@@ -6,7 +6,6 @@ import { insertProduct } from '@/api/products';
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
 import { generatePdfPagePreviews } from '@/lib/media/generatePdfPreview';
 import { moderateStorageUpload } from '@/lib/moderation/moderateUpload';
-import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { launchConfetti } from '@/utils/confetti';
 import { toast } from 'sonner';
 
@@ -191,7 +190,12 @@ export default function SowBookPage() {
 
       const companyId = selectedCompanyId ?? (await getDefaultCompanyId(sowerId));
 
-      const totalPrice = isFree ? 0 : priceBreakdown(price!).total;
+      // products.price stores the sower's BASE price -- checkout grosses it
+      // up by 15% itself (create-basket-bestowal-order). Saving
+      // priceBreakdown().total here (as this page originally did) made the
+      // fee apply twice: once at save, once at charge -- the 2026-09-04
+      // "$2.66 for a $2.00 seed" incident.
+      const basePrice = isFree ? 0 : price!;
       const metadata: Record<string, unknown> = {};
       if (author.trim()) metadata.author = author.trim();
       if (pageCount != null) metadata.page_count = pageCount;
@@ -217,7 +221,7 @@ export default function SowBookPage() {
         kind: 'ebook',
         category,
         license_type: isFree ? 'free' : 'bestowal',
-        price: totalPrice,
+        price: basePrice,
         cover_image_url: cover.fileUrl,
         file_url: seedFile.fileUrl,
         preview_url: previewPages[0] ?? null,
@@ -315,7 +319,7 @@ export default function SowBookPage() {
             isFree={isFree}
             onChangePrice={setPrice}
             onChangeFree={setIsFree}
-            label="Price"
+            label="Your price (USDC) — what you receive"
           />
 
           <OnePicker

@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { insertProduct } from '@/api/products';
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
+import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -171,9 +172,11 @@ export default function UploadForm() {
         .getPublicUrl(filePath);
       const fileUrlPublic = fileUrl.publicUrl;
 
-      // Calculate total price with fees (10% tithing + 5% admin)
+      // products.price stores the sower's BASE price -- checkout grosses it
+      // up by 15% itself. This form used to store basePrice * 1.15 (the
+      // grossed-up buyer total), which made the fee apply twice: once at
+      // save, once at charge.
       const basePrice = parseFloat(String(formData.price)) || 0;
-      const totalPrice = basePrice * 1.15; // Add 15% (10% + 5%)
 
       // Create product
       const insertedProduct = await insertProduct({
@@ -185,7 +188,7 @@ export default function UploadForm() {
         category: formData.category,
         wandering_role: wanderingRole,
         license_type: formData.license_type,
-        price: totalPrice, // Store total price
+        price: basePrice,
         cover_image_url: coverUrl.publicUrl,
         file_url: fileUrlPublic,
         delivery_type: deliveryType,
@@ -359,7 +362,7 @@ export default function UploadForm() {
 
                 {formData.license_type === 'bestowal' && (
                   <div>
-                    <Label htmlFor="price">Base Price (USDC) *</Label>
+                    <Label htmlFor="price">Your price (USDC) — what you receive *</Label>
                     <Input
                       id="price"
                       type="number"
@@ -369,7 +372,9 @@ export default function UploadForm() {
                       onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Total charged: ${((formData.price || 0) * 1.15).toFixed(2)} USDC (includes 10% platform fee + 5% admin fee)
+                      {(formData.price || 0) > 0
+                        ? `Bestowers pay $${priceBreakdown(formData.price).total.toFixed(2)} (Sow2Grow's 15% fee is added on top, plus a small network fee). You receive the full $${priceBreakdown(formData.price).base.toFixed(2)}.`
+                        : 'Set a price to see what bestowers will pay.'}
                     </p>
                   </div>
                 )}

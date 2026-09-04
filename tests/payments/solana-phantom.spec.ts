@@ -76,45 +76,62 @@ async function stubAuthSession(page: import('@playwright/test').Page) {
   );
 }
 
-/** Stub every Supabase REST read/write the page makes, with a configurable product price. */
-async function stubRest(page: import('@playwright/test').Page, price: number) {
+/** Stub every Supabase REST read/write the page makes, with a configurable product price/owner. */
+async function stubRest(
+  page: import('@playwright/test').Page,
+  { price, sowerUserId = SOWER_USER_ID }: { price: number; sowerUserId?: string },
+) {
   await page.route(`${SUPABASE_URL}/rest/v1/**`, async (route) => {
     const url = new URL(route.request().url());
     const table = url.pathname.replace('/rest/v1/', '').split('?')[0];
     const method = route.request().method();
+    // .single()/.maybeSingle() request a bare object (PostgREST's
+    // vnd.pgrst.object media type), everything else an array -- answer in
+    // the shape actually requested, like the real server would.
+    const wantsObject = (route.request().headers()['accept'] ?? '').includes('vnd.pgrst.object');
+    const reply = (rows: unknown[]) =>
+      route.fulfill({ json: wantsObject ? (rows[0] ?? null) : rows });
 
     if (table === 'dj_music_tracks') {
-      return route.fulfill({ json: [] });
+      return reply([]);
     }
     if (table === 'products') {
-      return route.fulfill({
-        json: [
-          {
-            id: TRACK_ID,
-            title: 'Playwright Test Seed',
-            artist_name: 'Test Sower',
-            cover_image_url: null,
-            image_urls: [],
-            file_url: 'https://example.com/fake.mp3',
-            preview_url: null,
-            price,
-            duration: 180,
-            music_genre: 'test',
-            music_mood: null,
-            sower_id: 'test-sower-row-id',
-            company_id: null,
-            sowers: { user_id: SOWER_USER_ID },
-          },
-        ],
-      });
+      return reply([
+        {
+          id: TRACK_ID,
+          title: 'Playwright Test Seed',
+          description: 'test description',
+          artist_name: 'Test Sower',
+          cover_image_url: null,
+          image_urls: [],
+          file_url: 'https://example.com/fake.mp3',
+          preview_url: null,
+          price,
+          duration: 180,
+          type: 'music',
+          category: 'music',
+          license_type: 'bestowal',
+          tags: [],
+          music_genre: 'test',
+          music_mood: null,
+          sower_id: 'test-sower-row-id',
+          company_id: null,
+          sowers: { user_id: sowerUserId },
+        },
+      ]);
     }
     if (table === 'sowers') {
-      return route.fulfill({ json: [{ display_name: 'Test Sower' }] });
+      return reply([{ display_name: 'Test Sower' }]);
+    }
+    if (table === 'profiles' && method === 'GET') {
+      // security_setup_complete keeps RequireSecuritySetup (wrapped around
+      // every ProtectedRoute) from bouncing to /onboarding/security.
+      return reply([{ user_id: FAKE_BUYER_USER_ID, display_name: 'Playwright Buyer', security_setup_complete: true }]);
     }
     if (method === 'POST' || method === 'PATCH') {
-      return route.fulfill({ json: [{}] });
+      return reply([{}]);
     }
-    return route.fulfill({ json: [] }); // product_bestowals, balance_available_v, etc.
+    return reply([]); // product_bestowals, balance_available_v, etc.
   });
   await page.route(`${SUPABASE_URL}/rest/v1/rpc/**`, (route) => route.fulfill({ json: {} }));
 }
@@ -159,7 +176,7 @@ test('desktop Phantom pay button builds a mainnet-USDC transaction with no conso
   );
 
   await stubAuthSession(page);
-  await stubRest(page, TRACK_PRICE);
+  await stubRest(page, { price: TRACK_PRICE });
 
   // --- The order-creation call: force a deterministic mainnet-USDC
   // response instead of hitting the live edge function (which would
@@ -265,7 +282,7 @@ test('a $2.00 seed shows Bestow $2.30, sends no amount in the request, and the p
   const BASE_PRICE = 2.0;
 
   await stubAuthSession(page);
-  await stubRest(page, BASE_PRICE);
+  await stubRest(page, { price: BASE_PRICE });
 
   let capturedBody: Record<string, unknown> | null = null;
   await page.route(`${SUPABASE_URL}/functions/v1/create-basket-bestowal-order`, (route) => {
@@ -333,4 +350,39 @@ test('a $2.00 seed shows Bestow $2.30, sends no amount in the request, and the p
   for (const forbidden of ['amount', 'amountUsdc', 'price', 'total', 'buyerTotal', 'subtotal']) {
     expect(body, `client must never send "${forbidden}" -- the server owns all pricing`).not.toHaveProperty(forbidden);
   }
+});
+
+// The price editor must speak the base-price model: the sower types what
+// they RECEIVE, and the helper shows what bestowers PAY (base + 15%,
+// same shared priceBreakdown the Bestow button and the server use).
+// Written after the 2026-09-04 incident: the editor used to label the
+// field "Total Charged to Bestower (USDC)" with helper "You receive
+// ~$<price/1.15> after Sow2Grow's 15% fee" -- the fee-DEDUCTED model --
+// which taught Louw to store a buyer total in the base-price column,
+// and checkout then grossed it up again ($2.66 for a $2.00 seed).
+test('product editor speaks the base-price model: type 2.00, helper says bestowers pay $2.30 and you receive $2.00', async ({ page }) => {
+  await stubAuthSession(page);
+  // Owner must match the signed-in fake user or EditForm bounces on its
+  // ownership check.
+  await stubRest(page, { price: 2.3, sowerUserId: FAKE_BUYER_USER_ID });
+
+  await page.goto(`/products/edit/${TRACK_ID}`);
+
+  const priceInput = page.locator('#price');
+  await expect(priceInput).toBeVisible({ timeout: 15_000 });
+
+  // Label: base-price wording, not "Total Charged to Bestower".
+  await expect(page.locator('label[for="price"]')).toContainText('what you receive');
+
+  await priceInput.fill('2.00');
+
+  const helper = page.getByText(/Bestowers pay/);
+  await expect(helper).toBeVisible();
+  await expect(helper).toContainText('$2.30');
+  await expect(helper).toContainText('$2.00');
+
+  // The deducted-fee model must be gone: 2.00 / 1.15 = 1.74 was the old
+  // "You receive ~$1.74" helper -- it must not appear anywhere.
+  await expect(page.locator('body')).not.toContainText('1.74');
+  await expect(page.locator('body')).not.toContainText('Total Charged to Bestower');
 });

@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { insertProduct } from '@/api/products';
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
-import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { launchConfetti } from '@/utils/confetti';
 import { toast } from 'sonner';
 
@@ -283,7 +282,12 @@ export default function SowProductPage() {
         await saveBusinessKind(companyId, chosenBusinessKind);
       }
 
-      const totalPrice = isFree ? 0 : priceBreakdown(price!).total;
+      // products.price stores the sower's BASE price -- checkout grosses it
+      // up by 15% itself (create-basket-bestowal-order). Saving
+      // priceBreakdown().total here (as this page originally did) made the
+      // fee apply twice: once at save, once at charge -- the 2026-09-04
+      // "$2.66 for a $2.00 seed" incident.
+      const basePrice = isFree ? 0 : price!;
       const metadata: Record<string, unknown> = {};
       if (weightSize.trim()) metadata.weight_size = weightSize.trim();
       if (fulfilmentNote.trim()) metadata.fulfilment_note = fulfilmentNote.trim();
@@ -305,7 +309,7 @@ export default function SowProductPage() {
         kind,
         category,
         license_type: isFree ? 'free' : 'bestowal',
-        price: totalPrice,
+        price: basePrice,
         cover_image_url: cover.fileUrl,
         image_urls: [cover.fileUrl, ...extraPhotos.map((p) => p.fileUrl)],
         stock,
@@ -420,7 +424,7 @@ export default function SowProductPage() {
             isFree={isFree}
             onChangePrice={setPrice}
             onChangeFree={setIsFree}
-            label="Price"
+            label="Your price (USDC) — what you receive"
           />
 
           {kind && (kind === 'product' ? (
