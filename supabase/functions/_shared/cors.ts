@@ -12,6 +12,10 @@
 // browser build: solana-client is the only extra header it sends.
 import { corsHeaders as baseCorsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
+// Re-exported so other _shared modules (e.g. rateLimiter's 429 builder) can
+// attach the standard CORS set without importing the npm module themselves.
+export { baseCorsHeaders };
+
 export const corsHeadersWithSolanaClient: Record<string, string> = {
   ...baseCorsHeaders,
   "Access-Control-Allow-Methods": "POST, OPTIONS",

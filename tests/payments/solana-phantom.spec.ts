@@ -658,3 +658,60 @@ test('bestow modal confirm button shows the exact server charge per provider', a
   await page.getByRole('radio', { name: /PayPal/ }).click();
   await expect(confirm).toContainText('Bestow $2.88');
 });
+
+// The watch loop must survive server errors: a 500 (or CORS-killed 429)
+// poll is "still watching", never terminal -- the exact failure that hung
+// the 2026-09-04 real payment for its whole 30-minute window.
+test('a failed check-solana-payment poll keeps watching and ends paid', async ({ page }) => {
+  test.setTimeout(90_000);
+  await stubAuthSession(page);
+  await stubRest(page, { price: 2.0 });
+
+  await page.route(`${SUPABASE_URL}/functions/v1/create-basket-bestowal-order`, (route) =>
+    route.fulfill({
+      json: {
+        solanaPayment: {
+          intentId: 'poll-resilience-test-intent',
+          referencePubkey: FAKE_REFERENCE,
+          solanaPayUrl: `solana:${FAKE_HOT_WALLET}?amount=2.31&spl-token=${MAINNET_USDC_MINT}&reference=${FAKE_REFERENCE}`,
+          hotWalletAddress: FAKE_HOT_WALLET,
+          amountUsdc: 2.31,
+          cluster: 'mainnet-beta',
+          expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+        },
+      },
+    }),
+  );
+
+  // First poll: 500. Every poll after that: paid. The loop must absorb the
+  // 500 (backoff, no error state) and land on "Payment confirmed".
+  let polls = 0;
+  await page.route(`${SUPABASE_URL}/functions/v1/check-solana-payment`, (route) => {
+    polls += 1;
+    if (polls === 1) {
+      return route.fulfill({ status: 500, json: { error: 'Solana RPC getSignaturesForAddress failed: Failed to query long-term storage; please try again' } });
+    }
+    return route.fulfill({
+      json: {
+        status: 'paid',
+        signature: 'FakePaidSignature111111111111111111111111111111111111111111',
+        receivedAmountUsdc: 2.31,
+        amountUsdc: 2.31,
+        expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+      },
+    });
+  });
+
+  await page.goto(`/music-track/${TRACK_ID}`);
+  await page.getByRole('button', { name: /Bestow \$/ }).click();
+
+  // Panel opens; first poll 500s; the loop backs off (16s) and keeps
+  // going; the second poll returns paid, which resolves the payment gate
+  // (toast + dialog closes). Reaching poll #2 at all proves the 500 was
+  // absorbed as "still watching" rather than a terminal error.
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await expect.poll(() => polls, { timeout: 45_000, message: 'second poll never happened -- the 500 stopped the loop' }).toBeGreaterThanOrEqual(2);
+  await expect(dialog).toHaveCount(0, { timeout: 15_000 }); // paid -> gate resolved -> dialog closed
+  await expect(page.getByText(/expired|failed/i)).toHaveCount(0);
+});

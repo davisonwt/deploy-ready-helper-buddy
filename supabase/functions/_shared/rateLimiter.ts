@@ -32,6 +32,7 @@
 
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { recordRateLimiterFailure } from './rateLimiterMonitoring.ts';
+import { baseCorsHeaders } from './cors.ts';
 
 export interface RateLimitConfig {
   identifier: string;
@@ -136,6 +137,11 @@ export function createRateLimitResponse(retryAfterSeconds: number = 900): Respon
     {
       status: 429,
       headers: {
+        // CORS on the 429 too -- without it the browser reports a CORS
+        // failure (ERR_FAILED, no Access-Control-Allow-Origin) instead of
+        // a rate limit, which is exactly how check-solana-payment's
+        // 30-minute watch died on the first real desktop Phantom attempt.
+        ...baseCorsHeaders,
         'Content-Type': 'application/json',
         'Retry-After': retryAfterSeconds.toString(),
         'X-RateLimit-Exceeded': 'true'

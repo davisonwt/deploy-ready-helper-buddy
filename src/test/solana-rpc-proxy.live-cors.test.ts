@@ -39,3 +39,38 @@ describe.skipIf(!LIVE)('solana-rpc-proxy live CORS (RUN_LIVE_TESTS=1)', () => {
     expect(res.headers.get('access-control-allow-origin')).toBeTruthy();
   });
 });
+
+describe.skipIf(!LIVE)('check-solana-payment live CORS (RUN_LIVE_TESTS=1)', () => {
+  const CHECK_URL = 'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/check-solana-payment';
+
+  it('preflight succeeds with the headers the browser sends', async () => {
+    const res = await fetch(CHECK_URL, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'https://sow2growapp.com',
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'authorization, content-type, apikey, x-client-info',
+      },
+    });
+    expect(res.status).toBe(200);
+    const allow = (res.headers.get('access-control-allow-headers') ?? '').toLowerCase();
+    for (const h of ['authorization', 'content-type', 'apikey', 'x-client-info']) {
+      expect(allow, `preflight must allow "${h}"`).toContain(h);
+    }
+    expect(res.headers.get('access-control-allow-origin')).toBeTruthy();
+  });
+
+  it('the 401 error path carries CORS headers', async () => {
+    const res = await fetch(CHECK_URL, {
+      method: 'POST',
+      headers: { Origin: 'https://sow2growapp.com', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ intentId: '00000000-0000-4000-8000-000000000000' }),
+    });
+    expect(res.status).toBe(401);
+    expect(res.headers.get('access-control-allow-origin')).toBeTruthy();
+  });
+
+  // The 429 path can't be triggered live without a valid user JWT and 400
+  // real calls; its CORS comes from the same shared createRateLimitResponse
+  // change deployed with this function, exercised indirectly above.
+});

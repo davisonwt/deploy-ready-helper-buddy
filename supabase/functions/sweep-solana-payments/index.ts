@@ -38,8 +38,13 @@ Deno.serve(async (req) => {
     // provider outage can't make a single sweep run indefinitely.
     const { data: intents, error } = await service
       .from("solana_payment_intents")
-      .select("id, order_kind, order_id, amount_usdc, reference_pubkey, hot_wallet_address, status, cluster, created_at, expires_at")
-      .eq("status", "pending")
+      .select("*")
+      // 'expired' intents from the last 24h stay in the sweep: a transfer
+      // that lands (or becomes queryable -- flaky RPC) after the 30-minute
+      // window must still be credited. checkAndFinalizeSolanaIntent treats
+      // expired as still-checkable since 2026-09-04.
+      .in("status", ["pending", "expired"])
+      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
       .order("created_at", { ascending: true })
       .limit(200);
     if (error) throw new Error(`intents_lookup_failed:${error.message}`);

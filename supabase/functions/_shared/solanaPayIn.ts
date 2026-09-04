@@ -36,16 +36,29 @@ import { finalizeCompletedOrder, type PaypalOrderKind } from "./paypal/capture.t
 const USDC_DECIMALS = 6;
 
 async function rpc<T>(method: string, params: unknown[]): Promise<T> {
-  const res = await fetch(getSolanaRpcUrl(), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-  });
-  const body = await res.json();
-  if (body.error) {
-    throw new Error(`Solana RPC ${method} failed: ${body.error.message ?? JSON.stringify(body.error)}`);
+  // 3 attempts with backoff -- the public endpoint intermittently fails
+  // getSignaturesForAddress with "Failed to query long-term storage", which
+  // took down a real payment watch on 2026-09-04. A dedicated RPC can be
+  // configured via the SOLANA_RPC_URL secret (read in cryptoNetworks.ts).
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(getSolanaRpcUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      });
+      const body = await res.json();
+      if (body.error) {
+        throw new Error(`Solana RPC ${method} failed: ${body.error.message ?? JSON.stringify(body.error)}`);
+      }
+      return body.result as T;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+    }
   }
-  return body.result as T;
+  throw lastErr;
 }
 
 export interface SolanaIntentPricing {
@@ -129,6 +142,42 @@ interface JsonParsedTransaction {
   };
 }
 
+/** Finds a finalized USDC transferChecked into the hot wallet's ATA inside one parsed transaction, or null. */
+function matchTransferInTx(tx: JsonParsedTransaction | null, mint: string, hotWalletAta: string): number | null {
+  if (!tx || tx.meta?.err) return null;
+  for (const ix of tx.transaction?.message?.instructions ?? []) {
+    if (ix.program !== "spl-token") continue;
+    const parsed = ix.parsed;
+    if (parsed?.type !== "transferChecked") continue;
+    const info = parsed.info;
+    if (!info || info.mint !== mint || info.destination !== hotWalletAta) continue;
+    return Number(BigInt(info.tokenAmount?.amount ?? "0")) / 10 ** USDC_DECIMALS;
+  }
+  return null;
+}
+
+/**
+ * Signature-first check: when the client recorded the signature Phantom
+ * returned at send time, verify that exact transaction before any address
+ * scan -- one getTransaction call, immune to getSignaturesForAddress's
+ * long-term-storage flakes.
+ */
+export async function verifyKnownSignature(params: {
+  signature: string;
+  hotWalletAddress: string;
+  cluster: SolanaCluster;
+}): Promise<SolanaVerifyOutcome> {
+  const mint = USDC_MINTS[params.cluster];
+  const hotWalletAta = sol.tokenAddress({ mint, owner: params.hotWalletAddress, tokenProgram: sol.TOKEN_PROGRAM });
+  const tx = await rpc<JsonParsedTransaction | null>("getTransaction", [
+    params.signature,
+    { encoding: "jsonParsed", commitment: "finalized", maxSupportedTransactionVersion: 0 },
+  ]);
+  const amount = matchTransferInTx(tx, mint, hotWalletAta);
+  if (amount === null) return { status: "pending" };
+  return { status: "paid", signature: params.signature, receivedAmountUsdc: amount };
+}
+
 /**
  * Looks up every signature that has ever referenced `referencePubkey`,
  * finds one carrying a finalized USDC transferChecked into the hot
@@ -198,6 +247,8 @@ export interface SolanaIntentRow {
   cluster: SolanaCluster;
   created_at: string;
   expires_at: string;
+  /** Signature Phantom reported to the client at send time (signature-first checking). Optional -- the column may not exist until the migration runs. */
+  client_signature?: string | null;
 }
 
 export interface CheckIntentResult {
@@ -242,15 +293,38 @@ export async function checkAndFinalizeSolanaIntent(
   service: any,
   intent: SolanaIntentRow,
 ): Promise<CheckIntentResult> {
-  if (intent.status !== "pending") {
+  // 'pending' AND 'expired' are both still checkable: a transfer that
+  // lands (or becomes queryable) after the 30-minute window must still be
+  // credited -- the buyer's money moved, expiry is our bookkeeping, not
+  // theirs. Only truly terminal states (paid/underpaid/failed) return
+  // early. Before 2026-09-04 the expired branch returned early too, which
+  // would have stranded any late-confirming payment forever.
+  if (intent.status !== "pending" && intent.status !== "expired") {
     return { status: intent.status as CheckIntentResult["status"] };
   }
 
-  let outcome: SolanaVerifyOutcome = await verifySolanaPayment({
-    referencePubkey: intent.reference_pubkey,
-    hotWalletAddress: intent.hot_wallet_address,
-    cluster: intent.cluster,
-  });
+  // Signature-first: the exact signature Phantom reported at send time,
+  // verified with one getTransaction call -- no address-scan flakes.
+  let outcome: SolanaVerifyOutcome = { status: "pending" };
+  if (intent.client_signature) {
+    try {
+      outcome = await verifyKnownSignature({
+        signature: intent.client_signature,
+        hotWalletAddress: intent.hot_wallet_address,
+        cluster: intent.cluster,
+      });
+    } catch (err) {
+      console.warn("client_signature check failed, falling back to reference scan", intent.id, err);
+    }
+  }
+
+  if (outcome.status === "pending") {
+    outcome = await verifySolanaPayment({
+      referencePubkey: intent.reference_pubkey,
+      hotWalletAddress: intent.hot_wallet_address,
+      cluster: intent.cluster,
+    });
+  }
 
   if (outcome.status === "pending") {
     // Fallback: nothing referenced this intent's reference key -- try
@@ -271,7 +345,7 @@ export async function checkAndFinalizeSolanaIntent(
 
   if (outcome.status === "pending") {
     if (new Date(intent.expires_at).getTime() < Date.now()) {
-      await expireSolanaIntent(service, intent);
+      if (intent.status !== "expired") await expireSolanaIntent(service, intent);
       return { status: "expired" };
     }
     return { status: "pending" };

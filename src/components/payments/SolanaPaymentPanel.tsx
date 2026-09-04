@@ -11,6 +11,7 @@ import type { SolanaPaymentResponse, SolanaPaymentResolution } from '@/lib/payme
 import { useSolanaWalletPay, type WalletPayError } from '@/hooks/useSolanaWalletPay';
 import { PHANTOM_INSTALL_URL, isMobileDevice } from '@/lib/payments/solanaWallet';
 import { cn } from '@/lib/utils';
+import { initialWatchState, nextWatchState, type WatchState } from '@/lib/payments/paymentWatch';
 
 interface CheckResponse {
   status: 'pending' | 'paid' | 'underpaid' | 'expired' | 'failed';
@@ -134,40 +135,73 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
     Math.max(0, Math.floor((new Date(payment.expiresAt).getTime() - Date.now()) / 1000)),
   );
   const resolvedRef = useRef(false);
+  // The signature Phantom reported at send time -- shown to the buyer,
+  // sent to the server for signature-first checking, and the reason an
+  // 'expired' status is no longer terminal once it exists (the transfer
+  // may confirm late; the server credits expired intents now).
+  const [walletSignature, setWalletSignature] = useState<string | null>(null);
+  const walletSignatureRef = useRef<string | null>(null);
+  const [signedAt, setSignedAt] = useState<number | null>(null);
+  const watchRef = useRef<WatchState>({ ...initialWatchState });
+  const [, forceTick] = useState(0);
 
   const poll = useCallback(async () => {
     if (resolvedRef.current) return;
     try {
       const data = await invokePaymentFunction<CheckResponse>('check-solana-payment', {
         intentId: payment.intentId,
+        ...(walletSignatureRef.current ? { clientSignature: walletSignatureRef.current } : {}),
       });
-      setStatus(data.status);
       setReceivedAmountUsdc(data.receivedAmountUsdc);
-      if (data.status === 'paid') {
+      const next = nextWatchState(
+        watchRef.current,
+        data.status === 'expired'
+          ? { type: 'expired', hasSignature: !!walletSignatureRef.current }
+          : { type: data.status },
+      );
+      watchRef.current = next;
+      if (next.done === 'paid') {
+        setStatus('paid');
         resolvedRef.current = true;
         toast.success('Payment received!');
         onResolved('paid');
-      } else if (data.status === 'expired') {
+      } else if (next.done === 'expired') {
+        setStatus('expired');
         resolvedRef.current = true;
         onResolved('expired');
+      } else {
+        // Still watching -- includes 'expired' with a known signature.
+        setStatus(data.status === 'expired' ? 'pending' : data.status);
       }
     } catch (err) {
-      // A transient check failure (RPC hiccup, etc.) — stay pending and
-      // let the next 5s poll try again. The cron sweep is the backstop
-      // if the buyer closes the tab entirely.
+      // ANY failed poll (network error, 429, 500) is "still watching" --
+      // back the interval off and keep going; the cron sweep is the
+      // backstop if the buyer closes the tab entirely. Never a failure
+      // state, never stops the loop.
       console.warn('check-solana-payment poll failed', err);
+      watchRef.current = nextWatchState(watchRef.current, { type: 'error' });
     }
+    forceTick((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payment.intentId]);
 
-  const handleSubmitted = useCallback(() => {
-    // Phantom confirmed submission -- check right away instead of waiting
-    // up to 5s for the next scheduled poll. "Paid" still only comes from
-    // this same server-verified poll, never from the wallet call alone.
+  const handleSubmitted = useCallback((signature: string) => {
+    // Phantom confirmed submission -- record the signature (shown to the
+    // buyer, and sent server-side so the watcher can verify this exact
+    // transaction) and check right away. "Paid" still only comes from the
+    // server-verified poll, never from the wallet call alone.
+    walletSignatureRef.current = signature;
+    setWalletSignature(signature);
+    setSignedAt(Date.now());
     poll();
   }, [poll]);
 
   const { phase, error, pay, reset, hasPhantom } = useSolanaWalletPay(payment, handleSubmitted);
+  const [approvalStartedAt, setApprovalStartedAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (phase === 'awaiting-approval') setApprovalStartedAt(Date.now());
+    else if (phase === 'idle' || phase === 'error') setApprovalStartedAt(null);
+  }, [phase]);
 
   useEffect(() => {
     if (error?.kind === 'not-installed') setQrOpen(true);
@@ -190,13 +224,19 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
 
   useEffect(() => {
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
     const loop = async () => {
-      if (cancelled) return;
+      if (cancelled || resolvedRef.current) return;
       await poll();
+      if (cancelled || resolvedRef.current) return;
+      // 8s base, backing off to 30s on consecutive errors (paymentWatch.ts)
+      // -- sized so a full 30-minute watch stays far inside the server's
+      // rate limit.
+      timer = setTimeout(loop, watchRef.current.delayMs);
     };
     loop();
-    const interval = setInterval(loop, 5000);
-    return () => { cancelled = true; clearInterval(interval); };
+    return () => { cancelled = true; clearTimeout(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [poll]);
 
   const minutes = Math.floor(secondsLeft / 60);
@@ -270,7 +310,42 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
       ) : phase === 'building' ? (
         <StatusRow text="Preparing transaction…" />
       ) : phase === 'awaiting-approval' ? (
-        <StatusRow text="Approve in Phantom…" />
+        <div className="space-y-2">
+          <StatusRow text="Approve in Phantom…" />
+          {approvalStartedAt !== null && Date.now() - approvalStartedAt > 90_000 && (
+            <p className="rounded-md border border-orange-500/40 bg-orange-500/10 p-2.5 text-xs text-orange-700 dark:text-orange-300">
+              Check your wallet — if the transaction went through, the order will complete
+              automatically; if not, try again.
+            </p>
+          )}
+        </div>
+      ) : phase === 'submitted' && walletSignature ? (
+        <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-4">
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <Check className="h-4 w-4 text-emerald-500" /> Payment sent
+          </p>
+          <p className="text-xs text-muted-foreground break-all">
+            Signature: <code>{walletSignature.slice(0, 12)}…{walletSignature.slice(-8)}</code>{' '}
+            <a
+              href={`https://solscan.io/tx/${walletSignature}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 underline"
+            >
+              View on Solscan <ExternalLink className="h-3 w-3" />
+            </a>
+          </p>
+          {signedAt !== null && Date.now() - signedAt > 120_000 ? (
+            <p className="text-xs text-muted-foreground">
+              Still confirming — you can close this, the order completes automatically once the
+              network confirms.
+            </p>
+          ) : (
+            <p className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Confirming on Solana…
+            </p>
+          )}
+        </div>
       ) : phase === 'submitted' ? (
         <StatusRow text="Confirming on Solana…" />
       ) : (

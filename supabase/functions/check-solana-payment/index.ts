@@ -8,7 +8,10 @@
 // the exact same path PayPal capture uses (finalizeCompletedOrder).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "npm:zod@3.23.8";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+// Extended shared CORS set -- every response path (200/4xx/429/500) must
+// carry these headers or the browser reports a CORS failure instead of the
+// real status, which is how the 2026-09-04 payment watch died mid-poll.
+import { corsHeadersWithSolanaClient as corsHeaders } from "../_shared/cors.ts";
 import {
   checkAndFinalizeSolanaIntent,
   ORDER_OWNER_COLUMN,
@@ -19,7 +22,13 @@ import {
 import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
 import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
-const BodySchema = z.object({ intentId: z.string().uuid() });
+const BodySchema = z.object({
+  intentId: z.string().uuid(),
+  /** The signature Phantom returned at send time -- recorded on the intent
+   * for signature-first verification (one getTransaction, no flaky address
+   * scan) and so a late-confirming payment can always be credited. */
+  clientSignature: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{60,100}$/).optional(),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -49,8 +58,13 @@ Deno.serve(async (req) => {
     // Polled every 5s while the payment screen is open -- a higher ceiling
     // than the once-per-checkout PAYMENT preset, same shape of "money
     // touching, per-user, fail-closed" requirement, just a lot more calls.
-    const rlOk = await checkRateLimit(service, callerId, "solana_payment_check", 120, 10, true);
-    if (!rlOk) return createRateLimitResponse(600);
+    // The watch polls every 8s (backing off to 30s on errors) for up to 30
+    // minutes: ~225 calls worst-case, plus the immediate post-sign poll and
+    // retries. 400/10min leaves real margin -- a full watch must NEVER trip
+    // this limit (the 2026-09-04 watch died partly because 120/10min
+    // couldn't cover a 5s poll).
+    const rlOk = await checkRateLimit(service, callerId, "solana_payment_check", 400, 10, true);
+    if (!rlOk) return createRateLimitResponse(60);
   }
 
   let parsed: z.infer<typeof BodySchema>;
@@ -62,13 +76,31 @@ Deno.serve(async (req) => {
     return json({ error: "invalid_json" }, 400);
   }
 
+  // select("*") so client_signature rides along once its migration has run,
+  // without the function 500ing if the column doesn't exist yet.
   const { data: intent, error: intentErr } = await service
     .from("solana_payment_intents")
-    .select("id, order_kind, order_id, amount_usdc, reference_pubkey, hot_wallet_address, status, cluster, created_at, expires_at")
+    .select("*")
     .eq("id", parsed.intentId)
     .maybeSingle();
   if (intentErr) return json({ error: "intent_lookup_failed" }, 500);
   if (!intent) return json({ error: "intent_not_found" }, 404);
+
+  // Record the wallet-reported signature the first time the client sends
+  // it. Best-effort: never fails the poll (the column may not exist until
+  // the migration runs, and a conflict just means it's already recorded).
+  if (parsed.clientSignature && !intent.client_signature) {
+    try {
+      await service
+        .from("solana_payment_intents")
+        .update({ client_signature: parsed.clientSignature })
+        .eq("id", parsed.intentId)
+        .is("client_signature", null);
+      intent.client_signature = parsed.clientSignature;
+    } catch (err) {
+      console.warn("client_signature record failed (non-blocking)", err);
+    }
+  }
 
   const orderKind = intent.order_kind as SolanaOrderKind;
   const ownerColumn = ORDER_OWNER_COLUMN[orderKind];
