@@ -51,10 +51,9 @@ function CopyField({ label, value }: { label: string; value: string }) {
 }
 
 function WalletErrorPanel({
-  error, amountUsdc, onRetry, onInstall,
+  error, onRetry, onInstall,
 }: {
   error: WalletPayError;
-  amountUsdc: number;
   onRetry: () => void;
   onInstall: () => void;
 }) {
@@ -258,11 +257,10 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
           </Button>
         </a>
       ) : phase === 'error' && error ? (
-        <WalletErrorPanel error={error} amountUsdc={payment.amountUsdc} onRetry={reset} onInstall={handleInstallOrOpen} />
+        <WalletErrorPanel error={error} onRetry={reset} onInstall={handleInstallOrOpen} />
       ) : !hasPhantom ? (
         <WalletErrorPanel
           error={{ kind: 'not-installed', message: '' }}
-          amountUsdc={payment.amountUsdc}
           onRetry={reset}
           onInstall={handleInstallOrOpen}
         />
