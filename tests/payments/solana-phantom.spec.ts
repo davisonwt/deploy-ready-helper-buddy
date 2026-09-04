@@ -48,6 +48,77 @@ function fakeJwt(payload: Record<string, unknown>): string {
   return `${b64url({ alg: 'HS256', typ: 'JWT' })}.${b64url(payload)}.test-signature-not-verified-client-side`;
 }
 
+/** Client-side-valid fake session so useAuth's `user` is truthy. Never sent anywhere real. */
+async function stubAuthSession(page: import('@playwright/test').Page) {
+  const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
+  await page.addInitScript(
+    ({ storageKey, session }) => {
+      window.localStorage.setItem(storageKey, JSON.stringify(session));
+    },
+    {
+      storageKey: `sb-${SUPABASE_PROJECT_REF}-auth-token`,
+      session: {
+        access_token: fakeJwt({ sub: FAKE_BUYER_USER_ID, role: 'authenticated', exp: futureExpiry }),
+        refresh_token: 'test-refresh-token',
+        token_type: 'bearer',
+        expires_in: 3600,
+        expires_at: futureExpiry,
+        user: {
+          id: FAKE_BUYER_USER_ID,
+          aud: 'authenticated',
+          role: 'authenticated',
+          email: 'phantom-playwright-test@example.com',
+          user_metadata: {},
+          app_metadata: {},
+        },
+      },
+    },
+  );
+}
+
+/** Stub every Supabase REST read/write the page makes, with a configurable product price. */
+async function stubRest(page: import('@playwright/test').Page, price: number) {
+  await page.route(`${SUPABASE_URL}/rest/v1/**`, async (route) => {
+    const url = new URL(route.request().url());
+    const table = url.pathname.replace('/rest/v1/', '').split('?')[0];
+    const method = route.request().method();
+
+    if (table === 'dj_music_tracks') {
+      return route.fulfill({ json: [] });
+    }
+    if (table === 'products') {
+      return route.fulfill({
+        json: [
+          {
+            id: TRACK_ID,
+            title: 'Playwright Test Seed',
+            artist_name: 'Test Sower',
+            cover_image_url: null,
+            image_urls: [],
+            file_url: 'https://example.com/fake.mp3',
+            preview_url: null,
+            price,
+            duration: 180,
+            music_genre: 'test',
+            music_mood: null,
+            sower_id: 'test-sower-row-id',
+            company_id: null,
+            sowers: { user_id: SOWER_USER_ID },
+          },
+        ],
+      });
+    }
+    if (table === 'sowers') {
+      return route.fulfill({ json: [{ display_name: 'Test Sower' }] });
+    }
+    if (method === 'POST' || method === 'PATCH') {
+      return route.fulfill({ json: [{}] });
+    }
+    return route.fulfill({ json: [] }); // product_bestowals, balance_available_v, etc.
+  });
+  await page.route(`${SUPABASE_URL}/rest/v1/rpc/**`, (route) => route.fulfill({ json: {} }));
+}
+
 test('desktop Phantom pay button builds a mainnet-USDC transaction with no console errors', async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on('console', (msg) => {
@@ -87,79 +158,8 @@ test('desktop Phantom pay button builds a mainnet-USDC transaction with no conso
     { buyerWallet: FAKE_BUYER_WALLET },
   );
 
-  // --- Seed a client-side-valid (unexpired) fake session so useAuth's
-  // `user` is truthy. Never sent anywhere real: every authenticated call
-  // this test cares about is intercepted below, and unintercepted ones are
-  // read-only public data this fake token is irrelevant to. ---
-  const futureExpiry = Math.floor(Date.now() / 1000) + 3600;
-  await page.addInitScript(
-    ({ storageKey, session }) => {
-      window.localStorage.setItem(storageKey, JSON.stringify(session));
-    },
-    {
-      storageKey: `sb-${SUPABASE_PROJECT_REF}-auth-token`,
-      session: {
-        access_token: fakeJwt({ sub: FAKE_BUYER_USER_ID, role: 'authenticated', exp: futureExpiry }),
-        refresh_token: 'test-refresh-token',
-        token_type: 'bearer',
-        expires_in: 3600,
-        expires_at: futureExpiry,
-        user: {
-          id: FAKE_BUYER_USER_ID,
-          aud: 'authenticated',
-          role: 'authenticated',
-          email: 'phantom-playwright-test@example.com',
-          user_metadata: {},
-          app_metadata: {},
-        },
-      },
-    },
-  );
-
-  // --- Stub every Supabase REST read/write the page makes. Unknown
-  // tables default to an empty result rather than erroring, so this stays
-  // robust to unrelated fetches added elsewhere on the page later. ---
-  await page.route(`${SUPABASE_URL}/rest/v1/**`, async (route) => {
-    const url = new URL(route.request().url());
-    const table = url.pathname.replace('/rest/v1/', '').split('?')[0];
-    const method = route.request().method();
-
-    if (table === 'dj_music_tracks') {
-      return route.fulfill({ json: [] });
-    }
-    if (table === 'products') {
-      return route.fulfill({
-        json: [
-          {
-            id: TRACK_ID,
-            title: 'Playwright Test Seed',
-            artist_name: 'Test Sower',
-            cover_image_url: null,
-            image_urls: [],
-            file_url: 'https://example.com/fake.mp3',
-            preview_url: null,
-            price: TRACK_PRICE,
-            duration: 180,
-            music_genre: 'test',
-            music_mood: null,
-            sower_id: 'test-sower-row-id',
-            company_id: null,
-            sowers: { user_id: SOWER_USER_ID },
-          },
-        ],
-      });
-    }
-    if (table === 'sowers') {
-      return route.fulfill({ json: [{ display_name: 'Test Sower' }] });
-    }
-    if (method === 'POST' || method === 'PATCH') {
-      // profiles upsert and similar -- echo back a minimal representation.
-      return route.fulfill({ json: [{}] });
-    }
-    return route.fulfill({ json: [] }); // product_bestowals, balance_available_v, etc. -- "not owned" / "no balance"
-  });
-
-  await page.route(`${SUPABASE_URL}/rest/v1/rpc/**`, (route) => route.fulfill({ json: {} }));
+  await stubAuthSession(page);
+  await stubRest(page, TRACK_PRICE);
 
   // --- The order-creation call: force a deterministic mainnet-USDC
   // response instead of hitting the live edge function (which would
@@ -242,4 +242,95 @@ test('desktop Phantom pay button builds a mainnet-USDC transaction with no conso
   );
 
   expect(consoleErrors, `console errors during checkout:\n${consoleErrors.join('\n')}`).toEqual([]);
+});
+
+// The fee is applied at exactly ONE layer, and it's the server's. Written
+// after a "$2.66 instead of $2.31 -- the fee must be applied twice"
+// report: traced live, the client never sends an amount at all (the
+// request body is just productId+qty+provider; the server reads
+// products.price itself, grosses up 15% once, adds the flat $0.01 network
+// fee once), and the $2.66 came from the seed's stored price being $2.30,
+// not $2.00. This test pins the whole browser-visible chain for a genuine
+// $2.00 seed so any future re-fee-ing at either layer fails loudly:
+//   1. the Bestow button shows the fee-inclusive $2.30 (client display),
+//   2. the request body carries NO amount/price field (one-layer invariant),
+//   3. the payment panel shows the server-computed $2.31.
+// The create-basket-bestowal-order stub COMPUTES its amount from the
+// request + fixture price using the deployed function's exact rule
+// (verified on-wire against real orders b71ffbdd/557cf099: price 2.30 ->
+// intent 2.66), rather than hardcoding 2.31 -- so if the client ever
+// started sending a pre-grossed amount, the displayed total would drift
+// and the assertions below would catch it.
+test('a $2.00 seed shows Bestow $2.30, sends no amount in the request, and the payment panel shows $2.31', async ({ page }) => {
+  const BASE_PRICE = 2.0;
+
+  await stubAuthSession(page);
+  await stubRest(page, BASE_PRICE);
+
+  let capturedBody: Record<string, unknown> | null = null;
+  await page.route(`${SUPABASE_URL}/functions/v1/create-basket-bestowal-order`, (route) => {
+    capturedBody = route.request().postDataJSON() as Record<string, unknown>;
+
+    // Mirror of the deployed function's amount rule (create-basket-
+    // bestowal-order): per item, priceBreakdown(price) once -- base + 15%,
+    // rounded to cents -- then computeBuyerFee('solana', subtotal) adds the
+    // flat $0.01. Keep in sync with supabase/functions/_shared/platformFee.ts
+    // and _shared/paypal/fees.ts.
+    const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+    const items = (capturedBody?.items ?? []) as Array<{ productId: string; qty?: number }>;
+    const subtotal = items.reduce((sum, item) => {
+      const price = item.productId === TRACK_ID ? BASE_PRICE : 0;
+      const lineTotal = round2(round2(price + round2(price * 0.15)) * Math.max(1, item.qty ?? 1));
+      return round2(sum + lineTotal);
+    }, 0);
+    const amountUsdc = round2(subtotal + 0.01);
+
+    return route.fulfill({
+      json: {
+        solanaPayment: {
+          intentId: 'playwright-amount-test-intent',
+          referencePubkey: FAKE_REFERENCE,
+          solanaPayUrl: `solana:${FAKE_HOT_WALLET}?amount=${amountUsdc}&spl-token=${MAINNET_USDC_MINT}&reference=${FAKE_REFERENCE}`,
+          hotWalletAddress: FAKE_HOT_WALLET,
+          amountUsdc,
+          cluster: 'mainnet-beta',
+          expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+        },
+      },
+    });
+  });
+
+  await page.route(`${SUPABASE_URL}/functions/v1/check-solana-payment`, (route) =>
+    route.fulfill({
+      json: {
+        status: 'pending',
+        signature: null,
+        receivedAmountUsdc: null,
+        amountUsdc: 2.31,
+        expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+      },
+    }),
+  );
+
+  await page.goto(`/music-track/${TRACK_ID}`);
+
+  // 1. Client display: fee-inclusive total, computed from the $2.00 base.
+  const bestowButton = page.getByRole('button', { name: /Bestow \$/ });
+  await expect(bestowButton).toBeVisible({ timeout: 15_000 });
+  await expect(bestowButton).toContainText('Bestow $2.30');
+
+  await bestowButton.click();
+
+  // 3. Server-computed amount on the payment panel: $2.31, exactly once-fee'd.
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByText('$2.31', { exact: false })).toBeVisible({ timeout: 15_000 });
+
+  // 2. One-layer invariant: the request body carries no amount of any kind.
+  expect(capturedBody, 'create-basket-bestowal-order was never called').not.toBeNull();
+  const body = capturedBody as unknown as Record<string, unknown>;
+  expect(body.provider).toBe('solana');
+  expect(body.items).toEqual([{ productId: TRACK_ID, qty: 1 }]);
+  for (const forbidden of ['amount', 'amountUsdc', 'price', 'total', 'buyerTotal', 'subtotal']) {
+    expect(body, `client must never send "${forbidden}" -- the server owns all pricing`).not.toHaveProperty(forbidden);
+  }
 });
