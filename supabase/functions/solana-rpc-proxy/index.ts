@@ -21,9 +21,11 @@
 // I/O only: one fetch, no @solana/web3.js, well under the edge runtime's
 // 2s CPU ceiling.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+// Extended CORS set: web3.js's Connection sends a `solana-client` header
+// the standard supabase-js corsHeaders don't allowlist -- see _shared/cors.ts.
+import { corsHeadersWithSolanaClient as corsHeaders } from "../_shared/cors.ts";
 import { getSolanaRpcUrl } from "../_shared/cryptoNetworks.ts";
-import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimiter.ts";
+import { checkRateLimit } from "../_shared/rateLimiter.ts";
 import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
 const ALLOWED_METHODS = new Set(["getLatestBlockhash", "simulateTransaction"]);
@@ -52,7 +54,15 @@ Deno.serve(async (req) => {
   // A pay click makes one blockhash + one simulate call; 60/5min leaves
   // ample retry headroom without being an open relay.
   const rlOk = await checkRateLimit(service, callerId, "solana_rpc_proxy", 60, 5, true);
-  if (!rlOk) return createRateLimitResponse(300);
+  if (!rlOk) {
+    // Inline rather than the shared createRateLimitResponse: that helper
+    // carries no CORS headers, and a 429 without them reads to the browser
+    // as a CORS failure instead of a rate limit.
+    return new Response(
+      JSON.stringify({ error: "Rate limit exceeded", message: "Too many requests. Please try again later.", retryAfter: 300 }),
+      { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "300" } },
+    );
+  }
 
   let body: { jsonrpc?: string; id?: unknown; method?: string; params?: unknown };
   try {

@@ -80,6 +80,7 @@ function WalletErrorPanel({
     'insufficient-funds': error.message,
     'wrong-network': error.message,
     'simulation-failed': error.message,
+    'service-unreachable': error.message,
     unknown: error.message,
   };
 
