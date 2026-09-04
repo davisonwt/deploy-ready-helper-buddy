@@ -2,7 +2,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Loader2, Heart } from 'lucide-react';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { CRYPTO_ROUNDING_NOTICE, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, computeBuyerFeeExact, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { useBalanceProvider } from '@/hooks/useBalanceProvider';
 
 interface ConfirmBestowModalProps {
@@ -10,7 +11,15 @@ interface ConfirmBestowModalProps {
   onClose: () => void;
   /** What's being bestowed on — a track title, product title, etc. */
   title: string;
-  /** Total amount the bestower will be charged. */
+  /**
+   * The BASE amount -- what the sower/recipient receives (a product's
+   * stored price, a gift's typed amount). The modal itself grosses this
+   * up with the shared priceBreakdown (S2G's 15%) plus the selected
+   * provider's exact processor fee, so the confirm button always reads
+   * the amount the server will actually charge. This modal used to
+   * display `amount` verbatim, which showed a $2.00 seed's button as
+   * "Bestow $2.00" while the Solana intent was (correctly) $2.31.
+   */
   amount: number;
   onConfirm: (provider: PayoutProviderId) => void | Promise<void>;
   confirming?: boolean;
@@ -36,8 +45,12 @@ export function ConfirmBestowModal({
   actionLabel = 'Bestow',
   blockedMessage = null,
 }: ConfirmBestowModalProps) {
-  const { provider, setProvider, providers, balanceShortBy } = useBalanceProvider(amount);
+  // Base -> +15% S2G (shared rule) -> + the selected provider's exact
+  // processor fee (client mirror of the server's computeBuyerFee).
+  const pricing = priceBreakdown(amount);
+  const { provider, setProvider, providers, balanceShortBy } = useBalanceProvider(pricing.total);
   const effectiveProvider = provider;
+  const charge = computeBuyerFeeExact(effectiveProvider, pricing.total);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && !confirming && onClose()}>
@@ -53,7 +66,7 @@ export function ConfirmBestowModal({
           <ProviderPicker
             value={effectiveProvider}
             onChange={setProvider}
-            amount={amount}
+            amount={pricing.total}
             mode="buyer"
             disabled={confirming}
             providers={providers}
@@ -80,7 +93,7 @@ export function ConfirmBestowModal({
             ) : (
               <Heart className="w-4 h-4 mr-2" />
             )}
-            {confirming ? 'Processing...' : `${actionLabel} $${amount.toFixed(2)}`}
+            {confirming ? 'Processing...' : `${actionLabel} $${charge.total.toFixed(2)}`}
           </Button>
         </div>
       </DialogContent>

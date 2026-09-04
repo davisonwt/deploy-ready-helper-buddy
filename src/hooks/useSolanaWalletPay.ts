@@ -3,10 +3,9 @@ import { PublicKey } from '@solana/web3.js';
 import {
   buildUsdcTransferTransaction,
   getPhantomProvider,
-  getUsdcBalance,
   usdcConnection,
 } from '@/lib/payments/solanaWallet';
-import { USDC_MINTS } from '@/lib/payments/solanaNetworks';
+import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import type { SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 
 export type WalletPayPhase =
@@ -92,19 +91,44 @@ export function useSolanaWalletPay(payment: SolanaPaymentResponse, onSubmitted?:
       }
       const payer = new PublicKey(pubkeyStr);
       const connection = usdcConnection(payment.cluster);
-      const mint = new PublicKey(USDC_MINTS[payment.cluster]);
 
       setPhase('building');
-      const balance = await getUsdcBalance(connection, payer, mint);
-      if (balance < payment.amountUsdc) {
-        setPhase('error');
-        setError({
-          kind: 'insufficient-funds',
-          message: 'Not enough USDC in this wallet.',
-          balance,
-          shortfall: Math.round((payment.amountUsdc - balance) * 100) / 100,
-        });
-        return;
+      // Balance pre-check via the get-wallet-balance edge function -- the
+      // SAME server-config read the dashboard's My Wallet tile uses. This
+      // used to call api.mainnet-beta.solana.com directly from the browser,
+      // which that endpoint CORS-blocks for arbitrary origins; the failed
+      // fetch was silently caught and reported as a real-looking 0.00
+      // balance ("You have 0.00 USDC") on every desktop pay attempt.
+      // Checked against the EXTENSION'S active account (payer), not the
+      // saved profile wallet -- they can differ, which is why the error
+      // message below names the wallet it actually checked. The edge
+      // function reads mainnet only, so on a devnet intent the pre-check is
+      // skipped (the on-chain simulation below still catches a true
+      // shortfall either way -- this check is advisory UX, not the
+      // enforcement layer).
+      if (payment.cluster === 'mainnet-beta') {
+        let balance: number | null = null;
+        try {
+          ({ balance } = await invokePaymentFunction<{ balance: number }>('get-wallet-balance', { address: pubkeyStr }));
+        } catch (err) {
+          // A failed READ is not a zero balance -- log and continue; the
+          // pre-flight simulation is the real gate.
+          console.warn('[SolanaPay] balance pre-check unavailable, continuing without it', err);
+        }
+        if (balance !== null && balance < payment.amountUsdc) {
+          const shortWallet = `${pubkeyStr.slice(0, 4)}…${pubkeyStr.slice(-4)}`;
+          setPhase('error');
+          setError({
+            kind: 'insufficient-funds',
+            message:
+              `Connected wallet ${shortWallet} has ${balance.toFixed(2)} USDC on mainnet — ` +
+              `you need ${(Math.round((payment.amountUsdc - balance) * 100) / 100).toFixed(2)} more to complete this payment. ` +
+              `If your funds are in a different account, switch accounts in Phantom and try again.`,
+            balance,
+            shortfall: Math.round((payment.amountUsdc - balance) * 100) / 100,
+          });
+          return;
+        }
       }
 
       const tx = await buildUsdcTransferTransaction({

@@ -73,9 +73,12 @@ function WalletErrorPanel({
     );
   }
 
+  // insufficient-funds now carries its full copy in error.message (it
+  // names the wallet actually checked and the network -- see
+  // useSolanaWalletPay), so every kind renders its own message verbatim.
   const copy: Record<Exclude<WalletPayError['kind'], 'not-installed'>, string> = {
     rejected: 'You declined the request in Phantom.',
-    'insufficient-funds': `You have ${(error.balance ?? 0).toFixed(2)} USDC — you need ${(error.shortfall ?? amountUsdc).toFixed(2)} more to complete this payment.`,
+    'insufficient-funds': error.message,
     'wrong-network': error.message,
     'simulation-failed': error.message,
     unknown: error.message,

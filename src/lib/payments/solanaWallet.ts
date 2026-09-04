@@ -28,24 +28,12 @@ export { getPhantomProvider, isMobileDevice, PHANTOM_INSTALL_URL, type PhantomPr
 
 const USDC_DECIMALS = 6;
 
-/**
- * The connected wallet's USDC balance, in whole USDC. Mirrors
- * _shared/solanaPayout.ts's getHotWalletUsdcBalance: no token account yet
- * reads as a real, valid zero balance, not an error.
- */
-export async function getUsdcBalance(
-  connection: Connection,
-  owner: PublicKey,
-  mint: PublicKey,
-): Promise<number> {
-  try {
-    const ata = await getAssociatedTokenAddress(mint, owner);
-    const info = await connection.getTokenAccountBalance(ata, 'confirmed');
-    return info.value.uiAmount ?? 0;
-  } catch {
-    return 0;
-  }
-}
+// getUsdcBalance (a direct browser call to connection.getTokenAccountBalance)
+// used to live here -- removed 2026-09-04: api.mainnet-beta.solana.com
+// CORS-blocks browser fetches, so it silently returned 0 for everyone and
+// the pay screen reported a real-looking "You have 0.00 USDC". The balance
+// pre-check now goes through the get-wallet-balance edge function (see
+// useSolanaWalletPay), the same server-config read the dashboard tile uses.
 
 /**
  * Builds the buyer's own USDC transferChecked transaction, unsigned, ready

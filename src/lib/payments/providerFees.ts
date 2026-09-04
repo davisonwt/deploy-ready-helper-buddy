@@ -100,6 +100,10 @@ export interface FeeQuote {
   display: string;
 }
 
+/** Same rounding the server uses for percent-based processor fees (ceil to the cent — a fee estimate must never understate). */
+const ceil2 = (n: number) => Math.ceil((n - Number.EPSILON) * 100) / 100;
+const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+
 export function quoteFee(
   provider: PayoutProviderId,
   amount: number,
@@ -109,14 +113,40 @@ export function quoteFee(
   if (!info || !Number.isFinite(amount) || amount <= 0) {
     return { minFee: 0, maxFee: 0, display: `${currencySymbol}0.00` };
   }
-  const minFee = (amount * info.feePct[0]) / 100 + info.feeFixed;
-  const maxFee = (amount * info.feePct[1]) / 100 + info.feeFixed;
+  // ceil2 on each bound, matching computeBuyerFee server-side -- a preview
+  // that rounds down where the server rounds up shows a fee (and total) one
+  // cent below the real charge.
+  const minFee = ceil2((amount * info.feePct[0]) / 100 + info.feeFixed);
+  const maxFee = ceil2((amount * info.feePct[1]) / 100 + info.feeFixed);
   const fmt = (n: number) => `${currencySymbol}${n.toFixed(2)}`;
   return {
     minFee,
     maxFee,
     display: minFee === maxFee ? fmt(minFee) : `${fmt(minFee)} – ${fmt(maxFee)}`,
   };
+}
+
+/**
+ * Exact client-side mirror of the server's computeBuyerFee
+ * (supabase/functions/_shared/paypal/fees.ts) at its production defaults:
+ * paypal ceil2(base * 3.49% + $0.49), solana flat $0.01, balance free.
+ * Used wherever the UI must show the precise amount the server will
+ * charge (e.g. ConfirmBestowModal's confirm button) rather than a
+ * headline range. Kept in lockstep by src/test/platform-fee-drift.test.ts.
+ */
+export function computeBuyerFeeExact(
+  provider: PayoutProviderId,
+  base: number,
+): { base: number; fee: number; total: number } {
+  const safeBase = round2(Number.isFinite(base) && base > 0 ? base : 0);
+  if (provider === 'paypal') {
+    const fee = ceil2(safeBase * 0.0349 + 0.49);
+    return { base: safeBase, fee, total: round2(safeBase + fee) };
+  }
+  if (provider === 'solana') {
+    return { base: safeBase, fee: 0.01, total: round2(safeBase + 0.01) };
+  }
+  return { base: safeBase, fee: 0, total: safeBase }; // balance
 }
 
 export function getProvider(id: PayoutProviderId): PayoutProviderInfo | undefined {

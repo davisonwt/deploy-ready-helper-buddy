@@ -33,3 +33,29 @@ describe('client and server platform-fee rules never drift', () => {
     expect(client.S2G_FEE_PERCENT).toBe(server.S2G_FEE_PERCENT);
   });
 });
+
+describe('client computeBuyerFeeExact matches server computeBuyerFee', () => {
+  it('for every provider across the price table (fee-inclusive bases)', async () => {
+    // The server module reads Deno.env for its overridable rates -- stub
+    // the global so the production defaults apply, same as live (no
+    // override secrets are set).
+    (globalThis as Record<string, unknown>).Deno = { env: { get: () => undefined } };
+    const serverFees = await import('../../supabase/functions/_shared/paypal/fees');
+    const { computeBuyerFeeExact } = await import('@/lib/payments/providerFees');
+
+    for (const base of PRICE_TABLE.map((p) => client.priceBreakdown(p).total)) {
+      for (const provider of ['solana', 'paypal', 'balance'] as const) {
+        const c = computeBuyerFeeExact(provider, base);
+        const srv = serverFees.computeBuyerFee(provider, base);
+        expect(c.fee, `${provider} fee on ${base}`).toBe(srv.fee);
+        expect(c.total, `${provider} total on ${base}`).toBe(srv.total);
+      }
+    }
+
+    // The incident's exact PayPal number: fee on the fee-inclusive $2.30
+    // is ceil2(2.30 * 3.49% + 0.49) = $0.58 -- not the $0.56-on-base the
+    // modal used to show, and not round2's $0.57 either.
+    expect(computeBuyerFeeExact('paypal', 2.3).fee).toBe(0.58);
+    expect(computeBuyerFeeExact('solana', 2.3).total).toBe(2.31);
+  });
+});

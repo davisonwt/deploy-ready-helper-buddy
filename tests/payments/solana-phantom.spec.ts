@@ -83,7 +83,12 @@ async function stubAuthSession(page: import('@playwright/test').Page) {
 /** Stub every Supabase REST read/write the page makes, with a configurable product price/owner. */
 async function stubRest(
   page: import('@playwright/test').Page,
-  { price, sowerUserId = SOWER_USER_ID }: { price: number; sowerUserId?: string },
+  {
+    price,
+    sowerUserId = SOWER_USER_ID,
+    djTracks = [],
+    includeProduct = true,
+  }: { price: number; sowerUserId?: string; djTracks?: unknown[]; includeProduct?: boolean },
 ) {
   await page.route(`${SUPABASE_URL}/rest/v1/**`, async (route) => {
     const url = new URL(route.request().url());
@@ -97,9 +102,13 @@ async function stubRest(
       route.fulfill({ json: wantsObject ? (rows[0] ?? null) : rows });
 
     if (table === 'dj_music_tracks') {
-      return reply([]);
+      return reply(djTracks);
+    }
+    if (table === 'radio_djs') {
+      return reply([{ id: 'test-dj-row-id', user_id: sowerUserId }]);
     }
     if (table === 'products') {
+      if (!includeProduct) return reply([]);
       return reply([
         {
           id: TRACK_ID,
@@ -143,14 +152,8 @@ async function stubRest(
   await page.route(`${SUPABASE_URL}/rest/v1/rpc/**`, (route) => route.fulfill({ json: null }));
 }
 
-test('desktop Phantom pay button builds a mainnet-USDC transaction with no console errors', async ({ page }) => {
-  const consoleErrors: string[] = [];
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') consoleErrors.push(msg.text());
-  });
-  page.on('pageerror', (err) => consoleErrors.push(`pageerror: ${err.message}`));
-
-  // --- Stub window.phantom.solana before any page script runs ---
+/** Stub window.phantom.solana before any page script runs; captured calls land on window.__phantomCalls / __capturedTxMintCandidates. */
+async function stubPhantom(page: import('@playwright/test').Page, buyerWallet: string = FAKE_BUYER_WALLET) {
   await page.addInitScript(
     ({ buyerWallet }) => {
       (window as any).__phantomCalls = { connect: 0, signAndSendTransaction: 0 };
@@ -179,11 +182,43 @@ test('desktop Phantom pay button builds a mainnet-USDC transaction with no conso
         },
       };
     },
-    { buyerWallet: FAKE_BUYER_WALLET },
+    { buyerWallet },
   );
+}
 
+/** The Solana JSON-RPC calls the transaction builder makes (blockhash + simulate). */
+async function stubSolanaRpc(page: import('@playwright/test').Page) {
+  await page.route('https://api.mainnet-beta.solana.com/**', async (route) => {
+    const body = route.request().postDataJSON() as { method: string; id: number };
+    const respond = (result: unknown) =>
+      route.fulfill({ json: { jsonrpc: '2.0', id: body.id, result } });
+    switch (body.method) {
+      case 'getLatestBlockhash':
+        return respond({ context: { slot: 1 }, value: { blockhash: FAKE_BLOCKHASH, lastValidBlockHeight: 1_000_000 } });
+      case 'simulateTransaction':
+        return respond({ context: { slot: 1 }, value: { err: null, logs: [], accounts: null, unitsConsumed: 0 } });
+      default:
+        return respond(null);
+    }
+  });
+}
+
+test('desktop Phantom pay button builds a mainnet-USDC transaction with no console errors', async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') consoleErrors.push(msg.text());
+  });
+  page.on('pageerror', (err) => consoleErrors.push(`pageerror: ${err.message}`));
+
+  await stubPhantom(page);
   await stubAuthSession(page);
   await stubRest(page, { price: TRACK_PRICE });
+  // Balance pre-check goes through the get-wallet-balance edge function
+  // (server-config mainnet read) -- plenty of USDC, so the builder is
+  // reached with no insufficient-balance gate.
+  await page.route(`${SUPABASE_URL}/functions/v1/get-wallet-balance`, (route) =>
+    route.fulfill({ json: { balance: 1000 } }),
+  );
 
   // --- The order-creation call: force a deterministic mainnet-USDC
   // response instead of hitting the live edge function (which would
@@ -488,4 +523,140 @@ test('/sow/music: type 2.00, split reads $2.30/$2.00, POST saves price 2 (not 2.
   const body = postBody as unknown as Record<string, unknown>;
   expect(body.price, 'products.price must be the BASE the sower typed').toBe(2);
   expect(body.license_type).toBe('bestowal');
+});
+
+// ---------------------------------------------------------------------------
+// Balance pre-check behavior (the "You have 0.00 USDC" incident): the check
+// reads the get-wallet-balance edge function for the EXTENSION's active
+// account. It used to hit api.mainnet-beta.solana.com directly from the
+// browser -- CORS-blocked there, silently caught, and reported as a real
+// 0.00 balance on every desktop pay attempt.
+// ---------------------------------------------------------------------------
+
+test('insufficient balance names the connected wallet and network', async ({ page }) => {
+  await stubPhantom(page); // active account: FAKE_BUYER_WALLET (Tokenkeg...5DA)
+  await stubAuthSession(page);
+  await stubRest(page, { price: TRACK_PRICE });
+  await page.route(`${SUPABASE_URL}/functions/v1/get-wallet-balance`, (route) =>
+    route.fulfill({ json: { balance: 0 } }),
+  );
+  await page.route(`${SUPABASE_URL}/functions/v1/create-basket-bestowal-order`, (route) =>
+    route.fulfill({
+      json: {
+        solanaPayment: {
+          intentId: 'balance-test-intent',
+          referencePubkey: FAKE_REFERENCE,
+          solanaPayUrl: `solana:${FAKE_HOT_WALLET}?amount=2.31&spl-token=${MAINNET_USDC_MINT}&reference=${FAKE_REFERENCE}`,
+          hotWalletAddress: FAKE_HOT_WALLET,
+          amountUsdc: 2.31,
+          cluster: 'mainnet-beta',
+          expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+        },
+      },
+    }),
+  );
+  await page.route(`${SUPABASE_URL}/functions/v1/check-solana-payment`, (route) =>
+    route.fulfill({ json: { status: 'pending', signature: null, receivedAmountUsdc: null, amountUsdc: 2.31, expiresAt: new Date(Date.now() + 30 * 60_000).toISOString() } }),
+  );
+
+  await page.goto(`/music-track/${TRACK_ID}`);
+  await page.getByRole('button', { name: /Bestow \$/ }).click();
+  await page.getByRole('button', { name: /Pay \$.*with Phantom/ }).click();
+
+  // The message names the wallet it actually CHECKED (the extension's
+  // active account) and the network -- so a wrong-account-in-Phantom case
+  // is visible instead of a bare "you have 0.00".
+  const message = page.getByText(/Connected wallet/);
+  await expect(message).toBeVisible({ timeout: 15_000 });
+  await expect(message).toContainText('Toke\u2026VQ5DA'.slice(0, 4)); // 'Toke' -- leading pubkey fragment
+  await expect(message).toContainText('5DA'); // trailing pubkey fragment
+  await expect(message).toContainText('0.00 USDC on mainnet');
+  await expect(message).toContainText('2.31 more');
+});
+
+test('a failed balance read is not reported as 0.00 -- payment proceeds to the builder', async ({ page }) => {
+  await stubPhantom(page);
+  await stubAuthSession(page);
+  await stubRest(page, { price: TRACK_PRICE });
+  await stubSolanaRpc(page);
+  await page.route(`${SUPABASE_URL}/functions/v1/get-wallet-balance`, (route) =>
+    route.fulfill({ status: 500, json: { error: 'rpc_down' } }),
+  );
+  await page.route(`${SUPABASE_URL}/functions/v1/create-basket-bestowal-order`, (route) =>
+    route.fulfill({
+      json: {
+        solanaPayment: {
+          intentId: 'balance-error-test-intent',
+          referencePubkey: FAKE_REFERENCE,
+          solanaPayUrl: `solana:${FAKE_HOT_WALLET}?amount=2.31&spl-token=${MAINNET_USDC_MINT}&reference=${FAKE_REFERENCE}`,
+          hotWalletAddress: FAKE_HOT_WALLET,
+          amountUsdc: 2.31,
+          cluster: 'mainnet-beta',
+          expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+        },
+      },
+    }),
+  );
+  await page.route(`${SUPABASE_URL}/functions/v1/check-solana-payment`, (route) =>
+    route.fulfill({ json: { status: 'pending', signature: null, receivedAmountUsdc: null, amountUsdc: 2.31, expiresAt: new Date(Date.now() + 30 * 60_000).toISOString() } }),
+  );
+
+  await page.goto(`/music-track/${TRACK_ID}`);
+  await page.getByRole('button', { name: /Bestow \$/ }).click();
+  await page.getByRole('button', { name: /Pay \$.*with Phantom/ }).click();
+
+  // A read failure must never masquerade as a zero balance: the pre-check
+  // is skipped and the real transaction build/simulation runs.
+  await expect
+    .poll(async () => page.evaluate(() => (window as any).__phantomCalls.signAndSendTransaction), {
+      timeout: 15_000,
+      message: 'transaction never reached the wallet -- the failed balance read blocked the payment',
+    })
+    .toBeGreaterThan(0);
+  await expect(page.getByText(/0\.00 USDC/)).toHaveCount(0);
+});
+
+// ---------------------------------------------------------------------------
+// The payment-method modal (ConfirmBestowModal): its confirm button must
+// show the amount the server will actually charge -- base + 15% + the
+// selected provider's exact processor fee -- never the raw base. It used to
+// read "Bestow $2.00" for a $2.00 seed whose real Solana charge is $2.31.
+// ---------------------------------------------------------------------------
+
+test('bestow modal confirm button shows the exact server charge per provider', async ({ page }) => {
+  await stubAuthSession(page);
+  await stubRest(page, {
+    price: 2.0,
+    includeProduct: false, // dj-track flow only -- the products half of the library stays empty
+    djTracks: [
+      {
+        id: 'dj-track-1',
+        dj_id: 'test-dj-row-id',
+        track_title: 'Playwright DJ Track',
+        artist_name: 'Test DJ',
+        price: 2.0,
+        is_public: true,
+        file_url: 'https://example.com/dj.mp3',
+        preview_url: null,
+        cover_image_url: null,
+        genre: 'test',
+        duration_seconds: 180,
+        created_at: new Date().toISOString(),
+      },
+    ],
+  });
+
+  await page.goto('/music-library?tab=community');
+
+  await page.getByRole('button', { name: 'Bestow', exact: true }).first().click({ timeout: 15_000 });
+
+  // Solana (default): $2.00 base + 15% ($2.30) + $0.01 network = $2.31.
+  const confirm = page.getByRole('button', { name: /Bestow \$/ });
+  await expect(confirm).toBeVisible({ timeout: 15_000 });
+  await expect(confirm).toContainText('Bestow $2.31');
+
+  // PayPal: $2.30 + ceil2(2.30 * 3.49% + $0.49) = $2.30 + $0.58 = $2.88 --
+  // the server's exact computeBuyerFee number, not $0.56-on-base.
+  await page.getByRole('radio', { name: /PayPal/ }).click();
+  await expect(confirm).toContainText('Bestow $2.88');
 });
