@@ -78,6 +78,23 @@ The receipt already does this correctly as of `f9fb4e6b` (buyer total,
 separate processor-fee line, then seed/sower/S2G breakdown). Do not
 regress it.
 
+### The price contract — settled 2026-09-04
+
+`products.price` stores the sower's BASE price — what the sower receives.
+Readers add the 15% on top at display/charge time (`priceBreakdown()`
+client-side, `_shared/platformFee.ts` server-side — one rule, pinned by a
+drift test). **No writer may ever store a grossed-up total.** This was the
+root cause of the "$2.66 for a $2.00 seed" double fee: the `/sow` forms
+and legacy `UploadForm` stored `priceBreakdown(price).total`, and
+`finalize_basket_order` separately deducted 15% OUT of the fee-inclusive
+`line_total` at split time. Both fixed 2026-09-04: writers store the base
+(`84f7de1f`), and finalize splits base-on-top (migration
+`20260904180000` — a `fee_inclusive` line's base is `unit_price × qty`, a
+legacy line backs out `/1.15`, `s2g_fee = line_total − base`, and the
+whisperer share comes out of the base). Orchard `pocket_price` is the one
+deliberate fee-inclusive exception (see the orchard pocket-price model
+below).
+
 ### Who absorbs the processor fee
 The **grower (payer)** absorbs it. If a cheaper rail is available and they
 choose the expensive one, that cost is theirs — the sower shouldn't be
@@ -215,7 +232,13 @@ the thank-you and receipt messages.
 
 ### Cases that must be handled explicitly
 - **Late payment** — arrives after the order expired. Do not silently
-  keep it. Either credit and reopen, or refund; decide and document which.
+  keep it. **Decided 2026-09-04: credit it.** `checkAndFinalizeSolanaIntent`
+  processes `expired` intents too — signature-first when the client
+  recorded Phantom's signature (`solana_payment_intents.client_signature`),
+  otherwise the address scan — and `sweep-solana-payments` re-checks
+  expired intents for 24h, so a confirmed transfer finalizes the order
+  late rather than stranding the money. (Deployed 2026-09-04; not yet
+  exercised by a real late payment.)
 - **Overpayment** — credit the order, record the excess.
 - **Underpayment** — do not finalize. Flag for manual resolution.
 - **Double payment** — same order paid twice. Second one is a refund case.

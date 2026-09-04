@@ -1,4 +1,4 @@
-# Session State — 2026-09-03
+# Session State — 2026-09-04
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
 
@@ -3065,6 +3065,179 @@ needed, confirmed by reading that code path.
 7. **`finalize_basket_order`'s fee-inclusive double-charge** — found today
    (see above), not fixed. Affects every basket sale with a `fee_inclusive`
    line item, not just Amber's.
+
+## Fixed — 2026-09-04 (double-fee closed at every layer; first real in-app desktop Phantom payment; ledger corrections)
+
+**The "$2.66 for a $2.00 seed" double fee, root-caused and closed end to
+end.** Three separate layers each contributed, and each is now fixed. None
+of them was `create-*-order`, despite three earlier rounds of reports
+pointing there — each round was disproven against real intent/order data at
+the time; recorded here so it isn't re-litigated:
+
+- **Write side** (`84f7de1f`) — the primary root cause: `/sow/music`,
+  `/sow/art`, `/sow/book`, `/sow/product` and the legacy `UploadForm` all
+  stored `priceBreakdown(price).total` (base + 15%) into `products.price`,
+  and `EditForm` spoke the old deducted model — a $2.00 listing was stored
+  as $2.30, and the reader-side 15% then produced the observed $2.66
+  ($2.31 + processor markup as displayed). Every price writer now saves the
+  BASE; `EditForm`'s label is "Your price (USDC) — what you receive" with a
+  live buyer-total helper; `PriceWithSplit`'s default copy states the model
+  ("Bestowers pay $X … You receive the full $Y").
+- **Display side** (`06531fd9`): buyer-facing surfaces that showed the raw
+  base (`ProductCard`, `ProductsPage` ×2, `BulkProductDetailPage` incl.
+  JSON-LD, `BulkSeedFeedPage`, `TribalAliveFeedPage`, `BestowalCheckout`
+  line items) now show `priceBreakdown(price).total`. Client and server
+  share one fee rule, pinned by a drift test
+  (`src/test/platform-fee-drift.test.ts`, 12 assertions, client mirror vs
+  `_shared/platformFee.ts`).
+- **Finalize** (`d273b5c0`, migration `20260904180000` — **applied by
+  Davison in the SQL editor, 18:27**): `finalize_basket_order` computed
+  `s2g_fee = round(line_total * 0.15, 2)` — 15% taken OUT of the
+  fee-inclusive total (a $2.30 line → 1.95/0.35, shorting the sower a
+  nickel per $2 sale; this is yesterday's Open item 7). Now base-on-top: a
+  `fee_inclusive` snapshot line's base is `unit_price × qty`, a legacy line
+  backs the 15% out (`/1.15`), `s2g_fee = line_total − base`, whisperer
+  share comes out of the base. Verified live twice over:
+  `pg_get_functiondef` shows the new source, and
+  `scripts/finalize-split-tests.sql` (a BEGIN…ROLLBACK fixture through the
+  real function — CLI only; the SQL editor can't run it because its temp
+  results table lives inside the rolled-back transaction) went from red
+  (`1.95/0.35`, `11.73/2.07`) to green (`2.00/0.30`, `12.00/1.80`). A TS
+  mirror of the split math (`src/test/finalize-split.test.ts`) pins the
+  same cases in the unit suite.
+
+**Data corrected (operator-run guarded SQL, results verified from this
+end):** the three grossed-up `products` rows (Louw's "The Ancient Voice"
+2.30→2.00, "The Journey" 13.80→12.00, coffee mugs 86.25→75.00), and the
+three wrong-split `product_bestowals` rows — `dcb9e8ad` (Louw),
+`02c6b716` (Amber), `2d195090` — from 1.95/0.35 to 2.00/0.30, `RETURNING`
+confirmed all three. `owed_payout_balances()` now shows Louw $2.00 and
+Amber $2.00. **Receipts regenerated** via `backfill-post-finalize`
+(9 basket orders, operator-run); Louw's receipt confirmed in chat:
+sower $2.00 / S2G fee $0.30 / processor $0.01 / total $2.31.
+
+**Correction found while writing this up: `2d195090` is NOT Amber's row.**
+It's a bestowal on "Sunrise Shine", sower user
+`110b5a23-ce07-45c8-a432-086550aa78b5` (no `profiles` row exists for a
+display name) — one of the "7 stuck rows across other sowers" from
+yesterday's sweep, not a third Amber row as earlier reports (including this
+agent's own, same day) had it. Its stale `earning_credit` in the disabled
+balance ledger is **$1.95 under that user** (ledger row `ce7dbd9d`,
+2026-09-03 10:59 UTC) — the revert SQL in Open item 1 below is addressed
+accordingly; an earlier printed version debiting Amber was wrong and must
+not be run.
+
+**Desktop Phantom — first real in-app mainnet payment, end to end**: order
+`ad805aa6-d698-4b29-aa86-ab8a6e17978d`, intent
+`70ca8056-3023-4059-8b44-d9dc2f608ab1`, $2.31 USDC, real Phantom extension
+approval, receipt delivered, Play/Download works. (09-03's `44ea0a44` was a
+hand-sent transfer caught by the fallback matcher; this is the first
+through the in-app button.) Getting there took, in order:
+
+- `95260d08` — Payout Settings "Test mode" banner false-positived on
+  mainnet (keyed off an aggregate including XRP, which is permanently
+  testnet) — now keyed off `solana_cluster` alone. Same commit re-audited
+  every `create-*-order` function's fee math against real $2.00 calls: all
+  correct, all reading $2.31.
+- `235e35cc`/`8d1f36f9` — `ConfirmBestowModal` shows the exact per-provider
+  server charge (`computeBuyerFeeExact`); the pre-pay balance check reads
+  the connected extension's own pubkey via `get-wallet-balance` (edge fn —
+  the browser can't call public Solana RPC, no CORS) and names the wallet
+  it checked; an RPC failure warns-and-proceeds instead of claiming
+  "0.00 USDC".
+- `e1c7ded0` — new `solana-rpc-proxy` edge fn: JWT-required, allowlists
+  exactly `getLatestBlockhash` + `simulateTransaction`, never exposes the
+  upstream RPC URL. The transaction builder uses `proxiedSolanaConnection()`;
+  the client-side default-RPC helper is deleted, and Playwright pins the
+  invariant (no `*.solana.com` request ever leaves the browser).
+- `5e8c140e` — the first real attempt died at preflight: web3.js stamps a
+  `solana-client` header the proxy's CORS didn't allow. New
+  `_shared/cors.ts` (`corsHeadersWithSolanaClient`) on every response path;
+  `walletErrorClassifier.ts` classifies transport failures ("couldn't reach
+  the payment service") BEFORE any network-mismatch match — the same
+  failure had shown a false "devnet vs. mainnet" message. Live-CORS vitest
+  (`RUN_LIVE_TESTS=1`) added against the deployed functions.
+- `d77722f2` — the payment then succeeded on-chain but the watch hung 30
+  minutes (a 500, then CORS-less 429s): `createRateLimitResponse` itself
+  now carries CORS; `check-solana-payment`'s rate limit resized
+  120→400/10min; the client poll is a pure state machine
+  (`src/lib/payments/paymentWatch.ts`, unit-tested) — 8s base, 8→16→30s
+  error backoff, failures never stop the loop; **signature-first
+  checking** — the client records Phantom's signature
+  (`solana_payment_intents.client_signature`, migration `20260904170000`,
+  applied) and the watcher verifies it directly before any address scan,
+  with 3× RPC retries; **late credit** — `checkAndFinalizeSolanaIntent`
+  now also processes `expired` intents and the sweep re-checks 24h of
+  them, so a late-confirming transfer credits the order instead of
+  stranding money; new panel states ("Payment sent" + Solscan link, "Still
+  confirming — you can close this" at 120s, "Check your wallet" nudge at
+  90s).
+- Reconcile-before-code held: the earlier `63a41cc1` attempt was proven
+  never-landed on-chain (both ATAs quiet; Phantom died on a "disconnected
+  port") — expired with nothing owed, established before any watcher code
+  changed.
+
+**Tests**: Playwright `tests/payments/solana-phantom.spec.ts` — 8 green
+against the production build (mainnet mint + zero console errors;
+no-public-RPC invariant; $2.31 panel amount and no client-computed amount
+in the POST body; `/sow/music` POST and editor PATCH both pin `price: 2`;
+insufficient-balance message names the wallet; failed balance read
+proceeds; modal $2.31 Solana / $2.88 PayPal; poll survives a 500). Unit
+suites green: fee drift (12), order-fee-math, wallet-error classifier (6),
+watch machine (3), finalize-split mirror (3), live-CORS (4, gated).
+
+**Unverified tonight** (deployed, not yet exercised by a real payment in a
+real browser): the new watch loop/backoff, signature-first path,
+late-credit path, and the new panel states — all shipped after the one
+real payment. The write-side browser proof (a throwaway `/sow/music` seed
+at $2.00 showing "Bestow $2.30" on its live page) is also still owed —
+Open 6.
+
+**Open, in priority order (2026-09-04):**
+
+1. **Stuck `credited_to_balance` rows.** (a) `2d195090` — sower user
+   `110b5a23…`, $1.95 stale credit; revert and return it to the payout
+   queue. Davison runs:
+
+   ```sql
+   SELECT public.debit_balance_ledger(
+     '110b5a23-ce07-45c8-a432-086550aa78b5', 1.95, 'adjustment',
+     'product_bestowals', '2d195090-2259-4087-bf2d-209a8fb3f205',
+     '2d195090-2259-4087-bf2d-209a8fb3f205:revert-stale-credit', NULL,
+     'Reverted: stale earning_credit from the backfill-era window; earning returns to the payout queue (bestowal row already corrected to 2.00/0.30)');
+
+   UPDATE public.product_bestowals SET payout_status = 'pending'
+    WHERE id = '2d195090-2259-4087-bf2d-209a8fb3f205'
+      AND payout_status = 'credited_to_balance';
+   ```
+
+   The debit mirrors the ledger's actual $1.95 credit; the corrected $2.00
+   then flows through `owed_payout_balances()` from the fixed bestowal row.
+   (b) Amber's two: apply the already-committed migration
+   `20260903170000` (`f119e2a6`, `acc9074c` — returns $4.00 to her queue
+   on top of the $2.00 showing). Then regenerate receipts for the affected
+   orders. (c) The rest of the 7-row/$13.95 sweep remains un-triaged.
+2. **Chat room crash**: "cannot add postgres_changes callbacks for
+   realtime:room:<id> after subscribe()" in `ChatRoom` — channel reused
+   after subscribe, re-render race. Fix + test.
+3. **First real mainnet payout** (old list's item 3): Louw's $2.00 on
+   request, or Amber's.
+4. **Rotate the legacy `service_role` key** when calm — exposed in chat
+   earlier, partially in a screenshot today.
+5. **Set `SOLANA_RPC_URL` to a dedicated RPC** — the public RPC flaked on
+   `getSignaturesForAddress` today.
+6. **Browser proof of the write-side fix**: list a throwaway `/sow/music`
+   seed at $2.00, confirm its live page shows Bestow $2.30.
+7. **Console noise**: mixkit confetti-sound 403; 401s on
+   `log_security_event_enhanced`/`check_rate_limit_enhanced` on `/login`;
+   `EnhancedSecureInput` null-`value` error; `DialogContent`
+   aria-describedby warnings. (MetaMask vs Phantom `window.ethereum` clash
+   is user-side.)
+8. **Orchards untested on mainnet**; orchard `pocket_price` uses a
+   fee-inclusive model server-side — decide whether that stays.
+9. Everything else from the 09-03 list unchanged (WH Phase 2, legacy key
+   cleanup, orchards page naming, core-loop walkthrough, avatar wipe
+   cause).
 
 ## Known gotchas
 
