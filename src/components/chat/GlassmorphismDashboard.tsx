@@ -98,7 +98,7 @@ function AvailableUsersSection({ circles, onAddToCircle }: { circles: Circle[], 
 
       // Get all profiles except current user
       const { data: profilesData } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, user_id, display_name, first_name, last_name, avatar_url')
         .neq('user_id', user.id)
         .limit(50);

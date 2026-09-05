@@ -85,7 +85,7 @@ const fetcher = async (userId: string): Promise<StatsData> => {
 
   // Get registered sowers count (total users)
   const { count: registeredSowers, error: sowersError } = await supabase
-    .from('profiles')
+    .from('profiles_public')
     .select('*', { count: 'exact', head: true });
 
   if (sowersError) {
@@ -94,7 +94,7 @@ const fetcher = async (userId: string): Promise<StatsData> => {
 
   // Get registered sowers from yesterday
   const { count: yesterdaySowers, error: yesterdaySowersError } = await supabase
-    .from('profiles')
+    .from('profiles_public')
     .select('*', { count: 'exact', head: true })
     .lt('created_at', yesterday.toISOString());
 

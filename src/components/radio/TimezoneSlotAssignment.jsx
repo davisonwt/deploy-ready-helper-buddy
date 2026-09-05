@@ -154,7 +154,7 @@ export default function TimezoneSlotAssignment() {
 
       // First get profiles
       const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select(`
           id,
           user_id,

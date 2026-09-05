@@ -66,7 +66,7 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
       let profileMap = {};
       if (ids.length > 0) {
         const { data: profs } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, avatar_url, first_name, last_name')
           .in('user_id', ids);
         profileMap = Object.fromEntries((profs || []).map(p => [p.user_id, p]));

@@ -50,8 +50,8 @@ export const ActivityFeed: React.FC = () => {
         // Fetch profiles separately
         const actorIds = [...new Set(data?.map(a => a.actor_profile_id).filter(Boolean) || [])];
         const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('*')
+          .from('profiles_public')
+          .select('id, user_id, display_name, first_name, last_name, avatar_url')
           .in('id', actorIds);
 
         const activitiesWithProfiles = data?.map(activity => ({

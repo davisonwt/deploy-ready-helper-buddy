@@ -223,8 +223,8 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
 
       // Fetch profiles for these users
       const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, user_id, display_name, full_name, avatar_url, first_name, last_name')
+        .from('profiles_public')
+        .select('id, user_id, display_name, avatar_url, first_name, last_name')
         .in('user_id', userIds);
 
       if (profilesError) {

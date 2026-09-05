@@ -123,7 +123,7 @@ export function useCommunityVideos() {
           let seedQuery = supabase
             .from('seeds')
             .select(`id, gifter_id, title, description, category, video_url, created_at,
-              profiles:gifter_id ( display_name, first_name, last_name, avatar_url )`)
+              profiles:profiles_public!gifter_id ( display_name, first_name, last_name, avatar_url )`)
             .not('video_url', 'is', null)
             .order('created_at', { ascending: false })
             .limit(20)

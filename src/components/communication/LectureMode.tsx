@@ -42,7 +42,7 @@ export const LectureMode: React.FC = () => {
         .from('lecture_halls')
         .select(`
           *,
-          profiles:presenter_profile_id (
+          profiles:profiles_public!presenter_profile_id (
             display_name,
             avatar_url
           )

@@ -92,7 +92,7 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
       // Load top 500 users from profiles table with xp/level fields
       // Use type assertion since these columns may not be in generated types
       const { data, error } = await (supabase
-        .from('profiles') as any)
+        .from('profiles_public') as any)
         .select('user_id, display_name, xp, level')
         .order('xp', { ascending: false })
         .limit(500);

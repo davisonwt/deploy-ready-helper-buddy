@@ -14324,70 +14324,100 @@ export type Database = {
       profiles_public: {
         Row: {
           avatar_url: string | null
+          bestowal_thank_you_message: string | null
           bio: string | null
+          birthday_day: number | null
+          birthday_month: number | null
           country: string | null
           created_at: string | null
           display_name: string | null
           facebook_url: string | null
+          first_name: string | null
           id: string | null
           instagram_url: string | null
           is_chatapp_verified: boolean | null
+          last_name: string | null
+          linkedin_url: string | null
           location: string | null
+          membership_tier: string | null
+          pinterest_url: string | null
+          show_birthday: boolean | null
           show_social_media: boolean | null
           tiktok_url: string | null
           twitter_url: string | null
           updated_at: string | null
           user_id: string | null
           username: string | null
-          verification_status:
+          verification_status: 
             | Database["public"]["Enums"]["verification_status"]
             | null
+          verified_at: string | null
           website: string | null
           youtube_url: string | null
         }
         Insert: {
           avatar_url?: string | null
+          bestowal_thank_you_message?: string | null
           bio?: string | null
+          birthday_day?: number | null
+          birthday_month?: number | null
           country?: string | null
           created_at?: string | null
           display_name?: string | null
           facebook_url?: string | null
+          first_name?: string | null
           id?: string | null
           instagram_url?: string | null
           is_chatapp_verified?: boolean | null
+          last_name?: string | null
+          linkedin_url?: string | null
           location?: string | null
+          membership_tier?: string | null
+          pinterest_url?: string | null
+          show_birthday?: boolean | null
           show_social_media?: boolean | null
           tiktok_url?: string | null
           twitter_url?: string | null
           updated_at?: string | null
           user_id?: string | null
           username?: string | null
-          verification_status?:
+          verification_status?: 
             | Database["public"]["Enums"]["verification_status"]
             | null
+          verified_at?: string | null
           website?: string | null
           youtube_url?: string | null
         }
         Update: {
           avatar_url?: string | null
+          bestowal_thank_you_message?: string | null
           bio?: string | null
+          birthday_day?: number | null
+          birthday_month?: number | null
           country?: string | null
           created_at?: string | null
           display_name?: string | null
           facebook_url?: string | null
+          first_name?: string | null
           id?: string | null
           instagram_url?: string | null
           is_chatapp_verified?: boolean | null
+          last_name?: string | null
+          linkedin_url?: string | null
           location?: string | null
+          membership_tier?: string | null
+          pinterest_url?: string | null
+          show_birthday?: boolean | null
           show_social_media?: boolean | null
           tiktok_url?: string | null
           twitter_url?: string | null
           updated_at?: string | null
           user_id?: string | null
           username?: string | null
-          verification_status?:
+          verification_status?: 
             | Database["public"]["Enums"]["verification_status"]
             | null
+          verified_at?: string | null
           website?: string | null
           youtube_url?: string | null
         }

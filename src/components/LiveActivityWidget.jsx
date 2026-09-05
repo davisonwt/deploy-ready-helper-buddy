@@ -150,7 +150,7 @@ export default function LiveActivityWidget() {
       const profileMap = {}
       if (hostIds.length > 0) {
         const { data: hostProfiles } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name')
           .in('user_id', hostIds)
         ;(hostProfiles || []).forEach(p => {
@@ -234,7 +234,7 @@ export default function LiveActivityWidget() {
       const sessionProfileMap = {}
       if (hostUserIds.length > 0) {
         const { data: sessionProfiles } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name')
           .in('user_id', hostUserIds)
         ;(sessionProfiles || []).forEach(p => {
@@ -345,7 +345,7 @@ export default function LiveActivityWidget() {
           let profileMap = new Map()
           if (senderIds.length > 0) {
             const { data: profiles } = await supabase
-              .from('profiles')
+              .from('profiles_public')
               .select('user_id, display_name, avatar_url')
               .in('user_id', senderIds)
             profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
@@ -408,7 +408,7 @@ export default function LiveActivityWidget() {
           
           // Fetch profiles separately
           const { data: profiles } = await supabase
-            .from('profiles')
+            .from('profiles_public')
             .select('user_id, display_name, avatar_url')
             .in('user_id', requesterIds)
           

@@ -52,7 +52,7 @@ export default function S2GCommunityLibraryPage() {
       if (data && data.length > 0) {
         const userIds = [...new Set(data.map(item => item.user_id))];
         const { data: profiles } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, avatar_url')
           .in('user_id', userIds);
         

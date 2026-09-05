@@ -388,7 +388,7 @@ export default function BrowseOrchardsPage() {
       const profileIds = Array.from(new Set(rows.map(o => o.profile_id).filter(Boolean)))
       let profilesById = new Map()
       if (profileIds.length) {
-        const { data: profs } = await supabase.from('profiles')
+        const { data: profs } = await supabase.from('profiles_public')
           .select('id, first_name, last_name, display_name, location').in('id', profileIds)
         ;(profs || []).forEach(p => profilesById.set(p.id, p))
       }
@@ -468,7 +468,7 @@ export default function BrowseOrchardsPage() {
           ...(sowersRows || []).map(s => s.user_id),
         ].filter(Boolean)))
         const { data: profiles } = profileIds.length
-          ? await supabase.from('profiles').select('id, user_id, first_name, last_name, display_name').or(`id.in.(${profileIds.join(',')}),user_id.in.(${profileIds.join(',')})`)
+          ? await supabase.from('profiles_public').select('id, user_id, first_name, last_name, display_name').or(`id.in.(${profileIds.join(',')}),user_id.in.(${profileIds.join(',')})`)
           : { data: [] }
         const profileMap = new Map()
         ;(profiles || []).forEach(p => { if (p.id) profileMap.set(p.id, p); if (p.user_id) profileMap.set(p.user_id, p) })

@@ -79,21 +79,21 @@ export const fetchUserBestowals = async (userId: string) => {
 export const fetchOrchardBestowalsWithProfiles = async (orchardId: string) => {
   const { data, error } = await supabase
     .from('bestowals')
-    .select(`
-      *,
-      profiles:bestower_id (
-        first_name,
-        last_name,
-        display_name,
-        avatar_url
-      )
-    `)
+    .select('*')
     .eq('orchard_id', orchardId)
     .eq('payment_status', 'completed')
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  // bestowals.bestower_id has no foreign key to profiles; attach the public
+  // profile rows (profiles_public) separately under the same `profiles` key.
+  const rows = data || [];
+  const ids = [...new Set(rows.map((b: any) => b.bestower_id).filter(Boolean))];
+  const { data: profiles } = ids.length
+    ? await supabase.from('profiles_public').select('user_id, first_name, last_name, display_name, avatar_url').in('user_id', ids)
+    : { data: [] as any[] };
+  const byUser = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+  return rows.map((b: any) => ({ ...b, profiles: byUser.get(b.bestower_id) ?? null }));
 };
 
 /** Plain bestowals for an orchard — no profile join. Mirrors the old api/orchards.ts shape. */

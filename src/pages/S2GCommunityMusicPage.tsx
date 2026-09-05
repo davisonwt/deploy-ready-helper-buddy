@@ -60,7 +60,7 @@ export default function S2GCommunityMusicPage() {
         // Get profiles for library items
         const userIds = [...new Set(libraryMusic.map(item => item.user_id))];
         const { data: profiles } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, avatar_url')
           .in('user_id', userIds);
         
@@ -116,7 +116,7 @@ export default function S2GCommunityMusicPage() {
         // Get profiles for DJ tracks
         const djUserIds = [...new Set(djTracks.map(t => t.radio_djs?.user_id).filter(Boolean))];
         const { data: djProfiles } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, avatar_url')
           .in('user_id', djUserIds);
         

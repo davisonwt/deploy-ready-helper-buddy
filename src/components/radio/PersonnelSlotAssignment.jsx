@@ -99,7 +99,7 @@ export default function PersonnelSlotAssignment() {
 
       // Then get the LATEST profiles for these users with all necessary fields
       const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select(`
           id,
           user_id,

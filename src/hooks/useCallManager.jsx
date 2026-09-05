@@ -82,7 +82,7 @@ export const useCallManagerInternal = () => {
     if (!callerName && callData.caller_id) {
       try {
         const { data: profile } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('display_name, first_name')
           .eq('user_id', callData.caller_id)
           .single();
@@ -1128,7 +1128,7 @@ export const useCallManagerInternal = () => {
           if (!currentIncomingId || currentIncomingId !== call.id) {
             // Fetch caller name for the call
             const { data: callerProfile } = await supabase
-              .from('profiles')
+              .from('profiles_public')
               .select('user_id, display_name, first_name, last_name')
               .eq('user_id', call.caller_id)
               .single();

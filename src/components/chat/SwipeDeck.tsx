@@ -122,7 +122,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
 
       // Fetch ALL profiles except current user
       const { data: allProfilesData, error: profilesError } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, user_id, username, avatar_url, bio, display_name, first_name, last_name')
         .neq('user_id', user.id);
 

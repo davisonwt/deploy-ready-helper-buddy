@@ -38,7 +38,7 @@ export const useRealAnalytics = (days: number = 30) => {
       // Fetch from actual Supabase data instead of mock
       // Get profiles count as visitors proxy
       const { data: profilesData } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('user_id, created_at')
         .gte('created_at', startStr)
         .lte('created_at', endStr);

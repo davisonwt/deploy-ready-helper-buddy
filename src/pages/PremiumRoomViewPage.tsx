@@ -270,7 +270,7 @@ const PremiumRoomViewPage: React.FC = () => {
 
         // Fetch creator profile separately
         const { data: profileData } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('display_name, avatar_url')
           .eq('user_id', data.creator_id)
           .maybeSingle();

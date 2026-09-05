@@ -79,7 +79,7 @@ const ChatModerationPanel = ({ currentRoom, currentUser }) => {
 
       // Fetch profiles separately
       const { data: profs, error: profErr } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('user_id, display_name, avatar_url')
         .in('user_id', ids);
       if (profErr) throw profErr;

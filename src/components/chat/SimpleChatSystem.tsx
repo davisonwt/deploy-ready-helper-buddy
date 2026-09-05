@@ -74,7 +74,7 @@ export const SimpleChatSystem = () => {
   const loadUsers = async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('user_id, display_name, first_name, last_name')
         .neq('user_id', user?.id)
         .limit(50);

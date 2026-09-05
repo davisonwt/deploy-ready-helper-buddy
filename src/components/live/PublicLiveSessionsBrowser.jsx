@@ -98,7 +98,7 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
       if (genericSessions && genericSessions.length > 0) {
         const userIds = [...new Set(genericSessions.map(s => s.user_id))]
         const { data: profilesData } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, avatar_url')
           .in('user_id', userIds)
         

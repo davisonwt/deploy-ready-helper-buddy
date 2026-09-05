@@ -78,7 +78,7 @@ export function UnreadInbox({ onOpenRoom, onBack }: UnreadInboxProps) {
         const otherIds = [...new Set((directParts || []).filter((p) => p.user_id !== user.id).map((p) => p.user_id))];
         const profileIds = [...new Set([...otherIds, user.id])];
         const { data: profiles } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, first_name, last_name')
           .in('user_id', profileIds);
         const profileByUser = new Map((profiles || []).map((p) => [p.user_id, p]));

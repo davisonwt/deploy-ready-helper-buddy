@@ -32,7 +32,7 @@ export default function InviteUsersModal({ isOpen, onClose, roomId, roomName }) 
       
       // Search for users by display name
       let query = supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, user_id, display_name, avatar_url, first_name, last_name, verification_status') // Only safe fields
         .neq('user_id', user.id) // Exclude current user
         .limit(20)

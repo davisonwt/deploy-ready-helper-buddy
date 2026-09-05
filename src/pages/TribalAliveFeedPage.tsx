@@ -328,12 +328,12 @@ export default function TribalAliveFeedPage() {
           ])) as string[];
 
           const [pubRes, selfRes] = await Promise.all([
-            supabase.from('public_profiles')
+            supabase.from('profiles_public')
               .select('user_id, display_name, username, avatar_url')
               .in('user_id', userIds),
-            // Best-effort: only returns the caller's own row under RLS, but gives richer fields.
-            supabase.from('profiles')
-              .select('id, user_id, first_name, last_name, display_name, username, email, avatar_url')
+            // Same view, richer public columns (never email: the view does not carry it).
+            supabase.from('profiles_public')
+              .select('id, user_id, first_name, last_name, display_name, username, avatar_url')
               .in('user_id', userIds),
           ]);
           const pubByUserId: Record<string, any> = {};
@@ -768,7 +768,7 @@ export default function TribalAliveFeedPage() {
     // Verify the sower actually has an auth user before we try to insert into
     // chat_participants — otherwise the FK to auth.users blows up.
     const { data: sowerProfile } = await supabase
-      .from('profiles')
+      .from('profiles_public')
       .select('user_id')
       .eq('user_id', item.sower_id)
       .maybeSingle();
@@ -835,7 +835,7 @@ export default function TribalAliveFeedPage() {
     if (!senderIds.length) return seedMessages as SeedMessage[];
 
     const { data: profiles } = await supabase
-      .from('profiles')
+      .from('profiles_public')
       .select('user_id, display_name, first_name, last_name, avatar_url')
       .in('user_id', senderIds as string[]);
     return seedMessages.map((message: any) => ({

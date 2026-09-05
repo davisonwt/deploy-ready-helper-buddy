@@ -32,7 +32,7 @@ export default function SowerProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('radio_djs')
-        .select('*, profiles!inner(*)')
+        .select('*') // no embed: radio_djs has no FK to profiles, and nothing here reads the sower's profile row
         .eq('id', id)
         .single();
       

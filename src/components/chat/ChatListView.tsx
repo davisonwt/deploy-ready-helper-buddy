@@ -57,7 +57,7 @@ export const ChatListView: React.FC = () => {
     
     try {
       const { data: profiles, error } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, display_name, avatar_url, first_name, last_name')
         .neq('id', user.id)
         .limit(50);
@@ -216,7 +216,7 @@ export const ChatListView: React.FC = () => {
             user_id,
             is_active,
             profile_id,
-            profiles(display_name, avatar_url, first_name, last_name)
+            profiles:profiles_public!profile_id(display_name, avatar_url, first_name, last_name)
           )
         `)
         .eq('chat_participants.user_id', user.id)
@@ -244,7 +244,7 @@ export const ChatListView: React.FC = () => {
           .from('chat_participants')
           .select(`
             user_id,
-            profiles(id, display_name, avatar_url, first_name, last_name)
+            profiles:profiles_public!profile_id(id, display_name, avatar_url, first_name, last_name)
           `)
           .eq('room_id', room.id)
           .eq('is_active', true)

@@ -39,7 +39,7 @@ export function TopSowersTeaser() {
       
       // For now, we'll use a simplified query - in production you'd have an XP/leaderboard table
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('user_id, display_name, avatar_url')
         .limit(3);
 

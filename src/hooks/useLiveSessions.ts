@@ -40,7 +40,7 @@ async function fetchProfiles(ids: string[]) {
   const clean = Array.from(new Set(ids.filter(Boolean)))
   if (!clean.length) return new Map<string, any>()
   const { data } = await supabase
-    .from('profiles')
+    .from('profiles_public')
     .select('id, user_id, display_name, first_name, last_name, avatar_url')
     .or(`id.in.(${clean.join(',')}),user_id.in.(${clean.join(',')})`)
   const map = new Map<string, any>()

@@ -73,7 +73,7 @@ export function LeaderboardTable({ filters = ['xp', 'bestowals', 'followers', 's
       if (selectedFilter === 'xp') {
         // Mock XP leaderboard - in production would query XP table
         const { data: profiles } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, avatar_url')
           .limit(100);
 
@@ -153,7 +153,7 @@ export function LeaderboardTable({ filters = ['xp', 'bestowals', 'followers', 's
       } else {
         // Streak - mock data
         const { data: profiles } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, avatar_url')
           .limit(100);
 

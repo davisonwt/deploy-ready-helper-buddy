@@ -133,7 +133,7 @@ export const useChat = () => {
       
       if (senderIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, avatar_url, first_name, last_name, verification_status') // Only safe public fields
           .in('user_id', senderIds);
 
@@ -187,7 +187,7 @@ export const useChat = () => {
       
       if (userIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, avatar_url, first_name, last_name, verification_status') // Only safe public fields
           .in('user_id', userIds);
 

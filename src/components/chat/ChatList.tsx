@@ -95,7 +95,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         // Fetch creator profiles separately
         const creatorIds = unique.map((room: any) => room.created_by).filter(Boolean);
         const { data: profilesData } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('id, display_name, first_name, last_name, avatar_url')
           .in('id', creatorIds);
         
@@ -166,7 +166,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         // Fetch creator profiles separately
         const creatorIds = rooms.map((room: any) => room.created_by).filter(Boolean);
         const { data: profilesData } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('id, display_name, first_name, last_name, avatar_url')
           .in('id', creatorIds);
         

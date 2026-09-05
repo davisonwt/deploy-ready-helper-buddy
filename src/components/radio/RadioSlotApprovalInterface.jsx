@@ -87,7 +87,7 @@ export function RadioSlotApprovalInterface() {
         let approverProfile = null
         if (request.approved_by) {
           const { data: profileData } = await supabase
-            .from('profiles')
+            .from('profiles_public')
             .select('display_name, first_name, last_name')
             .eq('user_id', request.approved_by)
             .single()

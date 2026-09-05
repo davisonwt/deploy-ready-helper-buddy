@@ -64,7 +64,7 @@ const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: Con
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('user_id, username, first_name, last_name, avatar_url, bio')
         .neq('user_id', user.id)
         .order('username', { ascending: true });

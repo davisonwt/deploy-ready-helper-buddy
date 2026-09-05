@@ -62,7 +62,7 @@ export default function MySeedsPage() {
 
       const sowerIds = [...new Set(purchases.map((p) => p.sowerId).filter(Boolean))] as string[];
       const { data: profiles } = sowerIds.length
-        ? await supabase.from('profiles').select('user_id, display_name, first_name, last_name').in('user_id', sowerIds)
+        ? await supabase.from('profiles_public').select('user_id, display_name, first_name, last_name').in('user_id', sowerIds)
         : { data: [] as any[] };
       const nameByUser = new Map(
         (profiles || []).map((p: any) => [p.user_id, p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'A sower']),

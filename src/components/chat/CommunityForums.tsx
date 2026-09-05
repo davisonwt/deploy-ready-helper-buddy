@@ -96,7 +96,7 @@ export const CommunityForums: React.FC = () => {
       if (!user) return;
 
       const { data: profiles, error } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, user_id, display_name, first_name, last_name, avatar_url')
         .neq('user_id', user.id)
         .order('display_name');
@@ -138,8 +138,8 @@ export const CommunityForums: React.FC = () => {
       // Fetch profiles and circles separately
       const profileIds = [...new Set(data?.map(p => p.author_profile_id).filter(Boolean) || [])];
       const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('*')
+        .from('profiles_public')
+        .select('id, user_id, display_name, first_name, last_name, avatar_url')
         .in('id', profileIds);
 
       const { data: circlesData } = await supabase
@@ -209,7 +209,7 @@ export const CommunityForums: React.FC = () => {
         // Fetch profile IDs for all participants including the creator
         const allUserIds = [user.id, ...selectedMembers];
         const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('id, user_id')
           .in('user_id', allUserIds);
 

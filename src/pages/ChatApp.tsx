@@ -189,21 +189,21 @@ const ChatApp = () => {
             user_id,
             display_name,
             logo_url,
-            bio,
-            profiles!inner (
-              id,
-              user_id,
-              display_name,
-              avatar_url,
-              first_name,
-              last_name
-            )
+            bio
           `)
           .neq('user_id', user.id);
 
         if (sowersError) {
           console.error('Error loading sowers:', sowersError);
         }
+        // sowers.user_id has no foreign key to profiles; attach the public
+        // profile rows (profiles_public) under the `profiles` key read below.
+        const sowerUserIds = [...new Set((sowersData || []).map((s: any) => s.user_id).filter(Boolean))];
+        const { data: sowerProfiles } = sowerUserIds.length
+          ? await supabase.from('profiles_public').select('id, user_id, display_name, avatar_url, first_name, last_name').in('user_id', sowerUserIds)
+          : { data: [] as any[] };
+        const sowerProfileByUser = new Map((sowerProfiles || []).map((p: any) => [p.user_id, p]));
+        (sowersData || []).forEach((s: any) => { s.profiles = sowerProfileByUser.get(s.user_id) ?? null; });
 
         // Fetch all registered bestowers (users who have made bestowals)
         const { data: bestowalsData, error: bestowalsError } = await supabase
@@ -240,7 +240,7 @@ const ChatApp = () => {
         let bestowerProfiles: any[] = [];
         if (bestowerIds.size > 0) {
           const { data: bestowerProfilesData, error: bestowerProfilesError } = await supabase
-            .from('profiles')
+            .from('profiles_public')
             .select('id, user_id, display_name, avatar_url, first_name, last_name')
             .in('user_id', Array.from(bestowerIds))
             .neq('user_id', user.id);
@@ -257,7 +257,7 @@ const ChatApp = () => {
         let gosatProfiles: any[] = [];
         if (gosatIds.size > 0) {
           const { data: gosatProfilesData, error: gosatProfilesError } = await supabase
-            .from('profiles')
+            .from('profiles_public')
             .select('id, user_id, display_name, avatar_url, first_name, last_name')
             .in('user_id', Array.from(gosatIds))
             .neq('user_id', user.id);

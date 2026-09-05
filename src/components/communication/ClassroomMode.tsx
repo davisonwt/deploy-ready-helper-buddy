@@ -45,7 +45,7 @@ export const ClassroomMode: React.FC = () => {
         .from('classroom_sessions')
         .select(`
           *,
-          profiles:instructor_profile_id (
+          profiles:profiles_public!instructor_profile_id (
             display_name,
             avatar_url
           )

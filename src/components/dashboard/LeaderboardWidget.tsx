@@ -36,7 +36,7 @@ export const LeaderboardWidget: FC = () => {
             title,
             follower_count,
             like_count,
-            profiles:user_id (
+            profiles:profiles_public!profile_id (
               display_name,
               first_name,
               last_name,
@@ -53,7 +53,7 @@ export const LeaderboardWidget: FC = () => {
             id,
             title,
             view_count,
-            profiles:uploader_id (
+            profiles:profiles_public (
               display_name,
               first_name,
               last_name,

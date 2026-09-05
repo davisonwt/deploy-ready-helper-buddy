@@ -129,7 +129,7 @@ export default function YhvhOrchardsPage() {
         .from('orchards')
         .select(`
           *,
-          profiles (
+          profiles:profiles_public (
             display_name,
             first_name,
             last_name

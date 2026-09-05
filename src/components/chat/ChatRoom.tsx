@@ -231,7 +231,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
       const senderIds = Array.from(new Set((data || []).map(m => m.sender_id)));
       if (senderIds.length > 0) {
         const { data: profiles } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, first_name, last_name, avatar_url')
           .in('user_id', senderIds);
         
@@ -280,7 +280,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
 
       // Fetch profiles separately and merge
       const { data: profs, error: profErr } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('user_id, display_name, first_name, last_name, avatar_url')
         .in('user_id', ids);
       if (profErr) throw profErr;
@@ -311,7 +311,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
         if (!otherId) return;
         if (participants.some((p:any) => p.user_id === otherId)) return;
         const { data: prof } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, first_name, last_name, avatar_url')
           .eq('user_id', otherId)
           .maybeSingle();
@@ -355,7 +355,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
       try {
         setLoadingUsers(true);
         let query = supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, first_name, last_name, avatar_url')
           .neq('user_id', user.id)
           .limit(20);
@@ -426,7 +426,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
 
           if (msg) {
             const { data: profile } = await supabase
-              .from('profiles')
+              .from('profiles_public')
               .select('user_id, display_name, first_name, last_name, avatar_url')
               .eq('user_id', msg.sender_id)
               .maybeSingle();

@@ -263,23 +263,24 @@ export const fetchWhispererEnabledProducts = (limit = 200) =>
     .limit(limit);
 
 /** Leaderboard widget: top products by follower count. */
-export const fetchTopProductsByFollowers = (limit = 5) =>
-  supabase
+export const fetchTopProductsByFollowers = async (limit = 5) => {
+  // products.user_id has no foreign key to profiles, so PostgREST cannot embed
+  // the sower. Fetch the public profile rows (profiles_public -- the only
+  // sanctioned cross-member read) and attach them under the same `profiles`
+  // key the widget already reads.
+  const { data, error } = await supabase
     .from('products')
-    .select(`
-      id,
-      title,
-      follower_count,
-      like_count,
-      profiles:user_id (
-        display_name,
-        first_name,
-        last_name,
-        avatar_url
-      )
-    `)
+    .select('id, title, follower_count, like_count, user_id')
     .order('follower_count', { ascending: false })
     .limit(limit);
+  if (error || !data) return { data, error };
+  const ids = [...new Set(data.map((p: any) => p.user_id).filter(Boolean))];
+  const { data: profiles } = ids.length
+    ? await supabase.from('profiles_public').select('user_id, display_name, first_name, last_name, avatar_url').in('user_id', ids)
+    : { data: [] as any[] };
+  const byUser = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+  return { data: data.map((p: any) => ({ ...p, profiles: byUser.get(p.user_id) ?? null })), error: null };
+};
 
 export interface ProductsPageQueryOpts {
   from: number;

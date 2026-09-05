@@ -86,7 +86,7 @@ export function useClassroomLive({ sessionId, userId, isHost }: UseClassroomLive
       let profileMap = new Map<string, { display_name: string | null; avatar_url: string | null }>();
       if (ids.length) {
         const { data: profs } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('user_id, display_name, first_name, last_name, avatar_url')
           .in('user_id', ids);
         (profs || []).forEach((p: any) => {
@@ -120,7 +120,7 @@ export function useClassroomLive({ sessionId, userId, isHost }: UseClassroomLive
           let extra: any = {};
           if (payload.eventType === 'INSERT') {
             const { data: prof } = await supabase
-              .from('profiles')
+              .from('profiles_public')
               .select('display_name, first_name, last_name, avatar_url')
               .eq('user_id', row.user_id)
               .maybeSingle();

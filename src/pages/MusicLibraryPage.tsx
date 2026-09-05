@@ -213,7 +213,7 @@ export default function MusicLibraryPage() {
 
       const { data: profileRows } = uniqueUserIds.length
         ? await supabase
-            .from('profiles')
+            .from('profiles_public')
             .select('id, username, avatar_url, display_name, first_name, last_name')
             .in('id', uniqueUserIds)
         : { data: [] };

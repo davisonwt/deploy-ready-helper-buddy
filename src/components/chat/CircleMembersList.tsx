@@ -95,7 +95,7 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
 
       // Now get profiles for those users
       const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, user_id, display_name, first_name, last_name, avatar_url, bio')
         .in('user_id', userIds);
 

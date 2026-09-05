@@ -27,7 +27,7 @@ export default function LiveSeedPage() {
     const fetchSeed = async () => {
       const { data } = await supabase
         .from('orchards')
-        .select('*, profiles:profile_id(first_name, last_name, display_name)')
+        .select('*, profiles:profiles_public!profile_id(first_name, last_name, display_name)')
         .eq('id', orchardId)
         .single()
       setSeed(data)

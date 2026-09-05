@@ -191,7 +191,7 @@ export default function SowerLibraryPage() {
       const sowerMap = new Map((sowerRows || []).map((s: any) => [s.id, s]));
       const userIds = [...new Set((sowerRows || []).map((s: any) => s.user_id).filter(Boolean))];
       const { data: profs } = userIds.length
-        ? await supabase.from('profiles').select('id, username, display_name, first_name, last_name').in('id', userIds)
+        ? await supabase.from('profiles_public').select('id, username, display_name, first_name, last_name').in('id', userIds)
         : { data: [] };
       const profMap = new Map((profs || []).map((p: any) => [p.id, p]));
 

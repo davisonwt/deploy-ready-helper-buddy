@@ -57,15 +57,19 @@ export function RadioModerationPanel({
     try {
       const { data, error } = await supabase
         .from('radio_djs')
-        .select(`
-          *,
-          profiles:user_id (display_name, avatar_url)
-        `)
+        .select('*')
         .eq('is_active', true)
         .order('dj_name')
 
       if (error) throw error
-      setAvailableDJs(data || [])
+      // radio_djs.user_id has no foreign key to profiles; attach the public
+      // profile rows (profiles_public) separately under the same `profiles` key.
+      const ids = [...new Set((data || []).map((d) => d.user_id).filter(Boolean))]
+      const { data: profiles } = ids.length
+        ? await supabase.from('profiles_public').select('user_id, display_name, avatar_url').in('user_id', ids)
+        : { data: [] }
+      const byUser = new Map((profiles || []).map((p) => [p.user_id, p]))
+      setAvailableDJs((data || []).map((d) => ({ ...d, profiles: byUser.get(d.user_id) ?? null })))
     } catch (error) {
       console.error('Error fetching DJs:', error)
     }

@@ -33,7 +33,7 @@ export default function VideoComments({ videoId }: VideoCommentsProps) {
         .from('video_comments')
         .select(`
           *,
-          profiles!inner(
+          profiles:profiles_public!inner(
             display_name,
             avatar_url
           )

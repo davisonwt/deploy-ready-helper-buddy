@@ -36,7 +36,7 @@ export function BirthdayCelebration({ onCountChange, className }: Props) {
 
   const m = members[idx];
   const initial = (m.first_name || m.display_name || '?').charAt(0).toUpperCase();
-  const dayBorn = dayCreatedLabel(m.date_of_birth);
+  const dayBorn = m.date_of_birth ? dayCreatedLabel(m.date_of_birth) : null; // profiles_public never exposes the full date
 
   return (
     <div className={cn('relative w-full overflow-hidden', className)}>

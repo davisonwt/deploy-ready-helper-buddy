@@ -7,8 +7,8 @@ export interface BirthdayMember {
   first_name: string | null;
   last_name: string | null;
   avatar_url: string | null;
-  date_of_birth: string; // YYYY-MM-DD
-  age: number | null;
+  date_of_birth: string | null; // always null: profiles_public exposes only birthday_month/day
+  age: number | null; // always null for the same reason
 }
 
 const dayNames = ['Sun-day', 'Mon-day', 'Tues-day', 'Wednes-day', 'Thurs-day', 'Fri-day', 'Satur-day'];
@@ -27,14 +27,15 @@ export function useBirthdaysToday() {
     let alive = true;
     (async () => {
       const today = new Date();
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const dd = String(today.getDate()).padStart(2, '0');
 
+      // profiles_public exposes birthday_month/birthday_day only when the
+      // member ticked show_birthday; date_of_birth itself never leaves the
+      // locked profiles table.
       const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, first_name, last_name, avatar_url, date_of_birth, show_birthday')
-        .not('date_of_birth', 'is', null)
-        .eq('show_birthday', true);
+        .from('profiles_public')
+        .select('user_id, display_name, first_name, last_name, avatar_url, birthday_month, birthday_day')
+        .eq('birthday_month', today.getMonth() + 1)
+        .eq('birthday_day', today.getDate());
 
       if (!alive) return;
       if (error || !data) {
@@ -43,25 +44,15 @@ export function useBirthdaysToday() {
         return;
       }
 
-      const matches: BirthdayMember[] = data
-        .filter((p: any) => {
-          if (!p.date_of_birth) return false;
-          const [, m, d] = p.date_of_birth.split('-');
-          return m === mm && d === dd;
-        })
-        .map((p: any) => {
-          const [y] = p.date_of_birth.split('-').map(Number);
-          const age = y ? today.getFullYear() - y : null;
-          return {
-            user_id: p.user_id,
-            display_name: p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Tribe member',
-            first_name: p.first_name,
-            last_name: p.last_name,
-            avatar_url: p.avatar_url,
-            date_of_birth: p.date_of_birth,
-            age,
-          };
-        });
+      const matches: BirthdayMember[] = data.map((p: any) => ({
+        user_id: p.user_id,
+        display_name: p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Tribe member',
+        first_name: p.first_name,
+        last_name: p.last_name,
+        avatar_url: p.avatar_url,
+        date_of_birth: null,
+        age: null,
+      }));
 
       setMembers(matches);
       setLoading(false);

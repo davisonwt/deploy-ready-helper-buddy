@@ -59,7 +59,7 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
         if (msgData && msgData.length > 0) {
           const senderIds = [...new Set(msgData.map(m => m.sender_id).filter(Boolean))];
           const { data: profiles } = await supabase
-            .from('profiles')
+            .from('profiles_public')
             .select('user_id, display_name, avatar_url')
             .in('user_id', senderIds);
 
@@ -92,7 +92,7 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
         },
         async (payload) => {
           const { data: profile } = await supabase
-            .from('profiles')
+            .from('profiles_public')
             .select('user_id, display_name, avatar_url')
             .eq('user_id', payload.new.sender_id)
             .single();
@@ -120,7 +120,7 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
           .from('chat_participants')
           .select(`
             user_id,
-            profiles(user_id, display_name, avatar_url)
+            profiles:profiles_public!profile_id(user_id, display_name, avatar_url)
           `)
           .eq('room_id', room.id)
           .eq('is_active', true);

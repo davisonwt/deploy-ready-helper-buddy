@@ -40,7 +40,7 @@ export default function OrchardVideoManager({ orchard }) {
         .from('community_videos')
         .select(`
           *,
-          profiles (
+          profiles:profiles_public (
             display_name,
             first_name,
             last_name,
