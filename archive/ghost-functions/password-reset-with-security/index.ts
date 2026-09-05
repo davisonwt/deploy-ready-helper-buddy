@@ -1,0 +1,221 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimiter.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-my-custom-header, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Max-Age": "86400",
+};
+
+// Hash function matching the client-side implementation
+async function hashAnswer(answer: string): Promise<string> {
+  const normalized = answer.trim().toLowerCase();
+  const encoder = new TextEncoder();
+  const data = encoder.encode(normalized);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** Extract client IP for rate limiting */
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  return forwarded ? forwarded.split(",")[0].trim() : "unknown";
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { action, email, identifier, answer1, answer2, answer3, newPassword } = await req.json();
+
+    // Support both legacy "email" field and new "identifier" (username or email)
+    const lookupValue = (identifier || email || "").trim().toLowerCase();
+    const isEmail = lookupValue.includes("@");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const clientIp = getClientIp(req);
+    const rateLimitIdentifier = `pw_reset:${lookupValue || clientIp}`;
+
+    // Action: get-questions - Returns security questions for an email
+    if (action === "get-questions") {
+      if (!lookupValue) {
+        return new Response(
+          JSON.stringify({ error: "Username or email is required" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Rate limit question lookups: 10 per 15 min per email/IP
+      const allowed = await checkRateLimit(supabase, rateLimitIdentifier, "pw_reset_questions", 10, 15, true);
+      if (!allowed) {
+        return createRateLimitResponse(900);
+      }
+
+      // Look up user via profiles table by email or username
+      let profileData: { user_id: string } | null = null;
+      if (isEmail) {
+        const { data } = await supabase.from("profiles").select("user_id").ilike("email", lookupValue).maybeSingle();
+        profileData = data;
+      } else {
+        const { data } = await supabase.from("profiles").select("user_id").ilike("username", lookupValue).maybeSingle();
+        profileData = data;
+      }
+
+      let questions: { question_1: string; question_2: string; question_3: string } | null = null;
+
+      if (profileData?.user_id) {
+        const { data: securityData } = await supabase
+          .from("user_security_questions")
+          .select("question_1, question_2, question_3")
+          .eq("user_id", profileData.user_id)
+          .maybeSingle();
+
+        if (securityData) {
+          questions = {
+            question_1: securityData.question_1,
+            question_2: securityData.question_2,
+            question_3: securityData.question_3,
+          };
+        }
+      }
+
+      // Return identical structure whether user exists or not
+      if (!questions) {
+        return new Response(
+          JSON.stringify({
+            error: "If an account exists with this username/email and has security questions configured, they will be shown. Please verify your details.",
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          questions,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Action: verify-and-reset - Verify answers and reset password
+    if (action === "verify-and-reset") {
+      if (!lookupValue || !answer1 || !answer2 || !answer3 || !newPassword) {
+        return new Response(
+          JSON.stringify({ error: "All fields are required" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (newPassword.length < 8) {
+        return new Response(
+          JSON.stringify({ error: "Password must be at least 8 characters" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Rate limit: 5 verification attempts per 15 min per email (brute-force protection)
+      const allowed = await checkRateLimit(supabase, rateLimitIdentifier, "pw_reset_verify", 5, 15, true);
+      if (!allowed) {
+        console.log(`Rate limit exceeded for password reset verification: ${email}`);
+        return createRateLimitResponse(900);
+      }
+
+      // Look up user via profiles table by email or username
+      let profileData: { user_id: string } | null = null;
+      if (isEmail) {
+        const { data } = await supabase.from("profiles").select("user_id").ilike("email", lookupValue).maybeSingle();
+        profileData = data;
+      } else {
+        const { data } = await supabase.from("profiles").select("user_id").ilike("username", lookupValue).maybeSingle();
+        profileData = data;
+      }
+      
+      if (!profileData?.user_id) {
+        // Return same error as incorrect answers to prevent enumeration
+        return new Response(
+          JSON.stringify({ error: "One or more security answers are incorrect. Please try again." }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Get stored security questions and hashed answers
+      const { data: securityData, error: securityError } = await supabase
+        .from("user_security_questions")
+        .select("*")
+        .eq("user_id", profileData.user_id)
+        .maybeSingle();
+
+      if (securityError || !securityData) {
+        return new Response(
+          JSON.stringify({ error: "One or more security answers are incorrect. Please try again." }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Hash provided answers and compare
+      const [hash1, hash2, hash3] = await Promise.all([
+        hashAnswer(answer1),
+        hashAnswer(answer2),
+        hashAnswer(answer3)
+      ]);
+
+      const allCorrect = 
+        hash1 === securityData.answer_1_hash &&
+        hash2 === securityData.answer_2_hash &&
+        hash3 === securityData.answer_3_hash;
+
+      if (!allCorrect) {
+        console.log(`Failed password reset attempt for ${lookupValue}: incorrect security answers`);
+        return new Response(
+          JSON.stringify({ error: "One or more security answers are incorrect. Please try again." }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // All answers correct - reset the password
+      const { error: updateError } = await supabase.auth.admin.updateUserById(
+        profileData.user_id,
+        { password: newPassword }
+      );
+
+      if (updateError) {
+        console.error("Error updating password:", updateError);
+        return new Response(
+          JSON.stringify({ error: "Failed to update password. Please try again." }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log(`Password successfully reset for ${lookupValue} via security questions`);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: "Password has been reset successfully. You can now log in with your new password." 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ error: "Invalid action" }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
+  } catch (error) {
+    console.error("Password reset error:", error);
+    return new Response(
+      JSON.stringify({ error: "An unexpected error occurred" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
