@@ -278,6 +278,8 @@ Optional later, unchanged states: a sweep job that moves `held` USDC from the ho
 
 ### Phase A status (2026-09-05)
 
+**Live as of 2026-09-05 evening.** Migration A1 applied server-side (`npx supabase db query --linked -f`), proof row clean; guard tests `scripts/studio/phase-a-rpc-guard-tests.sql` 9/9 pass (rolled back); all 14 functions deployed; `tests/payments/orchard-holdings.spec.ts` passes against the live backend and created the "Phase A test orchard" `55f4e02e-32fe-4013-aa7b-4eff6da77d37` (sower = test account A, 10 x 10 USDC, physical). **Not yet done: the live devnet pocket test** (one pocket via Phantom on devnet, then proofs on holdings / filled_pockets / no ledger credit / treasury). Cluster is mainnet-beta.
+
 Built. Step 0 (`scripts/studio/phase-a-step0.sql`) found **no** orchard with completed pocket bestowals, no pending orchard rows and no ledger credits from orchards, so the backfill in Migration A1 is a no-op today and stays idempotent.
 
 | Piece | Where |

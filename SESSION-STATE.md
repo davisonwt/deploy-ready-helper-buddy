@@ -1,6 +1,211 @@
-# Session State — 2026-09-04
+# Session State — 2026-09-05
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
+
+## Fixed — 2026-09-05 (full audit, P0-1 / P0-3 / P0-4 / P0-5 Phase A, chat and payout-settings bugs)
+
+Read this section first tomorrow. Everything below is committed and
+pushed (last commit `e4e15122`). End-of-day state, verified live at
+~19:35 UTC: `SOLANA_CLUSTER` digest `cbe1afc2…` = **mainnet-beta**,
+`PAYOUT_THRESHOLD_USD` digest `f5ca38f7…` = **20**; 0 bestowals in
+flight in the last 24h, 0 open payouts, 0 orchard holdings, 1 orchard
+(the Phase A test orchard, 0/10), weekly payout cron `payout-earnings-weekly`
+still `0 2 * * 5`. Two pre-existing local modifications
+(`supabase/.temp/cli-latest`, `supabase/functions/mcp/index.ts`) were
+already dirty at session start and were not touched — not mine, left
+uncommitted.
+
+### Devnet payout-rail test and the Louw mainnet check (morning)
+
+- Devnet: `payout-earnings` real run sent 2,000,000 raw devnet USDC
+  (sig `vwHDdF…`, verified via `getTransaction` pre/post token balances)
+  from hot wallet `6zbpF3HQbxFVMfUPMRzZZ52nwA7PSvqeq2Cqibq2BcxZ`. Secrets were
+  flipped devnet→mainnet-beta and threshold 2→20 afterwards and the
+  digests re-verified. **The user runs every credentialed command
+  himself with `!`**; I print one-line commands with a `KEY` placeholder.
+- Louw (`3971cc26`, payout address `414KU8dRj7…`) was in cooling-off
+  (`payout_details_updated_at` 2026-09-04 08:51 UTC) and below the $20
+  threshold, so no mainnet payout went out. Nothing was sent on mainnet
+  today.
+- **Incident (P0-2 in the audit):** a pasted service-role key with
+  line-breaks turned `{"dry_run":true}` into a real run and paid Amber's
+  real earning `02c6b716` on devnet (`payouts` row `f807f91b`). The
+  revert SQL was printed for the user; **whether it was applied is still
+  unverified** — check `earnings`/`payouts` for `02c6b716` / `f807f91b`
+  tomorrow. Root cause fixed as P0-1 below. Operational notes are in
+  memory `project_payout_earnings_ops.md` (apikey-header auth,
+  `K=$(printf %s "…")` wrapper, `-d @dry.json`).
+
+### `AUDIT-2026-09-05.md` (read-only audit, areas 1–11, P0–P3)
+
+Written from a full read of the repo, migrations, deployed function
+list and live probes. P0 items: P0-1 payout body handling, P0-2 Amber's
+devnet-paid row, P0-3 65 ghost functions, P0-4 profiles privacy/starved
+public reads, P0-5 orchard money not held apart, P0-6 service-role key
+exposed (rotation still pending). P0-1, P0-3, P0-4 are fixed below;
+P0-5 Phase A is built and live; P0-2 revert and P0-6 rotation are open.
+
+### P0-1 — `7fe7a639` payout-earnings refuses unreadable bodies, requires `confirm:"send"`
+
+- New `supabase/functions/payout-earnings/runMode.ts`:
+  `parseRunMode()` → `dry` unless the body is exactly `confirm:"send"`
+  and not `dry_run:true`; unreadable/garbage body → **400
+  `invalid_body`** (never a send). Responses carry `dry_run:true|false`.
+  Unit test `src/test/payout-run-mode.test.ts` (8 cases).
+- Migration `20260905120000_payout_earnings_cron_confirm_send.sql`:
+  `invoke_money_job(text, jsonb DEFAULT '{}')` and the weekly cron
+  rescheduled with body `{"confirm":"send"}`. **Applied by the user in
+  Studio, confirmed by CSV.** Live-verified: garbage body → invalid_body,
+  dry run → `dry_run:true`, cluster mainnet-beta, both owed rows
+  `below_minimum`.
+
+### P0-3 — ghost edge functions: 153 deployed → 88, 0 without source
+
+- `a2b8e61a`, `5916968f` (part A): every deployed function with no
+  source in the repo downloaded to `archive/ghost-functions/` (never
+  under `supabase/functions/`), classified in
+  `archive/ghost-functions/INVENTORY.md`.
+- `66475c2b` (part B): 56 deleted after the user's Studio check of live
+  cron/trigger callers; each verified 404.
+- `6664b441`, `1242922b` (parts C/D): migration
+  `20260905150000_remove_ghost_callers.sql` unscheduled 7 cron jobs and
+  dropped the `trigger_video_agent_on_insert` triggers (applied by the
+  user), then the last 8 were deleted. Cron `generate-364ttt-weekly-playlist`
+  could not be unscheduled (owned by `supabase_read_only_user`) — harmless,
+  its function is gone. `-Remnants-Wheel-Calendar` (invalid slug) was
+  deleted by the user in the dashboard.
+
+### P0-4 — `ad1e3694` profiles: `profiles_public` view, 79 readers moved
+
+- Migration `20260905160000_profiles_public_view.sql` (**applied, proof
+  70/1/33**): `public.profiles_public` (`security_invoker=false`) exposes
+  only approved columns; birthday and social URLs are null unless the
+  member's `show_birthday` / `show_social_media` flags allow. SELECT
+  granted to anon/authenticated/service_role. Live RLS on `profiles`
+  stays owner-or-admin.
+- 62 direct reads and 17 joins moved to the view. Joins without an FK
+  (`products.user_id`, `bestowals.bestower_id`, `radio_djs.user_id`,
+  `sowers.user_id`) became two-step fetches; hint-embeds use
+  `profiles:profiles_public!profile_id(...)` etc.
+- `333af6d4` + `.env.test` (gitignored via `.env.*`, never committed):
+  test accounts A `davisontest1@protonmail.com`
+  (`de22c876-d477-4a5e-81a2-cd22091ce125`) and B `davisontest2@protonmail.com`
+  (`a8872ed5-951c-4343-ba05-d4921af18eb2`), both non-admin, no roles.
+  `playwright.config.ts` loads the file. `tests/payments/profiles-public.spec.ts`
+  passes with them (A cannot read B's `profiles` row; the view returns B
+  without private keys; ChatApp New Chat lists other members).
+
+### Chat bugs found live after the P0-4 publish (all fixed, published)
+
+- `0a2800c1`, `76d827b6` — "No users found" in New Chat / Invite:
+  the RPCs `search_user_profiles` / `get_all_user_profiles` are revoked
+  live. New `src/lib/profiles/publicProfileSearch.ts`
+  (`searchPublicProfiles`, `listPublicProfiles` over `profiles_public`)
+  used by CreateRoomModal, InviteModal, UserSelector; invite dialog says
+  "X is already in this chat".
+- `0f688c53`, `1b0e99b9` — Public Rooms "1 members" + "Request to Join"
+  for the creator: a `(count)` embed was read as participant rows, then
+  RLS hid other viewers' rows. Fix: migration
+  `20260905180000_chat_room_member_counts.sql` (SECURITY DEFINER
+  `chat_room_member_counts(uuid[])`, **live**) and `isUserInRoom` =
+  creator or own active row.
+- `12e54b49` — ChatRoom crash "cannot add postgres_changes callbacks …
+  after subscribe()": channels were never cleaned up and supabase-js
+  caches by topic. New `src/lib/chat/roomRealtime.ts`
+  (`subscribeRoomRealtime`: per-run nonce topics, all `.on()` before
+  `.subscribe()`, idempotent cleanup); effect keyed `[roomId, userId]`.
+  Test `src/test/room-realtime.test.ts`.
+
+### `fca68636` — `/settings/payouts` save failed with "non-2xx"
+
+`update-crypto-payout` rethrew a failing `verify_own_security_answer`
+RPC as a generic 500. Now returns 500 with `security_check_unavailable`
+and the real message; `src/lib/payments/invokeFunction.ts`
+(`invokePaymentFunction`) surfaces the server's message on the page.
+Deployed v104. Migration `20260905190000_verify_own_security_answer_grant.sql`
+re-grants EXECUTE to authenticated — **application status unknown, check
+tomorrow** with `has_function_privilege` on that function.
+
+### P0-5 — orchard money. Part A design `b70d1443`, Phase A built `7e39d94f`, live tonight
+
+`ORCHARD-MONEY-PLAN.md` (sections 1–9, "Phase A status" under section
+8) is the design. Phase A = **hold**: pocket money is recorded per
+bestowal in a holdings ledger, the sower is no longer credited before
+funding, nothing is released (Phase B) and nothing refunded (Phase C).
+
+- **Migration A1 `20260905200000_orchard_holdings.sql` — applied live
+  tonight** via `npx supabase db query --linked -f <file>` (Management
+  API, server-side parsing, `postgres` role, whole file = one
+  transaction; no DB password needed). Studio had silently failed on it
+  twice: once from dollar-quote mis-splitting (blocks now tagged
+  `$a1_1$…$a1_5$`) and once from a real bug in the final proof query
+  (nested `sum()` inside `json_agg`, fixed in `e4e15122`). Proof row:
+  0 holdings, 0 orchard bestowals still credited, dead
+  `update_orchard_filled_pockets` gone, grants correct
+  (`orchard_funding_status` → authenticated; `orchard_apply_holding` →
+  service_role only), test orchard 0/10 target 100.
+  Contents: `bestowals.pocket_type` (bestowal|gift) + `delivery_address`
+  jsonb; `orchard_holdings` (one per bestowal, gross/sower/s2g split,
+  rail, location, status held|released|refund_pending|refunded, RLS own
+  or admin/gosat, no client writes); `orchard_events`;
+  `orchard_funding_status(uuid)` (target = total_pockets × pocket_price);
+  recount trigger keeping `orchards.filled_pockets` = held+released
+  pockets; `orchard_apply_holding(uuid)` (idempotent, sets
+  `payout_status='held_for_orchard'`); `credit_earning_for_gift_bestowal`
+  returns early for orchard rows and is gated by `s2g_balance_enabled`.
+- **Guard tests `scripts/studio/phase-a-rpc-guard-tests.sql` — 9/9
+  pass**, run the same server-side way (BEGIN…ROLLBACK; verified
+  nothing persisted and `trigger_auto_generate_premium_room` is enabled
+  again). Case 4's fixture needed `context_kind='chat_tip'` because of
+  `bestowals_orchard_or_context_check`.
+- Code (all 14 functions deployed ~19:15 UTC, verify_jwt false):
+  `_shared/orchardHolding.ts` + client twin `src/lib/orchards/pocketRules.ts`
+  (funding, split, address rules; drift test `src/test/orchard-holding.test.ts`,
+  15 tests); `_shared/paypal/capture.ts` `finalizeBestowal` → holding
+  for orchard rows; `create-orchard-bestowal-order` v27 takes
+  `pocketType`/`deliveryAddress`, refuses over-funding; `sweep-hot-wallet`
+  v41 sweepable = balance − held − ceiling and fails safe (500
+  `holdings_unreadable`); `treasury-balances` v112 + `GosatTreasuryPage`
+  "Held for orchards"; `QuickBestowModal` pocket kind + address form
+  (testids `pocket-kind-*`, `addr-*`, `bestow-submit`);
+  `OrchardPaymentWidget.jsx` real bestow button; `OrchardPage.jsx`
+  progress from `orchard_funding_status`. Other deployed versions:
+  capture-paypal-order v91, check-solana-payment v33,
+  create-basket-bestowal-order v125, create-content-purchase-order v111,
+  create-gift-bestowal-order v112, create-solana-bestowal-order v32,
+  create-wallet-topup v119, paypal-webhook v200, reconcile-paypal-orders
+  v73, sentinel v35, sweep-solana-payments v33.
+- **Playwright `tests/payments/orchard-holdings.spec.ts` passes** (21s)
+  against the live backend as A. It created the real row **"Phase A test
+  orchard" `55f4e02e-32fe-4013-aa7b-4eff6da77d37`** (sower A, 10 pockets ×
+  10 USDC, physical, active) — the target for the devnet pocket test.
+  Safe to cancel afterwards.
+- `scripts/studio/` is the new convention: **every Studio query for the
+  user is saved there and the path given** (memory
+  `feedback_studio_queries.md`). `phase-a-step0.sql` (live counts: 0
+  orchards with money, so the backfill was a no-op),
+  `phase-a-a1-proof.sql`, `phase-a-rpc-guard-tests.sql`,
+  `run-sql-file.mjs` (node pg runner; superseded by `db query --linked -f`).
+- Frontend: the chat/payout fixes were published by the user during the
+  day; **confirm the Phase A frontend (orchard page, bestow dialog) is
+  published before the devnet test.**
+
+### Next step tomorrow — the live devnet pocket test (Phase A Step 3), NOT started
+
+1. User flips: `! npx supabase secrets set SOLANA_CLUSTER=devnet --project-ref zuwkgasbkpjlxzsjzumu`
+   (and, only if a payout run is wanted, `PAYOUT_THRESHOLD_USD=2`).
+2. As A, on `/orchard/55f4e02e-32fe-4013-aa7b-4eff6da77d37`, bestow one
+   "claim a unit" pocket (address required) with Phantom on devnet.
+3. Proofs (I write the query to `scripts/studio/phase-a-devnet-proof.sql`):
+   one `orchard_holdings` row `held`, rail solana, `rail_reference` =
+   signature, `payer_address` set; `orchards.filled_pockets` = 1;
+   `orchard_funding_status` 10/100 held; **no** `balance_ledger` credit for
+   the sower; `bestowals.payout_status = 'held_for_orchard'`; treasury
+   "Held for orchards" = 10; page shows 10% / 1 / 10.
+4. User flips back: `! npx supabase secrets set SOLANA_CLUSTER=mainnet-beta --project-ref zuwkgasbkpjlxzsjzumu`,
+   re-verify digest `cbe1afc2…`.
+5. Update "Phase A status" in `ORCHARD-MONEY-PLAN.md`, then Phase B
+   (release on funded) per the plan's build order.
 
 ## Fixed — last session (2026-08-27)
 
@@ -2460,6 +2665,25 @@ itself. All 8 checks live, hourly via `invoke_money_job` (cron
   zuwkgasbkpjlxzsjzumu`) is recorded here for re-deploys.
 
 ## Open — priority order
+
+**Added 2026-09-05 (on top of the older list below, which is otherwise unchanged):**
+
+0. **Devnet pocket test for P0-5 Phase A** — the final proof, see the
+   2026-09-05 section's "Next step tomorrow". Until then no orchard
+   bestowal should be made on mainnet: the finalize path is live and
+   untested end-to-end (unit, SQL fixture and Playwright proofs pass).
+0a. **P0-2 Amber revert** — confirm the printed revert for `02c6b716` /
+   payouts `f807f91b` was applied (unverified).
+0b. **P0-6 service-role key rotation** — the key was pasted into the
+   terminal several times today; rotate it in the dashboard, then
+   `supabase secrets` and Lovable's stored value follow.
+0c. Migration `20260905190000_verify_own_security_answer_grant.sql` —
+   application status unknown; verify, else run it (server-side route
+   works: `npx supabase db query --linked -f <file>`).
+0d. After the devnet test: cancel or keep the "Phase A test orchard"
+   `55f4e02e…`; then P0-5 Phase B (release) and Phase C (cancel/refund).
+0e. Audit P1–P3 items in `AUDIT-2026-09-05.md` are not yet triaged into
+   this list.
 
 Every item below is current as of 2026-09-02 end of day. Everything from
 the 2026-08-27 → 2026-09-01 handoffs that got resolved along the way is
