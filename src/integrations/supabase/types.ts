@@ -15183,6 +15183,10 @@ export type Database = {
         Returns: boolean
       }
       is_marketplace_admin: { Args: { _uid: string }; Returns: boolean }
+      chat_room_member_counts: {
+        Args: { _room_ids: string[] }
+        Returns: { room_id: string; member_count: number }[]
+      }
       is_member_of_chat: {
         Args: { _room_id: string; _user_id?: string }
         Returns: boolean

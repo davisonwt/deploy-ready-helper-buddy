@@ -70,15 +70,25 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
         .from('chat_rooms')
         .select(`
           *,
-          members:chat_participants(user_id, is_active),
-          member_count:chat_participants(count)
+          members:chat_participants(user_id, is_active)
         `)
         .eq('is_premium', false)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPublicRooms(data || []);
+      const rooms = data || [];
+
+      // True member counts. RLS on chat_participants shows a non-creator only
+      // their own row, so any client-side count is a lower bound; the
+      // SECURITY DEFINER chat_room_member_counts() counts as owner.
+      const ids = rooms.map((r) => r.id);
+      const { data: counts, error: countsError } = ids.length
+        ? await supabase.rpc('chat_room_member_counts', { _room_ids: ids })
+        : { data: [], error: null };
+      if (countsError) console.error('Error loading room member counts:', countsError);
+      const countById = new Map((counts || []).map((c) => [c.room_id, Number(c.member_count)]));
+      setPublicRooms(rooms.map((r) => ({ ...r, member_count: countById.get(r.id) })));
     } catch (error) {
       console.error('Error fetching public rooms:', error);
       toast({
@@ -210,11 +220,11 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
     return (room.members || []).some(p => p.user_id === currentUser.id && p.is_active);
   };
 
-  // RLS lets a non-creator see only their own participant row, so for them
-  // this is a lower bound; the creator and gosats see the full count.
+  // member_count comes from chat_room_member_counts() (owner-side count,
+  // correct for every viewer). Falls back to the rows this viewer can see
+  // only if that call failed.
   const memberCount = (room) => {
-    const counted = room.member_count?.[0]?.count;
-    if (typeof counted === 'number') return counted;
+    if (typeof room.member_count === 'number') return room.member_count;
     return (room.members || []).filter(p => p.is_active).length;
   };
 
