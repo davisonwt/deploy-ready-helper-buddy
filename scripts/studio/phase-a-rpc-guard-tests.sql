@@ -3,7 +3,7 @@
 -- BEGIN ... ROLLBACK; nothing persists. Run the whole file in one Studio
 -- session and read the final SELECT: every row must say pass = true.
 --
--- Self-contained: builds its own temporary orchard (10 pockets x $10) with
+-- Self-contained: builds its own temporary orchard (10 pockets x 10 USDC) with
 -- test account A as sower, so it runs on an empty database. To get past
 -- the BEFORE INSERT settlement-consent gate it inserts a consent row for A
 -- at the current version; that row is rolled back with everything else.
@@ -29,7 +29,7 @@ ALTER TABLE public.orchards DISABLE TRIGGER trigger_auto_generate_premium_room;
 
 CREATE TEMP TABLE test_results (name text, pass boolean, detail text) ON COMMIT DROP;
 
-DO $$
+DO $phase_a$
 DECLARE
   v_user      uuid := 'de22c876-d477-4a5e-81a2-cd22091ce125'; -- test account A (sower AND bestower here)
   v_profile   uuid;
@@ -62,7 +62,7 @@ BEGIN
           'general', v_user, v_profile, 100, 100, 10, 'active', 'USDC')
   RETURNING id INTO v_orchard;
   SELECT * INTO v_o FROM public.orchards WHERE id = v_orchard;
-  INSERT INTO test_results VALUES ('0. fixture orchard: 10 pockets x $10', v_o.total_pockets = 10 AND v_o.pocket_price = 10,
+  INSERT INTO test_results VALUES ('0. fixture orchard: 10 pockets x 10 USDC', v_o.total_pockets = 10 AND v_o.pocket_price = 10,
                                    format('total_pockets=%s pocket_price=%s filled=%s', v_o.total_pockets, v_o.pocket_price, v_o.filled_pockets));
 
   -- A completed orchard pocket bestowal (2 pockets), as create-orchard-bestowal-order + finalize would leave it.
@@ -133,7 +133,7 @@ BEGIN
       AND (SELECT count(*) FROM public.balance_ledger WHERE reference_table = 'bestowals' AND reference_id IN (v_b, v_b2)) = 0,
       format('held=%s pockets=%s/%s funded=%s filled=%s', v_funding.held_total, v_funding.pockets_held, v_funding.pockets_total, v_funding.funded, v_filled));
 END;
-$$;
+$phase_a$;
 
 SELECT * FROM test_results ORDER BY name;
 
