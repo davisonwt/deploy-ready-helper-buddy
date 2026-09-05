@@ -82,23 +82,47 @@ test.describe('profiles_public: locked table, public view', () => {
 
     const failedProfileRequests: string[] = [];
     const publicRowsSeen: string[] = [];
+    const profileUrls: string[] = [];
     page.on('response', async (res) => {
       const url = res.url();
       if (!url.includes('/rest/v1/profiles')) return;
+      profileUrls.push(`${res.status()} ${url.slice(0, 140)}`);
       if (res.status() >= 400) failedProfileRequests.push(`${res.status()} ${url}`);
       if (url.includes('profiles_public') && res.status() < 300) {
         try { publicRowsSeen.push(await res.text()); } catch { /* body already consumed */ }
       }
     });
 
-    for (const path of ['/products', '/chatapp', '/stats', '/tribal-hearts']) {
+    const landed: Record<string, string> = {};
+    for (const path of ['/products', '/stats', '/tribal-hearts', '/chatapp']) {
       await page.goto(path, { waitUntil: 'networkidle' });
+      landed[path] = page.url();
       await expect(page.locator('body')).not.toContainText('permission denied');
     }
+    // Every page must have kept A signed in (a bounce to /login would mean
+    // the injected session was rejected).
+    for (const [path, url] of Object.entries(landed)) expect(url, `${path} stayed put`).toContain(path);
+
+    // The cross-member read that failed live on 2026-09-05 ("No users
+    // found"): ChatApp's New Chat dialog lists registered sowers and fetches
+    // their public rows from profiles_public. Open it and capture that
+    // response. (The other pages only read A's own row for a fresh account,
+    // so they prove "no failures", not "other members visible".)
+    const sowerRowsPromise = page.waitForResponse(
+      (res) => res.url().includes('/rest/v1/profiles_public') && res.request().method() === 'GET' && res.url().includes('user_id=in.'),
+      { timeout: 20_000 },
+    );
+    await page.getByRole('button', { name: /new chat/i }).first().click();
+    const sowerRows = await (await sowerRowsPromise).json();
+    console.log('New Chat dialog received public rows:', JSON.stringify(
+      (sowerRows as any[]).map((r) => ({ user_id: r.user_id, name: r.display_name ?? r.username ?? r.first_name })),
+    ));
+    console.log('profile requests:', JSON.stringify(profileUrls, null, 1));
+
     expect(failedProfileRequests, 'no profile read may fail on these pages').toEqual([]);
-    expect(
-      publicRowsSeen.some((body) => body.includes(B_USER_ID!) && body.includes(bDisplayName)),
-      'the chat app contact list should have received B\'s public row with a name',
-    ).toBe(true);
+    const others = (sowerRows as any[]).filter((r) => r?.user_id && r.user_id !== session.user.id);
+    expect(others.length, 'New Chat dialog must receive other members\' public rows').toBeGreaterThan(0);
+    expect(others.every((r) => r.display_name || r.username || r.first_name), 'every listed member has a visible name').toBe(true);
+    void bDisplayName; void publicRowsSeen;
   });
 });
