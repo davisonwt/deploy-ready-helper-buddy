@@ -19,7 +19,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { searchPublicProfiles } from '@/lib/profiles/publicProfileSearch';
 import { 
   Search, 
