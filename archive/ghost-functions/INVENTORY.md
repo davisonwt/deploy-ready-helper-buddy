@@ -135,3 +135,37 @@ SELECT id, hook_table_id, hook_name, request_id FROM supabase_functions.hooks OR
 
 If any output names a ghost, move that ghost from DELETE/HOLD to KEEP and
 record the object here before part B.
+
+## Part B outcome (2026-09-05, on the owner's go)
+
+Studio results (cron.job, pg_proc bodies, triggers) named eight ghosts, all
+moved to KEEP:
+
+| KEEP | Live reference |
+|---|---|
+| generate-weekly-playlist | cron job `generate-364ttt-weekly-playlist` |
+| poll-video-jobs | cron job `poll-video-jobs-every-minute` |
+| linux-family-cron | cron job `linux-family-hourly` |
+| agent-debian-collab-cron | cron job `debian-collab-dm-dispatch` |
+| agent-debian-event-scheduler | cron job `debian-event-scheduler-weekly` |
+| agent-gentoo-mentorship-matcher | cron job `gentoo-mentorship-nightly` |
+| elder-council-rotation | cron job `weekly-elder-council-rotation` |
+| trigger-video-agent | SQL function `public.trigger_video_agent_on_insert` |
+
+All seven cron jobs above call their function with the project's **anon**
+key as the bearer token, and an unauthenticated POST with `{}` returned
+200 from poll-video-jobs, linux-family-cron, agent-debian-event-scheduler
+and elder-council-rotation during the post-deletion probe. They are
+reachable by anyone and act on a service-role client. Worth a part C:
+either route them through `invoke_money_job` (CRON_SECRET) and add a
+caller check, or unschedule and delete them too.
+
+| | Before | After |
+|---|---|---|
+| Deployed | 153 | 97 |
+| Local | 88 | 88 |
+| Ghosts | 65 | 9 (8 KEEP + `-Remnants-Wheel-Calendar`) |
+
+56 deleted via `supabase functions delete`, each confirmed returning 404 on
+POST. `-Remnants-Wheel-Calendar` cannot be addressed by the CLI (invalid
+slug) and must be deleted in the dashboard; it currently answers 401.
