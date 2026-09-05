@@ -109,9 +109,10 @@ BEGIN
       format('target=%s held=%s pockets=%s/%s funded=%s', v_funding.target, v_funding.held_total, v_funding.pockets_held, v_funding.pockets_total, v_funding.funded));
 
   -- Case 4: a plain gift (no orchard) gets no holding.
+  -- (a non-orchard row must carry a context_kind: bestowals_orchard_or_context_check)
   INSERT INTO public.bestowals (orchard_id, bestower_id, amount, currency, pockets_count, payment_method, payment_status,
-                                provider, base_amount, buyer_total_amount, payout_status)
-  VALUES (NULL, v_user, 5, 'USDC', 1, 'solana', 'completed', 'solana', 5, 5, 'pending')
+                                provider, base_amount, buyer_total_amount, payout_status, context_kind, context_id)
+  VALUES (NULL, v_user, 5, 'USDC', 1, 'solana', 'completed', 'solana', 5, 5, 'pending', 'chat_tip', gen_random_uuid())
   RETURNING id INTO v_gift;
   INSERT INTO test_results VALUES ('4. non-orchard gift: no holding', public.orchard_apply_holding(v_gift) IS NULL
       AND NOT EXISTS (SELECT 1 FROM public.orchard_holdings WHERE bestowal_id = v_gift), 'null + no row');

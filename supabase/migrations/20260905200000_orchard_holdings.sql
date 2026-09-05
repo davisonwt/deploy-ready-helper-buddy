@@ -335,7 +335,7 @@ SELECT json_build_object(
   ),
   'holdings', (SELECT json_build_object('rows', count(*), 'held_total', round(COALESCE(sum(gross_amount), 0), 2)) FROM public.orchard_holdings WHERE status = 'held'),
   'reversed_credits_per_sower', (
-    SELECT COALESCE(json_agg(json_build_object('user_id', user_id, 'reversed', round(sum(amount), 2))), '[]'::json)
+    SELECT COALESCE(json_agg(json_build_object('user_id', user_id, 'reversed', round(amount, 2))), '[]'::json)
     FROM (SELECT user_id, sum(amount) AS amount FROM public.balance_ledger
           WHERE reference_table = 'orchard_holdings' AND kind = 'adjustment' GROUP BY user_id) s
   ),
