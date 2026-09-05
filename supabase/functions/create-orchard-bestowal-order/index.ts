@@ -21,12 +21,20 @@ import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
 import { finalizeCompletedOrder } from "../_shared/paypal/capture.ts";
 import { isS2GBalanceEnabled } from "../_shared/featureFlags.ts";
 import { hasAcceptedSettlementConsent } from "../_shared/settlementConsent.ts";
+import { normalizeDeliveryAddress, validatePocketRequest, type DeliveryAddress, type PocketType } from "../_shared/orchardHolding.ts";
 
 interface RequestPayload {
   orchardId: string;
   pocketsCount: number;
   provider: "balance" | "solana" | "paypal";
   message?: string;
+  /**
+   * P0-5 Phase A. 'bestowal' (default) claims a unit and, on a physical
+   * orchard, must carry a delivery address; 'gift' funds a unit that goes
+   * to the sower as stock and must NOT carry one.
+   */
+  pocketType?: PocketType;
+  deliveryAddress?: DeliveryAddress | null;
   /** Accepted but ignored — see create-paypal-order's identical note. */
   growerId?: string | null;
   redirectBaseUrl?: string;
@@ -91,6 +99,30 @@ Deno.serve(async (req) => {
     if (orchardError || !orchard) return json({ error: "orchard_not_found" }, 404);
     if (orchard.status !== "active") return json({ error: "orchard_inactive" }, 400);
 
+    // --- Pocket kind + delivery address (P0-5 Phase A) ------------------------
+    const pocketType: PocketType = (payload.pocketType ?? "bestowal") as PocketType;
+    const pocketProblem = validatePocketRequest({
+      pocketType: payload.pocketType,
+      deliveryAddress: payload.deliveryAddress ?? undefined,
+      productType: (orchard.product_type as string | null) ?? "physical",
+    });
+    if (pocketProblem) {
+      const [code, detail] = pocketProblem.split(": ");
+      return json({ error: code, detail: detail ?? null }, 400);
+    }
+    const deliveryAddress = payload.deliveryAddress ? normalizeDeliveryAddress(payload.deliveryAddress) : null;
+
+    // --- Remaining pockets: never sell past the target (all-or-nothing) ----
+    const { data: funding } = await service.rpc("orchard_funding_status", { _orchard_id: orchard.id });
+    const fundingRow = Array.isArray(funding) ? funding[0] : funding;
+    if (fundingRow) {
+      const remaining = Math.max(0, Number(fundingRow.pockets_total ?? 0) - Number(fundingRow.pockets_held ?? 0));
+      if (fundingRow.funded || remaining <= 0) return json({ error: "orchard_fully_funded" }, 409);
+      if (payload.pocketsCount > remaining) {
+        return json({ error: "too_many_pockets", remaining }, 409);
+      }
+    }
+
     // Settlement consent: block a sale on an orchard whose owner hasn't
     // accepted yet -- new orchards are already blocked at creation by a DB
     // trigger; this is the "first sale" half for anything pre-existing.
@@ -146,6 +178,8 @@ Deno.serve(async (req) => {
         amount: buyerTotal,
         currency,
         pockets_count: payload.pocketsCount,
+        pocket_type: pocketType,
+        delivery_address: deliveryAddress,
         message: payload.message ?? null,
         payment_method: payload.provider,
         payment_status: "pending",

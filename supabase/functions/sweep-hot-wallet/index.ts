@@ -120,15 +120,34 @@ Deno.serve(async (req) => {
     const cluster = getSolanaCluster();
     const balance = await getHotWalletUsdcBalance(sender, cluster);
 
-    if (balance <= HOT_WALLET_CEILING_USD) {
+    // P0-5 Phase A: USDC held for orchards (orchard_holdings, status held,
+    // still physically in this wallet) is bestowers' money, not S2G's. It is
+    // subtracted before the ceiling test so it can never be swept to the
+    // Squad vault:  sweepable = balance - held_for_orchards - ceiling.
+    const { data: heldRows, error: heldErr } = await admin
+      .from("orchard_holdings")
+      .select("gross_amount")
+      .eq("status", "held")
+      .eq("rail", "solana")
+      .eq("location", "hot_wallet");
+    if (heldErr) {
+      console.error("sweep-hot-wallet: could not read orchard holdings — refusing to sweep:", heldErr.message);
+      return json({ error: "holdings_unreadable", detail: heldErr.message }, 500);
+    }
+    const heldForOrchards = Math.round(
+      (heldRows ?? []).reduce((s: number, r: any) => s + Number(r.gross_amount || 0), 0) * 100,
+    ) / 100;
+    const sweepable = Math.round((balance - heldForOrchards - HOT_WALLET_CEILING_USD) * 100) / 100;
+
+    if (sweepable <= 0) {
       return json({
         success: true, swept: false, reason: "under_ceiling",
-        balance, ceiling: HOT_WALLET_CEILING_USD, cluster,
+        balance, heldForOrchards, ceiling: HOT_WALLET_CEILING_USD, cluster,
       });
     }
 
-    const excess = Math.round((balance - HOT_WALLET_CEILING_USD) * 100) / 100;
-    console.log(`sweep-hot-wallet: balance ${balance} USDC exceeds ceiling ${HOT_WALLET_CEILING_USD} — sweeping ${excess} to Squad ${squadVaultAddress}`);
+    const excess = sweepable;
+    console.log(`sweep-hot-wallet: balance ${balance} USDC minus ${heldForOrchards} held for orchards exceeds ceiling ${HOT_WALLET_CEILING_USD} — sweeping ${excess} to Squad ${squadVaultAddress}`);
 
     try {
       const { signature } = await sendUsdcPayout(sender, squadVaultAddress, excess);

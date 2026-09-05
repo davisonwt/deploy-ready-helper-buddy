@@ -199,7 +199,19 @@ Deno.serve(async (req) => {
       .reduce((acc, b) => acc + b.total, 0);
     const custodyTotalUsd = npUsdLike + ppUsd;
     const reservedTotal = reservedAvailable + reservedPending;
-    const platformNetUsd = custodyTotalUsd - reservedTotal;
+
+    // ---- Held for orchards (P0-5 Phase A) ----
+    // Bestowers' pocket money sitting in the hot wallet / PayPal balance
+    // until the orchard funds. A liability, shown as its own line (spec-
+    // payments.md section 9), never merged into "reserved for sowers".
+    const { data: heldRows } = await service
+      .from("orchard_holdings")
+      .select("gross_amount, orchard_id")
+      .eq("status", "held");
+    const heldForOrchardsUsd = (heldRows ?? []).reduce((s: number, r: any) => s + Number(r.gross_amount || 0), 0);
+    const heldOrchardCount = new Set((heldRows ?? []).map((r: any) => r.orchard_id)).size;
+
+    const platformNetUsd = custodyTotalUsd - reservedTotal - heldForOrchardsUsd;
 
     // ---- Organization wallets (main + tithing) with live Solana balances ----
     const orgWallets: OrgWalletBalance[] = [];

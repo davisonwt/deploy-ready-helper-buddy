@@ -30,6 +30,22 @@ const OrchardPage = () => {
   const { user } = useAuth();
   const { fetchOrchardById, loading, error } = useOrchards();
   const [orchard, setOrchard] = useState(null);
+  // P0-5 Phase A: funding progress comes from public.orchard_funding_status()
+  // (held orchard_holdings vs total_pockets x pocket_price), never from a
+  // filled_pockets value set by hand.
+  const [funding, setFunding] = useState(null);
+  const loadFunding = async (id) => {
+    const { data, error } = await supabase.rpc('orchard_funding_status', { _orchard_id: id });
+    if (error) { console.error('orchard_funding_status failed:', error); return; }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (row) setFunding({
+      target: Number(row.target || 0),
+      heldTotal: Number(row.held_total || 0),
+      pocketsTotal: Number(row.pockets_total || 0),
+      pocketsHeld: Number(row.pockets_held || 0),
+      funded: !!row.funded,
+    });
+  };
 
   useEffect(() => {
     const loadOrchard = async () => {
@@ -57,6 +73,7 @@ const OrchardPage = () => {
       if (result.success) {
         console.log('✅ OrchardPage: Orchard loaded successfully:', result.data.title);
         setOrchard(result.data);
+        loadFunding(orchardId);
       } else {
         console.error('❌ OrchardPage: Failed to load orchard:', result.error);
         
@@ -91,13 +108,9 @@ const OrchardPage = () => {
     }
   }, [orchardId, user?.id, navigate]);
 
-  const getCompletionPercentage = (orchard) => {
-    // Use total_pockets as primary, intended_pockets only if it's reasonable
-    const totalPockets = (orchard.intended_pockets && orchard.intended_pockets > 1) 
-      ? orchard.intended_pockets 
-      : orchard.total_pockets || 1;
-    if (!totalPockets || totalPockets === 0) return 0;
-    return Math.round((orchard.filled_pockets / totalPockets) * 100);
+  const getCompletionPercentage = () => {
+    if (!funding || funding.target <= 0) return 0;
+    return Math.min(100, Math.round((funding.heldTotal / funding.target) * 100));
   };
 
   const getStatusColor = (status) => {
@@ -250,37 +263,42 @@ const OrchardPage = () => {
                 </div>
                 
                 {/* Progress Section */}
-                <div>
+                <div data-testid="funding-progress" data-funded={funding?.funded ? '1' : '0'}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-orange-700">Funding Progress</h3>
-                    <span className="text-2xl font-bold text-orange-700">
-                      {getCompletionPercentage(orchard)}%
+                    <h3 className="text-lg font-semibold text-orange-700">
+                      Funding Progress{funding?.funded ? ' — fully funded' : ''}
+                    </h3>
+                    <span className="text-2xl font-bold text-orange-700" data-testid="funding-percent">
+                      {getCompletionPercentage()}%
                     </span>
                   </div>
-                  <Progress 
-                    value={getCompletionPercentage(orchard)} 
+                  <Progress
+                    value={getCompletionPercentage()}
                     className="h-4 mb-4"
                   />
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
-                      <div className="text-lg font-semibold text-orange-700">
-                        {formatCurrency((orchard.filled_pockets || 0) * (orchard.pocket_price || 0))}
+                      <div className="text-lg font-semibold text-orange-700" data-testid="funding-held">
+                        {formatCurrency(funding?.heldTotal ?? 0)}
                       </div>
-                      <div className="text-sm text-orange-600">Raised</div>
+                      <div className="text-sm text-orange-600">Held</div>
                     </div>
                     <div>
-                      <div className="text-lg font-semibold text-orange-700">
-                        {formatCurrency(((orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 0) * (orchard.pocket_price || 0))}
+                      <div className="text-lg font-semibold text-orange-700" data-testid="funding-target">
+                        {formatCurrency(funding?.target ?? 0)}
                       </div>
                       <div className="text-sm text-orange-600">Goal</div>
                     </div>
-                     <div>
-                       <div className="text-lg font-semibold text-orange-700">
-                         {orchard.filled_pockets || 0} / {(orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 1}
-                       </div>
-                       <div className="text-sm text-orange-600">Pockets</div>
-                     </div>
+                    <div>
+                      <div className="text-lg font-semibold text-orange-700" data-testid="funding-pockets">
+                        {funding?.pocketsHeld ?? 0} / {funding?.pocketsTotal ?? 0}
+                      </div>
+                      <div className="text-sm text-orange-600">Pockets</div>
+                    </div>
                   </div>
+                  <p className="text-xs text-orange-600 mt-3">
+                    All or nothing: every pocket must fill before anything is released, and there is no deadline.
+                  </p>
                 </div>
 
                 {/* Additional Details */}
@@ -299,11 +317,14 @@ const OrchardPage = () => {
                  )}
 
                  {/* Payment Section */}
-                 <OrchardPaymentWidget 
+                 <OrchardPaymentWidget
                    orchardId={orchard.id}
                    orchardTitle={orchard.title}
                    pocketPrice={orchard.pocket_price || 150}
-                   availablePockets={(orchard.intended_pockets && orchard.intended_pockets > 1 ? orchard.intended_pockets : orchard.total_pockets || 1) - (orchard.filled_pockets || 0)}
+                   availablePockets={Math.max(0, (funding?.pocketsTotal ?? 0) - (funding?.pocketsHeld ?? 0))}
+                   productType={orchard.product_type}
+                   funded={!!funding?.funded}
+                   onBestowed={() => loadFunding(orchard.id)}
                  />
                </CardContent>
              </div>

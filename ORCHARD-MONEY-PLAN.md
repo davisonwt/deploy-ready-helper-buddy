@@ -276,6 +276,24 @@ Each phase ships on its own and is verifiable before the next starts. Migrations
 
 Optional later, unchanged states: a sweep job that moves `held` USDC from the hot wallet to the Launch or Uplift wallet and flips `location` to `orchard_wallet`; refunds and releases then read `location` to pick the sending key.
 
+### Phase A status (2026-09-05)
+
+Built. Step 0 (`scripts/studio/phase-a-step0.sql`) found **no** orchard with completed pocket bestowals, no pending orchard rows and no ledger credits from orchards, so the backfill in Migration A1 is a no-op today and stays idempotent.
+
+| Piece | Where |
+|---|---|
+| Migration A1 | `supabase/migrations/20260905200000_orchard_holdings.sql`: `orchard_holdings`, `orchard_events`, `orchard_funding_status()`, `orchard_apply_holding()`, pocket-count trigger, gift-credit guard, backfill, proof. |
+| Proof / tests for the owner | `scripts/studio/phase-a-a1-proof.sql`, `scripts/studio/phase-a-rpc-guard-tests.sql`. |
+| Finalize | `_shared/paypal/capture.ts` writes a holding for orchard rows (all four confirmation paths go through it). |
+| Checkout | `create-orchard-bestowal-order` accepts `pocketType` + `deliveryAddress`, refuses over-funding. |
+| Sweep | `sweep-hot-wallet`: sweepable = balance − held-for-orchards − ceiling. |
+| Treasury | `treasury-balances` + `GosatTreasuryPage`: "Held for orchards" line. |
+| Orchard page | progress from `orchard_funding_status`; the Support card now opens the real bestow dialog with pocket kind + address. |
+| Rules | `_shared/orchardHolding.ts` and `src/lib/orchards/pocketRules.ts` (drift-tested in `src/test/orchard-holding.test.ts`). |
+| Playwright | `tests/payments/orchard-holdings.spec.ts` (needs `.env.test`). |
+
+Decisions recorded from the owner's answers: target = `total_pockets × pocket_price`; PayPal refund shortfalls are topped up from S2G's float and recorded as a cost (Phase C); the sower's own pockets are refunded like anyone's (Phase C); the revenue ledger is built in Phase B. Until Phase B, an orchard that reaches its target simply reads "fully funded" and accepts no more pockets; nothing is released and the money stays held.
+
 ---
 
 ## 9. Open questions

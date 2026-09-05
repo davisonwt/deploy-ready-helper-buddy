@@ -169,7 +169,7 @@ async function finalizeBestowal(
 ): Promise<void> {
   const { data: bestowal, error: lookupError } = await supabase
     .from("bestowals")
-    .select("id, payment_status")
+    .select("id, payment_status, orchard_id")
     .eq("id", bestowalId)
     .maybeSingle();
   if (lookupError) {
@@ -185,6 +185,19 @@ async function finalizeBestowal(
       .from("bestowals")
       .update({ payment_status: "completed", payment_reference: paymentReference })
       .eq("id", bestowalId);
+  }
+
+  // Orchard pocket money is HELD, never an earning, until the orchard is
+  // fully funded (P0-5 Phase A, ORCHARD-MONEY-PLAN.md): write a holding
+  // (idempotent on bestowal_id; the trigger recounts filled_pockets). The
+  // gift credit below is for non-orchard gifts only, and the RPC itself
+  // refuses orchard rows as a second guard.
+  if (bestowal.orchard_id) {
+    const { error: holdError } = await supabase.rpc("orchard_apply_holding", { _bestowal_id: bestowalId });
+    if (holdError) {
+      throw new Error(`orchard_apply_holding_failed:${holdError.message}`);
+    }
+    return;
   }
 
   // Always attempted, regardless of whether payment_status was already

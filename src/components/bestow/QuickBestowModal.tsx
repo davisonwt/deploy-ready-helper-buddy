@@ -16,7 +16,7 @@
  * In every case the bestowal row is created server-side with the buyer-side
  * processor fee broken out, and post-payment chat notes are pre-staged.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,8 @@ import { priceBreakdown, round2 } from '@/lib/pricing/platformFee';
 import { useBalanceProvider, isBalanceSuccess } from '@/hooks/useBalanceProvider';
 import { useExchangeRates, formatConvertedWithUsd } from '@/lib/currency/rates';
 import { checkoutErrorMessage, isBlockingCheckoutError } from '@/lib/payments/checkoutErrors';
+import { supabase } from '@/integrations/supabase/client';
+import { deliveryAddressRequired, validateDeliveryAddress, type DeliveryAddress, type PocketType } from '@/lib/orchards/pocketRules';
 
 export interface QuickBestowModalProps {
   open: boolean;
@@ -57,6 +59,14 @@ export interface QuickBestowModalProps {
    */
   lockAmount?: boolean;
   /**
+   * P0-5 Phase A. The orchard's product_type, if the caller already knows
+   * it; otherwise the modal looks it up when opened. A 'bestowal' pocket on
+   * a physical orchard must carry a delivery address (collected here); a
+   * 'gift' pocket funds a unit that goes to the sower as stock and needs
+   * none.
+   */
+  orchardProductType?: string | null;
+  /**
    * Fires once invoice/order creation actually succeeds (payment initiated),
    * before the tab opens (crypto) or the redirect happens (PayPal). Never
    * call basket-item removal from onClose — that also fires on Cancel.
@@ -71,6 +81,7 @@ export default function QuickBestowModal({
   defaultAmount = 5,
   pocketsCount = 1,
   lockAmount = false,
+  orchardProductType,
   onSuccess,
 }: QuickBestowModalProps) {
   const { user } = useAuth();
@@ -80,6 +91,15 @@ export default function QuickBestowModal({
   const [note, setNote] = useState('');
   const [processing, setProcessing] = useState(false);
   const [sellerBlocked, setSellerBlocked] = useState(false);
+
+  // Pocket kind + delivery address (P0-5 Phase A)
+  const [productType, setProductType] = useState<string | null>(orchardProductType ?? null);
+  const [pocketType, setPocketType] = useState<PocketType>('bestowal');
+  const [address, setAddress] = useState<DeliveryAddress>({ name: '', line1: '', line2: '', city: '', region: '', postal_code: '', country: '', phone: '' });
+  const needsAddress = deliveryAddressRequired(pocketType, productType);
+  const addressProblem = needsAddress ? validateDeliveryAddress(address) : null;
+  const setAddr = (k: keyof DeliveryAddress) => (e: ChangeEvent<HTMLInputElement>) =>
+    setAddress((a) => ({ ...a, [k]: e.target.value }));
 
   // The server grosses base up by S2G's 15% before charging (see
   // create-orchard-bestowal-order) — the processor fee estimate and the
@@ -102,13 +122,21 @@ export default function QuickBestowModal({
       setNote('');
       setProvider('solana');
       setSellerBlocked(false);
+      setPocketType('bestowal');
+      setProductType(orchardProductType ?? null);
+      if (orchardProductType == null && orchardId) {
+        // The address rule depends on whether the orchard ships something.
+        supabase.from('orchards').select('product_type').eq('id', orchardId).maybeSingle()
+          .then(({ data }) => setProductType((data as any)?.product_type ?? 'physical'));
+      }
     }
-  }, [open, defaultAmount]);
+  }, [open, defaultAmount, orchardId, orchardProductType]);
 
   const handleBestow = async () => {
     if (!user) { toast.error('Please sign in to bestow.'); return; }
     if (!orchardId) { toast.error('No seed selected.'); return; }
     if (amount <= 0) { toast.error('Enter an amount greater than zero.'); return; }
+    if (addressProblem) { toast.error(addressProblem); return; }
 
     setProcessing(true);
     try {
@@ -118,7 +146,11 @@ export default function QuickBestowModal({
         balance?: { debited: true };
       }>(
         'create-orchard-bestowal-order',
-        { orchardId, pocketsCount, provider: effectiveProvider, message: note || undefined, redirectBaseUrl: window.location.origin },
+        {
+          orchardId, pocketsCount, provider: effectiveProvider, message: note || undefined, redirectBaseUrl: window.location.origin,
+          pocketType,
+          deliveryAddress: needsAddress ? address : undefined,
+        },
       );
 
       if (effectiveProvider === 'balance') {
@@ -208,6 +240,56 @@ export default function QuickBestowModal({
             )}
           </div>
 
+          <div data-testid="pocket-kind">
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Pocket kind
+            </label>
+            <div className="mt-1 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                data-testid="pocket-kind-bestowal"
+                onClick={() => setPocketType('bestowal')}
+                className={`rounded-md border px-3 py-2 text-left text-sm ${pocketType === 'bestowal' ? 'border-emerald-500 bg-emerald-500/10' : 'border-border hover:bg-muted'}`}
+              >
+                <div className="font-medium">Claim a unit</div>
+                <div className="text-xs text-muted-foreground">You receive what this pocket funds.</div>
+              </button>
+              <button
+                type="button"
+                data-testid="pocket-kind-gift"
+                onClick={() => setPocketType('gift')}
+                className={`rounded-md border px-3 py-2 text-left text-sm ${pocketType === 'gift' ? 'border-emerald-500 bg-emerald-500/10' : 'border-border hover:bg-muted'}`}
+              >
+                <div className="font-medium">Gift a unit</div>
+                <div className="text-xs text-muted-foreground">The sower keeps it as stock to sow.</div>
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Held for the orchard until every pocket is filled. No deadline; a cancelled orchard refunds you in full.
+            </p>
+          </div>
+
+          {needsAddress && (
+            <div data-testid="delivery-address" className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Delivery address (where your unit ships)
+              </label>
+              <Input placeholder="Full name" value={address.name} onChange={setAddr('name')} data-testid="addr-name" />
+              <Input placeholder="Street address" value={address.line1} onChange={setAddr('line1')} data-testid="addr-line1" />
+              <Input placeholder="Apartment, suite (optional)" value={address.line2 ?? ''} onChange={setAddr('line2')} />
+              <div className="grid grid-cols-2 gap-2">
+                <Input placeholder="City" value={address.city} onChange={setAddr('city')} data-testid="addr-city" />
+                <Input placeholder="Region / province (optional)" value={address.region ?? ''} onChange={setAddr('region')} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input placeholder="Postal code" value={address.postal_code} onChange={setAddr('postal_code')} data-testid="addr-postal" />
+                <Input placeholder="Country" value={address.country} onChange={setAddr('country')} data-testid="addr-country" />
+              </div>
+              <Input placeholder="Phone (optional)" value={address.phone ?? ''} onChange={setAddr('phone')} />
+              {addressProblem && <p className="text-xs text-orange-600" data-testid="addr-problem">{addressProblem}</p>}
+            </div>
+          )}
+
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Payment method
@@ -263,7 +345,7 @@ export default function QuickBestowModal({
           )}
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={onClose} disabled={processing}>Cancel</Button>
-            <Button onClick={handleBestow} disabled={processing || sellerBlocked || amount <= 0} className="gap-2">
+            <Button onClick={handleBestow} disabled={processing || sellerBlocked || amount <= 0 || !!addressProblem} className="gap-2" data-testid="bestow-submit">
               {processing && <Loader2 className="h-4 w-4 animate-spin" />}
               Bestow ${pricing.total.toFixed(2)}
             </Button>

@@ -29,6 +29,8 @@ interface TreasuryResponse {
   summary: {
     custodyTotalUsd: number;
     reservedForSowersUsd: number;
+    heldForOrchardsUsd?: number;
+    heldOrchardCount?: number;
     platformNetUsd: number;
     notice: string;
   };
@@ -90,9 +92,13 @@ export default function GosatTreasuryPage() {
                 Generated {new Date(data.generatedAt).toLocaleString()}.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Stat label="Custody total" value={fmtUsd(data.summary.custodyTotalUsd)} />
               <Stat label="Reserved for sowers" value={fmtUsd(data.summary.reservedForSowersUsd)} />
+              <Stat
+                label={`Held for orchards${data.summary.heldOrchardCount ? ` (${data.summary.heldOrchardCount})` : ''}`}
+                value={fmtUsd(data.summary.heldForOrchardsUsd ?? 0)}
+              />
               <Stat label="Platform net (computed)" value={fmtUsd(data.summary.platformNetUsd)} highlight />
             </CardContent>
           </Card>
