@@ -70,7 +70,8 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
         .from('chat_rooms')
         .select(`
           *,
-          chat_participants(count)
+          members:chat_participants(user_id, is_active),
+          member_count:chat_participants(count)
         `)
         .eq('is_premium', false)
         .eq('is_active', true)
@@ -198,8 +199,23 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
     }
   };
 
+  // A `(count)` embed returns [{ count: n }], never participant rows -- this
+  // used to be read as a row list, so the creator and every invitee saw
+  // "Request to Join" on their own room and every room showed "1 members".
+  // Membership now comes from the caller's own participant row (always
+  // visible under RLS) or from having created the room.
   const isUserInRoom = (room) => {
-    return room.chat_participants?.some(p => p.user_id === currentUser?.id && p.is_active);
+    if (!currentUser?.id) return false;
+    if (room.created_by === currentUser.id) return true;
+    return (room.members || []).some(p => p.user_id === currentUser.id && p.is_active);
+  };
+
+  // RLS lets a non-creator see only their own participant row, so for them
+  // this is a lower bound; the creator and gosats see the full count.
+  const memberCount = (room) => {
+    const counted = room.member_count?.[0]?.count;
+    if (typeof counted === 'number') return counted;
+    return (room.members || []).filter(p => p.is_active).length;
   };
 
   const filteredPublicRooms = publicRooms.filter(room => {
@@ -372,7 +388,7 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                               <div className="flex items-center gap-2 mt-2">
                                 <div className="flex items-center gap-1 text-xs text-white/70">
                                   <Users className="h-3 w-3" />
-                                  <span>{room.chat_participants?.length || 0} members</span>
+                                  <span>{memberCount(room)} {memberCount(room) === 1 ? 'member' : 'members'}</span>
                                 </div>
                                 {room.category && (
                                   <Badge variant="outline" className="text-xs border-white/40 text-white/90 bg-white/10">
