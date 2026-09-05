@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { searchPublicProfiles } from '@/lib/profiles/publicProfileSearch';
 import { 
   Search, 
   X, 
@@ -79,9 +80,8 @@ const CreateRoomModal = ({ isOpen, onClose, onCreateRoom }) => {
 
     setSearching(true);
     try {
-      const { data, error } = await supabase.rpc('search_user_profiles', {
-        search_term: searchTerm
-      });
+      // profiles_public search: the search_user_profiles RPC is revoked live.
+      const { data, error } = await searchPublicProfiles(searchTerm);
 
       if (error) throw error;
       

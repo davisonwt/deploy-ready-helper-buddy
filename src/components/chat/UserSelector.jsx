@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Phone, Video, Search } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { listPublicProfiles, searchPublicProfiles } from '@/lib/profiles/publicProfileSearch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { JitsiCall } from '@/components/JitsiCall';
 
@@ -28,9 +29,8 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
           setUsers([]);
           return;
         }
-        const { data, error } = await supabase.rpc('search_user_profiles', {
-          search_term: searchTerm.trim(),
-        });
+        // profiles_public search; the search_user_profiles RPC is revoked live.
+        const { data, error } = await searchPublicProfiles(searchTerm, { excludeUserId: user.id });
         if (error) throw error;
         setUsers(data || []);
       } catch (error) {
@@ -47,7 +47,8 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
     if (!user) return;
     (async () => {
       try {
-        const { data, error } = await supabase.rpc('get_all_user_profiles');
+        // profiles_public list; the get_all_user_profiles RPC is revoked live.
+        const { data, error } = await listPublicProfiles({ excludeUserId: user.id });
         if (error) throw error;
         setAllUsers(data || []);
       } catch (e) {

@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Copy, Search, UserPlus, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { searchPublicProfiles } from '@/lib/profiles/publicProfileSearch';
 
 const InviteModal = ({ isOpen, onClose, room, currentParticipants = [] }) => {
   const { toast } = useToast();
@@ -37,10 +38,9 @@ const InviteModal = ({ isOpen, onClose, room, currentParticipants = [] }) => {
 
     try {
       setLoading(true);
-      // Use the secure search function to get only safe profile data
-      const { data: searchData, error: searchError } = await supabase.rpc('search_user_profiles', { 
-        search_term: searchQuery 
-      });
+      // profiles_public search (public columns only; the search_user_profiles
+      // RPC is revoked live and used to surface as "No users found").
+      const { data: searchData, error: searchError } = await searchPublicProfiles(searchQuery);
 
       if (searchError) throw searchError;
 

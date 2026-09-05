@@ -80,6 +80,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [selectedInvitees, setSelectedInvitees] = useState<string[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  // Names that matched the search but are already in this room -- shown
+  // instead of a misleading "No users found".
+  const [alreadyInRoom, setAlreadyInRoom] = useState<string[]>([]);
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
 
@@ -365,10 +368,12 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
         const { data, error } = await query;
         if (error) throw error;
         // Filter out blank names and current participants
+        const nameOf = (u: any) => (u.display_name || `${u.first_name || ''} ${u.last_name || ''}`.trim());
         const filtered = (data || []).filter((u: any) => {
-          const name = (u.display_name || `${u.first_name || ''} ${u.last_name || ''}`.trim());
+          const name = nameOf(u);
           return !participantIds.includes(u.user_id) && name.length > 1 && name !== ' ';
         });
+        setAlreadyInRoom((data || []).filter((u: any) => participantIds.includes(u.user_id)).map(nameOf));
         setAvailableUsers(filtered);
       } catch (e: any) {
         console.error('Error loading users:', e);
@@ -1107,7 +1112,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
               {loadingUsers ? (
                 <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">Loading...</div>
               ) : availableUsers.length === 0 ? (
-                <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">No users found</div>
+                <div className="flex items-center justify-center py-10 text-sm text-muted-foreground text-center px-4">
+                  {alreadyInRoom.length > 0
+                    ? `${alreadyInRoom.join(', ')} ${alreadyInRoom.length === 1 ? 'is' : 'are'} already in this chat`
+                    : inviteSearch.trim() ? 'No members match that name' : 'Start typing to search for members'}
+                </div>
               ) : (
                 <div className="space-y-2">
                   {availableUsers.map((u: any) => (
