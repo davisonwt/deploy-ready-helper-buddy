@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import ChatMessage from './ChatMessage';
 import { DonateModal } from './DonateModal';
 import { useCallManager } from '@/hooks/useCallManager';
+import { subscribeRoomRealtime } from '@/lib/chat/roomRealtime';
 import { JitsiCall } from '@/components/JitsiCall';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -117,47 +118,25 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
   // ---------------------------------------------------------------------
 
 
+  const userId = user?.id;
   useEffect(() => {
-    if (roomId && user) {
-      console.debug('[ChatRoom] init', { roomId, userId: user.id });
-      fetchRoomInfo();
-      fetchMessages();
-      fetchParticipants();
-      setupRealtimeSubscription();
-      setupTypingSubscription();
-    }
-  }, [roomId, user]);
-
-  // Setup typing indicator subscription
-  const setupTypingSubscription = () => {
-    const channel = supabase
-      .channel(`typing:${roomId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'typing',
-          filter: `room_id=eq.${roomId}`
-        } as any,
-        (payload: any) => {
-          if (payload.new && payload.new.user_id !== user.id) {
-            setUsersTyping(prev => {
-              const filtered = prev.filter(id => id !== payload.new.user_id);
-              if (payload.new.is_typing) {
-                return [...filtered, payload.new.user_id];
-              }
-              return filtered;
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
+    if (!roomId || !userId) return;
+    console.debug('[ChatRoom] init', { roomId, userId });
+    fetchRoomInfo();
+    fetchMessages();
+    fetchParticipants();
+    // Realtime: unique per-run channel topics, every .on() before
+    // .subscribe(), and the cleanup is RETURNED so React removes the
+    // channels before this effect runs again (room switch, auth refresh,
+    // StrictMode double-invoke). The old code discarded the cleanups, so a
+    // re-run reused the already-subscribed `room:<id>` channel and threw
+    // "cannot add postgres_changes callbacks ... after subscribe()".
+    const { cleanup } = setupRealtimeSubscription();
+    return cleanup;
+    // Deliberately keyed on user.id, not the user object, whose identity
+    // changes on every auth refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, userId]);
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive
@@ -410,60 +389,50 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
     }
   };
 
-  const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel(`room:${roomId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `room_id=eq.${roomId}`
-        },
-        async (payload) => {
-          // Fetch the message and its sender profile separately
-          const { data: msg } = await supabase
-            .from('chat_messages')
-            .select('*')
-            .eq('id', payload.new.id)
+  // Both room channels (messages/room changes + typing) via one helper --
+  // see src/lib/chat/roomRealtime.ts for the rules it enforces.
+  const setupRealtimeSubscription = () =>
+    subscribeRoomRealtime(supabase, roomId, {
+      onMessageInsert: async (payload) => {
+        // Fetch the message and its sender profile separately
+        const { data: msg } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('id', payload.new.id)
+          .maybeSingle();
+
+        if (msg) {
+          const { data: profile } = await supabase
+            .from('profiles_public')
+            .select('user_id, display_name, first_name, last_name, avatar_url')
+            .eq('user_id', msg.sender_id)
             .maybeSingle();
 
-          if (msg) {
-            const { data: profile } = await supabase
-              .from('profiles_public')
-              .select('user_id, display_name, first_name, last_name, avatar_url')
-              .eq('user_id', msg.sender_id)
-              .maybeSingle();
-            
-            setMessages(prev => [...prev, { ...msg, sender_profile: profile || null }]);
-          }
+          setMessages(prev => [...prev, { ...msg, sender_profile: profile || null }]);
         }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'chat_rooms', filter: `id=eq.${roomId}` },
-        () => {
-          toast({ title: 'Chat removed', description: 'This chat was deleted.' });
+      },
+      onRoomDeleted: () => {
+        toast({ title: 'Chat removed', description: 'This chat was deleted.' });
+        onBack?.();
+      },
+      onRoomUpdated: (payload) => {
+        if ((payload.new as any)?.is_active === false) {
+          toast({ title: 'Chat archived', description: 'This chat is no longer available.' });
           onBack?.();
         }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'chat_rooms', filter: `id=eq.${roomId}` },
-        (payload) => {
-          if ((payload.new as any)?.is_active === false) {
-            toast({ title: 'Chat archived', description: 'This chat is no longer available.' });
-            onBack?.();
-          }
+      },
+      onTyping: (payload: any) => {
+        if (payload.new && payload.new.user_id !== user?.id) {
+          setUsersTyping(prev => {
+            const filtered = prev.filter(id => id !== payload.new.user_id);
+            if (payload.new.is_typing) {
+              return [...filtered, payload.new.user_id];
+            }
+            return filtered;
+          });
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
+      },
+    });
 
   // Handle typing indicator
   const handleTyping = () => {
