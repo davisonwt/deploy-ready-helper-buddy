@@ -56,10 +56,14 @@
 //     only ever returns rows still payout_status='pending', so a row
 //     marked 'processing' can't be picked up again by a later run).
 //
-// dry_run:true computes and returns the exact same eligible/skipped
-// breakdown (for the admin "next run preview") without touching anything —
-// no payouts rows, no covered-row status changes, no PayPal call, no
-// notifications.
+// RUN MODE (audit 2026-09-05, P0-1 -- see ./runMode.ts): a real send happens
+// ONLY when the JSON body carries exactly "confirm":"send". Every other
+// readable body ({}, {"dry_run":true}, {"dry_run":false}, ...) is a dry run:
+// it computes and returns the same eligible/skipped breakdown (the admin
+// "next run preview") without touching anything -- no payouts rows, no
+// covered-row status changes, no PayPal call, no notifications. An empty,
+// non-JSON, or non-object body is refused with 400 invalid_body and does
+// nothing. Responses always carry dry_run:true|false.
 //
 // NOTIFICATIONS: on a real (non-dry) run, every owed recipient gets exactly
 // one chat message via deliverPayoutNotification (messaging.ts) — "paid"
@@ -83,6 +87,7 @@ import { validateSolanaAddress } from "../_shared/cryptoAddress.ts";
 import { getSolanaCluster } from "../_shared/cryptoNetworks.ts";
 import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimiter.ts";
 import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
+import { parseRunMode } from "./runMode.ts";
 // No @solana/web3.js here (or anywhere in the Solana rail now) -- see
 // _shared/solanaPayout.ts's file header for why (measured ~3s CPU import
 // cost vs. the edge runtime's hard, non-configurable 2s ceiling) and what
@@ -260,8 +265,12 @@ Deno.serve(async (req) => {
     const rlOk = await checkRateLimit(admin, rateLimitId!, "payout_earnings_run", 30, 60, true);
     if (!rlOk) return createRateLimitResponse(3600);
 
-    const body = await req.json().catch(() => ({}));
-    const dryRun = body?.dry_run === true;
+    // Audit 2026-09-05 P0-1: an unreadable body used to become {} and {}
+    // meant "real run". Now an unreadable body is refused, and only an
+    // explicit "confirm":"send" is a real run -- see ./runMode.ts.
+    const runMode = parseRunMode(await req.text().catch(() => ""));
+    if (!runMode.ok) return json({ error: "invalid_body" }, 400);
+    const dryRun = runMode.mode !== "send";
 
     // --- Load owed balances, every recipient, regardless of threshold -----
     const { data: owedRaw, error: owedErr } = await admin.rpc("owed_payout_balances");
@@ -680,6 +689,7 @@ Deno.serve(async (req) => {
     if (eligiblePaypal.length === 0 && withdrawalsWithEmail.length === 0) {
       return json({
         success: true,
+        dry_run: false,
         totalFloatUsd,
         paid: solanaPaidCount,
         skipped: outcomes.filter((o) => !o.eligible).length,
@@ -691,6 +701,7 @@ Deno.serve(async (req) => {
     if (!payoutsEnabled) {
       return json({
         success: true,
+        dry_run: false,
         totalFloatUsd,
         paid: solanaPaidCount,
         skipped: outcomes.filter((o) => !o.eligible).length,
@@ -748,6 +759,7 @@ Deno.serve(async (req) => {
     if (claimedRows.length === 0 && withdrawalsWithEmail.length === 0) {
       return json({
         success: true,
+        dry_run: false,
         totalFloatUsd,
         paid: solanaPaidCount,
         skipped: outcomes.filter((o) => !o.eligible).length + inserted.length,
@@ -825,6 +837,7 @@ Deno.serve(async (req) => {
 
       return json({
         success: true,
+        dry_run: false,
         runId,
         batchId,
         totalFloatUsd,
