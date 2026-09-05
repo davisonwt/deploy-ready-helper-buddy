@@ -169,3 +169,34 @@ caller check, or unschedule and delete them too.
 56 deleted via `supabase functions delete`, each confirmed returning 404 on
 POST. `-Remnants-Wheel-Calendar` cannot be addressed by the CLI (invalid
 slug) and must be deleted in the dashboard; it currently answers 401.
+
+## Part D outcome (2026-09-05, owner's decision: delete the eight KEEP functions and their callers)
+
+Callers first, via `supabase/migrations/20260905150000_remove_ghost_callers.sql`
+run by the owner in Studio: six cron jobs unscheduled, every trigger on
+`public.trigger_video_agent_on_insert` dropped, then the function dropped.
+One cron job, `generate-364ttt-weekly-playlist`, is owned by
+`supabase_read_only_user` and could not be unscheduled from the editor. It
+still fires weekly but now targets a deleted function and gets 404 from
+the gateway; it was already failing with 401 before (the function required
+an admin session and the job sent the anon key). Remove it from the
+dashboard's cron view when convenient.
+
+Then the eight functions were deleted, one `supabase functions delete`
+each, and each confirmed 404 on POST: generate-weekly-playlist,
+poll-video-jobs, trigger-video-agent, linux-family-cron,
+agent-debian-collab-cron, agent-debian-event-scheduler,
+agent-gentoo-mentorship-matcher, elder-council-rotation. The owner deleted
+`-Remnants-Wheel-Calendar` from the dashboard the same day.
+
+| | Start of day | After part B | After part D |
+|---|---|---|---|
+| Deployed | 153 | 97 | 88 |
+| Local | 88 | 88 | 88 |
+| Ghosts | 65 | 9 | 0 |
+
+Every deployed function now has its source in `supabase/functions/`. The
+archive in this folder remains the only copy of the 64 deleted sources.
+Data those functions wrote (`weekly_playlists`, `video_jobs`,
+`linux_family_*`, `tribal_events`, `mentorship_pairings`,
+`elder_council_seats`) was left in place; nothing in the app reads it.
