@@ -24,7 +24,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AlertTriangle, Loader2, ShieldAlert, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 
 import { useAuth } from '@/hooks/useAuth';
 import { IRREVERSIBLE_WARNING, maskAddress, validateSolanaAddress } from '@/lib/payments/cryptoAddress';
@@ -67,10 +67,10 @@ export default function CryptoPayoutSettings() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('update-crypto-payout', {
-        method: 'GET',
-      });
-      if (error) throw error;
+      // Plain fetch (invokePaymentFunction) rather than functions.invoke():
+      // the SDK collapses every non-2xx into "Edge Function returned a
+      // non-2xx status code", hiding the function's own message.
+      const data = await invokePaymentFunction<any>('update-crypto-payout', undefined, { method: 'GET' });
       const summary = data?.network_mode;
       setMode(summary ? { solana_cluster: summary.solana_cluster, is_testnet: summary.is_testnet } : null);
       setSecurityQuestions(data?.security_questions ?? null);
@@ -118,20 +118,19 @@ export default function CryptoPayoutSettings() {
     if (!canSave) return;
     setSaving(true);
     try {
-      const { data, error } = await supabase.functions.invoke('update-crypto-payout', {
-        body: {
-          payout_network: PAYOUT_NETWORK,
-          payout_address: address.trim(),
-          payout_address_confirm: confirmAddress.trim(),
-          payout_tag: null,
-          payout_wallet_type: 'personal',
-          current_password: currentPassword,
-          security_question_index: selectedQuestionIndex,
-          security_answer: securityAnswer,
-        },
+      // Through invokePaymentFunction so a 401 (wrong password / wrong
+      // answer), 400 (validation), 429 (rate limit) or 500 reaches the
+      // toast as the function's actual message.
+      const data = await invokePaymentFunction<any>('update-crypto-payout', {
+        payout_network: PAYOUT_NETWORK,
+        payout_address: address.trim(),
+        payout_address_confirm: confirmAddress.trim(),
+        payout_tag: null,
+        payout_wallet_type: 'personal',
+        current_password: currentPassword,
+        security_question_index: selectedQuestionIndex,
+        security_answer: securityAnswer,
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
       setSaved({ payout_address: data.payout.payout_address });
       setActiveNetwork(PAYOUT_NETWORK);
       setConfirmAddress('');

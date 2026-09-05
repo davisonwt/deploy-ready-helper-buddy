@@ -149,7 +149,16 @@ Deno.serve(async (req) => {
       p_question_index: questionIndex,
       p_answer: securityAnswer,
     });
-    if (answerRpcErr) throw answerRpcErr;
+    if (answerRpcErr) {
+      // Say what actually failed (e.g. a revoked EXECUTE grant on the RPC)
+      // instead of the generic 500 the catch-all below would produce.
+      console.error("update-crypto-payout: verify_own_security_answer failed", answerRpcErr);
+      await logFunctionFailure("update-crypto-payout", answerRpcErr);
+      return json({
+        error: `Security-question check failed: ${answerRpcErr.message}`,
+        code: "security_check_unavailable",
+      }, 500);
+    }
     if (!answerOk) {
       return json({
         error: "That answer doesn't match. If you haven't set up security questions yet, do that first.",

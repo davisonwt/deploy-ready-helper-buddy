@@ -24,22 +24,24 @@ const SUPABASE_ANON_KEY =
 export async function invokePaymentFunction<T = any>(
   name: string,
   body: unknown,
+  options: { method?: 'GET' | 'POST' } = {},
 ): Promise<T> {
+  const method = options.method ?? 'POST';
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
   if (!token) {
-    throw new Error('Your session expired — please sign in again to complete this bestowal.');
+    throw new Error('Your session expired — please sign in again and retry.');
   }
 
   const url = `${SUPABASE_URL}/functions/v1/${name}`;
   const init: RequestInit = {
-    method: 'POST',
+    method,
     headers: {
       'Content-Type': 'application/json',
       apikey: SUPABASE_ANON_KEY,
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(body ?? {}),
+    ...(method === 'GET' ? {} : { body: JSON.stringify(body ?? {}) }),
   };
 
   let response: Response;
