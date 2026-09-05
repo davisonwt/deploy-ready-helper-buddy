@@ -103,7 +103,7 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS $a1_1$
   SELECT
     o.id,
     round(COALESCE(o.total_pockets, 0) * COALESCE(o.pocket_price, 0), 2)                        AS target,
@@ -118,7 +118,7 @@ AS $$
           >= COALESCE(o.total_pockets, 0) * COALESCE(o.pocket_price, 0))                          AS funded
   FROM public.orchards o
   WHERE o.id = _orchard_id;
-$$;
+$a1_1$;
 REVOKE ALL ON FUNCTION public.orchard_funding_status(uuid) FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.orchard_funding_status(uuid) TO authenticated, service_role;
 
@@ -130,7 +130,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS $a1_2$
 DECLARE
   v_orchard uuid := COALESCE(NEW.orchard_id, OLD.orchard_id);
 BEGIN
@@ -141,7 +141,7 @@ BEGIN
    WHERE o.id = v_orchard;
   RETURN NULL;
 END;
-$$;
+$a1_2$;
 DROP TRIGGER IF EXISTS orchard_holdings_recount ON public.orchard_holdings;
 CREATE TRIGGER orchard_holdings_recount
   AFTER INSERT OR DELETE OR UPDATE OF status, pockets ON public.orchard_holdings
@@ -153,7 +153,7 @@ RETURNS uuid
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS $a1_3$
 DECLARE
   v_b         public.bestowals%ROWTYPE;
   v_holding   uuid;
@@ -208,7 +208,7 @@ BEGIN
 
   RETURN v_holding;
 END;
-$$;
+$a1_3$;
 REVOKE ALL ON FUNCTION public.orchard_apply_holding(uuid) FROM public, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.orchard_apply_holding(uuid) TO service_role;
 
@@ -223,7 +223,7 @@ RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS $a1_4$
 DECLARE
   v_b public.bestowals%ROWTYPE;
   v_recipient uuid;
@@ -263,10 +263,10 @@ BEGIN
      SET payout_status = 'credited_to_balance'
    WHERE id = _bestowal_id AND payout_status = 'pending';
 END;
-$$;
+$a1_4$;
 
 -- 7. Backfill (idempotent; 0 rows expected on 2026-09-05) -------------------
-DO $$
+DO $a1_5$
 DECLARE
   r record;
   v_holding uuid;
@@ -319,7 +319,7 @@ BEGIN
   RAISE NOTICE 'Phase A backfill: holdings created=%, ledger credits reversed=% (total %), reversal skipped=%',
     v_created, v_reversed, v_reversed_total, v_skipped;
 END;
-$$;
+$a1_5$;
 
 -- 8. Proof --------------------------------------------------------------------
 SELECT json_build_object(
