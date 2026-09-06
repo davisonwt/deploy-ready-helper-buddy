@@ -103,7 +103,7 @@ const stateClass: Record<string, string> = {
 };
 const refundClass = (status: string, tone: PocketTone) => (status === 'written_off' ? stateClass.open : toneClass[tone]);
 const NUM = 'text-right font-mono tabular-nums whitespace-nowrap';
-const TH = 'py-2 px-3 font-medium';
+const TH = 'py-2 px-3 font-medium whitespace-nowrap';
 const TD = 'py-2.5 px-3 align-middle';
 function daysSince(iso: string) { return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)); }
 function rpcError(err: any): string { return err?.message ?? err?.error ?? String(err); }
