@@ -16,6 +16,7 @@ export type WalletPayErrorKind =
   | 'not-installed'
   | 'rejected'
   | 'insufficient-funds'
+  | 'no-sol-for-fees'
   | 'wrong-network'
   | 'simulation-failed'
   | 'service-unreachable'
@@ -37,6 +38,20 @@ export interface WalletPayError {
   shortfall?: number;
 }
 
+/** The one sentence a member needs when their wallet cannot pay the network fee. */
+export const NO_SOL_MESSAGE =
+  'Your wallet has no SOL to pay the network fee (about 0.00001 SOL). Add a little SOL in Phantom, then try again.';
+
+// A fee payer with no lamports: the runtime answers "AccountNotFound" (the
+// system account was never funded) or an insufficient-lamports / -funds-
+// for-fee error. 2026-09-06: a member funded a fresh wallet with USDC only
+// and every pay attempt died here with a generic pre-flight message.
+const NO_SOL_PATTERN = /accountnotfound|insufficient funds for fee|insufficient lamports|insufficientfundsforfee|insufficientfundsforrent/i;
+
+export function isNoSolForFees(text: string | null | undefined): boolean {
+  return !!text && NO_SOL_PATTERN.test(text);
+}
+
 export class SimulationFailedError extends Error {
   detail: string;
   constructor(detail: string) {
@@ -56,6 +71,9 @@ const NETWORK_MISMATCH_PATTERN = /blockhash ?not ?found|genesis|cluster mismatch
 
 export function classifyError(err: unknown): WalletPayError {
   if (err instanceof SimulationFailedError) {
+    if (isNoSolForFees(err.detail)) {
+      return { kind: 'no-sol-for-fees', message: NO_SOL_MESSAGE, detail: err.detail };
+    }
     // A simulation that failed BECAUSE the blockhash is unknown to the
     // cluster is the one real devnet/mainnet-mismatch signal we can see.
     if (NETWORK_MISMATCH_PATTERN.test(err.detail)) {
@@ -112,6 +130,9 @@ export function classifyError(err: unknown): WalletPayError {
     };
   }
 
+  if (isNoSolForFees(message) || isNoSolForFees(detail)) {
+    return { kind: 'no-sol-for-fees', message: NO_SOL_MESSAGE, detail };
+  }
   if (/insufficient/i.test(message)) {
     return { kind: 'insufficient-funds', message: 'Not enough USDC (or SOL for the network fee) in this wallet.', detail };
   }

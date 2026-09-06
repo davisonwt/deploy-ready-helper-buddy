@@ -4,6 +4,7 @@
 //
 //   getLatestBlockhash   -- buildUsdcTransferTransaction (solanaWallet.ts)
 //   simulateTransaction  -- useSolanaWalletPay's pre-flight check
+//   getBalance           -- useSolanaWalletPay's SOL-for-fees check (read-only)
 //
 // Exists because api.mainnet-beta.solana.com sends no CORS headers for
 // arbitrary browser origins -- the same wall that made the balance
@@ -28,7 +29,7 @@ import { getSolanaRpcUrl } from "../_shared/cryptoNetworks.ts";
 import { checkRateLimit } from "../_shared/rateLimiter.ts";
 import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
-const ALLOWED_METHODS = new Set(["getLatestBlockhash", "simulateTransaction"]);
+const ALLOWED_METHODS = new Set(["getLatestBlockhash", "simulateTransaction", "getBalance"]);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });

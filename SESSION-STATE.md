@@ -2,6 +2,28 @@
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
 
+## Fixed — 2026-09-06 (pay dialog: "didn't pass a pre-flight check" for a wallet with no SOL)
+
+Louw's new wallet `BQSToMoC…` holds 6.01 USDC and 0 SOL. The buyer's own
+SOL pays the network fee (`solanaWallet.ts:81` feePayer = payer), so
+simulation (`useSolanaWalletPay.ts:123`) answered `AccountNotFound` and the
+classifier had no case for it. Reproduced by rebuilding the 2.31 transfer
+and simulating on mainnet: AccountNotFound for his wallet, success for a
+funded control. Not a code bug in the builder; a first-run trap for any
+USDC-only wallet. Fix: `walletErrorClassifier.ts` gains `no-sol-for-fees`
+(AccountNotFound / insufficient funds for fee / insufficient lamports) with
+"Your wallet has no SOL to pay the network fee (about 0.00001 SOL). Add a
+little SOL in Phantom, then try again."; the hook reads the payer's SOL via
+the proxy before building and stops early with that message (threshold
+10,000 lamports); `solana-rpc-proxy` v23 allows the read-only `getBalance`
+(sends still blocked); `SolanaPaymentPanel` opens the QR on that error and
+says any wallet holding SOL can scan and pay the same intent. Tests:
+`wallet-error-classifier.test.ts` 7. Pre-existing, untouched: one TS2345 at
+the panel's `nextWatchState` call and an unused eslint-disable at line 245.
+Louw needs ~0.002 SOL in his wallet, or pays by QR from a wallet with SOL.
+Sponsoring the fee from the hot wallet (partial co-sign with strict
+instruction validation) is the follow-up that removes the trap entirely.
+
 ## Fixed — 2026-09-06 (checkout rate limit locked Louw out of buying a song)
 
 Root cause: `create-basket-bestowal-order` and `capture-paypal-order` used

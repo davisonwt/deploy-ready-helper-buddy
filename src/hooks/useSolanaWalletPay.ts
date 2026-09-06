@@ -20,7 +20,11 @@ export type WalletPayPhase =
 // without React/web3.js -- re-exported here for existing importers.
 export { SimulationFailedError, classifyError } from '@/lib/payments/walletErrorClassifier';
 export type { WalletPayError, WalletPayErrorKind } from '@/lib/payments/walletErrorClassifier';
-import { SimulationFailedError, classifyError, type WalletPayError } from '@/lib/payments/walletErrorClassifier';
+import { NO_SOL_MESSAGE, SimulationFailedError, classifyError, type WalletPayError } from '@/lib/payments/walletErrorClassifier';
+
+// A transfer costs 5,000 lamports; ask for a small margin so a wallet that
+// can sign once can sign again. 0.00001 SOL, the figure the message quotes.
+const MIN_FEE_LAMPORTS = 10_000;
 
 /**
  * Drives the "Pay with Phantom" button's whole click-to-signature flow.
@@ -103,6 +107,26 @@ export function useSolanaWalletPay(payment: SolanaPaymentResponse, onSubmitted?:
           });
           return;
         }
+      }
+
+      // The buyer's own SOL pays the network fee (feePayer = payer in
+      // buildUsdcTransferTransaction). A wallet funded with USDC only has
+      // no system account at all and fails simulation with a bare
+      // "AccountNotFound"; say the real thing before building anything.
+      let lamports: number | null = null;
+      try {
+        lamports = await connection.getBalance(payer);
+      } catch (err) {
+        console.warn('[SolanaPay] SOL balance pre-check unavailable, continuing to simulation', err);
+      }
+      if (lamports !== null && lamports < MIN_FEE_LAMPORTS) {
+        setPhase('error');
+        setError({
+          kind: 'no-sol-for-fees',
+          message: NO_SOL_MESSAGE,
+          detail: `${pubkeyStr} holds ${lamports} lamports; a transfer needs about 5,000 for the network fee.`,
+        });
+        return;
       }
 
       const tx = await buildUsdcTransferTransaction({

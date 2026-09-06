@@ -79,6 +79,7 @@ function WalletErrorPanel({
   const copy: Record<Exclude<WalletPayError['kind'], 'not-installed'>, string> = {
     rejected: 'You declined the request in Phantom.',
     'insufficient-funds': error.message,
+    'no-sol-for-fees': error.message,
     'wrong-network': error.message,
     'simulation-failed': error.message,
     'service-unreachable': error.message,
@@ -89,6 +90,11 @@ function WalletErrorPanel({
     <div className="space-y-3 rounded-lg border border-orange-500/40 bg-orange-500/10 p-4 text-center">
       <AlertTriangle className="mx-auto h-6 w-6 text-orange-500" />
       <p className="text-sm text-orange-700 dark:text-orange-300">{copy[error.kind]}</p>
+      {error.kind === 'no-sol-for-fees' && (
+        <p className="text-xs text-muted-foreground" data-testid="no-sol-hint">
+          No SOL handy? A different wallet that holds SOL can scan the QR code below and pay this same amount; we match the payment by its reference, not by the wallet.
+        </p>
+      )}
       {error.detail && (
         <details className="text-left">
           <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
@@ -204,7 +210,7 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
   }, [phase]);
 
   useEffect(() => {
-    if (error?.kind === 'not-installed') setQrOpen(true);
+    if (error?.kind === 'not-installed' || error?.kind === 'no-sol-for-fees') setQrOpen(true);
   }, [error]);
 
   useEffect(() => {
@@ -376,6 +382,9 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
               </div>
             )}
             <p className="text-sm text-muted-foreground">Scan with Phantom or any Solana Pay wallet</p>
+            <p className="text-xs text-muted-foreground text-center">
+              Any wallet that holds SOL for the network fee can pay this: the amount and reference are in the code, so it does not have to be the wallet you connected.
+            </p>
           </div>
 
           <div className="space-y-3">

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyError, SimulationFailedError } from '@/lib/payments/walletErrorClassifier';
+import { classifyError, isNoSolForFees, NO_SOL_MESSAGE, SimulationFailedError } from '@/lib/payments/walletErrorClassifier';
 
 // Written after the first real desktop Phantom attempt (2026-09-04): the
 // RPC proxy's CORS preflight failed, web3.js surfaced "failed to get
@@ -27,6 +27,21 @@ describe('walletErrorClassifier', () => {
     const result = classifyError(new SimulationFailedError('"BlockhashNotFound"\n\nProgram log: none'));
     expect(result.kind).toBe('wrong-network');
     expect(result.message).toContain('devnet vs. mainnet');
+  });
+
+  it('a fee payer with no SOL is no-sol-for-fees, with the one sentence that names the fix', () => {
+    // 2026-09-06: a wallet funded with USDC only, 0 lamports -> the runtime answers AccountNotFound
+    for (const detail of ['"AccountNotFound"', 'AccountNotFound', '{"InsufficientFundsForFee":null}', 'Transaction results in an account (0) with insufficient funds for fee', 'insufficient lamports 0, need 5000']) {
+      const r = classifyError(new SimulationFailedError(detail));
+      expect(r.kind, detail).toBe('no-sol-for-fees');
+      expect(r.message).toBe(NO_SOL_MESSAGE);
+      expect(r.detail).toBe(detail);
+    }
+    // the same words from Phantom itself, not from the simulation
+    expect(classifyError(new Error('Transaction simulation failed: insufficient funds for fee')).kind).toBe('no-sol-for-fees');
+    // a USDC shortfall is still insufficient-funds, not the SOL message
+    expect(classifyError(new Error('insufficient funds')).kind).toBe('insufficient-funds');
+    expect(isNoSolForFees('Blockhash not found')).toBe(false);
   });
 
   it('any other simulation failure stays simulation-failed', () => {
