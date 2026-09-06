@@ -2,6 +2,35 @@
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
 
+## Paid — 2026-09-06 09:22 UTC (first REAL mainnet payouts: Louw, Amber, davison.taljaard)
+
+Task file `s2g-real-payouts.txt`. Owner funded the hot wallet with 15.00 USDC
+(`5yDg3G8y…`, 08:58 UTC) after Step 1 found 5.62 on hand against 8.00 owed.
+Threshold lowered to 2 for the run (digest `d4735e3a…`), dry run checked
+(mainnet-beta, address_matches true, three eligible), owner said "go", real
+run `{"confirm":"send"}` paid 3 / skipped 0. Bodies now live in
+`scripts/payouts/dry.json` / `send.json` (never inline JSON with a pasted key).
+
+| Recipient | Amount | Signature | Slot |
+|---|---|---|---|
+| davison.taljaard `04754d57` | 2.00 | `CZ8mTse8…hdtv` | 444757472 |
+| Louw `3971cc26` | 2.00 | `2j8Y2XLe…HQEF` | 444757507 |
+| Amber `c34c0eba` | 4.00 | `29ixvdg8…6Xhm` | 444757547 |
+
+On-chain: err null on all three, recipient USDC +2,000,000 / +2,000,000 /
++4,000,000 raw, hot wallet 20,622,069 → 12,622,069 raw, SOL 0.05 → 0.0463
+(fees + two new token accounts). DB: payouts `1477bdd4`, `2810566d`,
+`115a75cc` paid on mainnet-beta with signatures; earnings `b3518c23`,
+`dcb9e8ad`, `02c6b716`, `904058fc` paid. Liability view: owed 8.00 → 0.00,
+held for members 16.00 → 8.00 (the parked ledger only), S2G own unchanged
+1.90. Revenue ledger: no new rows, by design (sale fees were recognised at
+completion, Phase 1). **Open:** the fee rows for `b3518c23` and `904058fc`
+are tagged devnet (owner decision when their earnings had been settled with
+devnet tokens); those earnings are now settled on mainnet, so a correction
+(−0.60 devnet / +0.60 live) is proposed. Threshold restored to 20 after the
+run (see the owner's `!` command). The service-role key was pasted into the
+session twice today: rotate it.
+
 ## Built — 2026-09-06 (Bookkeeping Phases 1 and 2: revenue ledger, liability view; devnet-earnings revert)
 
 Task files `s2g-bookkeeping-plan.txt`, `-phase-1.txt`, `-phase-2.txt`. Design in
