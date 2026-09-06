@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert"
 import { useToast } from "../hooks/use-toast"
 import { EnhancedSecureInput } from "../components/security/EnhancedSecureInput"
 import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, Heart, Users, Sparkles, Shield, CheckCircle } from "lucide-react"
+import { STALE_BUILD_MESSAGE } from '@/lib/staleBuild'
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -199,6 +200,17 @@ export default function LoginPage() {
               {error && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 animate-fade-in">
                   <p className="text-sm text-destructive font-medium">{error}</p>
+                  {error === STALE_BUILD_MESSAGE && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => window.location.reload()}
+                    >
+                      Refresh now
+                    </Button>
+                  )}
                 </div>
               )}
               

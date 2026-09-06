@@ -17,6 +17,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { SERVICE_WORKER_URL } from '@/lib/serviceWorkerUrl';
 import App from "./App";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductionErrorBoundary } from "@/components/error/ProductionErrorBoundary";
@@ -110,10 +111,15 @@ if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
 async function registerServiceWorker() {
   try {
     if (localStorage.getItem('sw:disabled') === '1') return;
-    const registration = await navigator.serviceWorker.register('/sw.js?v=2026-08-26-payment-fix');
+    const registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL);
     if (document.visibilityState === 'visible') {
       registration.update();
     }
+    // A tab left open across a publish: check for the new build whenever the
+    // member comes back to it, not only on the initial load.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') registration.update().catch(() => undefined);
+    });
   } catch (error) {
     console.warn('Service worker registration skipped:', error.message);
   }

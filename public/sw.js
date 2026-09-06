@@ -1,5 +1,9 @@
 // Lightweight Service Worker - Network-first strategy
-const CACHE_VERSION = '2026-08-26-payment-fix'
+// __SW_BUILD_ID__ is replaced with the build id by vite.config.ts at build
+// time (dist/sw.js), so every publish is a new worker: install -> skipWaiting
+// -> clients.claim -> main.tsx reloads tabs still running the old bundle.
+// In dev the placeholder stays; main.tsx does not register the worker in dev.
+const CACHE_VERSION = '__SW_BUILD_ID__'
 const CACHE_NAME = `sow2grow-v${CACHE_VERSION}`
 
 // Only cache critical static assets

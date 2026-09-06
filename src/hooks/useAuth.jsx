@@ -1,6 +1,18 @@
 import React, { createContext, useContext } from 'react'
 import { supabase } from "@/integrations/supabase/client"
 import { logError, logInfo, logWarn } from "@/lib/logging"
+import { friendlyAuthError, isStaleBuildError, requestServiceWorkerUpdate } from '@/lib/staleBuild'
+
+// 2026-09-06: a tab still running an old build gets "Legacy API keys are
+// disabled" from Supabase after the key rotation. That is a stale page, not
+// bad credentials: say so, and ask the service worker for the new build.
+function staleAware(result) {
+  if (result && !result.success && isStaleBuildError(result.error)) {
+    requestServiceWorkerUpdate()
+    return { ...result, error: friendlyAuthError(result.error), stale: true }
+  }
+  return result
+}
 
 // Minimal, resilient Auth context that avoids React hooks inside providers
 // to prevent "dispatcher is null" when multiple React copies are bundled.
@@ -163,10 +175,10 @@ export class AuthProviderClass extends React.Component {
   login = async (email, password) => {
     try {
       const { data, error } = await this.withRetry(() => supabase.auth.signInWithPassword({ email, password }))
-      if (error) return { success: false, error: error.message }
+      if (error) return staleAware({ success: false, error: error.message })
       return { success: true, user: data.user }
     } catch (e) {
-      return { success: false, error: e.message }
+      return staleAware({ success: false, error: e.message })
     }
   }
 
@@ -219,7 +231,7 @@ export class AuthProviderClass extends React.Component {
       }))
       if (error) {
         await logAttempt(false, error)
-        return { success: false, error: error.message, code: error.code || error.name }
+        return staleAware({ success: false, error: error.message, code: error.code || error.name })
       }
       // Best-effort: also call claim_referral_code RPC after signup so it sticks even if trigger missed it
       if (referral_code && data?.user?.id) {
@@ -240,7 +252,7 @@ export class AuthProviderClass extends React.Component {
   loginAnonymously = async () => {
     try {
       const { data, error } = await this.withRetry(() => supabase.auth.signInAnonymously())
-      if (error) return { success: false, error: error.message }
+      if (error) return staleAware({ success: false, error: error.message })
       return { success: true, user: data.user }
     } catch (e) {
       return { success: false, error: e.message }

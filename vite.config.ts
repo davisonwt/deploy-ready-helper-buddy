@@ -6,6 +6,31 @@ import { componentTagger } from "lovable-tagger";
 import eslint from "vite-plugin-eslint";
 import { visualizer } from "rollup-plugin-visualizer";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
+import { readFileSync, writeFileSync } from "fs";
+
+// One id per build (UTC, to the second). It is compiled into the app as
+// __BUILD_ID__ and stamped into dist/sw.js, so every publish ships a
+// byte-different service worker and open tabs reload onto the new build
+// (see src/lib/serviceWorkerUrl.ts and the controllerchange handler in
+// src/main.tsx). 2026-09-06: members on an old tab saw "Legacy API keys
+// are disabled" after the key rotation until a manual hard refresh.
+const BUILD_ID = new Date().toISOString().replace(/[-:]/g, "").replace("T", "-").slice(0, 15);
+
+function serviceWorkerBuildStamp() {
+  let outDir = "dist";
+  return {
+    name: "sow2grow-service-worker-build-stamp",
+    apply: "build" as const,
+    configResolved(config: { build: { outDir: string } }) {
+      outDir = config.build.outDir;
+    },
+    closeBundle() {
+      const src = readFileSync(path.resolve(__dirname, "public/sw.js"), "utf8");
+      if (!src.includes("__SW_BUILD_ID__")) throw new Error("public/sw.js lost its __SW_BUILD_ID__ placeholder");
+      writeFileSync(path.resolve(__dirname, outDir, "sw.js"), src.replace(/__SW_BUILD_ID__/g, BUILD_ID));
+    },
+  };
+}
 
 
 // https://vitejs.dev/config/
@@ -21,6 +46,7 @@ export default defineConfig(({ mode, command }) => ({
   plugins: [
     react(),
     mcpPlugin(),
+    serviceWorkerBuildStamp(),
     command === 'serve' && mode === 'development' && componentTagger(),
     command === 'serve' && eslint({
       failOnError: true, // Fail dev server on ESLint errors
@@ -93,6 +119,7 @@ export default defineConfig(({ mode, command }) => ({
     'process.version': '"v18.0.0"',
     'process.browser': 'true',
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
+    __BUILD_ID__: JSON.stringify(BUILD_ID),
   },
   optimizeDeps: {
     include: [

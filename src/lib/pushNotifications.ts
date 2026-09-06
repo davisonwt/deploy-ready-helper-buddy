@@ -1,3 +1,4 @@
+import { SERVICE_WORKER_URL } from '@/lib/serviceWorkerUrl'
 import { supabase } from "@/integrations/supabase/client"
 import { useEffect } from "react"
 import { useAuth } from "@/hooks/useAuth"
@@ -10,7 +11,7 @@ export async function registerServiceWorker() {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js')
+    const registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL)
     console.log('Service Worker registered:', registration)
     return registration
   } catch (error) {
