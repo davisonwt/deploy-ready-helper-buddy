@@ -198,7 +198,10 @@ export default function QuickBestowModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="sm:max-w-md">
+      {/* Capped to the viewport and laid out as header / scrolling body /
+          footer rows, so the Cancel and Bestow buttons are always reachable
+          however long the address form makes the body (2026-09-06). */}
+      <DialogContent className="sm:max-w-md max-h-[calc(100dvh-1.5rem)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Heart className="h-4 w-4 text-rose-500" /> Bestow on “{seedTitle}”
@@ -209,7 +212,7 @@ export default function QuickBestowModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 py-2">
+        <div className="space-y-3 py-2 min-h-0 overflow-y-auto overscroll-contain pr-1" data-testid="bestow-body">
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Amount (USD)</label>
             <Input
@@ -343,13 +346,13 @@ export default function QuickBestowModal({
               You'll pay <span className="font-medium text-foreground">{formatConvertedWithUsd(pricing.total, displayCurrency, rates)}</span>
             </div>
           )}
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={onClose} disabled={processing}>Cancel</Button>
-            <Button onClick={handleBestow} disabled={processing || sellerBlocked || amount <= 0 || !!addressProblem} className="gap-2" data-testid="bestow-submit">
-              {processing && <Loader2 className="h-4 w-4 animate-spin" />}
-              Bestow ${pricing.total.toFixed(2)}
-            </Button>
-          </div>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-border pt-3" data-testid="bestow-footer">
+          <Button variant="ghost" onClick={onClose} disabled={processing}>Cancel</Button>
+          <Button onClick={handleBestow} disabled={processing || sellerBlocked || amount <= 0 || !!addressProblem} className="gap-2" data-testid="bestow-submit">
+            {processing && <Loader2 className="h-4 w-4 animate-spin" />}
+            Bestow ${pricing.total.toFixed(2)}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
