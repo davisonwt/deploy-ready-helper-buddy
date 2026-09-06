@@ -1,5 +1,5 @@
 -- Bookkeeping corrections after the first real mainnet payouts (2026-09-06).
--- Run once in Studio as the owner. Both functions are gosat-only and stamp
+-- Applied server-side 2026-09-06 ~09:40 UTC. Run once in Studio as the owner if ever needed again. Both functions are gosat-only and stamp
 -- created_by = auth.uid(); Studio has no JWT, so the first statement acts as
 -- the owner's own gosat account (davison.taljaard, 04754d57...). Every write
 -- is idempotent: a re-run inserts nothing new.
@@ -11,8 +11,7 @@
 --    and 115a75cc), and the sales themselves were live PayPal money, so
 --    S2G's 0.30 + 0.30 belongs in live revenue. The ledger is append-only:
 --    two correction rows, -0.60 devnet and +0.60 live, never an edit.
--- 2. Record the 15.00 USDC the owner sent to the hot wallet (signature
---    5yDg3G8y..., 08:58 UTC) as float, so the reconciliation expects it.
+-- (The float row lives in bookkeeping-2026-09-06-float.sql.)
 
 SELECT set_config('request.jwt.claims',
   json_build_object('sub', '04754d57-d41d-4ea7-93df-542047a6785b', 'role', 'authenticated')::text, false);
@@ -35,20 +34,8 @@ FROM public.record_revenue_correction(
   'live',
   '2026-09-06 09:22:39+00');
 
--- 2. the 15.00 USDC float, if not already recorded
-SELECT id, kind, wallet, amount_usd, currency, reference
-FROM public.record_treasury_movement(
-  'float_in', 'hot', 15.00,
-  'Owner sent 15.00 USDC from their own wallet to the hot wallet on mainnet on 2026-09-06 08:58 UTC to cover the first real payouts (8.00 owed vs 5.62 on hand). S2G float, not income.',
-  'USDC',
-  '5yDg3G8ytXeQbJnDCZVCpcsdc2bMZPygofnprVLxyBUCsLkrv3GExTGcNQJ2F1kEsNhtxpTBkj68KamoDY4eqkRY')
-WHERE NOT EXISTS (
-  SELECT 1 FROM public.treasury_movements
-   WHERE reference = '5yDg3G8ytXeQbJnDCZVCpcsdc2bMZPygofnprVLxyBUCsLkrv3GExTGcNQJ2F1kEsNhtxpTBkj68KamoDY4eqkRY');
-
 -- proof
 SELECT
   (SELECT round(sum(amount), 2) FROM public.revenue_ledger WHERE environment = 'live' AND kind <> 'opening_balance') AS live_operating_net_expect_2_50,
   (SELECT round(sum(amount), 2) FROM public.revenue_ledger WHERE environment = 'devnet') AS devnet_net_expect_0_90,
-  (SELECT count(*) FROM public.revenue_ledger WHERE kind = 'correction') AS correction_rows_expect_2,
-  (SELECT round(sum(amount_usd), 2) FROM public.treasury_movements WHERE wallet = 'hot' AND environment = 'live') AS hot_float_expect_15;
+  (SELECT count(*) FROM public.revenue_ledger WHERE kind = 'correction') AS correction_rows_expect_2;

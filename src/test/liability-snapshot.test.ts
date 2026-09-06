@@ -79,6 +79,24 @@ describe('per-wallet expectation', () => {
     expect(byName.paypal.expected).toBe(24.6);
     expect(unplaced).toEqual({ parked_s2g_balance: 13.95, owed_without_rail: 2, s2g_own_other_rails: 0.1 });
   });
+  it("cross-rail payouts move expectation from the paying wallet to the one holding the sale proceeds (today's 4.00)", () => {
+    const { wallets } = walletExpectations({
+      held_for_members: { owed: { by_rail: {} }, parked: { total: 8 } },
+      held_for_orchards: { by_location: {} },
+      s2g_own: { operating_net: 2.5, by_rail: { solana: 0.6, paypal: 1.8, none: 0.1 } },
+      unrecorded: { solana_processor_fees: 0.02 },
+      recorded_float: { by_wallet: { hot: 15 } },
+      swept_to_squad: 0,
+      payouts_paid: { total: 8, by_rail: { solana: 8 }, cross_rail: { solana_paid_for_paypal_sales: 4, paypal_paid_for_solana_sales: 0 } },
+    });
+    const byName = Object.fromEntries(wallets.map((w) => [w.wallet, w]));
+    // hot: 0.6 own + 0.02 fees + 15 float - 4 paid for PayPal sales = 11.62 (actual 12.62: the unrecorded 1.00 seed)
+    expect(byName.hot.expected).toBe(11.62);
+    expect(byName.hot.parts.paid_out_for_paypal_sales).toBe(-4);
+    // paypal: 1.8 own + 4 it now holds on the hot wallet's behalf
+    expect(byName.paypal.expected).toBe(5.8);
+  });
+
   it('an empty snapshot expects nothing anywhere', () => {
     const { wallets, unplaced } = walletExpectations({
       held_for_members: { owed: { by_rail: {} }, parked: { total: 0 } },

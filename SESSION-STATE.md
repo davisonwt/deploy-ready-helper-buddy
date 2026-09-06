@@ -2,6 +2,29 @@
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
 
+## Books — 2026-09-06 ~09:45 UTC (fee reclass, float recorded, cross-rail wallet expectation)
+
+- `scripts/studio/bookkeeping-2026-09-06-corrections.sql` applied server-side:
+  two `correction` rows (−0.60 devnet, +0.60 live) move the sale fees of
+  `b3518c23` / `904058fc` to live now that their earnings were paid on
+  mainnet. **Live operating net 1.90 → 2.50**; devnet net 1.50 → 0.90.
+- `scripts/studio/bookkeeping-2026-09-06-float.sql` applied: `treasury_movements`
+  float_in hot 15.00 USDC, reference `5yDg3G8y…`. (Owner later asked to hold
+  the float row until the wallet math was fixed; it was already in. The
+  TOTAL-level verdict math was in fact right — payouts reduce cash and
+  liabilities equally — so the row stays.)
+- What WAS wrong was the per-wallet expectation: the hot wallet paid 4.00
+  of PayPal-origin earnings. `20260906160000_liability_snapshot_cross_rail.sql`
+  adds `payouts_paid {total, by_rail, cross_rail}` to the snapshot;
+  `liabilityRules.walletExpectations` subtracts cross-rail payouts from the
+  paying wallet and adds them to the wallet holding the sale proceeds.
+  Live: hot expected 11.62 vs actual 12.62 — the +1.00 is the unrecorded
+  seed from 2026-09-01; PayPal expected 5.80 own + parked 8.00 unplaced.
+  treasury-balances v122. Fixture 13/13, unit tests 9.
+- Verdict (SQL-only, PayPal entered 0): GREEN, coverage 158%, unexplained
+  −12.90 = PayPal not counted (≈ 9.20 of sales less PayPal's fees) + 1.00
+  unrecorded seed. The page counts PayPal live.
+
 ## Paid — 2026-09-06 09:22 UTC (first REAL mainnet payouts: Louw, Amber, davison.taljaard)
 
 Task file `s2g-real-payouts.txt`. Owner funded the hot wallet with 15.00 USDC

@@ -80,6 +80,8 @@ export interface SnapshotForWallets {
   unrecorded: { solana_processor_fees: number };
   recorded_float: { by_wallet: Record<string, number> };
   swept_to_squad: number;
+  /** Payouts already made, and the cross-rail part: money paid from one rail for sales that came in on the other. */
+  payouts_paid?: { total: number; by_rail: Record<string, number>; cross_rail: { solana_paid_for_paypal_sales: number; paypal_paid_for_solana_sales: number } };
 }
 
 export type WalletName = "hot" | "squad" | "launch" | "uplift" | "paypal";
@@ -113,6 +115,11 @@ export function walletExpectations(s: SnapshotForWallets): { wallets: WalletExpe
   const swept = Number(s.swept_to_squad ?? 0);
   const flt = s.recorded_float.by_wallet ?? {};
   const proc = Number(s.unrecorded.solana_processor_fees ?? 0);
+  // Cross-rail payouts: a Solana payout of a PayPal-sale earning left the hot
+  // wallet while the sale proceeds stayed in PayPal, so the hot wallet expects
+  // less and PayPal expects more by that amount (and the mirror case).
+  const solForPaypal = Number(s.payouts_paid?.cross_rail?.solana_paid_for_paypal_sales ?? 0);
+  const paypalForSol = Number(s.payouts_paid?.cross_rail?.paypal_paid_for_solana_sales ?? 0);
 
   const hot: WalletExpectation = {
     wallet: "hot",
@@ -122,6 +129,8 @@ export function walletExpectations(s: SnapshotForWallets): { wallets: WalletExpe
       s2g_own_unswept: round2(Math.max(ownSolana - swept, 0)),
       unrecorded_processor_fees: proc,
       recorded_float: Number(flt.hot ?? 0),
+      paid_out_for_paypal_sales: round2(-solForPaypal),
+      received_for_solana_sales_paid_by_paypal: paypalForSol,
     },
     expected: 0,
   };
@@ -130,7 +139,14 @@ export function walletExpectations(s: SnapshotForWallets): { wallets: WalletExpe
   const uplift: WalletExpectation = { wallet: "uplift", parts: { recorded_float: Number(flt.uplift ?? 0) }, expected: 0 };
   const paypal: WalletExpectation = {
     wallet: "paypal",
-    parts: { owed_to_members_paypal: owedPaypal, held_for_orchards: orchPaypal, s2g_own: ownPaypal, recorded_float: Number(flt.paypal ?? 0) },
+    parts: {
+      owed_to_members_paypal: owedPaypal,
+      held_for_orchards: orchPaypal,
+      s2g_own: ownPaypal,
+      recorded_float: Number(flt.paypal ?? 0),
+      held_for_hot_wallet_after_cross_rail_payouts: solForPaypal,
+      paid_out_for_solana_sales: round2(-paypalForSol),
+    },
     expected: 0,
   };
   for (const w of [hot, squad, launch, uplift, paypal]) {
