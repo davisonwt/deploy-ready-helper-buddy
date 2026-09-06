@@ -35,6 +35,8 @@ describe('walletErrorClassifier', () => {
       const r = classifyError(new SimulationFailedError(detail));
       expect(r.kind, detail).toBe('no-sol-for-fees');
       expect(r.message).toBe(NO_SOL_MESSAGE);
+      expect(NO_SOL_MESSAGE).toMatch(/0\.01 SOL/);
+      expect(NO_SOL_MESSAGE).not.toMatch(/0\.00001/);
       expect(r.detail).toBe(detail);
     }
     // the same words from Phantom itself, not from the simulation

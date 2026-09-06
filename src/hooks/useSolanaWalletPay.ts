@@ -22,8 +22,9 @@ export { SimulationFailedError, classifyError } from '@/lib/payments/walletError
 export type { WalletPayError, WalletPayErrorKind } from '@/lib/payments/walletErrorClassifier';
 import { NO_SOL_MESSAGE, SimulationFailedError, classifyError, type WalletPayError } from '@/lib/payments/walletErrorClassifier';
 
-// A transfer costs 5,000 lamports; ask for a small margin so a wallet that
-// can sign once can sign again. 0.00001 SOL, the figure the message quotes.
+// A transfer costs 5,000 lamports; stop under 10,000 (fee plus margin). The
+// member-facing guidance (NO_SOL_MESSAGE) deliberately asks for a practical
+// 0.01 SOL, not this bare threshold.
 const MIN_FEE_LAMPORTS = 10_000;
 
 /**

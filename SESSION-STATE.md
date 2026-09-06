@@ -12,8 +12,9 @@ and simulating on mainnet: AccountNotFound for his wallet, success for a
 funded control. Not a code bug in the builder; a first-run trap for any
 USDC-only wallet. Fix: `walletErrorClassifier.ts` gains `no-sol-for-fees`
 (AccountNotFound / insufficient funds for fee / insufficient lamports) with
-"Your wallet has no SOL to pay the network fee (about 0.00001 SOL). Add a
-little SOL in Phantom, then try again."; the hook reads the payer's SOL via
+"Your wallet needs a little SOL to pay the network fee. Add about 0.01
+SOL (a few cents' worth) in Phantom, then try again." (owner corrected the
+first wording, which quoted the bare 0.00001 fee); the hook reads the payer's SOL via
 the proxy before building and stops early with that message (threshold
 10,000 lamports); `solana-rpc-proxy` v23 allows the read-only `getBalance`
 (sends still blocked); `SolanaPaymentPanel` opens the QR on that error and

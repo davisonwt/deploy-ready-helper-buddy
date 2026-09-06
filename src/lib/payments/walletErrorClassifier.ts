@@ -39,8 +39,11 @@ export interface WalletPayError {
 }
 
 /** The one sentence a member needs when their wallet cannot pay the network fee. */
+// The check stops under 10,000 lamports (the bare fee with margin), but the
+// guidance names a practical top-up: 0.01 SOL is the smallest amount a
+// member can realistically add and it covers many fees plus any rent.
 export const NO_SOL_MESSAGE =
-  'Your wallet has no SOL to pay the network fee (about 0.00001 SOL). Add a little SOL in Phantom, then try again.';
+  "Your wallet needs a little SOL to pay the network fee. Add about 0.01 SOL (a few cents' worth) in Phantom, then try again.";
 
 // A fee payer with no lamports: the runtime answers "AccountNotFound" (the
 // system account was never funded) or an insufficient-lamports / -funds-
