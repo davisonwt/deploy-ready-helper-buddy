@@ -1,30 +1,67 @@
-// Gosat-only treasury view: returns the platform's custody balances from
-// NOWPayments and PayPal, plus computed "reserved for sowers" and "platform net".
+// Gosat-only treasury view (BOOKKEEPING-PLAN.md section 4, Phase 2):
+// the three buckets from public.liability_snapshot(), the live balances of
+// the four named wallets + PayPal, the per-wallet expectation, and the
+// reconciliation verdict (GREEN / RED) from _shared/liabilityRules.ts,
+// the TypeScript twin of public.treasury_verdict().
 //
 // Auth: caller MUST be signed in AND have a `gosat` role in public.user_roles.
-// Verification is done with the service-role client so RLS cannot be bypassed.
+// Read-only: this page observes, it never moves money.
+//
+// Retired 2026-09-06: the legacy organization_wallets rows (s2gholding /
+// s2gbestow, NOWPayments era) are no longer fetched or shown. The rows stay
+// in the table because _shared/distribution.ts still snapshots them into
+// orchard distribution_data; that reference goes with orchard Phase B.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { getPaypalAccessToken, paypalBaseUrl } from "../_shared/paypal/client.ts";
+import { paypalEnvironment } from "../_shared/revenue.ts";
+import {
+  treasuryVerdict,
+  verdictSentence,
+  walletExpectations,
+  type SnapshotForWallets,
+  type WalletName,
+} from "../_shared/liabilityRules.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 const SOLANA_RPC = Deno.env.get("SOLANA_RPC_URL") ?? "https://api.mainnet-beta.solana.com";
 const USDC_SPL_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
-interface NPBalanceEntry {
-  amount?: number;
-  pendingAmount?: number;
-}
-interface NPBalanceResponse {
-  currencies?: Record<string, NPBalanceEntry>;
-}
+// The four named wallets (spec-payments.md sections 2 and 10). Addresses
+// come from secrets where one exists, else the documented address.
+const WALLETS: Array<{ name: WalletName; label: string; address: string; note: string }> = [
+  {
+    name: "hot",
+    label: "Hot wallet",
+    address: (Deno.env.get("SOLANA_HOT_WALLET_ADDRESS") ?? "6zbpF3HQbxFVMfUPMRzZZ52nwA7PSvqeq2Cqibq2BcxZ").trim(),
+    note: "Working float: payments in, payouts out. Single key.",
+  },
+  {
+    name: "squad",
+    label: "Squad vault (2-of-3)",
+    address: (Deno.env.get("SQUAD_VAULT_ADDRESS") ?? "BjBY4uCCEQfE66rYddTBUn9Twg7jKevH1Rze8UfZFWLs").trim(),
+    note: "S2G's own accumulated fees, swept from the hot wallet.",
+  },
+  {
+    name: "launch",
+    label: "Launch Orchard wallet",
+    address: (Deno.env.get("LAUNCH_ORCHARD_WALLET_ADDRESS") ?? "13M2yVLWFmm2VeU1SD5PPPzJwBGUR3eny6Mbvdx3ztct").trim(),
+    note: "Held for Launch orchards once holdings move off the hot wallet. Not S2G's.",
+  },
+  {
+    name: "uplift",
+    label: "Uplift Orchard wallet",
+    address: (Deno.env.get("UPLIFT_ORCHARD_WALLET_ADDRESS") ?? "8Aj2bWN4eDxvGiWPNbCuJXvtH5pL3ZHNGeFdcahRMVRD").trim(),
+    note: "Held for Uplift orchards. Not S2G's.",
+  },
+];
 
-interface OrgWalletBalance {
-  wallet_name: string;
+interface WalletBalance {
+  name: WalletName;
   label: string;
-  blockchain: string;
   address: string;
+  note: string;
   sol: number;
   usdc: number;
   ok: boolean;
@@ -47,7 +84,6 @@ async function solanaRpc<T>(method: string, params: unknown[]): Promise<T> {
 async function loadSolanaWalletBalance(address: string): Promise<{ sol: number; usdc: number }> {
   const lamports = await solanaRpc<{ value: number }>("getBalance", [address]);
   const sol = Number(lamports?.value ?? 0) / 1e9;
-
   const tokens = await solanaRpc<{ value: Array<{ account: { data: { parsed: { info: { tokenAmount: { uiAmount: number | null } } } } } }> }>(
     "getTokenAccountsByOwner",
     [address, { mint: USDC_SPL_MINT }, { encoding: "jsonParsed" }],
@@ -59,10 +95,9 @@ async function loadSolanaWalletBalance(address: string): Promise<{ sol: number; 
   return { sol, usdc };
 }
 
-const WALLET_LABELS: Record<string, string> = {
-  s2gholding: "Main (s2gholding)",
-  s2gbestow: "Tithing (s2gbestow)",
-};
+function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -93,57 +128,41 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!roleRow) return json({ error: "forbidden", message: "gosat role required" }, 403);
 
-    // ---- NOWPayments balance (auth -> /v1/balance) ----
-    const npEmail = Deno.env.get("NOWPAYMENTS_EMAIL");
-    const npPassword = Deno.env.get("NOWPAYMENTS_PASSWORD");
-    let nowpayments: {
-      ok: boolean;
-      error?: string;
-      currencies?: Array<{ currency: string; available: number; pending: number }>;
-    } = { ok: false, error: "not_configured" };
+    // ---- The books: liability snapshot, live + the test environments ----
+    const { data: snapshot, error: snapErr } = await service.rpc("liability_snapshot", { _environment: "live" });
+    if (snapErr || !snapshot) {
+      return json({ error: "liability_snapshot_failed", detail: snapErr?.message ?? "no data" }, 500);
+    }
+    const { data: devnetSnapshot } = await service.rpc("liability_snapshot", { _environment: "devnet" });
 
-    if (npEmail && npPassword) {
-      try {
-        const authRes = await fetch(`${NOWPAYMENTS_API}/auth`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: npEmail, password: npPassword }),
-        });
-        const authText = await authRes.text();
-        if (!authRes.ok) throw new Error(`auth_http_${authRes.status}: ${authText}`);
-        const authJson = JSON.parse(authText) as { token?: string };
-        if (!authJson.token) throw new Error("no_jwt_token");
-
-        const balRes = await fetch(`${NOWPAYMENTS_API}/balance`, {
-          headers: { Authorization: `Bearer ${authJson.token}` },
-        });
-        const balText = await balRes.text();
-        if (!balRes.ok) throw new Error(`balance_http_${balRes.status}: ${balText}`);
-        const balJson = JSON.parse(balText) as NPBalanceResponse;
-
-        const currencies = Object.entries(balJson.currencies ?? {})
-          .map(([code, v]) => ({
-            currency: code.toUpperCase(),
-            available: Number(v?.amount ?? 0),
-            pending: Number(v?.pendingAmount ?? 0),
-          }))
-          .filter((e) => e.available > 0 || e.pending > 0)
-          .sort((a, b) => b.available - a.available);
-
-        nowpayments = { ok: true, currencies };
-      } catch (err) {
-        console.error("nowpayments balance failed", err);
-        nowpayments = { ok: false, error: err instanceof Error ? err.message : String(err) };
+    // ---- The four wallets, on-chain (mainnet) ----
+    const wallets: WalletBalance[] = [];
+    for (const w of WALLETS) {
+      const entry: WalletBalance = { ...w, sol: 0, usdc: 0, ok: false };
+      if (!w.address) {
+        entry.error = "no_address";
+      } else {
+        try {
+          const bal = await loadSolanaWalletBalance(w.address);
+          entry.sol = bal.sol;
+          entry.usdc = bal.usdc;
+          entry.ok = true;
+        } catch (err) {
+          entry.error = err instanceof Error ? err.message : String(err);
+        }
       }
+      wallets.push(entry);
     }
 
-    // ---- PayPal balance ----
+    // ---- PayPal balance, labelled live / sandbox from PAYPAL_ENV ----
+    const paypalEnv = paypalEnvironment(); // 'live' | 'sandbox'
     let paypal: {
       ok: boolean;
+      environment: "live" | "sandbox";
       error?: string;
       balances?: Array<{ currency: string; available: number; total: number }>;
-    } = { ok: false, error: "not_configured" };
-
+      availableUsd: number;
+    } = { ok: false, environment: paypalEnv, error: "not_configured", availableUsd: 0 };
     try {
       const accessToken = await getPaypalAccessToken();
       const url = `${paypalBaseUrl()}/v1/reporting/balances?currency_code=ALL`;
@@ -164,111 +183,97 @@ Deno.serve(async (req) => {
         available: Number(b.available_balance?.value ?? 0),
         total: Number(b.total_balance?.value ?? 0),
       }));
-      paypal = { ok: true, balances };
+      const availableUsd = balances.filter((b) => b.currency === "USD").reduce((acc, b) => acc + b.available, 0);
+      paypal = { ok: true, environment: paypalEnv, balances, availableUsd };
     } catch (err) {
       console.error("paypal balance failed", err);
-      paypal = { ok: false, error: err instanceof Error ? err.message : String(err) };
+      paypal = { ok: false, environment: paypalEnv, error: err instanceof Error ? err.message : String(err), availableUsd: 0 };
     }
 
-    // ---- Reserved for sowers ----
-    // "Available" = the real member-balance liability: every dollar sitting
-    // in balance_ledger (topups + released earnings, minus spends/
-    // withdrawals) that a member could ask to withdraw right now. This
-    // replaces the old sower_balances sum, which was topup-only and never
-    // actually reflected sower earnings (see spec-payments.md's S2G
-    // Balance section). "Pending" = owed_payout_balances()'s total --
-    // earnings still working through the OLD pipeline (e.g. a physical
-    // product still held in escrow) that haven't reached the ledger yet.
-    const { data: ledgerRows } = await service
-      .from("balance_available_v")
-      .select("available_balance");
-    const reservedAvailable = (ledgerRows ?? []).reduce(
-      (sum: number, r: any) => sum + Number(r.available_balance ?? 0), 0,
-    );
-    const { data: owedRows } = await service.rpc("owed_payout_balances");
-    const reservedPending = (owedRows ?? []).reduce(
-      (sum: number, r: any) => sum + Number(r.amount_usd ?? 0), 0,
-    );
-
-    // Rough USD custody total (sums numeric values across currencies — display only).
-    const npUsdLike = (nowpayments.currencies ?? [])
-      .filter((c) => ["USDC","USDT","USD","DAI","BUSD"].includes(c.currency))
-      .reduce((acc, c) => acc + c.available + c.pending, 0);
-    const ppUsd = (paypal.balances ?? [])
-      .filter((b) => b.currency === "USD")
-      .reduce((acc, b) => acc + b.total, 0);
-    const custodyTotalUsd = npUsdLike + ppUsd;
-    const reservedTotal = reservedAvailable + reservedPending;
-
-    // ---- Held for orchards (P0-5 Phase A) ----
-    // Bestowers' pocket money sitting in the hot wallet / PayPal balance
-    // until the orchard funds. A liability, shown as its own line (spec-
-    // payments.md section 9), never merged into "reserved for sowers".
-    const { data: heldRows } = await service
-      .from("orchard_holdings")
-      .select("gross_amount, orchard_id")
-      .eq("status", "held");
-    const heldForOrchardsUsd = (heldRows ?? []).reduce((s: number, r: any) => s + Number(r.gross_amount || 0), 0);
-    const heldOrchardCount = new Set((heldRows ?? []).map((r: any) => r.orchard_id)).size;
-
-    const platformNetUsd = custodyTotalUsd - reservedTotal - heldForOrchardsUsd;
-
-    // ---- Organization wallets (main + tithing) with live Solana balances ----
-    const orgWallets: OrgWalletBalance[] = [];
-    const { data: orgRows } = await service
-      .from("organization_wallets")
-      .select("wallet_name, blockchain, wallet_address, is_active")
-      .eq("is_active", true);
-    for (const row of orgRows ?? []) {
-      const address = row.wallet_address as string | null;
-      const blockchain = (row.blockchain as string | null) ?? "unknown";
-      const name = row.wallet_name as string;
-      const entry: OrgWalletBalance = {
-        wallet_name: name,
-        label: WALLET_LABELS[name] ?? name,
-        blockchain,
-        address: address ?? "",
-        sol: 0,
-        usdc: 0,
-        ok: false,
-      };
-      if (!address) {
-        entry.error = "no_address";
-        orgWallets.push(entry);
-        continue;
-      }
-      if (blockchain !== "solana") {
-        entry.error = `unsupported_chain_${blockchain}`;
-        orgWallets.push(entry);
-        continue;
-      }
+    // ---- NOWPayments (legacy; shown only if it still holds something) ----
+    let nowpayments: { ok: boolean; error?: string; currencies?: Array<{ currency: string; available: number; pending: number }> } =
+      { ok: false, error: "not_configured" };
+    const npEmail = Deno.env.get("NOWPAYMENTS_EMAIL");
+    const npPassword = Deno.env.get("NOWPAYMENTS_PASSWORD");
+    if (npEmail && npPassword) {
       try {
-        const bal = await loadSolanaWalletBalance(address);
-        entry.sol = bal.sol;
-        entry.usdc = bal.usdc;
-        entry.ok = true;
+        const authRes = await fetch(`${NOWPAYMENTS_API}/auth`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: npEmail, password: npPassword }),
+        });
+        const authText = await authRes.text();
+        if (!authRes.ok) throw new Error(`auth_http_${authRes.status}: ${authText}`);
+        const authJson = JSON.parse(authText) as { token?: string };
+        if (!authJson.token) throw new Error("no_jwt_token");
+        const balRes = await fetch(`${NOWPAYMENTS_API}/balance`, { headers: { Authorization: `Bearer ${authJson.token}` } });
+        const balText = await balRes.text();
+        if (!balRes.ok) throw new Error(`balance_http_${balRes.status}: ${balText}`);
+        const balJson = JSON.parse(balText) as { currencies?: Record<string, { amount?: number; pendingAmount?: number }> };
+        const currencies = Object.entries(balJson.currencies ?? {})
+          .map(([code, v]) => ({ currency: code.toUpperCase(), available: Number(v?.amount ?? 0), pending: Number(v?.pendingAmount ?? 0) }))
+          .filter((e) => e.available > 0 || e.pending > 0)
+          .sort((a, b) => b.available - a.available);
+        nowpayments = { ok: true, currencies };
       } catch (err) {
-        entry.error = err instanceof Error ? err.message : String(err);
+        console.error("nowpayments balance failed", err);
+        nowpayments = { ok: false, error: err instanceof Error ? err.message : String(err) };
       }
-      orgWallets.push(entry);
     }
+
+    // ---- Reconciliation ----
+    // Live assets = the four wallets' mainnet USDC + PayPal available USD,
+    // but only when PayPal is live: a sandbox balance is not money.
+    const walletUsdc = wallets.reduce((s, w) => s + (w.ok ? w.usdc : 0), 0);
+    const paypalCounted = paypal.ok && paypal.environment === "live" ? paypal.availableUsd : 0;
+    const assetsUsd = round2(walletUsdc + paypalCounted);
+    const walletsUnreadable = wallets.filter((w) => !w.ok).map((w) => w.name);
+
+    const snap = snapshot as SnapshotForWallets & Record<string, unknown>;
+    const verdict = treasuryVerdict({
+      assetsUsd,
+      liabilitiesUsd: Number(snap.liabilities_total ?? 0),
+      s2gOwnUsd: Number(snap.s2g_own?.operating_net ?? 0),
+      unrecordedUsd: Number(snap.unrecorded?.solana_processor_fees ?? 0),
+      recordedFloatUsd: Number(snap.recorded_float?.total ?? 0),
+    });
+    const expectations = walletExpectations(snap);
+    const actualByWallet: Record<string, number> = {
+      hot: wallets.find((w) => w.name === "hot")?.usdc ?? 0,
+      squad: wallets.find((w) => w.name === "squad")?.usdc ?? 0,
+      launch: wallets.find((w) => w.name === "launch")?.usdc ?? 0,
+      uplift: wallets.find((w) => w.name === "uplift")?.usdc ?? 0,
+      paypal: paypalCounted,
+    };
+    const perWallet = expectations.wallets.map((e) => ({
+      ...e,
+      actual: round2(actualByWallet[e.wallet] ?? 0),
+      difference: round2((actualByWallet[e.wallet] ?? 0) - e.expected),
+    }));
+
+    const gapComponents = [
+      { label: "SOL gas float (not USDC, excluded from every USD figure)", amount: round2(wallets.reduce((s, w) => s + (w.ok ? w.sol : 0), 0)), unit: "SOL" },
+      { label: "Solana processor fees received, S2G's, not in the ledger until phase 4", amount: verdict.unrecorded, unit: "USD" },
+      { label: "Float and gas recorded by a gosat (treasury_movements)", amount: verdict.recorded_float, unit: "USD" },
+      { label: "Test-environment money (devnet / sandbox), excluded from the live figures", amount: round2(Number((devnetSnapshot as { liabilities_total?: number } | null)?.liabilities_total ?? 0)), unit: "USD" },
+    ];
 
     return json({
       generatedAt: new Date().toISOString(),
-      nowpayments,
+      environment: "live",
+      snapshot,
+      devnetSnapshot: devnetSnapshot ?? null,
+      wallets,
       paypal,
-      orgWallets,
-      reserved: {
-        available: reservedAvailable,
-        pending: reservedPending,
-        currency: "USD",
-      },
-      summary: {
-        custodyTotalUsd,
-        reservedForSowersUsd: reservedTotal,
-        platformNetUsd,
-        notice:
-          "Sow2Grow does not currently hold a separate fee wallet. Platform net is computed (custody − reserved for sowers), not held in a distinct account. To enforce a hard split, create a second NOWPayments sub-account and route the platform's % there at distribution time.",
+      nowpayments,
+      assets: { totalUsd: assetsUsd, walletUsdc: round2(walletUsdc), paypalUsd: paypalCounted, paypalCounted: paypal.ok && paypal.environment === "live", unreadable: walletsUnreadable },
+      reconciliation: {
+        ...verdict,
+        sentence: verdictSentence(verdict, "live"),
+        partial: walletsUnreadable.length > 0 || !paypal.ok,
+        gapComponents,
+        perWallet,
+        unplaced: expectations.unplaced,
       },
     });
   } catch (err) {

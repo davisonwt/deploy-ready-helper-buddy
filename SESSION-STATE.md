@@ -2,6 +2,54 @@
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
 
+## Built — 2026-09-06 (Bookkeeping Phases 1 and 2: revenue ledger, liability view; devnet-earnings revert)
+
+Task files `s2g-bookkeeping-plan.txt`, `-phase-1.txt`, `-phase-2.txt`. Design in
+`BOOKKEEPING-PLAN.md` (sections 1–8, with "Phase 1 status" and "Phase 2
+status" under section 6). All migrations applied server-side with
+`npx supabase db query --linked -f <file>`; every proof query is under
+`scripts/studio/`.
+
+- **Phase 1 `8df3f0c8`** — `revenue_ledger` (append-only, environment-tagged
+  live/devnet/sandbox), `record_revenue()` (service_role only, released-source
+  guard, duplicate returns the existing row), `record_revenue_correction()`
+  (gosat, note), `revenue_summary()`. `finalize_basket_order(uuid, text)` and
+  `finalize_content_purchase(uuid, text)` record the fee in-transaction;
+  `capture.ts` records gift and booking fees (`_shared/revenue.ts`,
+  `_shared/revenueRules.ts`). Backfill: 12 sale_fee rows (7 live 1.90, 5 devnet
+  1.50), opening balance −13.95 (the parked S2G Balance, recorded as a cost,
+  owner's decision). 11 functions redeployed (capture-paypal-order v94,
+  check-solana-payment v36, create-basket-bestowal-order v128,
+  create-content-purchase-order v114, create-gift-bestowal-order v115,
+  create-orchard-bestowal-order v30, create-solana-bestowal-order v35,
+  create-wallet-topup v122, paypal-webhook v203, reconcile-paypal-orders v76,
+  sweep-solana-payments v36). Orchard Phase B writes `orchard_fee` through
+  `record_revenue('orchard_fee', …, 'orchard_releases', <release id>, …)`.
+- **Part A revert** — `scripts/studio/revert-devnet-earnings.sql`:
+  `b3518c23` (davison.taljaard) and `904058fc` (Amber) back to
+  `payout_status = 'pending'`, `paid_at` null; payouts `4b7274bd` and
+  `7fe7f2e6` → failed with the revert note. Owed went 4.00 → 8.00 (3
+  recipients). Ledger untouched (both already tagged devnet); live revenue
+  unchanged. Re-run is a no-op.
+- **Phase 2** — `liability_snapshot()`, `treasury_verdict()`,
+  `treasury_movements` + `record_treasury_movement()`, `member_payout_rail()`,
+  `source_row_environment()`; `treasury-balances` v116 rewritten (four named
+  wallets on mainnet, PayPal labelled live/sandbox, legacy org wallets gone
+  from the page); `GosatTreasuryPage.tsx` rewritten (verdict, buckets,
+  per-wallet expectation, recipients with rail/age, orchards, test-money
+  note, Back link). Twin `_shared/liabilityRules.ts`. Live verdict at ship:
+  **RED, short by 10.38** with PayPal counted as 0 (not readable from the
+  CLI): cash 5.62 vs liabilities 16.00. Live smoke: A gets 403 from the
+  function and 42501 from the RPC; unauthenticated gets 401.
+- Tests: `src/test/revenue-ledger.test.ts` 19, `src/test/liability-snapshot.test.ts`
+  8; full suite 137 passed, the same 23 pre-existing failures. SQL fixtures:
+  `revenue-ledger-tests.sql` 17/17, `liability-shortfall-tests.sql` 13/13.
+- Owner to do: **publish in Lovable** (page change), open `/gosat/treasury`
+  on the gosat account and read the verdict with PayPal counted; record the
+  1.00 hot-wallet float via `record_treasury_movement` if it is S2G's seed;
+  the parked 13.95 and any PayPal-held cash remain the reconciliation's
+  open questions (plan section 8).
+
 ## Proven — 2026-09-06 morning (P0-5 Phase A devnet pocket test PASSED; cluster back on mainnet-beta)
 
 Task file `s2g-phase-a-devnet-test.txt`. Result: one real pocket bought on
@@ -2728,18 +2776,21 @@ itself. All 8 checks live, hourly via `invoke_money_job` (cron
    release instead).
 0h. **`orchard_holdings.payer_address` is null** for Solana holdings —
    Phase C needs the sender account from the transaction for refunds.
-0a. **P0-2 Amber revert** — confirm the printed revert for `02c6b716` /
-   payouts `f807f91b` was applied (unverified).
+0a. ~~P0-2 Amber revert~~ — verified applied 2026-09-06 (`02c6b716` pending,
+   `f807f91b` failed). The two other devnet-settled earnings reverted the
+   same day (see "Built — 2026-09-06").
 0b. **P0-6 service-role key rotation** — the key was pasted into the
    terminal several times today; rotate it in the dashboard, then
    `supabase secrets` and Lovable's stored value follow.
-0c. Migration `20260905190000_verify_own_security_answer_grant.sql` —
-   application status unknown; verify, else run it (server-side route
-   works: `npx supabase db query --linked -f <file>`).
+0c. ~~Migration `20260905190000_verify_own_security_answer_grant.sql`~~ —
+   verified live 2026-09-06 (`authenticated` has EXECUTE).
 0d. After the devnet test: cancel or keep the "Phase A test orchard"
    `55f4e02e…`; then P0-5 Phase B (release) and Phase C (cancel/refund).
 0e. Audit P1–P3 items in `AUDIT-2026-09-05.md` are not yet triaged into
    this list.
+0i. **Bookkeeping phases 3–4** (honest revenue tiles; Solana processor-fee
+   income + month-end) per `BOOKKEEPING-PLAN.md` section 6. Phase 2's live
+   verdict is RED until PayPal is counted or the parked 13.95 is resolved.
 
 Every item below is current as of 2026-09-02 end of day. Everything from
 the 2026-08-27 → 2026-09-01 handoffs that got resolved along the way is

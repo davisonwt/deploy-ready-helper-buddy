@@ -281,6 +281,21 @@ Each phase ships alone, is verified by section 7, and can stop there. Migrations
 
 Live-only figures at ship: `sale_fee` 1.90, `opening_balance` −13.95, net −12.05, operating net 1.90. This does **not** reconcile to on-chain yet, by design: reconciliation is phase 2, and today's wallets hold devnet test money and unrecorded float (section 1b). Phase B may now call `record_revenue('orchard_fee', …, 'orchard_releases', <release id>, …)`; the function already refuses that source until the table exists.
 
+### Phase 2 status (2026-09-06)
+
+**Live.** Migration `supabase/migrations/20260906140000_liability_snapshot.sql` applied server-side. Before it, the two devnet-settled earnings were reverted (`scripts/studio/revert-devnet-earnings.sql`: `b3518c23` and `904058fc` back to pending, payouts `4b7274bd` / `7fe7f2e6` failed with a note; ledger untouched, live revenue unchanged).
+
+| Piece | Where |
+|---|---|
+| Snapshot | `liability_snapshot(_environment)`: owed (from `owed_payout_balances()`, split by the covered rows' environment, rail via `member_payout_rail`, aging), parked ledger, orchard holdings by location/rail, S2G own from the ledger, unrecorded Solana processor fees, recorded float, sweeps, per-recipient and per-orchard detail, other environments. Admin/gosat or service role. |
+| Verdict | `treasury_verdict(assets, liabilities, own, unrecorded, float, tolerance)` in SQL and `_shared/liabilityRules.ts` (`treasuryVerdict`, `walletExpectations`) in TypeScript: RED when assets < liabilities, else GREEN; expected assets = liabilities + own + unrecorded + float; unexplained flagged beyond max(1.00, 1%). |
+| Movements | `treasury_movements` + `record_treasury_movement()` (gosat, note mandatory). Empty today; the 1.00 hot-wallet float is for the owner to record. |
+| Function | `treasury-balances` v116: the four named wallets on mainnet, PayPal labelled live/sandbox from `PAYPAL_ENV` (sandbox is never counted as cash), NOWPayments only if non-zero, legacy s2gholding/s2gbestow dropped from the page (rows kept for `distribution.ts` until orchard Phase B). |
+| Page | `/gosat/treasury`: verdict line, held-for-members / held-for-orchards / total liability / S2G own, cash on hand vs expected, explained gap, per-wallet actual vs expected, who is owed what with rail and age, orchards holding money, test-environment note, Back to Admin. |
+| Proofs | `scripts/studio/liability-shortfall-tests.sql` 13/13 (a live 1,000 holding turns the verdict RED, rolled back); `scripts/studio/bookkeeping-reconcile.sql` (assets entered by hand); `src/test/liability-snapshot.test.ts` 8 pass. |
+
+Live picture at ship (PayPal balance not readable from the CLI, entered as 0): held for members 16.00 (owed 8.00 to 3 on the Solana rail, parked 8.00), held for orchards 0.00 live (the 10.00 devnet pocket is listed under test money), total liability 16.00, S2G own 1.90, cash on hand 5.62 → **RED, short by 10.38** before PayPal. Whether PayPal's live balance closes that gap is the first thing the owner's own page view will show.
+
 Phase 1 goes first because Phase B is blocked on it and because it is invisible to members, so it is safe to ship on a weekday. Phase 2 is the one the spec calls for and should follow immediately. Phases 3 and 4 can wait.
 
 ---
