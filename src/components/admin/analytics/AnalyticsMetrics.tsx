@@ -46,7 +46,10 @@ export const MetricCard = ({ title, value, trend, icon, className = '' }: Metric
 interface MetricsOverviewProps {
   totalUsers: number;
   totalOrchards: number;
-  totalRevenue: number;
+  /** Gross volume (bestowals + sales paid), not S2G revenue. */
+  grossVolume: number;
+  /** S2G's own revenue from revenue_summary(); optional. */
+  s2gRevenue?: number;
   totalBestowals: number;
   userGrowth?: number;
   revenueGrowth?: number;
@@ -55,7 +58,8 @@ interface MetricsOverviewProps {
 export const MetricsOverview = ({ 
   totalUsers, 
   totalOrchards, 
-  totalRevenue, 
+  grossVolume,
+  s2gRevenue,
   totalBestowals,
   userGrowth,
   revenueGrowth 
@@ -74,8 +78,8 @@ export const MetricsOverview = ({
         icon="orchards"
       />
       <MetricCard
-        title="Total Revenue"
-        value={`$${totalRevenue.toLocaleString()}`}
+        title="Gross volume"
+        value={`$${grossVolume.toLocaleString()}`}
         trend={revenueGrowth}
         icon="revenue"
       />
@@ -84,6 +88,13 @@ export const MetricsOverview = ({
         value={totalBestowals.toLocaleString()}
         icon="bestowals"
       />
+      {s2gRevenue !== undefined && (
+        <MetricCard
+          title="S2G revenue"
+          value={`$${s2gRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          icon="revenue"
+        />
+      )}
     </div>
   );
 };

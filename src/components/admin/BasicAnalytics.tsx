@@ -61,7 +61,8 @@ export default function BasicAnalytics() {
           .gte('created_at', thirtyDaysAgo.toISOString())
       ]);
 
-      // Calculate total revenue
+      // Gross bestowal volume (BOOKKEEPING-PLAN phase 3): what bestowers paid,
+      // not S2G's revenue. Revenue lives in revenue_ledger / revenue_summary().
       const totalRevenue = bestowalsData.data?.reduce((sum, b) => 
         sum + parseFloat(String(b.amount || 0)), 0) || 0;
 
@@ -198,7 +199,7 @@ export default function BasicAnalytics() {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue Generated</CardTitle>
+            <CardTitle className="text-sm font-medium">Bestowal volume (gross)</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -206,7 +207,7 @@ export default function BasicAnalytics() {
               ${((metrics?.revenue || 0) as number).toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </div>
             <p className="text-xs text-muted-foreground">
-              From bestowals
+              Paid by bestowers; not S2G revenue
             </p>
           </CardContent>
         </Card>
@@ -354,9 +355,9 @@ export default function BasicAnalytics() {
               </div>
             </div>
             <div className="space-y-2">
-              <div className="font-medium">Revenue Growth</div>
+              <div className="font-medium">Volume growth</div>
               <div className="text-muted-foreground">
-                ${(metrics?.revenue || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} raised through bestowals
+                ${(metrics?.revenue || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} gross volume through bestowals
               </div>
             </div>
           </div>

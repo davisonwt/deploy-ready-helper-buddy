@@ -306,6 +306,10 @@ Phase 1 goes first because Phase B is blocked on it and because it is invisible 
 
 ---
 
+### Phase 3 status (2026-09-06): honest tiles built
+
+`src/components/admin/EnhancedAnalyticsDashboard.jsx` -> `.tsx` (the only component rendered on /admin): the "Total Revenue" tile is now **Gross volume** ("bestowals + sales paid in the window; mostly other people's money", trend kept), a new **S2G revenue** tile reads `revenue_summary(null, 'live').operating_net` with "this month" from `revenue_summary(<month start>, 'live')` and links to the treasury page; the fabricated 125,000 fallback is gone and a query failure renders an error state with Try again; the "Revenue" tab is "Volume & revenue" with the chart renamed "Gross volume over time" and an S2G revenue breakdown card (operating net, this month, income, costs, ledger rows). The tab bar also got explicit dark-surface colours (it used theme tokens over the page's hard-coded dark background and was grey-on-grey in light mode). The three unrendered components were relabelled only: `BasicAnalytics` "Bestowal volume (gross)" / "gross volume through bestowals", `AnalyticsMetrics` prop `grossVolume` + optional `s2gRevenue` card, `PaymentMonitoring` "Legacy payments (NOWPayments era)". Labels live in `src/lib/analytics/honestTiles.ts`; `src/test/honest-tiles.test.ts` scans the four sources for the forbidden labels and the fallback. Proven through PostgREST as the owner's gosat account: `revenue_summary` live all-time operating net 2.70, this month 1.50 (2026-09-06 19:3x UTC). Not done: a monthly series for the chart (would need one RPC call per month); `AdminAnalyticsPage.jsx` still carries mock "trend" data with a 125,000 figure on /admin/analytics, outside this phase's four components.
+
 ## 7. Tests
 
 | Phase | Unit (Vitest) | Studio query | Playwright |
