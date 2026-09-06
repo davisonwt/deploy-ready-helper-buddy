@@ -2,6 +2,25 @@
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
 
+## Books closed to the cent — 2026-09-06 ~10:00 UTC
+
+Migration `20260906170000_books_close_to_the_cent.sql` (applied server-side):
+`treasury_movements.occurred_at` + `record_treasury_movement(_occurred_at)`;
+`record_revenue_correction(_rail)`; `liability_snapshot()` splits the parked
+S2G Balance by the rail it came in on (`held_for_members.parked.by_rail`) and
+`walletExpectations` places it (PayPal-sale parked money → PayPal). Entries in
+`scripts/studio/bookkeeping-2026-09-06-close.sql`, applied: seed float 1.00
+(hot, occurred 2026-09-03 16:03 UTC, sig `uQvYQnmc…` — the USDC seed was
+09-03, not 09-01; 09-01 was wallet creation), −0.10 correction for legacy
+`fff9fdc6` (no cash behind it), and a −0.60 (rail none) / +0.60 (rail paypal)
+relabel pair. Results: live operating net 2.50 → **2.40**; own by rail solana
+0.60 / paypal 1.80 / none 0; hot float 16.00. Per-wallet: **hot expected 12.62
+= actual 12.62**; PayPal expected 13.80 = 8.00 parked + 1.80 own + 4.00 held
+for the hot wallet = the six 2.30 PayPal sales. Total: expected 26.42 =
+liabilities 8.00 + own 2.40 + processor 0.02 + float 16.00; actual 12.62 +
+PayPal. If PayPal holds 13.80 the books reconcile to 0.00. treasury-balances
+v123; fixture 13/13; unit tests 10. Only PayPal's real balance is unverified.
+
 ## Books — 2026-09-06 ~09:45 UTC (fee reclass, float recorded, cross-rail wallet expectation)
 
 - `scripts/studio/bookkeeping-2026-09-06-corrections.sql` applied server-side:

@@ -77,7 +77,7 @@ describe('per-wallet expectation', () => {
     expect(byName.launch.expected).toBe(30);
     expect(byName.uplift.expected).toBe(0);
     expect(byName.paypal.expected).toBe(24.6);
-    expect(unplaced).toEqual({ parked_s2g_balance: 13.95, owed_without_rail: 2, s2g_own_other_rails: 0.1 });
+    expect(unplaced).toEqual({ parked_s2g_balance_without_rail: 13.95, owed_without_rail: 2, s2g_own_other_rails: 0.1 });
   });
   it("cross-rail payouts move expectation from the paying wallet to the one holding the sale proceeds (today's 4.00)", () => {
     const { wallets } = walletExpectations({
@@ -97,6 +97,22 @@ describe('per-wallet expectation', () => {
     expect(byName.paypal.expected).toBe(5.8);
   });
 
+  it('closed books (2026-09-06): every wallet reconciles to the cent when parked money is placed by rail', () => {
+    const { wallets, unplaced } = walletExpectations({
+      held_for_members: { owed: { by_rail: {} }, parked: { total: 8, by_rail: { paypal: 8 } } },
+      held_for_orchards: { by_location: {} },
+      s2g_own: { operating_net: 2.4, by_rail: { solana: 0.6, paypal: 1.8, none: 0 } },
+      unrecorded: { solana_processor_fees: 0.02 },
+      recorded_float: { by_wallet: { hot: 16 } },
+      swept_to_squad: 0,
+      payouts_paid: { total: 8, by_rail: { solana: 8 }, cross_rail: { solana_paid_for_paypal_sales: 4, paypal_paid_for_solana_sales: 0 } },
+    });
+    const byName = Object.fromEntries(wallets.map((w) => [w.wallet, w]));
+    expect(byName.hot.expected).toBe(12.62);   // 0.6 + 0.02 + 16 - 4 = the wallet's actual balance
+    expect(byName.paypal.expected).toBe(13.8); // 8 parked + 1.8 own + 4 held for the hot wallet = six 2.30 sales
+    expect(unplaced).toEqual({ parked_s2g_balance_without_rail: 0, owed_without_rail: 0, s2g_own_other_rails: 0 });
+  });
+
   it('an empty snapshot expects nothing anywhere', () => {
     const { wallets, unplaced } = walletExpectations({
       held_for_members: { owed: { by_rail: {} }, parked: { total: 0 } },
@@ -107,6 +123,6 @@ describe('per-wallet expectation', () => {
       swept_to_squad: 0,
     });
     for (const w of wallets) expect(w.expected).toBe(0);
-    expect(unplaced.parked_s2g_balance).toBe(0);
+    expect(unplaced.parked_s2g_balance_without_rail).toBe(0);
   });
 });

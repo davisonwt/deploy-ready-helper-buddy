@@ -74,7 +74,7 @@ export function verdictSentence(v: VerdictResult, env: string): string {
 
 /** The subset of liability_snapshot() the wallet expectation needs. */
 export interface SnapshotForWallets {
-  held_for_members: { owed: { by_rail: Record<string, number> }; parked: { total: number } };
+  held_for_members: { owed: { by_rail: Record<string, number> }; parked: { total: number; by_rail?: Record<string, number> } };
   held_for_orchards: { by_location: Record<string, number> };
   s2g_own: { operating_net: number; by_rail: Record<string, number> };
   unrecorded: { solana_processor_fees: number };
@@ -106,6 +106,10 @@ export function walletExpectations(s: SnapshotForWallets): { wallets: WalletExpe
   const owedSolana = Number(s.held_for_members.owed.by_rail?.solana ?? 0);
   const owedPaypal = Number(s.held_for_members.owed.by_rail?.paypal ?? 0);
   const owedOther = sumWhere(s.held_for_members.owed.by_rail, (k) => k !== "solana" && k !== "paypal");
+  // Parked S2G Balance money physically sits on the rail it came in on.
+  const parkedSolana = Number(s.held_for_members.parked.by_rail?.solana ?? 0);
+  const parkedPaypal = Number(s.held_for_members.parked.by_rail?.paypal ?? 0);
+  const parkedOther = round2(Number(s.held_for_members.parked.total ?? 0) - parkedSolana - parkedPaypal);
   const orchHotSolana = sumWhere(s.held_for_orchards.by_location, (k) => k.startsWith("hot_wallet/"));
   const orchOrchardWallet = sumWhere(s.held_for_orchards.by_location, (k) => k.startsWith("orchard_wallet/"));
   const orchPaypal = sumWhere(s.held_for_orchards.by_location, (k) => k.startsWith("paypal_balance/"));
@@ -125,6 +129,7 @@ export function walletExpectations(s: SnapshotForWallets): { wallets: WalletExpe
     wallet: "hot",
     parts: {
       owed_to_members_solana: owedSolana,
+      parked_s2g_balance_solana: parkedSolana,
       held_for_orchards: orchHotSolana,
       s2g_own_unswept: round2(Math.max(ownSolana - swept, 0)),
       unrecorded_processor_fees: proc,
@@ -141,6 +146,7 @@ export function walletExpectations(s: SnapshotForWallets): { wallets: WalletExpe
     wallet: "paypal",
     parts: {
       owed_to_members_paypal: owedPaypal,
+      parked_s2g_balance_paypal: parkedPaypal,
       held_for_orchards: orchPaypal,
       s2g_own: ownPaypal,
       recorded_float: Number(flt.paypal ?? 0),
@@ -155,7 +161,7 @@ export function walletExpectations(s: SnapshotForWallets): { wallets: WalletExpe
   return {
     wallets: [hot, squad, launch, uplift, paypal],
     unplaced: {
-      parked_s2g_balance: round2(Number(s.held_for_members.parked.total ?? 0)),
+      parked_s2g_balance_without_rail: parkedOther,
       owed_without_rail: owedOther,
       s2g_own_other_rails: ownOther,
     },
