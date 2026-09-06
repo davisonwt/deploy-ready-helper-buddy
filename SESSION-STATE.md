@@ -2,6 +2,30 @@
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
 
+## Built — 2026-09-06 (P0-5 Phase B: orchard release on full funding; devnet proof pending owner's go)
+
+Commit `63e94f3c`. Migration `20260906190000_orchard_release.sql` applied
+server-side: `orchards.orchard_kind/funding_state/funded_at/released_at`,
+`orchard_releases`, `orchard_stock`, `orchard_release()` (service role or
+gosat), `orchard_release_locked()`, `orchard_release_if_funded()` called at
+the end of `orchard_apply_holding()` (auto-release in the same transaction
+under the orchard lock), `orchard_funding_status()` + released columns,
+`revenue_ledger` unique key now includes environment. Release: held →
+released; bestowal rows `held_for_orchard` → `pending` (owed via
+`owed_payout_balances()`, paid by the weekly run); `orchard_fee` via
+`record_revenue` per environment; gift pockets → `orchard_stock`; Books
+income at release (`books.ts` skips orchard income at pocket time);
+`finalizeBestowal` marks orchard rows held_for_orchard in the completing
+update. 11 functions redeployed (capture-paypal-order v105 … sweep-solana-
+payments v46). Proofs: `phase-b-release-tests.sql` 10/10, Phase A guard
+9/9 (case 5 now expects auto-release), unit 16, Playwright orchard spec
+pass. UI: "funded & released" on the orchard page/widget. Devnet proof
+files ready: `scripts/studio/phase-b-devnet-orchard.sql` (1-pocket orchard
+by B), `phase-b-devnet-proof.sql` (before/after). Cluster mainnet-beta.
+Deferred: C (cancel/refund, payer_address), D (Uplift), My Bestowals
+states, console delivery list. Pre-existing window noted and closed: a
+completed orchard row was briefly `pending` before apply.
+
 ## Fixed — 2026-09-06 (pay dialog: "didn't pass a pre-flight check" for a wallet with no SOL)
 
 Louw's new wallet `BQSToMoC…` holds 6.01 USDC and 0 SOL. The buyer's own
