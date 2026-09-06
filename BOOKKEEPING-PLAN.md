@@ -266,6 +266,21 @@ Each phase ships alone, is verified by section 7, and can stop there. Migrations
 | **3. Honest tiles** | Section 5. | none | The five components in section 5; `PaymentMonitoring` retired or relabelled; `.jsx` → `.tsx` on the one file touched. | No admin screen shows the word "revenue" over a gross-volume number; the S2G revenue tile equals `revenue_summary('live').all_time`. |
 | **4. Processor-fee income and month-end** | `processor_fee_income` rows for Solana orders; a monthly P&L export. | backfill of Solana processor fees from `solana_payment_intents` paid mainnet joined to their orders; `revenue_monthly_v`. | Order finalizers write the 0.01; a "Download month" CSV on the gosat page. | Month total for August and September matches a hand-sum of the source tables. |
 
+### Phase 1 status (2026-09-06)
+
+**Live.** Migration `supabase/migrations/20260906120000_revenue_ledger.sql` applied server-side (`npx supabase db query --linked -f`). Owner's decisions folded in: the Solana 0.01 processor fee waits for phase 4; the parked S2G Balance total (13.95) is one `opening_balance` row, recorded as a cost (a liability carried in, not income; `revenue_summary().operating_net` excludes it); the two sales settled with devnet tokens (`b3518c23`, `904058fc`) are tagged `devnet` and named in the migration; their reverts are a separate step, not done here; PayPal live/sandbox labelling and legacy-wallet retirement wait for phase 2; corrections are gosat-only with a mandatory note (`record_revenue_correction`).
+
+| Piece | Where |
+|---|---|
+| Table, append-only trigger, RLS, grants | `revenue_ledger`; `record_revenue` service_role only; `revenue_summary` checks admin/gosat inside |
+| Environment derivation | `payment_environment(provider, order_kind, order_id)` in SQL; `_shared/revenue.ts` `resolveOrderEnvironment` in Deno; rules twin `_shared/revenueRules.ts` |
+| Writers | `finalize_basket_order(uuid, text)` and `finalize_content_purchase(uuid, text)` record in the same transaction; `_shared/paypal/capture.ts` records `gift_fee` (gift branch of `finalizeBestowal`) and `booking_fee` (`finalizeBooking`) |
+| Backfill | 12 `sale_fee` rows = every completed `product_bestowals` row with a fee, total 3.40 = source total; 7 live (1.90), 5 devnet (1.50, three of them Solana devnet sales plus the two named); 1 `opening_balance` −13.95 |
+| Proofs | migration proof; `scripts/studio/revenue-ledger-proof.sql`; `scripts/studio/revenue-ledger-tests.sql` 17/17 pass (rolled back); `src/test/revenue-ledger.test.ts` 19 pass |
+| Deployed | the 11 functions that bundle `capture.ts` (see SESSION-STATE) |
+
+Live-only figures at ship: `sale_fee` 1.90, `opening_balance` −13.95, net −12.05, operating net 1.90. This does **not** reconcile to on-chain yet, by design: reconciliation is phase 2, and today's wallets hold devnet test money and unrecorded float (section 1b). Phase B may now call `record_revenue('orchard_fee', …, 'orchard_releases', <release id>, …)`; the function already refuses that source until the table exists.
+
 Phase 1 goes first because Phase B is blocked on it and because it is invisible to members, so it is safe to ship on a weekday. Phase 2 is the one the spec calls for and should follow immediately. Phases 3 and 4 can wait.
 
 ---

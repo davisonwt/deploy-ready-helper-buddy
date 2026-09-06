@@ -20,6 +20,8 @@
 import { deliverFinalizeMessages } from "../postFinalize/messaging.ts";
 import { syncBooksEntries } from "../postFinalize/books.ts";
 import { paypalFetch } from "./client.ts";
+import { paypalEnvironment, recordRevenue, resolveOrderEnvironment } from "../revenue.ts";
+import { railFor } from "../revenueRules.ts";
 
 export type PaypalOrderKind = "basket" | "content" | "gift" | "orchard" | "topup" | "booking";
 
@@ -109,14 +111,19 @@ async function finalize(
       // finalize_basket_order is idempotent — locks the row, short-circuits
       // if status is already 'completed'. It derives its own payment
       // reference from the order row, so none is passed here.
-      const { error } = await supabase.rpc("finalize_basket_order", { _basket_order_id: recordId });
+      // Bookkeeping Phase 1: the function records S2G's fee per line in the
+      // same transaction; it needs to know which environment the money
+      // moved on (devnet test money must never read as live revenue).
+      const environment = await orderEnvironment(supabase, "basket_orders", "basket", recordId);
+      const { error } = await supabase.rpc("finalize_basket_order", { _basket_order_id: recordId, _environment: environment });
       if (error) throw new Error(`finalize_basket_order_failed:${error.message}`);
       break;
     }
     case "content": {
       // finalize_content_purchase is idempotent — locks the row,
       // short-circuits if payment_status is already 'completed'.
-      const { error } = await supabase.rpc("finalize_content_purchase", { _purchase_id: recordId });
+      const environment = await orderEnvironment(supabase, "content_purchases", "content", recordId);
+      const { error } = await supabase.rpc("finalize_content_purchase", { _purchase_id: recordId, _environment: environment });
       if (error) throw new Error(`finalize_content_purchase_failed:${error.message}`);
       await supabase.from("content_purchases")
         .update({ payment_reference: paymentReference })
@@ -169,7 +176,7 @@ async function finalizeBestowal(
 ): Promise<void> {
   const { data: bestowal, error: lookupError } = await supabase
     .from("bestowals")
-    .select("id, payment_status, orchard_id")
+    .select("id, payment_status, orchard_id, provider, base_amount, amount, distribution_data, provider_order_id")
     .eq("id", bestowalId)
     .maybeSingle();
   if (lookupError) {
@@ -212,6 +219,48 @@ async function finalizeBestowal(
   if (creditError) {
     throw new Error(`credit_earning_for_gift_bestowal_failed:${creditError.message}`);
   }
+
+  // Bookkeeping Phase 1: S2G's share of a gift is earned the moment the
+  // gift lands. gross = base_amount (fee-inclusive for gifts), sower share
+  // from the distribution snapshot; the fee is the difference. Never
+  // throws; a duplicate returns the existing row server-side.
+  const gross = Number(bestowal.base_amount ?? bestowal.amount ?? 0);
+  const snapshotSower = Number((bestowal.distribution_data as { sower_amount?: unknown } | null)?.sower_amount ?? NaN);
+  const sowerShare = Number.isFinite(snapshotSower) ? snapshotSower : gross;
+  const fee = Math.round((gross - sowerShare) * 100) / 100;
+  if (fee > 0) {
+    await recordRevenue(supabase, {
+      kind: "gift_fee",
+      amount: fee,
+      environment: await resolveOrderEnvironment(supabase, { provider: bestowal.provider, orderKind: "gift", orderId: bestowalId }),
+      sourceTable: "bestowals",
+      sourceId: bestowalId,
+      rail: railFor(bestowal.provider),
+      releaseRef: paymentReference ?? bestowal.provider_order_id ?? null,
+      notes: `gift bestowal ${bestowalId}`,
+    });
+  }
+}
+
+/**
+ * Which environment did an order's money move on -- for the SQL-side
+ * finalizers, which cannot read PAYPAL_ENV themselves. Solana answers from
+ * the payment intent; PayPal from PAYPAL_ENV; balance and legacy are live.
+ */
+async function orderEnvironment(
+  supabase: SupabaseLike,
+  table: "basket_orders" | "content_purchases",
+  orderKind: "basket" | "content",
+  recordId: string,
+): Promise<"live" | "devnet" | "sandbox"> {
+  let provider: string | null = null;
+  try {
+    const { data } = await supabase.from(table).select("provider").eq("id", recordId).maybeSingle();
+    provider = (data as { provider?: string | null } | null)?.provider ?? null;
+  } catch (err) {
+    console.warn("[revenue] provider lookup failed; environment falls back to the SQL default", err);
+  }
+  return resolveOrderEnvironment(supabase, { provider, orderKind, orderId: recordId });
 }
 
 /**
@@ -319,6 +368,23 @@ async function finalizeBooking(
     .from("bookings")
     .update({ status: "paid", payment_reference: paymentReference })
     .eq("id", bookingId);
+
+  // Bookkeeping Phase 1: the booking fee is earned once the booking is
+  // paid. Source = the product_bestowals row just written (status
+  // completed), rail PayPal (the only booking rail today).
+  const bookingFee = Number(booking.s2g_fee ?? 0);
+  if (bookingFee > 0) {
+    await recordRevenue(supabase, {
+      kind: "booking_fee",
+      amount: bookingFee,
+      environment: paypalEnvironment(),
+      sourceTable: "product_bestowals",
+      sourceId: bestowal.id,
+      rail: "paypal",
+      releaseRef: paymentReference,
+      notes: `booking ${bookingId}`,
+    });
+  }
 
   if (assignment?.assignment_id && whispererAmount > 0) {
     await supabase.from("whisperer_earnings").insert({
