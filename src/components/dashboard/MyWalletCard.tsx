@@ -3,11 +3,12 @@
 // Solana wallet and its real, live on-chain USDC balance so "how much can
 // I bestow right now" is always answerable from the dashboard, without
 // opening Phantom separately.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Wallet, RefreshCw, ExternalLink, Smartphone, Loader2 } from 'lucide-react';
+import { Wallet, RefreshCw, ExternalLink, Smartphone, Loader2, AlertTriangle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useLiveWalletBalance } from '@/lib/payments/liveWalletBalance';
@@ -30,8 +31,26 @@ function phantomBrowseUrl(): string {
 export default function MyWalletCard() {
   const { user, updateProfile } = useAuth();
   const address: string | null = user?.solana_wallet_address || null;
-  const { balance, loading: balanceLoading, refetch } = useLiveWalletBalance(address);
+  const { balance, error: balanceError, loading: balanceLoading, refetch } = useLiveWalletBalance(address);
   const [connecting, setConnecting] = useState(false);
+  // Earnings arrive at the PAYOUT address (profiles.payout_address, set on
+  // /settings/payouts), which can differ from the wallet shown here. Say so,
+  // or a member reads this balance and wonders where their payout went.
+  const [payout, setPayout] = useState<{ network: string | null; address: string | null } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id) { setPayout(null); return; }
+    supabase
+      .from('profiles')
+      .select('payout_network, payout_address')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setPayout({ network: data?.payout_network ?? null, address: data?.payout_address ?? null });
+      });
+    return () => { cancelled = true; };
+  }, [user?.id]);
+  const payoutDiffers = !!address && payout?.network === 'solana_usdc' && !!payout.address && payout.address !== address;
   const [showPaste, setShowPaste] = useState(false);
   const [pasteValue, setPasteValue] = useState('');
   const [pasteError, setPasteError] = useState('');
@@ -150,12 +169,41 @@ export default function MyWalletCard() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div>
-          <div className="text-xs text-muted-foreground">Balance (USDC)</div>
-          <div className="text-2xl font-bold tabular-nums">
-            {balanceLoading && balance === null ? <Loader2 className="h-5 w-5 animate-spin" /> : `$${(balance ?? 0).toFixed(2)}`}
+          <div className="text-xs text-muted-foreground">Balance (mainnet USDC)</div>
+          <div className="text-2xl font-bold tabular-nums" data-testid="wallet-balance">
+            {balanceLoading && balance === null && !balanceError ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : balanceError ? (
+              <span className="text-base font-semibold text-destructive">Couldn't read balance</span>
+            ) : (
+              `$${(balance ?? 0).toFixed(2)}`
+            )}
           </div>
+          {balanceError && (
+            <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground" data-testid="wallet-balance-error">
+              <span>{balanceError}</span>
+              <button type="button" className="underline hover:text-foreground" onClick={() => refetch()} disabled={balanceLoading}>
+                Retry
+              </button>
+            </div>
+          )}
+          {!balanceError && (
+            <div className="text-[11px] text-muted-foreground">
+              What this wallet holds on Solana mainnet right now. Phantom in Testnet Mode shows devnet, which is not spendable here.
+            </div>
+          )}
         </div>
-        <div className="text-xs text-muted-foreground font-mono">{truncate(address)}</div>
+        <div className="text-xs text-muted-foreground font-mono" title={address}>{truncate(address)}</div>
+        {payoutDiffers && payout?.address && (
+          <div className="flex items-start gap-2 rounded-md border border-border p-2.5 text-xs text-muted-foreground" data-testid="wallet-payout-differs">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>
+              Bestowals leave this wallet, but your earnings are paid to a different address,{' '}
+              <span className="font-mono" title={payout.address}>{truncate(payout.address)}</span>, set on your payout settings.
+              Payouts will not show in this balance.
+            </span>
+          </div>
+        )}
         {low && (
           <div className="rounded-md border border-orange-500/40 bg-orange-500/10 p-2.5 text-xs text-orange-700 dark:text-orange-300">
             Top up your wallet to keep bestowing — open Phantom and tap <strong>Buy</strong> to add USDC.

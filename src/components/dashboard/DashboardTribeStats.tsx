@@ -20,7 +20,7 @@ export default function DashboardTribeStats() {
   const [purchases, setPurchases] = useState({ count: 0, total: 0 });
   const [unread, setUnread] = useState(0);
   const walletAddress: string | null = user?.solana_wallet_address || null;
-  const { balance: walletBalance, loading: walletBalanceLoading } = useLiveWalletBalance(walletAddress);
+  const { balance: walletBalance, error: walletBalanceError, loading: walletBalanceLoading } = useLiveWalletBalance(walletAddress);
 
   const reload = React.useCallback(async () => {
     if (!user?.id) return;
@@ -173,16 +173,20 @@ export default function DashboardTribeStats() {
       {tile("/wallet-settings", <Wallet size={20} />, "My Wallet",
         !walletAddress
           ? "Connect"
-          : walletBalanceLoading && walletBalance === null
+          : walletBalanceLoading && walletBalance === null && !walletBalanceError
             ? "…"
-            : `$${(walletBalance ?? 0).toFixed(2)}`,
+            : walletBalanceError
+              ? "?"
+              : `$${(walletBalance ?? 0).toFixed(2)}`,
         (
           <div style={subLine}>
             {!walletAddress
               ? "no wallet linked yet"
-              : walletBalance !== null && walletBalance < WALLET_LOW_BALANCE_THRESHOLD
-                ? "low — top up in Phantom"
-                : "USDC, live"}
+              : walletBalanceError
+                ? "couldn't read balance — tap to retry"
+                : walletBalance !== null && walletBalance < WALLET_LOW_BALANCE_THRESHOLD
+                  ? "low — top up in Phantom"
+                  : "mainnet USDC, live"}
           </div>
         ), "#a78bfa")}
     </div>

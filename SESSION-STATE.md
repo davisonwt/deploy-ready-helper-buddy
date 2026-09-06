@@ -2,6 +2,28 @@
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
 
+## Fixed — 2026-09-06 (My Wallet tile: a failed balance read showed $0.00)
+
+Bug report: Louw's tile $0.00, davison's $4.28. Investigation (no code
+change needed for those two): the tile reads `profiles.solana_wallet_address`
+(`MyWalletCard.tsx:32`) → `useLiveWalletBalance` → `get-wallet-balance` →
+`_shared/liveBalance.ts` (mainnet RPC, mainnet mint, missing token account
+= true 0). Davison's 4.28 is his real mainnet Phantom balance (Phantom in
+Testnet Mode shows devnet 23.06). Louw's saved address `414KU8dR…` is an
+exchange deposit address from the NOWPayments era, not his Phantom: his
+2.00 payout landed there 09:22 and was forwarded 09:32 to `HA9oNhHd…` (an
+exchange hot wallet holding ~2.85M USDC); davison's payout address did the
+same. Louw must press Connect Phantom.
+The real defect: `liveWalletBalance.ts` turned any fetch failure into 0
+and cached it 60s. Fixed: the hook returns `balance: null` + `error` on
+failure, never caches a failure, rejects a non-numeric answer;
+`MyWalletCard` shows "Couldn't read balance" + Retry, labels the figure
+"mainnet USDC", explains Testnet Mode, and flags when the payout address
+(`profiles.payout_address`, read with one query) differs from the wallet
+shown; `WalletBalanceChip` shows "Balance?" on error; `DashboardTribeStats`
+shows "?" + "tap to retry". Test `src/test/live-wallet-balance.test.ts` (6).
+Payout and messaging code untouched. Needs a Lovable publish.
+
 ## Books closed to the cent — 2026-09-06 ~10:00 UTC
 
 Migration `20260906170000_books_close_to_the_cent.sql` (applied server-side):

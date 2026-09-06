@@ -15,7 +15,7 @@ export default function WalletBalanceChip() {
   const { user } = useAuth();
   const location = useLocation();
   const address: string | null = user?.solana_wallet_address || null;
-  const { balance, loading } = useLiveWalletBalance(address);
+  const { balance, error, loading } = useLiveWalletBalance(address);
 
   // Same page the dashboard tile and the "Connect wallet" flow both use --
   // this is the only place wallet-address connect/change UI lives (see
@@ -35,13 +35,16 @@ export default function WalletBalanceChip() {
             ? 'border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-300'
             : 'border-border bg-background/90 text-foreground',
       )}
-      aria-label={!address ? 'Connect your wallet' : `Wallet balance ${(balance ?? 0).toFixed(2)} USDC`}
+      aria-label={!address ? 'Connect your wallet' : error ? 'Wallet balance could not be read' : `Wallet balance ${(balance ?? 0).toFixed(2)} USDC on mainnet`}
+      title={!address ? undefined : error ? error : 'Mainnet USDC in your connected wallet'}
     >
       <Wallet className="h-3.5 w-3.5" />
       {!address ? (
         'Connect wallet'
-      ) : loading && balance === null ? (
+      ) : loading && balance === null && !error ? (
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : error ? (
+        'Balance?'
       ) : (
         `$${(balance ?? 0).toFixed(2)}`
       )}

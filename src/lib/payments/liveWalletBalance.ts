@@ -27,18 +27,35 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 const inflight = new Map<string, Promise<number>>();
 
+// A failed read is NOT a zero. This used to swallow every error into 0
+// and cache it for 60s, so an expired session, a dropped connection or a
+// 500 from the function rendered as a confident "$0.00" (2026-09-06 My
+// Wallet tile bug). Now a failure throws, the hook reports it, and only a
+// real answer from the chain is ever cached.
 async function fetchBalance(address: string): Promise<number> {
-  try {
-    const { balance } = await invokePaymentFunction<{ balance: number }>('get-wallet-balance', { address });
-    return balance;
-  } catch (err) {
-    console.error('liveWalletBalance: fetchBalance failed', address, err);
-    return 0;
+  const { balance } = await invokePaymentFunction<{ balance: number }>('get-wallet-balance', { address });
+  if (typeof balance !== 'number' || !Number.isFinite(balance)) {
+    throw new Error('The balance service returned no number.');
   }
+  return balance;
+}
+
+export function describeBalanceError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err ?? '');
+  if (/session expired|sign in/i.test(raw)) return 'Sign in again to read your balance.';
+  if (/could not reach|failed to fetch|network/i.test(raw)) return "Couldn't reach the balance service.";
+  return raw ? `Couldn't read balance: ${raw}` : "Couldn't read balance.";
+}
+
+/** Test seam: forget every cached balance. */
+export function clearLiveWalletBalanceCache() {
+  cache.clear();
+  inflight.clear();
 }
 
 export function useLiveWalletBalance(address: string | null | undefined) {
   const [balance, setBalance] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!!address);
 
   const refetch = async (force = false) => {
@@ -48,15 +65,25 @@ export function useLiveWalletBalance(address: string | null | undefined) {
       const cached = cache.get(address);
       if (!force && cached && Date.now() - cached.at < CACHE_MS) {
         setBalance(cached.balance);
+        setError(null);
         return;
       }
       const existing = inflight.get(address);
       const p = existing ?? fetchBalance(address);
       if (!existing) inflight.set(address, p);
-      const b = await p;
-      inflight.delete(address);
-      cache.set(address, { balance: b, at: Date.now() });
+      let b: number;
+      try {
+        b = await p;
+      } finally {
+        inflight.delete(address);
+      }
+      cache.set(address, { balance: b, at: Date.now() }); // only a real answer is cached
       setBalance(b);
+      setError(null);
+    } catch (err) {
+      console.error('liveWalletBalance: fetchBalance failed', address, err);
+      setBalance(null); // unknown, never 0
+      setError(describeBalanceError(err));
     } finally {
       setLoading(false);
     }
@@ -65,6 +92,7 @@ export function useLiveWalletBalance(address: string | null | undefined) {
   useEffect(() => {
     if (!address) {
       setBalance(null);
+      setError(null);
       setLoading(false);
       return;
     }
@@ -72,5 +100,5 @@ export function useLiveWalletBalance(address: string | null | undefined) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address]);
 
-  return { balance, loading, refetch: () => refetch(true) };
+  return { balance, error, loading, refetch: () => refetch(true) };
 }
