@@ -7,13 +7,13 @@
 -- the explorer), then run:
 --   npx supabase db query --linked -f scripts/studio/bookkeeping-reconcile.sql
 --
--- Values below are what was read on 2026-09-06 ~08:30 UTC.
+-- Values below are what was read on 2026-09-06 ~09:35 UTC (after the first mainnet payouts).
 
 -- liability_snapshot() is gosat/admin-only; when this runs as the postgres role there is no JWT, so act as a gosat.
 SELECT set_config('request.jwt.claims', json_build_object('sub', (SELECT user_id FROM public.user_roles WHERE role = 'gosat' LIMIT 1), 'role', 'authenticated')::text, false);
 
 WITH assets(wallet, usdc) AS (VALUES
-  ('hot',    5.62),   -- 6zbpF3HQ... mainnet USDC
+  ('hot',    12.62),   -- 6zbpF3HQ... mainnet USDC
   ('squad',  0.00),   -- BjBY4uCC... (no USDC account yet)
   ('launch', 0.00),   -- 13M2yVLW...
   ('uplift', 0.00),   -- 8Aj2bWN4...
