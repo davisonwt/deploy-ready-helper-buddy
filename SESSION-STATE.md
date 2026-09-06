@@ -3768,7 +3768,7 @@ Open 6.
 
 ## Built - 2026-09-06 (orchard Phase C2: cancel + refund, ready for the devnet proof)
 
-**Status: built, applied, deployed, fixture 27/27, unit tests 15, worker proven through the cron path. The devnet cancel/refund proof has NOT been run (owner: stop before it).** Full record in `ORCHARD-CANCEL-REFUND-PLAN.md` -> Status.
+**Status: built, applied, deployed, fixture 27/27, unit tests 15, worker proven through the cron path, devnet cancel/refund proof PASSED 13:28 UTC.** Full record in `ORCHARD-CANCEL-REFUND-PLAN.md` -> Status.
 
 - Migration `supabase/migrations/20260906210000_orchard_cancel_refund.sql` applied with `npx supabase db query --linked -f` (three passes while the fixture found: `orchards_funding_state_check` lacked `cancelling`; `record_revenue` returns the row, not a uuid; duplicate gosat alerts for a user holding both admin and gosat roles). Idempotent; safe to re-run.
 - Functions deployed: `orchard-refund-worker` (new), `paypal-webhook` (`PAYMENT.CAPTURE.REFUNDED`), `sweep-hot-wallet` (refund-pending money is never sweepable).
@@ -3778,7 +3778,7 @@ Open 6.
 - Live state: cluster mainnet-beta (digest cbe1afc2...); no refund rows; holdings: 1 held (Phase A `2df2ff33`, devnet, payer `EbSUvuE8...` chain), 1 released; Phase A orchard `55f4e02e` open 1/10.
 - Not proven through PostgREST yet: the new `liability_snapshot` body (filter change only). Opening /admin/treasury (deployed `treasury-balances`, no publish needed) is the check.
 
-**Devnet proof, when the owner says go:** `secrets set SOLANA_CLUSTER=devnet` (owner) -> `orchard_cancel('55f4e02e-...', reason)` as gosat -> fire the worker -> `phase-c-refund-proof.sql` shows the refund confirmed with a devnet signature, holding refunded, bestowal refunded, `refund_cost` -0.01 devnet, orchard cancelled -> check `EbSUvuE8...` +10.00 USDC on devnet -> flip back to mainnet-beta (owner) -> confirm.
+**Devnet proof PASSED 13:28 UTC** (details in the plan's Status): orchard `55f4e02e` cancelled by gosat, refund `27fc8591` confirmed by the worker via the cron path in 17 s, devnet signature `2iuoASMs...5diHva`, payer `EbSUvuE8...` 13.05 -> 23.05 USDC, hot wallet devnet 38 -> 28, holding refunded, bestowal refunded, `refund_cost` -0.01 devnet, orchard cancelled, 4 events, 3 notifications, devnet liability view 10.00 -> 0, live view untouched. Live state now: holdings 1 refunded + 1 released, no open orchard money. **Cluster: owner flipped to devnet for the proof at ~13:25 UTC; must be flipped back to mainnet-beta.** Studio file for the cancel: `scripts/studio/phase-c-devnet-cancel.sql` (commits; do not re-run).
 
 ## Known gotchas
 
