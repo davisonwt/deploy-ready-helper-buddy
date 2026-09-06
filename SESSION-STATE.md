@@ -2,7 +2,7 @@
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
 
-## Built — 2026-09-06 (P0-5 Phase B: orchard release on full funding; devnet proof pending owner's go)
+## Built and PROVEN — 2026-09-06 (P0-5 Phase B: orchard release on full funding; devnet proof passed 11:55 UTC)
 
 Commit `63e94f3c`. Migration `20260906190000_orchard_release.sql` applied
 server-side: `orchards.orchard_kind/funding_state/funded_at/released_at`,
@@ -22,8 +22,13 @@ payments v46). Proofs: `phase-b-release-tests.sql` 10/10, Phase A guard
 pass. UI: "funded & released" on the orchard page/widget. Devnet proof
 files ready: `scripts/studio/phase-b-devnet-orchard.sql` (1-pocket orchard
 by B), `phase-b-devnet-proof.sql` (before/after). Cluster mainnet-beta.
-Deferred: C (cancel/refund, payer_address), D (Uplift), My Bestowals
-states, console delivery list. Pre-existing window noted and closed: a
+Devnet proof: orchard `9d8fbab2…` (1 pocket, sower B), A paid 10.01 devnet
+(sig `b4NquLfz…`): auto-release in the same second, B owed 8.70, one devnet
+`orchard_fee` 1.30, 2 notifications, devnet view owed 0→8.70 / own 0.90→2.20,
+live view untouched; cluster flipped back to mainnet-beta after.
+Deferred: C (cancel/refund, payer_address, and: a stale intent paid after
+release would still create a held holding — apply_holding must refuse/flag
+it), D (Uplift), My Bestowals states, console delivery list. Pre-existing window noted and closed: a
 completed orchard row was briefly `pending` before apply.
 
 ## Fixed — 2026-09-06 (pay dialog: "didn't pass a pre-flight check" for a wallet with no SOL)
