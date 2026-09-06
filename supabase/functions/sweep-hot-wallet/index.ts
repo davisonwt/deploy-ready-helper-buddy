@@ -124,10 +124,12 @@ Deno.serve(async (req) => {
     // still physically in this wallet) is bestowers' money, not S2G's. It is
     // subtracted before the ceiling test so it can never be swept to the
     // Squad vault:  sweepable = balance - held_for_orchards - ceiling.
+    // Phase C2: money awaiting a refund (refund_pending / refund_failed) is
+    // still theirs and still here; it must stay to be returned.
     const { data: heldRows, error: heldErr } = await admin
       .from("orchard_holdings")
       .select("gross_amount")
-      .eq("status", "held")
+      .in("status", ["held", "refund_pending", "refund_failed"])
       .eq("rail", "solana")
       .eq("location", "hot_wallet");
     if (heldErr) {

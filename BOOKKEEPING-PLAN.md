@@ -164,7 +164,7 @@ The rule is "record at release", and release is already a concrete moment in eve
 | Gift bestowal (no orchard) | `finalizeBestowal` in `capture.ts` | after the credit-or-pending step | `gift_fee`, amount `base_amount − distribution_data.sower_amount` |
 | Booking | `create-booking-paypal-order` capture path | on paid | `booking_fee` |
 | **Orchard release (Phase B)** | `orchard_release(orchard_id)` flips holdings to `released` | The same SQL transaction | One `orchard_fee` row per orchard, amount `sum(s2g_amount)` of the released holdings, `source_table = 'orchard_releases'`, `release_ref` = release id. Exactly what plan section 4 step 3 specifies. |
-| Orchard refund (Phase C) | `orchard_refund` worker | on refund | No income row was ever written for a held orchard, so nothing to reverse. A PayPal shortfall writes `refund_cost`. |
+| Orchard refund (Phase C2, live 2026-09-06) | `orchard_refund_confirm()` (called by `orchard-refund-worker` / `paypal-webhook`) | on confirmation | No income row was ever written for a held orchard, so nothing to reverse. The fee S2G absorbed (0.01 flat per Solana refund; what PayPal kept of its fee) is one `refund_cost` row, `source_table = 'orchard_refunds'`, `release_ref` = orchard id. A write-off writes nothing (owner: unclaimed surplus, not income). |
 | Platform-only income (Hearts unlock, later) | its own order function | on paid | `platform_income`, full amount |
 | PayPal payout sent | `payout-earnings` after a batch succeeds | per item | `payout_fee_cost` if the fee is known from PayPal's response; else skipped and reconciled monthly from the PayPal statement |
 

@@ -21,6 +21,7 @@
 //                                                    ORDER.APPROVED already
 //                                                    finalized this order)
 //   - PAYMENT.CAPTURE.DENIED / VOIDED / DECLINED -> mark 'failed'
+//   - PAYMENT.CAPTURE.REFUNDED                   -> confirm a pending orchard refund (Phase C2)
 //   - PAYMENT.PAYOUTS-ITEM.SUCCEEDED             -> the payouts row (found
 //     by sender_item_id = payouts.id, set at dispatch by payout-earnings)
 //     and every row it covers are marked paid.
@@ -306,6 +307,36 @@ async function handleEvent(
     if (!customId) return;
     const order = parseCustomId(customId);
     await markFailed(supabase, order, `paypal_${type.toLowerCase()}`);
+    return;
+  }
+
+  // ------- Capture refunded: an orchard refund the worker left at 'sent' --------
+  // P0-5 Phase C2. The resource is the refund object; its id is what
+  // orchard-refund-worker stored as rail_reference when PayPal answered
+  // PENDING. Anything else (a refund made by hand in the PayPal UI, a
+  // non-orchard capture) is logged and left alone.
+  if (type === "PAYMENT.CAPTURE.REFUNDED") {
+    const refundId = typeof resource.id === "string" ? resource.id : null;
+    if (!refundId) return;
+    const { data: row } = await supabase
+      .from("orchard_refunds")
+      .select("id, status, fee_cost")
+      .eq("rail", "paypal")
+      .eq("rail_reference", refundId)
+      .maybeSingle();
+    if (!row) {
+      console.log("paypal-webhook: CAPTURE.REFUNDED for a refund we did not queue", refundId, event.id);
+      return;
+    }
+    if (row.status === "confirmed") return; // a retried delivery
+    const { data: res, error: confErr } = await supabase.rpc("orchard_refund_confirm", {
+      _refund_id: row.id,
+      _rail_reference: refundId,
+      _fee_cost: null,               // keep the fee orchard_refund_sent stored
+      _detail: `paypal webhook ${event.id}`,
+    });
+    if (confErr) throw new Error(`orchard_refund_confirm failed: ${confErr.message}`);
+    console.log("paypal-webhook: orchard refund confirmed", row.id, refundId, JSON.stringify(res));
     return;
   }
 

@@ -3766,6 +3766,20 @@ Open 6.
    cleanup, orchards page naming, core-loop walkthrough, avatar wipe
    cause).
 
+## Built - 2026-09-06 (orchard Phase C2: cancel + refund, ready for the devnet proof)
+
+**Status: built, applied, deployed, fixture 27/27, unit tests 15, worker proven through the cron path. The devnet cancel/refund proof has NOT been run (owner: stop before it).** Full record in `ORCHARD-CANCEL-REFUND-PLAN.md` -> Status.
+
+- Migration `supabase/migrations/20260906210000_orchard_cancel_refund.sql` applied with `npx supabase db query --linked -f` (three passes while the fixture found: `orchards_funding_state_check` lacked `cancelling`; `record_revenue` returns the row, not a uuid; duplicate gosat alerts for a user holding both admin and gosat roles). Idempotent; safe to re-run.
+- Functions deployed: `orchard-refund-worker` (new), `paypal-webhook` (`PAYMENT.CAPTURE.REFUNDED`), `sweep-hot-wallet` (refund-pending money is never sweepable).
+- Cron: `orchard-refund-worker` `*/10 * * * *`, jobid 25. First cron-path run at 12:58 UTC answered `ok, actor cron, cluster mainnet-beta, paypal live, stale 0, claimed 0`.
+- Guardrail (`_shared/orchardRefundRules.ts`): sending + no reference; holding refund_pending; orchard cancelling (or released for a late payment); amount = gross to the cent; destination = payer wallet (Solana) / capture id (PayPal); environment = the worker's cluster / PayPal credentials, else defer; per-tx cap 50 -> park for the Squad; daily cap 200 -> defer. No SOLANA_MAX_* secrets are set, so the defaults apply, the same as payout-earnings.
+- Studio files: `scripts/studio/phase-c-refund-tests.sql` (fixture, rolled back), `phase-c-worker-invoke.sql` (fire the worker once), `phase-c-refund-proof.sql` (read-only state: cron, last worker answers, refund rows, the Phase A orchard/holding, ledger refund_cost rows).
+- Live state: cluster mainnet-beta (digest cbe1afc2...); no refund rows; holdings: 1 held (Phase A `2df2ff33`, devnet, payer `EbSUvuE8...` chain), 1 released; Phase A orchard `55f4e02e` open 1/10.
+- Not proven through PostgREST yet: the new `liability_snapshot` body (filter change only). Opening /admin/treasury (deployed `treasury-balances`, no publish needed) is the check.
+
+**Devnet proof, when the owner says go:** `secrets set SOLANA_CLUSTER=devnet` (owner) -> `orchard_cancel('55f4e02e-...', reason)` as gosat -> fire the worker -> `phase-c-refund-proof.sql` shows the refund confirmed with a devnet signature, holding refunded, bestowal refunded, `refund_cost` -0.01 devnet, orchard cancelled -> check `EbSUvuE8...` +10.00 USDC on devnet -> flip back to mainnet-beta (owner) -> confirm.
+
 ## Known gotchas
 
 - **A plain `supabase functions deploy <name>` resets `verify_jwt` to `true` for any function with no `[functions.<name>]` entry in `supabase/config.toml`** — discovered when deploying the PayPal unification reset `create-gift-bestowal-order`, `create-wallet-topup`, and the new `capture-paypal-order` from `false` to `true`, silently, with no warning. Every function actually running with `verify_jwt = false` now has an explicit `config.toml` entry (added in one pass, cross-checked against the Management API's live list) specifically so this can't happen again on a future redeploy of any of them.
