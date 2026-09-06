@@ -155,6 +155,12 @@ C1 ships first because it is read-mostly, safe, and closes the one true unknown.
 
 ---
 
+### Status
+
+**Design approved 2026-09-06.** Owner answers to section 8: (1) yes, manual payer entry by a gosat, logged as manual; (2) the same absolute ceiling as the payout circuit breaker, Squad approval above it; (3) written-off money stays an unclaimed surplus, not income; (4) PayPal past 180 days is `needs_human` with a manual payout fallback; (5) C3's Playwright uses the owner's own gosat account.
+
+**C1 built and applied 2026-09-06.** `supabase/migrations/20260906200000_orchard_payer_capture.sql`: `solana_payment_intents.payer_address / payer_source`, `orchard_holdings.payer_source`, `orchard_apply_holding()` copies the payer from the intent at hold time, `orchard_record_payer()` (service role) and `orchard_set_payer_manual()` (gosat, note mandatory, logged). `_shared/solanaSenderRules.ts` (pure, two of three readings must agree, any disagreement is unknown) + `_shared/solanaSender.ts` (fetch on the holding's own cluster). `_shared/solanaPayIn.ts` resolves the sender when it marks an intent paid. `backfill-orchard-payers` edge function. Proof: the backfill resolved both existing holdings, `2df2ff33` (held) and `4be08578` (released), to `EbSUvuE8…` with source `chain`, events written; the refundability query shows no unknowns. Unit tests `src/test/solana-sender.test.ts` 6. The pocket-time capture is proven by a new devnet pocket (see the session state). C2 and C3 not started.
+
 ## 8. Open questions
 
 1. **Manual payer entry.** When the chain cannot tell us the sender, may a gosat type the address the bestower gives them, with the entry logged? Drafted yes; it is the only way an `unknown` ever gets paid.

@@ -32,6 +32,7 @@ import { validateSolanaAddress } from "./cryptoAddress.ts";
 // fork, the finalize path"). Not renamed/moved here -- avoids churning
 // every existing PayPal import for a rename with no behavior change.
 import { finalizeCompletedOrder, type PaypalOrderKind } from "./paypal/capture.ts";
+import { resolveSenderForSignature } from "./solanaSender.ts";
 
 const USDC_DECIMALS = 6;
 
@@ -389,11 +390,27 @@ export async function checkAndFinalizeSolanaIntent(
     return { status: "underpaid", signature, receivedAmountUsdc };
   }
 
+  // Phase C1: who paid, read from the confirmed transaction (two readings
+  // must agree), so a refund can go back to the exact wallet. Never blocks
+  // the payment: an unresolved sender is recorded as unknown.
+  let payerAddress: string | null = null;
+  let payerSource: "chain" | "unknown" = "unknown";
+  try {
+    const sender = await resolveSenderForSignature(signature, intent.cluster, intent.hot_wallet_address);
+    payerAddress = sender.payer;
+    payerSource = sender.source;
+    if (sender.source === "unknown") console.warn("[solanaPayIn] payer unknown for", intent.id, sender.reason);
+  } catch (err) {
+    console.warn("[solanaPayIn] payer resolution failed for", intent.id, err);
+  }
+
   await service.from("solana_payment_intents").update({
     status: "paid",
     signature,
     received_amount_usdc: receivedAmountUsdc,
     paid_at: new Date().toISOString(),
+    payer_address: payerAddress,
+    payer_source: payerSource,
   }).eq("id", intent.id);
 
   await finalizeCompletedOrder(service, intent.order_kind, intent.order_id, signature);
