@@ -19,7 +19,7 @@ Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent d
   `liabilityRules.walletExpectations` subtracts cross-rail payouts from the
   paying wallet and adds them to the wallet holding the sale proceeds.
   Live: hot expected 11.62 vs actual 12.62 — the +1.00 is the unrecorded
-  seed from 2026-09-01; PayPal expected 5.80 own + parked 8.00 unplaced.
+  seed from 2026-09-01; PayPal expected 5.20 (own 1.20 + 4.00 cross-rail), with the +0.60 correction (rail none) and the parked 8.00 shown as unplaced.
   treasury-balances v122. Fixture 13/13, unit tests 9.
 - Verdict (SQL-only, PayPal entered 0): GREEN, coverage 158%, unexplained
   −12.90 = PayPal not counted (≈ 9.20 of sales less PayPal's fees) + 1.00
