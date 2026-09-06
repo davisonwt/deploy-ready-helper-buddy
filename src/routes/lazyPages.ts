@@ -154,6 +154,7 @@ export const BooksCatalogItemPage = lazy(() => import('@/pages/BooksCatalogItemP
 export const MyWalletPage = lazy(() => import('@/pages/MyWalletPage'));
 export const GosatTreasuryPage = lazy(() => import('@/pages/GosatTreasuryPage'));
 export const AdminPayoutsPage = lazy(() => import('@/pages/AdminPayoutsPage'));
+export const GosatOrchardsPage = lazy(() => import('@/pages/GosatOrchardsPage'));
 export const NowPaymentsTestPage = lazy(() => import('@/pages/NowPaymentsTestPage'));
 export const PaypalTestPage = lazy(() => import('@/pages/PaypalTestPage'));
 export const SowerProfile = lazy(() => import('@/pages/SowerProfile'));

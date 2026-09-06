@@ -19,7 +19,7 @@ interface Snapshot {
     parked: { total: number; members: number };
     total: number;
   };
-  held_for_orchards: { total: number; sower_share: number; s2g_share: number; holdings: number; orchards: number; by_location: Record<string, number> };
+  held_for_orchards: { total: number; sower_share: number; s2g_share: number; holdings: number; orchards: number; by_location: Record<string, number>; refunding?: { total: number; holdings: number; needs_human: number } };
   liabilities_total: number;
   s2g_own: { operating_net: number; net: number; opening_balance: number; this_month: number; by_rail: Record<string, number> };
   unrecorded: { solana_processor_fees: number };
@@ -27,7 +27,7 @@ interface Snapshot {
   swept_to_squad: number;
   aging: { oldest_unpaid_at: string | null; oldest_unpaid_days: number; recipients_over_30d: number; recipients_over_60d: number };
   recipients: Array<{ user_id: string; name: string; type: string; amount: number; rail: string; oldest_row_at: string | null; days_waiting: number }>;
-  orchards: Array<{ id: string; title: string; kind: string; sower: string; held: number; target: number; pockets_held: number; pockets_total: number; funded: boolean; days_open: number }>;
+  orchards: Array<{ id: string; title: string; kind: string; sower: string; held: number; refunding?: number; target: number; pockets_held: number; pockets_total: number; funded: boolean; funding_state?: string; days_open: number }>;
   other_environments: Record<string, { owed: number; parked: number; held_for_orchards: number }>;
 }
 
@@ -164,7 +164,7 @@ export default function GosatTreasuryPage() {
                 <Stat label="Held for members" value={fmtUsd(snap.held_for_members.total)}
                       sub={`owed ${fmtUsd(snap.held_for_members.owed.total)} to ${snap.held_for_members.owed.recipients} · parked balance ${fmtUsd(snap.held_for_members.parked.total)}`} testId="held-for-members" />
                 <Stat label={`Held for orchards (${snap.held_for_orchards.orchards})`} value={fmtUsd(snap.held_for_orchards.total)}
-                      sub={`sowers ${fmtUsd(snap.held_for_orchards.sower_share)} · S2G share once released ${fmtUsd(snap.held_for_orchards.s2g_share)}`} testId="held-for-orchards" />
+                      sub={`sowers ${fmtUsd(snap.held_for_orchards.sower_share)} · S2G share once released ${fmtUsd(snap.held_for_orchards.s2g_share)}${snap.held_for_orchards.refunding ? ` · refunding ${fmtUsd(snap.held_for_orchards.refunding.total)} (${snap.held_for_orchards.refunding.holdings})` : ''}`} testId="held-for-orchards" />
                 <Stat label="Total liability" value={fmtUsd(snap.liabilities_total)} highlight testId="total-liability" />
                 <Stat label="S2G's own, recognised" value={fmtUsd(snap.s2g_own.operating_net)}
                       sub={`this month ${fmtUsd(snap.s2g_own.this_month)} · opening balance ${fmtUsd(snap.s2g_own.opening_balance)}`} testId="s2g-own" />
@@ -272,6 +272,18 @@ export default function GosatTreasuryPage() {
             </CardContent>
           </Card>
 
+          {/* Refunds in progress (P0-5 Phase C2/C3) */}
+          {snap.held_for_orchards.refunding && (snap.held_for_orchards.refunding.holdings > 0 || snap.held_for_orchards.refunding.needs_human > 0) && (
+            <Alert variant={snap.held_for_orchards.refunding.needs_human > 0 ? 'destructive' : 'default'} data-testid="treasury-refunding">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                Refunding {fmtUsd(snap.held_for_orchards.refunding.total)} across {snap.held_for_orchards.refunding.holdings} pocket(s) of cancelled orchards; still counted as held until each refund confirms.
+                {snap.held_for_orchards.refunding.needs_human > 0 && <> <strong>{snap.held_for_orchards.refunding.needs_human}</strong> need a human.</>}
+                {' '}<Link to="/admin/orchards" className="underline">Open the orchard console</Link>.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Orchards */}
           {snap.orchards.length > 0 && (
             <Card>
@@ -284,7 +296,7 @@ export default function GosatTreasuryPage() {
                   {snap.orchards.map((o) => (
                     <li key={o.id} className="py-2 flex flex-wrap justify-between gap-2">
                       <span>{o.title} <span className="text-muted-foreground">· {o.sower} · {o.days_open} d open</span></span>
-                      <span className="font-mono">{fmtUsd(o.held)} / {fmtUsd(o.target)} · {o.pockets_held}/{o.pockets_total} pockets{o.funded ? ' · funded' : ''}</span>
+                      <span className="font-mono">{fmtUsd(o.held)} / {fmtUsd(o.target)} · {o.pockets_held}/{o.pockets_total} pockets{o.funded ? ' · funded' : ''}{o.funding_state && o.funding_state !== 'open' ? ` · ${o.funding_state}` : ''}{o.refunding ? ` · refunding ${fmtUsd(o.refunding)}` : ''}</span>
                     </li>
                   ))}
                 </ul>

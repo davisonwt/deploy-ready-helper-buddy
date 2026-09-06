@@ -3792,6 +3792,12 @@ Open 6.
 
 - Nothing local ever stored the service-role key (`.env.example` is a placeholder; `.env.test` holds only the test accounts). The `scripts/payouts` curl recipe now uses the new secret key as `apikey`.
 
+## Built - 2026-09-06 (orchard Phase C3: the screens)
+
+- New gosat console **/admin/orchards** (`src/pages/GosatOrchardsPage.tsx`, gosat|admin, linked from the Gosat panel): orchard list with states, cancel dialog (reason + typed title, refuses released with the reason), refund-progress tables with Retry / Write off / Set payer address / Run worker now. Bestower: My Seeds and the orchard page show "Held for this orchard" / "Funded — released to the sower" / "Refund on its way" / "Refunded … tx …" (labels in `src/lib/orchards/refundLabels.ts`, data in `pocketStatus.ts`). Sower: Cancelled badge + reason, bestow disabled. Treasury: refunding sub-block. Details in `ORCHARD-CANCEL-REFUND-PLAN.md` -> Status (C3).
+- Tests: `src/test/orchard-refund-labels.test.ts` 9; Playwright `tests/payments/orchard-console.spec.ts` 3/3 with the owner's gosat account (`TEST_GOSAT_EMAIL/PASSWORD` in the gitignored `.env.test`, added 2026-09-06); payments suite 13/13. The Phase A spec now skips cancelled orchards and, finding no open physical orchard, created a new real "Phase A test orchard" `343fd1b7-dd07-4fef-86f7-33f5be85850d` (sower A, 10 x 10 USDC, open, no pockets) - harmless; cancel it from the console if unwanted.
+- Not verified by me: the console in a real browser session beyond Playwright (the owner should open /admin/orchards after publishing); a live cancel through the dialog (the only cancellable orchard is the new empty one).
+
 ## Known gotchas
 
 - **A plain `supabase functions deploy <name>` resets `verify_jwt` to `true` for any function with no `[functions.<name>]` entry in `supabase/config.toml`** — discovered when deploying the PayPal unification reset `create-gift-bestowal-order`, `create-wallet-topup`, and the new `capture-paypal-order` from `false` to `true`, silently, with no warning. Every function actually running with `verify_jwt = false` now has an explicit `config.toml` entry (added in one pass, cross-checked against the Management API's live list) specifically so this can't happen again on a future redeploy of any of them.

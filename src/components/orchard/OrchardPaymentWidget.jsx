@@ -20,6 +20,7 @@ const OrchardPaymentWidget = ({
   productType,
   funded = false,
   released = false,
+  cancelled = false,
   onBestowed,
 }) => {
   const [pocketsCount, setPocketsCount] = useState(1);
@@ -64,7 +65,14 @@ const OrchardPaymentWidget = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {funded || maxPockets === 0 ? (
+        {cancelled ? (
+          <Alert data-testid="orchard-cancelled-alert">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              This orchard was cancelled. Nothing can be bestowed into it; everyone who bestowed is refunded in full.
+            </AlertDescription>
+          </Alert>
+        ) : funded || maxPockets === 0 ? (
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>

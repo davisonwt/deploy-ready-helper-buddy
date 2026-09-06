@@ -29,6 +29,7 @@ export function GosatPanel({ isOpen, onClose }: GosatPanelProps) {
     { href: '/admin/dashboard', title: 'Admin Dashboard', subtitle: 'Manage settings', icon: Settings },
     { href: '/admin/radio', title: 'AOD Station Radio', subtitle: 'Radio management', icon: Radio },
     { href: '/admin/treasury', title: 'Treasury', subtitle: 'NOWPayments & PayPal custody', icon: Wallet },
+    { href: '/admin/orchards', title: 'Orchards', subtitle: 'Cancel & refund console', icon: Sprout },
     { href: '/admin/seeds', title: 'Seeds Management', subtitle: 'Manage seeds & products', icon: Sprout },
   ]
 
@@ -36,6 +37,7 @@ export function GosatPanel({ isOpen, onClose }: GosatPanelProps) {
     { href: '/admin/dashboard', label: 'Dashboard', color: 'bg-indigo-600 hover:bg-indigo-500', icon: Settings },
     { href: '/admin/radio', label: 'Radio', color: 'bg-purple-600 hover:bg-purple-500', icon: Radio },
     { href: '/admin/treasury', label: 'Treasury', color: 'bg-green-600 hover:bg-green-500', icon: Wallet },
+    { href: '/admin/orchards', label: 'Orchards', color: 'bg-orange-600 hover:bg-orange-500', icon: Sprout },
     { href: '/admin/seeds', label: 'Seeds', color: 'bg-teal-600 hover:bg-teal-500', icon: Sprout },
   ]
 

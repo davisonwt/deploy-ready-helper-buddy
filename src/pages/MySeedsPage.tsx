@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { resolveItemLink } from '@/lib/media/resolveItemLink';
+import { pocketStatesForBestowals, type PocketRow } from '@/lib/orchards/pocketStatus';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +38,8 @@ export default function MySeedsPage() {
   const [groups, setGroups] = useState<SowerGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  // P0-5 Phase C3: what each orchard pocket is doing (held / released / refund on its way / refunded).
+  const [pockets, setPockets] = useState<Map<string, PocketRow>>(new Map());
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -59,6 +62,9 @@ export default function MySeedsPage() {
         status: r.status,
         paidAt: r.paid_at,
       }));
+
+      const orchardBestowalIds = purchases.filter((p) => p.source === 'bestowal' && p.itemId).map((p) => p.sourceId);
+      setPockets(await pocketStatesForBestowals(orchardBestowalIds));
 
       const sowerIds = [...new Set(purchases.map((p) => p.sowerId).filter(Boolean))] as string[];
       const { data: profiles } = sowerIds.length
@@ -181,6 +187,23 @@ export default function MySeedsPage() {
                           <p className="text-sm text-muted-foreground">
                             {money(row.buyerTotal)} · {when(row.paidAt)}
                           </p>
+                          {row.source === 'bestowal' && pockets.get(row.sourceId) && (
+                            <p className="text-sm mt-1" data-testid="pocket-state" data-tone={pockets.get(row.sourceId)!.state.tone}>
+                              {pockets.get(row.sourceId)!.state.label}
+                              {pockets.get(row.sourceId)!.state.referenceUrl && (
+                                <>
+                                  {' '}
+                                  <a href={pockets.get(row.sourceId)!.state.referenceUrl!} target="_blank" rel="noreferrer" className="underline text-emerald-700">view transaction</a>
+                                </>
+                              )}
+                              {row.itemId && (
+                                <>
+                                  {' · '}
+                                  <Link to={`/orchard/${row.itemId}`} className="underline">orchard</Link>
+                                </>
+                              )}
+                            </p>
+                          )}
                         </div>
                         {itemLink && (
                           <div className="flex items-center gap-2 shrink-0">

@@ -42,7 +42,8 @@ test.describe('orchard holdings (Phase A)', () => {
     for (const o of orchards ?? []) {
       const { data: f } = await client.rpc('orchard_funding_status', { _orchard_id: o.id });
       const row = Array.isArray(f) ? f[0] : f;
-      if (row && !row.funded) { target = { ...o, funding: row }; break; }
+      // Phase C3: a cancelling / cancelled orchard has no bestow button any more.
+      if (row && !row.funded && !['cancelling', 'cancelled'].includes(row.funding_state)) { target = { ...o, funding: row }; break; }
     }
 
     // No suitable orchard (the database can be empty): create the Phase A

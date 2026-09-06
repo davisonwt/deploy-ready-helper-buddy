@@ -21,6 +21,8 @@ import { formatCurrency } from '../utils/formatters';
 import { VideoPlayer } from '@/components/ui/VideoPlayer';
 import OrchardVideoManager from '@/components/orchard/OrchardVideoManager';
 import OrchardPaymentWidget from '@/components/orchard/OrchardPaymentWidget';
+import { myPocketsForOrchard } from '@/lib/orchards/pocketStatus';
+import { fundingStateLabel } from '@/lib/orchards/refundLabels';
 import SignedImg from '@/components/media/SignedImg';
 import ReportButton from '@/components/moderation/ReportButton';
 
@@ -34,6 +36,9 @@ const OrchardPage = () => {
   // (held orchard_holdings vs total_pockets x pocket_price), never from a
   // filled_pockets value set by hand.
   const [funding, setFunding] = useState(null);
+  // P0-5 Phase C3: the cancel reason (sower sees it) and the signed-in member's own pockets.
+  const [cancelInfo, setCancelInfo] = useState(null);
+  const [myPockets, setMyPockets] = useState([]);
   const loadFunding = async (id) => {
     const { data, error } = await supabase.rpc('orchard_funding_status', { _orchard_id: id });
     if (error) { console.error('orchard_funding_status failed:', error); return; }
@@ -48,7 +53,25 @@ const OrchardPage = () => {
       fundingState: row.funding_state ?? null,
       releasedAt: row.released_at ?? null,
     });
+    if (row.funding_state === 'cancelling' || row.funding_state === 'cancelled') {
+      const { data: c } = await supabase.from('orchards').select('cancel_reason, cancelled_at').eq('id', id).maybeSingle();
+      setCancelInfo(c ?? null);
+    } else {
+      setCancelInfo(null);
+    }
   };
+
+  // P0-5 Phase C3: the signed-in member's own pockets here, re-read when the
+  // orchard's state changes (held -> released, or refund on its way -> refunded).
+  useEffect(() => {
+    let alive = true;
+    if (orchard?.id && user?.id) {
+      myPocketsForOrchard(orchard.id, user.id).then((rows) => { if (alive) setMyPockets(rows); });
+    } else {
+      setMyPockets([]);
+    }
+    return () => { alive = false; };
+  }, [orchard?.id, user?.id, funding?.fundingState]);
 
   useEffect(() => {
     const loadOrchard = async () => {
@@ -227,8 +250,13 @@ const OrchardPage = () => {
               
               <CardHeader>
                 <div className="flex items-start justify-between gap-3 mb-4">
-                  <CardTitle className="text-3xl font-bold text-orange-700">
+                  <CardTitle className="text-3xl font-bold text-orange-700 flex flex-wrap items-center gap-3">
                     {orchard.title}
+                    {(funding?.fundingState === 'cancelling' || funding?.fundingState === 'cancelled') && (
+                      <Badge variant="outline" className="text-base bg-red-100 text-red-900 border-red-300" data-testid="orchard-cancelled-badge">
+                        {fundingStateLabel(funding.fundingState).label}
+                      </Badge>
+                    )}
                   </CardTitle>
                   {user?.id !== orchard.user_id && (
                     <ReportButton targetType="orchard" targetId={orchard.id} variant="outline" size="icon" />
@@ -265,11 +293,43 @@ const OrchardPage = () => {
                   <p className="text-orange-600">{orchard.description}</p>
                 </div>
                 
+                {(funding?.fundingState === 'cancelling' || funding?.fundingState === 'cancelled') && (
+                  <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900" data-testid="orchard-cancelled-notice">
+                    <p className="font-medium">
+                      {funding.fundingState === 'cancelled'
+                        ? 'This orchard was cancelled. Every bestower is refunded in full on the way they paid.'
+                        : 'This orchard is being cancelled. Every bestower is being refunded in full on the way they paid.'}
+                    </p>
+                    {user?.id === orchard.user_id && cancelInfo?.cancel_reason && (
+                      <p className="mt-1" data-testid="orchard-cancel-reason">Reason given: {cancelInfo.cancel_reason}</p>
+                    )}
+                  </div>
+                )}
+
+                {myPockets.length > 0 && (
+                  <div className="rounded-lg border border-orange-200 bg-orange-50/60 p-3" data-testid="my-pockets">
+                    <h3 className="text-sm font-semibold text-orange-700 mb-1">Your pockets in this orchard</h3>
+                    <ul className="text-sm space-y-1">
+                      {myPockets.map((p) => (
+                        <li key={p.holdingId} data-testid="my-pocket-state" data-tone={p.state.tone}>
+                          {p.pockets} pocket{p.pockets === 1 ? '' : 's'} · {formatCurrency(p.gross)} · {p.state.label}
+                          {p.state.referenceUrl && (
+                            <>
+                              {' '}
+                              <a href={p.state.referenceUrl} target="_blank" rel="noreferrer" className="underline">view transaction</a>
+                            </>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 {/* Progress Section */}
-                <div data-testid="funding-progress" data-funded={funding?.funded ? '1' : '0'} data-released={funding?.released ? '1' : '0'}>
+                <div data-testid="funding-progress" data-funded={funding?.funded ? '1' : '0'} data-released={funding?.released ? '1' : '0'} data-state={funding?.fundingState ?? ''}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-orange-700">
-                      Funding Progress{funding?.released ? ' — funded & released' : funding?.funded ? ' — fully funded' : ''}
+                      Funding Progress{funding?.fundingState === 'cancelled' ? ' — cancelled' : funding?.fundingState === 'cancelling' ? ' — cancelling' : funding?.released ? ' — funded & released' : funding?.funded ? ' — fully funded' : ''}
                     </h3>
                     <span className="text-2xl font-bold text-orange-700" data-testid="funding-percent">
                       {getCompletionPercentage()}%
@@ -328,6 +388,7 @@ const OrchardPage = () => {
                    productType={orchard.product_type}
                    funded={!!funding?.funded}
                    released={!!funding?.released}
+                   cancelled={funding?.fundingState === 'cancelling' || funding?.fundingState === 'cancelled'}
                    onBestowed={() => loadFunding(orchard.id)}
                  />
                </CardContent>
