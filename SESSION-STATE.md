@@ -1,6 +1,52 @@
-# Session State — 2026-09-05
+# Session State — 2026-09-06
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
+
+## Proven — 2026-09-06 morning (P0-5 Phase A devnet pocket test PASSED; cluster back on mainnet-beta)
+
+Task file `s2g-phase-a-devnet-test.txt`. Result: one real pocket bought on
+devnet created a HELD holding, not a sower credit. Full proof in
+`ORCHARD-MONEY-PLAN.md` "Phase A status"; queries
+`scripts/studio/phase-a-devnet-before.sql` / `-after.sql`.
+
+- **Prerequisite found:** `create-orchard-bestowal-order` (and the other
+  five order functions) return 409 `no_payout_method` unless the SOWER has
+  a payout method (`resolveSowerPayout`). Test account A had none, so the
+  test orchard `55f4e02e…` was reassigned to **test account B**
+  (`scripts/studio/phase-a-devnet-reassign.sql`, run by the user), who has
+  a Solana USDC payout address + consent. Assessment: for orchards under
+  Phase A this gate is misplaced (the resolved wallet is only stamped on
+  the bestowal row; nothing is paid until a Phase B release, which resolves
+  the destination again). Keep for gifts/content; drop or defer for
+  orchard orders in Phase B. Not changed yet.
+- **Two attempts were dropped before the third landed.** Phantom returned
+  signatures `42RkSVpB…` (06:51) and `5ttaz74m…` (07:12) that no cluster
+  ever saw: Phantom was on mainnet while the app built a devnet
+  transaction (devnet blockhash + mint), so mainnet dropped it and Phantom
+  still returned a signature; the dialog then said "Unexpected error" and
+  offered a retry. The "33 → 19.28" balance the user saw was Phantom
+  switching between the devnet (33.07) and mainnet (19.28) balances of the
+  same wallet — **no money moved on any cluster** for those two. Three
+  never-paid orders remain on the orchard (`ba52bb0c` expired, `80b95124`
+  and `8dfbf1f9` pending → expire at 07:37/07:43, janitor closes the rows
+  after 48h); harmless, funding counts holdings only.
+- **The landed one:** order `ef43a986…` at 07:21, signature
+  `eFkR7VNuTemE…DiKixzZW`, finalized slot 493950903, hot wallet devnet USDC
+  17,980,000 → 27,990,000 raw, payer `EbSUvuE8…` −10,010,000. Holding
+  `2df2ff33…` held/hot_wallet/solana 10.00 = 8.70 + 1.30, fee 0.01, address
+  + signature stored, event holding_created. Bestowal completed +
+  `held_for_orchard`, 0 ledger rows. Sower B ledger 0 → 0. filled_pockets
+  0 → 1; funding 10/100, 1/10, not funded; treasury held 10.00.
+- **End state 07:25 UTC:** `SOLANA_CLUSTER` digest `cbe1afc2…` =
+  mainnet-beta (set 07:25:09), `PAYOUT_THRESHOLD_USD` still 20, 0 open
+  payouts, 1 held holding. Nothing was sent on mainnet. Louw/Amber payouts
+  NOT started (next task).
+
+New Open items from this test (added to the list below as 0f–0h):
+`payer_address` null on holdings until Phase C; pay hook should poll the
+signature after submit and say "not confirmed — check Phantom's network"
+instead of "Unexpected error", and must not offer a retry while a
+submitted signature is unresolved; sower-payout gate on orchard orders.
 
 ## Fixed — 2026-09-05 (full audit, P0-1 / P0-3 / P0-4 / P0-5 Phase A, chat and payout-settings bugs)
 
@@ -2668,10 +2714,20 @@ itself. All 8 checks live, hourly via `invoke_money_job` (cron
 
 **Added 2026-09-05 (on top of the older list below, which is otherwise unchanged):**
 
-0. **Devnet pocket test for P0-5 Phase A** — the final proof, see the
-   2026-09-05 section's "Next step tomorrow". Until then no orchard
-   bestowal should be made on mainnet: the finalize path is live and
-   untested end-to-end (unit, SQL fixture and Playwright proofs pass).
+0. ~~Devnet pocket test for P0-5 Phase A~~ — **PASSED 2026-09-06**, see
+   "Proven — 2026-09-06" above. Orchard bestowals on mainnet are now
+   backed by a proven hold path.
+0f. **Pay dialog on a dropped transaction** — Phantom on the wrong network
+   (or an expired blockhash) yields a signature no cluster ever sees; the
+   hook stops at "submitted", the dialog shows "Unexpected error" and
+   offers a retry. Poll `getSignatureStatuses` after submit, say plainly
+   "not confirmed — check Phantom is on <cluster>", and block retry while
+   a submitted signature is unresolved.
+0g. **Sower-payout gate on orchard orders** (`no_payout_method`) is
+   misplaced under Phase A; decide in Phase B (resolve destination at
+   release instead).
+0h. **`orchard_holdings.payer_address` is null** for Solana holdings —
+   Phase C needs the sender account from the transaction for refunds.
 0a. **P0-2 Amber revert** — confirm the printed revert for `02c6b716` /
    payouts `f807f91b` was applied (unverified).
 0b. **P0-6 service-role key rotation** — the key was pasted into the
