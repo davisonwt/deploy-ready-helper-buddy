@@ -2,6 +2,35 @@
 
 Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent documentation — a snapshot for picking work back up.
 
+## Fixed — 2026-09-06 (checkout rate limit locked Louw out of buying a song)
+
+Root cause: `create-basket-bestowal-order` and `capture-paypal-order` used
+`RateLimitPresets.PAYMENT` (5 per 60 min, key = user id, `_shared/rateLimiter.ts`),
+a bucket SHARED with six money-out/settings functions (payout request,
+withdrawal, payout-address save, topup, EFT, consent), and the check ran
+BEFORE validation, so a 409 `sower_settlement_consent_pending` or a 400
+still consumed an attempt. Louw's `billing_access_logs` showed 5 accepted
+calls (none produced an order; the 5th at 10:17:42 was his payout-address
+save) then 6 refusals 10:18–10:35. Reproduced as test account A: a 409
+added a limiter row and no order.
+Fix: new `CHECKOUT` bucket (`_shared/rateLimitCopy.ts`, 20 per 15 min,
+fail-closed) for the two order functions; the check moved below every
+validation return (basket: right before the order insert; capture: after
+ownership/already-done/order-id checks, before the PayPal capture);
+`createRateLimitResponse` body now says "Too many attempts, try again in N
+minutes." (`error` = the sentence, `code: rate_limited`, `retryAfter`), which
+`invokePaymentFunction` throws as the toast. Payout-side limits untouched.
+Gosat RPC `clear_member_rate_limit(user, 'checkout'|'payment')`
+(`20260906180000_clear_member_rate_limit.sql`, applied) + Studio file
+`scripts/studio/clear-checkout-rate-limit.sql`. Deployed
+create-basket-bestowal-order v135, capture-paypal-order v101. Test
+`src/test/checkout-rate-limit.test.ts` (5) guards the placement by reading
+the function source. Live proof after deploy: two rejected orders as A
+added no limiter row. Other rateLimiter importers keep the old 429 wording
+until their next deploy. Side note: Louw changed his payout address at
+10:17 UTC, which restarted his 48h cooling-off (next payout after
+2026-09-08 10:17 UTC).
+
 ## Fixed — 2026-09-06 (My Wallet tile: a failed balance read showed $0.00)
 
 Bug report: Louw's tile $0.00, davison's $4.28. Investigation (no code

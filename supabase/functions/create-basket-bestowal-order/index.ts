@@ -78,14 +78,9 @@ Deno.serve(async (req) => {
     }
     const userId = userData.user.id;
 
-    // Wallet-hardening audit item 3: every money-touching function
-    // rate-limited per user, fail-closed.
-    const rlService = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-    const rlOk = await checkRateLimit(
-      rlService, userId, RateLimitPresets.PAYMENT.limitType,
-      RateLimitPresets.PAYMENT.maxAttempts, RateLimitPresets.PAYMENT.timeWindowMinutes, true,
-    );
-    if (!rlOk) return createRateLimitResponse(RateLimitPresets.PAYMENT.timeWindowMinutes * 60);
+    // The rate limit is checked further down, AFTER validation: a 400 for a
+    // bad payload or a 409 for a sower without settlement consent must not
+    // consume one of the member's attempts (2026-09-06 lock-out).
 
     let payload: RequestPayload;
     try {
@@ -240,6 +235,17 @@ Deno.serve(async (req) => {
       });
     }
 
+
+    // --- Rate limit: only an attempt that is about to become an order counts.
+    // Own CHECKOUT bucket (20 per 15 min), separate from the money-out
+    // functions' PAYMENT bucket. Fail-closed.
+    {
+      const rlOk = await checkRateLimit(
+        service, userId, RateLimitPresets.CHECKOUT.limitType,
+        RateLimitPresets.CHECKOUT.maxAttempts, RateLimitPresets.CHECKOUT.timeWindowMinutes, true,
+      );
+      if (!rlOk) return createRateLimitResponse(RateLimitPresets.CHECKOUT.timeWindowMinutes * 60);
+    }
 
     // --- Processor fee on top (paid by BUYER — Sow2Grow golden rule) ---------
     const quote = computeBuyerFee(payload.provider, subtotal);

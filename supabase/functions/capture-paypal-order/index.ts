@@ -64,17 +64,8 @@ Deno.serve(async (req) => {
     callerId = authData.user.id;
   }
 
-  // Wallet-hardening audit item 3: rate-limited per user, fail-closed.
-  // Skipped for the service-role bypass above -- that's a trusted internal
-  // caller, same as the ownership check it already skips.
-  if (callerId) {
-    const rlService = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-    const rlOk = await checkRateLimit(
-      rlService, callerId, RateLimitPresets.PAYMENT.limitType,
-      RateLimitPresets.PAYMENT.maxAttempts, RateLimitPresets.PAYMENT.timeWindowMinutes, true,
-    );
-    if (!rlOk) return createRateLimitResponse(RateLimitPresets.PAYMENT.timeWindowMinutes * 60);
-  }
+  // The rate limit is checked further down, after the body, ownership and
+  // already-completed checks, so a rejected call never consumes an attempt.
 
   let parsed: z.infer<typeof BodySchema>;
   try {
@@ -124,6 +115,16 @@ Deno.serve(async (req) => {
     ? (row.provider_invoice_id as string | null)
     : (row.provider_order_id as string | null);
   if (!paypalOrderId) return json({ error: "paypal_order_id_missing" }, 409);
+
+  // Rate limit, own CHECKOUT bucket, fail-closed. Skipped for the
+  // service-role bypass above -- a trusted internal caller.
+  if (callerId) {
+    const rlOk = await checkRateLimit(
+      service, callerId, RateLimitPresets.CHECKOUT.limitType,
+      RateLimitPresets.CHECKOUT.maxAttempts, RateLimitPresets.CHECKOUT.timeWindowMinutes, true,
+    );
+    if (!rlOk) return createRateLimitResponse(RateLimitPresets.CHECKOUT.timeWindowMinutes * 60);
+  }
 
   let result: { completed: boolean };
   try {

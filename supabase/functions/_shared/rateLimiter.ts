@@ -33,6 +33,7 @@
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { recordRateLimiterFailure } from './rateLimiterMonitoring.ts';
 import { baseCorsHeaders } from './cors.ts';
+import { CHECKOUT_LIMIT, rateLimitBody } from './rateLimitCopy.ts';
 
 export interface RateLimitConfig {
   identifier: string;
@@ -128,12 +129,10 @@ export async function checkRateLimit(
  * @returns Response object with 429 status
  */
 export function createRateLimitResponse(retryAfterSeconds: number = 900): Response {
+  // 2026-09-06: `error` is the member-facing sentence ("Too many attempts,
+  // try again in N minutes.") because the client throws it as the toast.
   return new Response(
-    JSON.stringify({
-      error: 'Rate limit exceeded',
-      message: 'Too many requests. Please try again later.',
-      retryAfter: retryAfterSeconds
-    }),
+    JSON.stringify(rateLimitBody(retryAfterSeconds)),
     {
       status: 429,
       headers: {
@@ -265,7 +264,16 @@ async function getDefaultIdentifier(req: Request): Promise<string> {
  * Pre-configured rate limit configs for common use cases
  */
 export const RateLimitPresets = {
-  /** Payment operations: 5 attempts per hour - FAILS CLOSED for security */
+  /**
+   * Order creation and PayPal capture (create-basket-bestowal-order,
+   * capture-paypal-order): 20 per 15 minutes, its own bucket. Shopping
+   * must never share a bucket with payout settings and withdrawals
+   * (2026-09-06: a member was locked out of buying a song for an hour by
+   * five rejected attempts plus a payout-address save).
+   */
+  CHECKOUT: CHECKOUT_LIMIT,
+
+  /** Money OUT and payout settings: 5 attempts per hour - FAILS CLOSED for security */
   PAYMENT: {
     limitType: 'payment',
     maxAttempts: 5,
