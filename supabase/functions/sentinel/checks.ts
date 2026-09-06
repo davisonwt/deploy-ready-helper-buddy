@@ -408,9 +408,28 @@ export async function checkDataSanity(admin: SupabaseClient): Promise<Condition[
 export async function checkBalanceLedger(admin: SupabaseClient): Promise<Condition[]> {
   const conditions: Condition[] = [];
 
-  const { data: ledgerRows, error: e1 } = await admin.from("balance_ledger").select("amount");
+  // 2026-09-06: this used to compare the MAINNET hot wallet with EVERY
+  // balance_ledger row, so PayPal-rail balances and devnet test money
+  // raised "underfunded" on a wallet that was never meant to hold them.
+  // liability_snapshot('live') already splits liabilities by rail and
+  // environment (BOOKKEEPING-PLAN.md section 4); the hot wallet must cover
+  // the Solana-rail share: owed on Solana + parked balances that came in on
+  // Solana + orchard money physically held in the hot wallet.
+  const { data: snap, error: e1 } = await admin.rpc("liability_snapshot", { _environment: "live" });
   if (e1) throw e1;
-  const totalLiability = (ledgerRows ?? []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+  const s = (snap ?? {}) as any;
+  const owedSolana = Number(s?.held_for_members?.owed?.by_rail?.solana ?? 0);
+  const parkedSolana = Number(s?.held_for_members?.parked?.by_rail?.solana ?? 0);
+  const heldHotWallet = Number(s?.held_for_orchards?.by_location?.["hot_wallet/solana"] ?? 0);
+  const totalLiability = Math.round((owedSolana + parkedSolana + heldHotWallet) * 100) / 100;
+  const breakdown = { owed_solana: owedSolana, parked_solana: parkedSolana, held_for_orchards_hot_wallet: heldHotWallet };
+
+  if (getSolanaCluster() !== "mainnet-beta") {
+    // A devnet window (a proof in progress): the live figure cannot be read from this cluster. Say so instead of comparing apples to oranges.
+    return totalLiability > 0
+      ? [{ subject: "balance_ledger_cluster_devnet", severity: "warn", message: `Cluster is devnet, so the live hot-wallet cover for ${totalLiability.toFixed(2)} USD of Solana-rail liabilities could not be checked this run.`, detail: breakdown }]
+      : [];
+  }
 
   if (totalLiability > 0) {
     let seed: Uint8Array;
@@ -429,8 +448,8 @@ export async function checkBalanceLedger(admin: SupabaseClient): Promise<Conditi
     if (usdcBalance < totalLiability) {
       conditions.push({
         subject: "balance_ledger_underfunded", severity: "critical",
-        message: `Hot wallet USDC balance (${usdcBalance.toFixed(2)}) is below the S2G Balance liability (${totalLiability.toFixed(2)}) -- members could be owed more than Sow2Grow currently holds on this rail. Squad balance is not included in this check (not queryable from here) -- verify it directly too.`,
-        detail: { usdc_balance: usdcBalance, total_liability: totalLiability, cluster },
+        message: `Hot wallet USDC (${usdcBalance.toFixed(2)}) is below the Solana-rail liabilities it must cover (${totalLiability.toFixed(2)}: owed ${owedSolana.toFixed(2)} + parked ${parkedSolana.toFixed(2)} + held for orchards ${heldHotWallet.toFixed(2)}). PayPal-rail and test-environment money are excluded by design; the treasury page has the full picture.`,
+        detail: { usdc_balance: usdcBalance, total_liability: totalLiability, cluster, ...breakdown },
       });
     }
   }

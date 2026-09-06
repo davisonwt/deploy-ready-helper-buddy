@@ -20,7 +20,7 @@ import {
   checkQueues, checkThirdPartyUsage, checkConfigDrift, checkDataSanity,
   checkBalanceLedger,
 } from "./checks.ts";
-import { reconcileCheck, maybeDailyAllClear, type Condition } from "./report.ts";
+import { reconcileCheck, maybeDailyAllClear, recordRunHeartbeat, type Condition } from "./report.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -133,6 +133,7 @@ Deno.serve(async (req) => {
     openWarn = warnCount ?? 0;
 
     await maybeDailyAllClear(admin, openCritical, openWarn);
+    await recordRunHeartbeat(admin, openCritical, openWarn, results);
 
     return json({ ok: true, checks: results, open_critical: openCritical, open_warn: openWarn });
   } catch (err) {

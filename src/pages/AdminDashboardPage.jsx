@@ -44,6 +44,7 @@ import SentinelPanel from '@/components/admin/SentinelPanel'
 import { EnhancedAnalyticsDashboard } from '@/components/admin/EnhancedAnalyticsDashboard'
 import { GoSatGhostAccessMonitor } from '@/components/admin/GoSatGhostAccessMonitor'
 import GosatTreasuryPage from '@/pages/GosatTreasuryPage'
+import GosatOrchardsPage from '@/pages/GosatOrchardsPage'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
@@ -361,7 +362,7 @@ export default function AdminDashboardPage() {
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="analytics" className="space-y-6">
           <div className="flex justify-center mb-8">
-            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
               <TabsTrigger 
                 value="analytics" 
                 className="border-2 border-primary/20 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-primary/40 transition-all duration-300 data-[state=active]:bg-cyan-700 data-[state=active]:text-white data-[state=active]:border-primary data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
@@ -393,6 +394,14 @@ export default function AdminDashboardPage() {
               >
                 <Wallet className="w-4 h-4 mr-2" />
                 Treasury
+              </TabsTrigger>
+              <TabsTrigger
+                value="orchards"
+                className="border-2 border-orange-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-orange-300 transition-all duration-300 data-[state=active]:bg-orange-700 data-[state=active]:text-white data-[state=active]:border-orange-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+                data-testid="admin-tab-orchards"
+              >
+                <Sprout className="w-4 h-4 mr-2" />
+                Orchards
               </TabsTrigger>
               <TabsTrigger
                 value="sentinel"
@@ -438,6 +447,10 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="treasury" className="space-y-6">
             <GosatTreasuryPage />
+          </TabsContent>
+
+          <TabsContent value="orchards" className="space-y-6">
+            <GosatOrchardsPage />
           </TabsContent>
 
 

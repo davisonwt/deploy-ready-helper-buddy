@@ -128,6 +128,30 @@ async function notifyGosats(admin: SupabaseClient, checkName: string, cond: Cond
 }
 
 /** One info row per calendar day (UTC), so "the sentinel itself is alive" is answerable without depending on any other check having fired. */
+// One row, updated every run, so the panel can show "last ran N minutes
+// ago" against the hourly schedule. The daily_heartbeat row below stays
+// as the once-a-day summary. 2026-09-06: the panel measured "heartbeat"
+// from the daily row and reported 19h since the last one.
+export async function recordRunHeartbeat(admin: SupabaseClient, openCriticalCount: number, openWarnCount: number, checks: unknown): Promise<void> {
+  const now = new Date().toISOString();
+  const message = `Sentinel ran. ${openCriticalCount} open critical, ${openWarnCount} open warn.`;
+  const { data: existing } = await admin
+    .from("sentinel_events")
+    .select("id")
+    .eq("check_name", "sentinel_run")
+    .eq("subject", "hourly")
+    .maybeSingle();
+  if (existing) {
+    await admin.from("sentinel_events").update({ last_seen: now, resolved_at: now, message, detail: { open_critical: openCriticalCount, open_warn: openWarnCount, checks } }).eq("id", existing.id);
+    return;
+  }
+  await admin.from("sentinel_events").insert({
+    check_name: "sentinel_run", subject: "hourly", severity: "info", status: "resolved",
+    first_seen: now, last_seen: now, resolved_at: now, message,
+    detail: { open_critical: openCriticalCount, open_warn: openWarnCount, checks },
+  });
+}
+
 export async function maybeDailyAllClear(admin: SupabaseClient, openCriticalCount: number, openWarnCount: number): Promise<void> {
   const today = new Date().toISOString().slice(0, 10);
   const { data: existing } = await admin

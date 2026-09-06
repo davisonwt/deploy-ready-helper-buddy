@@ -37,15 +37,16 @@ export default function SentinelPanel() {
   const { user } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [openEvents, setOpenEvents] = useState<SentinelEvent[]>([]);
-  const [lastHeartbeat, setLastHeartbeat] = useState<{ created_at: string; message: string } | null>(null);
+  const [lastHeartbeat, setLastHeartbeat] = useState<{ created_at: string; last_seen?: string | null; message: string } | null>(null);
   const [acting, setActing] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data: open }, { data: heartbeat }] = await Promise.all([
       supabase.from('sentinel_events').select('*').eq('status', 'open').order('created_at', { ascending: false }),
-      supabase.from('sentinel_events').select('created_at, message').eq('check_name', 'daily_heartbeat')
-        .order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      // The hourly run row (updated every run) or, before the first one, the daily summary.
+      supabase.from('sentinel_events').select('created_at, last_seen, message').in('check_name', ['sentinel_run', 'daily_heartbeat'])
+        .order('last_seen', { ascending: false }).limit(1).maybeSingle(),
     ]);
     const sorted = ((open ?? []) as SentinelEvent[]).slice()
       .sort((a, b) => (SEVERITY_RANK[b.severity] ?? 0) - (SEVERITY_RANK[a.severity] ?? 0));
@@ -76,7 +77,7 @@ export default function SentinelPanel() {
   const criticalCount = openEvents.filter((e) => e.severity === 'critical').length;
   const warnCount = openEvents.filter((e) => e.severity === 'warn').length;
   const heartbeatAgeHours = lastHeartbeat
-    ? (Date.now() - new Date(lastHeartbeat.created_at).getTime()) / (60 * 60 * 1000)
+    ? (Date.now() - new Date(lastHeartbeat.last_seen ?? lastHeartbeat.created_at).getTime()) / (60 * 60 * 1000)
     : null;
 
   return (
