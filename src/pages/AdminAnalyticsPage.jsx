@@ -62,185 +62,124 @@ export default function AdminAnalyticsPage() {
     "The Gift of Wellness"
   ]
   
-  // Fetch analytics data from Supabase
+  // Real data only (2026-09-06). Category totals come from orchards and
+  // their completed bestowals; the trend compares the selected window with
+  // the window before it. When the earlier window is empty the trend is
+  // null and rendered as "new", never a made-up percentage. On any query
+  // failure the page shows the error and a retry: no fallback figures.
+  const [loadError, setLoadError] = useState(null)
+  const pctChange = (current, previous) => {
+    if (!previous) return null
+    return ((current - previous) / previous) * 100
+  }
   const fetchAnalytics = async () => {
     try {
       setLoading(true)
-      
-      // Calculate date range
+      setLoadError(null)
+
+      const days = parseInt(dateRange, 10)
       const endDate = new Date()
       const startDate = new Date()
-      startDate.setDate(endDate.getDate() - parseInt(dateRange))
-      
-      // Fetch orchards data
-      const { data: orchards, error: orchardsError } = await supabase
-        .from('orchards')
-        .select(`
-          *,
-          bestowals (
-            id,
-            amount,
-            status,
-            created_at
-          )
-        `)
-        
+      startDate.setDate(endDate.getDate() - days)
+      const prevStartDate = new Date(startDate)
+      prevStartDate.setDate(prevStartDate.getDate() - days)
+
+      const [{ data: orchards, error: orchardsError }, { data: windowBestowals, error: bestowalsError }] = await Promise.all([
+        supabase.from('orchards').select('id, category, status, created_at'),
+        supabase
+          .from('bestowals')
+          .select('id, orchard_id, amount, payment_status, created_at')
+          .eq('payment_status', 'completed')
+          .gte('created_at', prevStartDate.toISOString())
+          .lte('created_at', endDate.toISOString()),
+      ])
       if (orchardsError) throw orchardsError
-      
-      // Fetch bestowals data for the date range
-      const { data: recentBestowals, error: bestowalsError } = await supabase
-        .from('bestowals')
-        .select('*')
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString())
-        .eq('status', 'completed')
-        
       if (bestowalsError) throw bestowalsError
-      
-      // Process data by category
+      // Lifetime completed bestowals per orchard (all time), for the lifetime column.
+      const { data: lifetimeRows, error: lifetimeError } = await supabase
+        .from('bestowals')
+        .select('orchard_id, amount')
+        .eq('payment_status', 'completed')
+      if (lifetimeError) throw lifetimeError
+
+      const orchardsByCategory = new Map()
+      for (const o of orchards || []) {
+        const key = o.category || 'Other'
+        if (!orchardsByCategory.has(key)) orchardsByCategory.set(key, [])
+        orchardsByCategory.get(key).push(o)
+      }
+      const categoryOfOrchard = new Map((orchards || []).map((o) => [o.id, o.category || 'Other']))
+      const sum = (rows) => rows.reduce((t, b) => t + (parseFloat(b.amount) || 0), 0)
+      const startMs = startDate.getTime()
+
       const categoryStats = {}
-      
-      categories.forEach(category => {
-        const categoryOrchards = orchards?.filter(o => o.category === category) || []
-        const allBestowals = categoryOrchards.flatMap(o => o.bestowals || [])
-        const completedBestowals = allBestowals.filter(b => b.status === 'completed')
-        const recentCategoryBestowals = recentBestowals?.filter(b => 
-          categoryOrchards.some(o => o.id === b.orchard_id)
-        ) || []
-        
-        const lifetimeBestowed = completedBestowals.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0)
-        const currentBestowed = recentCategoryBestowals.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0)
-        
-        // Calculate trends (simplified - comparing current period to previous period)
-        const prevStartDate = new Date(startDate)
-        prevStartDate.setDate(prevStartDate.getDate() - parseInt(dateRange))
-        
+      for (const [category, categoryOrchards] of orchardsByCategory.entries()) {
+        const inCategory = (b) => categoryOfOrchard.get(b.orchard_id) === category
+        const lifetime = (lifetimeRows || []).filter(inCategory)
+        const current = (windowBestowals || []).filter((b) => inCategory(b) && new Date(b.created_at).getTime() >= startMs)
+        const previous = (windowBestowals || []).filter((b) => inCategory(b) && new Date(b.created_at).getTime() < startMs)
+        const currentOrchards = categoryOrchards.filter((o) => new Date(o.created_at).getTime() >= startMs).length
+        const previousOrchards = categoryOrchards.filter((o) => {
+          const t = new Date(o.created_at).getTime()
+          return t < startMs && t >= prevStartDate.getTime()
+        }).length
         categoryStats[category] = {
           category,
           lifetimeOrchards: categoryOrchards.length,
-          lifetimeBestowed,
-          currentOrchards: categoryOrchards.filter(o => o.status === 'active').length,
-          currentBestowed,
-          orchardsTrend: Math.random() * 30 - 15, // Simplified trend calculation
-          bestowedTrend: Math.random() * 40 - 20,
+          lifetimeBestowed: sum(lifetime),
+          currentOrchards: categoryOrchards.filter((o) => o.status === 'active').length,
+          currentBestowed: sum(current),
+          previousBestowed: sum(previous),
+          orchardsTrend: pctChange(currentOrchards, previousOrchards),
+          bestowedTrend: pctChange(sum(current), sum(previous)),
           popularityRank: 1,
           successRank: 1,
           growthRank: 1,
         }
-      })
-      
-      // Sort categories by performance
-      const performanceData = Object.values(categoryStats)
-        .filter(cat => cat.lifetimeOrchards > 0)
-        .sort((a, b) => b.currentBestowed - a.currentBestowed)
-        .map((cat, index) => ({
-          ...cat,
-          popularityRank: index + 1,
-          successRank: index + 1,
-          growthRank: index + 1
-        }))
-      
-      // Create trending data
+      }
+
+      const byBestowed = Object.values(categoryStats).sort((a, b) => b.currentBestowed - a.currentBestowed)
+      const performanceData = byBestowed.map((cat, index) => ({ ...cat, popularityRank: index + 1 }))
+      const successOrder = [...performanceData].sort((a, b) => b.lifetimeBestowed - a.lifetimeBestowed)
+      const growthOrder = [...performanceData].sort((a, b) => (b.bestowedTrend ?? -Infinity) - (a.bestowedTrend ?? -Infinity))
+      for (const cat of performanceData) {
+        cat.successRank = successOrder.indexOf(cat) + 1
+        cat.growthRank = growthOrder.indexOf(cat) + 1
+      }
+
       const trendingData = performanceData
-        .filter(cat => cat.bestowedTrend > 0)
+        .filter((cat) => cat.bestowedTrend !== null && cat.bestowedTrend > 0)
         .sort((a, b) => b.bestowedTrend - a.bestowedTrend)
-        .map(cat => ({
-          category: cat.category,
-          trend: cat.bestowedTrend,
-          currentValue: cat.currentBestowed,
-          metric: "bestowed"
-        }))
-      
-      // Calculate overview stats
-      const totalBestowed = Object.values(categoryStats)
-        .reduce((sum, cat) => sum + cat.lifetimeBestowed, 0)
-      const activeOrchards = Object.values(categoryStats)
-        .reduce((sum, cat) => sum + cat.currentOrchards, 0)
-      const averageGrowth = performanceData.length > 0 
-        ? performanceData.reduce((sum, cat) => sum + cat.bestowedTrend, 0) / performanceData.length
-        : 0
-      
+        .map((cat) => ({ category: cat.category, trend: cat.bestowedTrend, currentValue: cat.currentBestowed, metric: 'bestowed' }))
+
+      const totalBestowed = performanceData.reduce((t, cat) => t + cat.lifetimeBestowed, 0)
+      const activeOrchards = performanceData.reduce((t, cat) => t + cat.currentOrchards, 0)
+      const withTrend = performanceData.filter((cat) => cat.bestowedTrend !== null)
+      const averageGrowth = withTrend.length > 0 ? withTrend.reduce((t, cat) => t + cat.bestowedTrend, 0) / withTrend.length : null
+
       setAnalytics({
-        overview: {
-          totalCategories: categories.length,
-          activeOrchards,
-          totalBestowed,
-          averageGrowth
-        },
+        overview: { totalCategories: categories.length, activeOrchards, totalBestowed, averageGrowth },
         performance: performanceData,
-        trending: trendingData
+        trending: trendingData,
+        window: { days, from: startDate.toISOString(), to: endDate.toISOString() },
       })
-      
     } catch (error) {
       console.error('Error fetching analytics:', error)
-      toast({
-        title: "Error",
-        description: "Failed to load analytics data. Please try again.",
-        variant: "destructive"
-      })
-      
-      // Fallback to mock data
-      setAnalytics({
-        overview: {
-          totalCategories: categories.length,
-          activeOrchards: 234,
-          totalBestowed: 8500000,
-          averageGrowth: 23.5
-        },
-        performance: [
-          {
-            category: "The Gift of Technology",
-            lifetimeOrchards: 156,
-            lifetimeBestowed: 2450000,
-            currentOrchards: 23,
-            currentBestowed: 345000,
-            orchardsTrend: 15.2,
-            bestowedTrend: 28.5,
-            popularityRank: 1,
-            successRank: 2,
-            growthRank: 1,
-          },
-          {
-            category: "The Gift of Vehicles",
-            lifetimeOrchards: 89,
-            lifetimeBestowed: 1890000,
-            currentOrchards: 12,
-            currentBestowed: 280000,
-            orchardsTrend: -5.1,
-            bestowedTrend: 12.3,
-            popularityRank: 2,
-            successRank: 1,
-            growthRank: 4,
-          },
-          {
-            category: "The Gift of Property",
-            lifetimeOrchards: 45,
-            lifetimeBestowed: 3200000,
-            currentOrchards: 8,
-            currentBestowed: 520000,
-            orchardsTrend: 22.7,
-            bestowedTrend: 45.2,
-            popularityRank: 3,
-            successRank: 3,
-            growthRank: 2,
-          }
-        ],
-        trending: [
-          { category: "The Gift of Property", trend: 45.2, currentValue: 520000, metric: "bestowed" },
-          { category: "The Gift of Technology", trend: 28.5, currentValue: 345000, metric: "bestowed" },
-          { category: "The Gift of Energy", trend: 18.7, currentValue: 125000, metric: "bestowed" }
-        ]
-      })
+      setAnalytics(null)
+      setLoadError(error?.message || 'Unknown error')
+      toast({ title: 'Analytics could not be loaded', description: error?.message || 'Please try again.', variant: 'destructive' })
     } finally {
       setLoading(false)
     }
   }
-  
+
   useEffect(() => {
     fetchAnalytics()
   }, [dateRange, selectedCategory])
   
+  const fmtTrend = (trend) => (trend === null || trend === undefined ? 'new' : `${Math.abs(trend).toFixed(1)}%`)
   const getTrendIcon = (trend) => {
+    if (trend === null || trend === undefined) return null
     if (trend > 0) {
       return <TrendingUp className="h-4 w-4 text-green-600" />
     } else if (trend < 0) {
@@ -305,9 +244,26 @@ export default function AdminAnalyticsPage() {
     }
   }
   
+  if (!analytics && loadError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <Card className="max-w-lg w-full" data-testid="analytics-error">
+          <CardHeader><CardTitle>Analytics could not be loaded</CardTitle></CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <p>Nothing is shown rather than a made-up number.</p>
+            <p className="text-muted-foreground font-mono break-words">{loadError}</p>
+            <div className="flex gap-2">
+              <Button onClick={fetchAnalytics} disabled={loading}><RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />Try again</Button>
+              <Button asChild variant="outline"><Link to="/dashboard">Back to dashboard</Link></Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
   if (!analytics) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-12" data-testid="analytics-loading">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     )
@@ -443,7 +399,7 @@ export default function AdminAnalyticsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-amber-600">Avg Growth</p>
-                      <p className="text-3xl font-bold text-amber-800">{analytics.overview.averageGrowth.toFixed(1)}%</p>
+                      <p className="text-3xl font-bold text-amber-800">{analytics.overview.averageGrowth === null ? 'n/a' : `${analytics.overview.averageGrowth.toFixed(1)}%`}</p>
                     </div>
                     <TrendingUp className="h-8 w-8 text-amber-600" />
                   </div>
@@ -471,7 +427,7 @@ export default function AdminAnalyticsPage() {
                         <p className="font-bold text-green-600">{formatAmount(cat.currentBestowed)}</p>
                         <div className={`flex items-center gap-1 text-xs ${getTrendColor(cat.bestowedTrend)}`}>
                           {getTrendIcon(cat.bestowedTrend)}
-                          {Math.abs(cat.bestowedTrend).toFixed(1)}%
+                          {fmtTrend(cat.bestowedTrend)}
                         </div>
                       </div>
                     </div>
@@ -496,7 +452,7 @@ export default function AdminAnalyticsPage() {
                       <div className="text-right">
                         <div className="flex items-center gap-1 text-green-600">
                           <TrendingUp className="h-4 w-4" />
-                          <span className="font-bold">{cat.trend.toFixed(1)}%</span>
+                          <span className="font-bold">{fmtTrend(cat.trend)}</span>
                         </div>
                       </div>
                     </div>

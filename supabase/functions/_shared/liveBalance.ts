@@ -20,19 +20,56 @@ import * as sol from "https://esm.sh/micro-sol-signer@0.8.2";
 import { USDC_MINTS } from "./cryptoNetworks.ts";
 
 const USDC_DECIMALS = 6;
-const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
+const PUBLIC_MAINNET_RPC = "https://api.mainnet-beta.solana.com";
 
-async function rpc<T>(method: string, params: unknown[]): Promise<T> {
-  const res = await fetch(MAINNET_RPC, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-  });
-  const body = await res.json();
-  if (body.error) {
-    throw new Error(`Solana RPC ${method} failed: ${body.error.message ?? JSON.stringify(body.error)}`);
+/** The configured RPC when it is a mainnet one, else the public endpoint. */
+function mainnetRpcUrl(): string {
+  const custom = (Deno.env.get("SOLANA_RPC_URL") ?? "").trim();
+  if (custom && Deno.env.get("SOLANA_CLUSTER") === "mainnet-beta") return custom;
+  return PUBLIC_MAINNET_RPC;
+}
+
+/** Thrown when the RPC refuses us (429/403) or answers with something that is not JSON-RPC: retryable, not a code bug. */
+export class RpcUnavailableError extends Error {
+  readonly status: number;
+  constructor(status: number, detail: string) {
+    super(`Solana RPC unavailable (HTTP ${status}): ${detail}`);
+    this.name = "RpcUnavailableError";
+    this.status = status;
   }
-  return body.result as T;
+}
+
+// 2026-09-06: the public RPC rate-limits shared egress IPs (429, sometimes
+// 403 with an HTML body). res.json() on that body used to throw a bare
+// SyntaxError that surfaced as an opaque 500. Now: one short retry, then a
+// typed, retryable error the function maps to 503.
+async function rpc<T>(method: string, params: unknown[]): Promise<T> {
+  let lastErr: Error | null = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 400));
+    const res = await fetch(mainnetRpcUrl(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+    });
+    const text = await res.text();
+    if (res.status === 429 || res.status === 403 || res.status >= 500) {
+      lastErr = new RpcUnavailableError(res.status, text.slice(0, 120).replace(/\s+/g, " ") || res.statusText);
+      continue;
+    }
+    let body: { result?: T; error?: { message?: string } };
+    try {
+      body = JSON.parse(text);
+    } catch {
+      lastErr = new RpcUnavailableError(res.status, `non-JSON answer: ${text.slice(0, 80)}`);
+      continue;
+    }
+    if (body.error) {
+      throw new Error(`Solana RPC ${method} failed: ${body.error.message ?? JSON.stringify(body.error)}`);
+    }
+    return body.result as T;
+  }
+  throw lastErr ?? new RpcUnavailableError(0, "no answer");
 }
 
 export async function getLiveUsdcBalance(owner: string): Promise<number> {

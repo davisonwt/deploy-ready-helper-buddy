@@ -5,7 +5,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "npm:zod@3.23.8";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { getLiveUsdcBalance } from "../_shared/liveBalance.ts";
+import { getLiveUsdcBalance, RpcUnavailableError } from "../_shared/liveBalance.ts";
 import { validateSolanaAddress } from "../_shared/cryptoAddress.ts";
 import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimiter.ts";
 import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
@@ -57,6 +57,13 @@ Deno.serve(async (req) => {
     const balance = await getLiveUsdcBalance(parsed.address);
     return json({ balance });
   } catch (err) {
+    // The public Solana RPC rate-limiting us is the expected failure here:
+    // say so (503, retryable), so the client shows "try again shortly"
+    // instead of an opaque 500. Anything else is logged as a real failure.
+    if (err instanceof RpcUnavailableError) {
+      console.warn("get-wallet-balance: RPC unavailable", err.message);
+      return json({ error: "The Solana network is busy; balance unavailable right now. Try again shortly.", retryable: true, detail: err.message }, 503);
+    }
     console.error("get-wallet-balance error", err);
     await logFunctionFailure("get-wallet-balance", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);

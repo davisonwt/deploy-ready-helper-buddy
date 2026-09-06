@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
 import { useProductBasket } from '@/contexts/ProductBasketContext'
 import SettlementConsentBanner from '@/components/dashboard/SettlementConsentBanner'
+import { TileErrorBoundary } from '@/components/error/TileErrorBoundary';
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
@@ -1283,7 +1284,7 @@ export default function SeedFlowDashboard() {
             <LiveNowStrip className="mb-3" />
 
             {/* ── Tribe size · Bestowals · Unread messages ── */}
-            <DashboardTribeStats />
+            <TileErrorBoundary name="dashboard stats"><DashboardTribeStats /></TileErrorBoundary>
 
             {/* ── Tribal Tiers — jump to each SeedFlow by business scale ── */}
             <TribalTiersCard />

@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
+import { TileErrorBoundary } from "@/components/error/TileErrorBoundary";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ResponsiveLayout from "./components/layout/ResponsiveLayout";
 import AccessibilityChecker from "./components/accessibility/AccessibilityChecker";
@@ -73,7 +74,7 @@ const App = () => (
                       <ResponsiveLayout>
                         <AppRoutes />
                         <FloatingBasketButton />
-                        <WalletBalanceChip />
+                        <TileErrorBoundary name="wallet balance" inline><WalletBalanceChip /></TileErrorBoundary>
                         <GroundskeeperWidget />
                       </ResponsiveLayout>
 

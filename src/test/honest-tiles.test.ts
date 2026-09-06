@@ -44,6 +44,15 @@ describe('honest tiles', () => {
     expect(text).toContain('Try again');
   });
 
+  it('/admin/analytics has no mock rows, no random trends, and an error state', () => {
+    const text = src('src/pages/AdminAnalyticsPage.jsx');
+    expect(text).not.toMatch(/125[, _]?000/);
+    expect(text).not.toContain('Math.random');
+    expect(text).not.toContain('Fallback to mock');
+    expect(text).toContain("eq('payment_status', 'completed')");
+    expect(text).toContain('data-testid="analytics-error"');
+  });
+
   it('the S2G tile sub line names the month figure and the ledger', () => {
     expect(s2gRevenueSub(2.7)).toBe('this month $2.70 · from the revenue ledger, live');
     expect(s2gRevenueSub(null)).toBe('from the revenue ledger, live');
