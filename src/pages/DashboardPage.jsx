@@ -82,7 +82,7 @@ const SEEDS = [
     activity: 'Omer 8 of 50',
     description: "Walking toward Shavu'ot",
     image: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800&q=80',
-    color: '#92400e',
+    color: '#fbbf24',
     glow: '#f59e0b',
     playPath: '/364yhvh-days',
     bookPath: '/364yhvh-days',
@@ -247,7 +247,7 @@ function WeekBeads({ sacred }) {
         marginBottom: 10,
       }}>
         <div>
-          <div style={{ fontSize: 11, color: '#64748b', letterSpacing: '0.08em' }}>
+          <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '0.08em' }}>
             Today in Creator's Count
           </div>
           <div style={{ fontSize: 18, fontWeight: 800, color: '#f1f5f9', marginTop: 2 }}>
@@ -309,7 +309,7 @@ function WeekBeads({ sacred }) {
                 >
                   {b.dayNum > 0 ? b.dayNum : ''}
                 </button>
-                <div style={{ fontSize: 10, color: b.isToday ? '#38bdf8' : b.isSabbath ? '#f59e0b' : '#475569', fontWeight: 700 }}>
+                <div style={{ fontSize: 10, color: b.isToday ? '#38bdf8' : b.isSabbath ? '#f59e0b' : '#94a3b8', fontWeight: 700 }}>
                   {b.isSabbath ? 'שבת' : b.wd}
                 </div>
                 {b.isToday && (
@@ -323,7 +323,7 @@ function WeekBeads({ sacred }) {
         </div>
         <div style={{
           marginTop: 8, textAlign: 'center', fontSize: 10,
-          color: '#92400e', letterSpacing: '0.18em', fontWeight: 700,
+          color: '#fbbf24', letterSpacing: '0.18em', fontWeight: 700,
         }}>
           MONTH {sacred.date.month} · WEEK {Math.ceil(sacred.dayOfYear / 7)}
         </div>
@@ -548,9 +548,9 @@ export default function SeedFlowDashboard() {
     food:      { color: '#65a30d', glow: '#a3e635', emoji: '🍞', label: 'Food' },
     service:   { color: '#0e7490', glow: '#06b6d4', emoji: '🛠', label: 'Service' },
     teaching:  { color: '#7c3aed', glow: '#a78bfa', emoji: '📖', label: 'Teaching' },
-    prayer:    { color: '#92400e', glow: '#f59e0b', emoji: '🙏', label: 'Prayer' },
+    prayer:    { color: '#fbbf24', glow: '#f59e0b', emoji: '🙏', label: 'Prayer' },
     book:      { color: '#7c2d12', glow: '#fb923c', emoji: '📚', label: 'Book' },
-    other:     { color: '#475569', glow: '#94a3b8', emoji: '🌱', label: 'Seed' },
+    other:     { color: '#94a3b8', glow: '#94a3b8', emoji: '🌱', label: 'Seed' },
   }
   const catMeta = (c) => CATEGORY_META[(c || 'other').toLowerCase()] || CATEGORY_META.other
 
@@ -742,7 +742,7 @@ export default function SeedFlowDashboard() {
       display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
     },
     logoText: { fontWeight: 700, fontSize: 15, color: '#fff', lineHeight: 1.2 },
-    logoSub: { fontSize: 11, color: '#4b5563', lineHeight: 1 },
+    logoSub: { fontSize: 11, color: '#cbd5e1', lineHeight: 1 },
     keeperBadge: {
       display: 'flex', alignItems: 'center', gap: 8,
       padding: '7px 10px', background: '#111827',
@@ -751,7 +751,7 @@ export default function SeedFlowDashboard() {
     keeperDot: {
       width: 26, height: 26, borderRadius: '50%',
       background: '#1e293b', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#64748b',
+      justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#94a3b8',
     },
     nav: {
       flex: 1, padding: '10px 8px',
@@ -796,17 +796,17 @@ export default function SeedFlowDashboard() {
       fontSize: 19, overflow: 'hidden', flexShrink: 0,
     },
     greeting: { fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 2 },
-    greetingSub: { fontSize: 12, color: '#4b5563' },
+    greetingSub: { fontSize: 12, color: '#cbd5e1' },
     seedflowLabel: {
       display: 'inline-flex', alignItems: 'center', gap: 6,
       background: '#0f172a', border: '1px solid #1e293b',
       borderRadius: 20, padding: '5px 12px',
-      fontSize: 12, color: '#64748b',
+      fontSize: 12, color: '#94a3b8',
     },
     content: { padding: '18px 22px', flex: 1 },
     sectionLabel: {
       fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
-      color: '#374151', textTransform: 'uppercase', marginBottom: 12,
+      color: '#cbd5e1', textTransform: 'uppercase', marginBottom: 12,
       display: 'flex', alignItems: 'center', gap: 7,
     },
     liveTag: {
@@ -890,19 +890,19 @@ export default function SeedFlowDashboard() {
     },
     panelSection: { display: 'flex', flexDirection: 'column', gap: 8 },
     panelTitle: {
-      fontSize: 10, fontWeight: 700, color: '#374151',
+      fontSize: 10, fontWeight: 700, color: '#cbd5e1',
       letterSpacing: '0.12em', textTransform: 'uppercase',
       display: 'flex', alignItems: 'center', gap: 6,
     },
     dateYear: { fontSize: 22, fontWeight: 800, color: '#f1f5f9', marginBottom: 2 },
-    dateLine: { fontSize: 13, color: '#4b5563', lineHeight: 1.9 },
+    dateLine: { fontSize: 13, color: '#cbd5e1', lineHeight: 1.9 },
     omerBadge: {
       background: '#1c1400', border: '1px solid #92400e44',
       borderRadius: 10, padding: '10px 12px',
       display: 'flex', alignItems: 'center', gap: 9,
     },
     omerText: { fontSize: 14, fontWeight: 700, color: '#f59e0b' },
-    omerNext: { fontSize: 13, color: '#4b5563' },
+    omerNext: { fontSize: 13, color: '#cbd5e1' },
     growthCard: {
       background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.05)',
       borderRadius: 10, padding: '12px 12px',
@@ -912,12 +912,12 @@ export default function SeedFlowDashboard() {
       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
     },
-    growthLabel: { fontSize: 12, color: '#4b5563' },
+    growthLabel: { fontSize: 12, color: '#cbd5e1' },
     growthVal: { fontSize: 14, fontWeight: 700, color: '#f1f5f9' },
     tipBox: {
       background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.05)',
       borderRadius: 10, padding: '12px',
-      fontSize: 12, color: '#6b7280', lineHeight: 1.7,
+      fontSize: 12, color: '#9ca3af', lineHeight: 1.7,
       fontStyle: 'italic',
     },
   }
@@ -1316,7 +1316,7 @@ export default function SeedFlowDashboard() {
                   <div style={{
                     padding: 24, textAlign: 'center',
                     background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: 14, color: '#64748b', fontSize: 13, fontStyle: 'italic',
+                    borderRadius: 14, color: '#94a3b8', fontSize: 13, fontStyle: 'italic',
                   }}>
                     You haven't planted any seeds yet — tap "Plant Seed" below to start.
                   </div>

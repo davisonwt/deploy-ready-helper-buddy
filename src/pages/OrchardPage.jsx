@@ -206,7 +206,7 @@ const OrchardPage = () => {
             </Button>
             
             <Link to={`/edit-orchard/${orchardId}`}>
-              <Button className="bg-lime-500 hover:bg-lime-400 text-green-800 border-2 border-green-700">
+              <Button className="bg-lime-700 hover:bg-lime-600 text-white border-2 border-lime-400/60">
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Orchard
               </Button>
@@ -253,7 +253,7 @@ const OrchardPage = () => {
                   <CardTitle className="text-3xl font-bold text-orange-700 flex flex-wrap items-center gap-3">
                     {orchard.title}
                     {(funding?.fundingState === 'cancelling' || funding?.fundingState === 'cancelled') && (
-                      <Badge variant="outline" className="text-base bg-red-100 text-red-900 border-red-300" data-testid="orchard-cancelled-badge">
+                      <Badge variant="outline" className="text-base bg-red-900/50 text-red-100 border-red-400/50" data-testid="orchard-cancelled-badge">
                         {fundingStateLabel(funding.fundingState).label}
                       </Badge>
                     )}
@@ -294,7 +294,7 @@ const OrchardPage = () => {
                 </div>
                 
                 {(funding?.fundingState === 'cancelling' || funding?.fundingState === 'cancelled') && (
-                  <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900" data-testid="orchard-cancelled-notice">
+                  <div className="rounded-lg border border-red-400/40 bg-red-950/40 p-3 text-sm text-red-100" data-testid="orchard-cancelled-notice">
                     <p className="font-medium">
                       {funding.fundingState === 'cancelled'
                         ? 'This orchard was cancelled. Every bestower is refunded in full on the way they paid.'
@@ -307,7 +307,7 @@ const OrchardPage = () => {
                 )}
 
                 {myPockets.length > 0 && (
-                  <div className="rounded-lg border border-orange-200 bg-orange-50/60 p-3" data-testid="my-pockets">
+                  <div className="rounded-lg border border-orange-400/40 bg-orange-950/30 p-3" data-testid="my-pockets">
                     <h3 className="text-sm font-semibold text-orange-700 mb-1">Your pockets in this orchard</h3>
                     <ul className="text-sm space-y-1">
                       {myPockets.map((p) => (

@@ -204,7 +204,7 @@ export default function RegisterPage() {
                   <Button 
                     onClick={() => setShowQuickRegistration(true)}
                     size="sm"
-                    className="bg-green-500 hover:bg-green-600"
+                    className="bg-green-700 hover:bg-green-800 text-white"
                   >
                     Quick & Easy
                   </Button>

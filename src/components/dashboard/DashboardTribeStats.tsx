@@ -122,7 +122,7 @@ export default function DashboardTribeStats() {
     return () => { supabase.removeChannel(ch); };
   }, [user?.id, reload]);
 
-  const subLine = { fontSize: 11, color: "#64748b", marginTop: 2 };
+  const subLine = { fontSize: 11, color: "#94a3b8", marginTop: 2 };
 
   const tile = (to, icon, label, value, sub, color) => (
     <Link to={to} style={{

@@ -114,8 +114,8 @@ const styles = {
   titleRow: { display: 'flex', alignItems: 'center', gap: 8 },
   titleEmoji: { fontSize: 18 },
   title: { fontSize: 13, fontWeight: 800, color: '#f1f5f9', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 },
-  count: { fontSize: 11, color: '#64748b', fontWeight: 700 },
-  empty: { padding: 18, fontSize: 12, color: '#64748b', fontStyle: 'italic', textAlign: 'center' },
+  count: { fontSize: 11, color: '#94a3b8', fontWeight: 700 },
+  empty: { padding: 18, fontSize: 12, color: '#94a3b8', fontStyle: 'italic', textAlign: 'center' },
 
   card: (accent) => ({
     position: 'relative',

@@ -2,11 +2,15 @@ import type { Config } from "tailwindcss";
 
 export default {
 	darkMode: ["class"],
+	// 2026-09-06: .js/.jsx were never scanned, so any class used only in a
+	// grandfathered .jsx page (admin dashboard, login, register, orchard...)
+	// was silently missing from the CSS. Selected admin tabs had no
+	// background for that reason. Scan everything under src/.
 	content: [
-		"./pages/**/*.{ts,tsx}",
-		"./components/**/*.{ts,tsx}",
-		"./app/**/*.{ts,tsx}",
-		"./src/**/*.{ts,tsx}",
+		"./pages/**/*.{js,jsx,ts,tsx}",
+		"./components/**/*.{js,jsx,ts,tsx}",
+		"./app/**/*.{js,jsx,ts,tsx}",
+		"./src/**/*.{js,jsx,ts,tsx}",
 	],
 	prefix: "",
 	theme: {

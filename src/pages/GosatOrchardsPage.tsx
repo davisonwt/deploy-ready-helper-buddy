@@ -82,12 +82,14 @@ const db = supabase as any;
 
 const HELD_STATES = new Set(['held', 'refund_pending', 'refund_failed']);
 const fmtUsd = (n: number | string | null | undefined) => `$${(Number(n) || 0).toFixed(2)}`;
+// Dark-surface tints: the app's theme is dark in both modes, and light
+// pastel badges are remapped globally (index.css); these are explicit.
 const toneClass: Record<PocketTone, string> = {
-  held: 'bg-amber-100 text-amber-900 border-amber-300',
-  released: 'bg-emerald-100 text-emerald-900 border-emerald-300',
-  pending: 'bg-sky-100 text-sky-900 border-sky-300',
-  done: 'bg-emerald-100 text-emerald-900 border-emerald-300',
-  problem: 'bg-red-100 text-red-900 border-red-300',
+  held: 'bg-amber-900/50 text-amber-100 border-amber-400/50',
+  released: 'bg-emerald-900/50 text-emerald-100 border-emerald-400/50',
+  pending: 'bg-sky-900/50 text-sky-100 border-sky-400/50',
+  done: 'bg-emerald-900/50 text-emerald-100 border-emerald-400/50',
+  problem: 'bg-red-900/50 text-red-100 border-red-400/50',
 };
 function daysSince(iso: string) { return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)); }
 function rpcError(err: any): string { return err?.message ?? err?.error ?? String(err); }

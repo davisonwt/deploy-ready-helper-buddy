@@ -717,7 +717,7 @@ export default function ProfilePage() {
                   <div className="text-sm text-muted-foreground">Supported</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-secondary">{statsLoading ? "—" : stats.peopleHelped}</div>
+                  <div className="text-2xl font-bold text-primary">{statsLoading ? "—" : stats.peopleHelped}</div>
                   <div className="text-sm text-muted-foreground">People Helped</div>
                 </div>
               </div>
@@ -738,7 +738,7 @@ export default function ProfilePage() {
                     <Button
                       onClick={() => setShowQuickSetup(true)}
                       size="sm"
-                      className="bg-green-500 hover:bg-green-600"
+                      className="bg-green-700 hover:bg-green-800 text-white"
                     >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Quick Setup
@@ -1642,7 +1642,7 @@ export default function ProfilePage() {
                 <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <Users className="h-8 w-8 text-secondary" />
                 </div>
-                <div className="text-3xl font-bold text-secondary mb-2">{statsLoading ? "—" : stats.orchardsSupported}</div>
+                <div className="text-3xl font-bold text-primary mb-2">{statsLoading ? "—" : stats.orchardsSupported}</div>
                 <p className="text-sm text-muted-foreground font-medium">Orchards Supported</p>
                 <p className="text-xs text-muted-foreground mt-1">Growing together</p>
               </CardContent>

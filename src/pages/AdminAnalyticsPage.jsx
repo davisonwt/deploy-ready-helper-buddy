@@ -384,16 +384,16 @@ export default function AdminAnalyticsPage() {
         {/* Analytics Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex w-full overflow-x-auto justify-start bg-white/90 backdrop-blur-sm border border-green-200">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-green-700 data-[state=active]:text-white">
               Overview
             </TabsTrigger>
-            <TabsTrigger value="performance" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="performance" className="data-[state=active]:bg-blue-700 data-[state=active]:text-white">
               Performance
             </TabsTrigger>
-            <TabsTrigger value="trending" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <TabsTrigger value="trending" className="data-[state=active]:bg-purple-700 data-[state=active]:text-white">
               Trending
             </TabsTrigger>
-            <TabsTrigger value="insights" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            <TabsTrigger value="insights" className="data-[state=active]:bg-amber-700 data-[state=active]:text-white">
               Insights
             </TabsTrigger>
           </TabsList>

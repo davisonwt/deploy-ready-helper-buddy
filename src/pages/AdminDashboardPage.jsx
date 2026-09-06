@@ -364,46 +364,46 @@ export default function AdminDashboardPage() {
             <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
               <TabsTrigger 
                 value="analytics" 
-                className="border-2 border-primary/20 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-primary/40 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+                className="border-2 border-primary/20 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-primary/40 transition-all duration-300 data-[state=active]:bg-cyan-700 data-[state=active]:text-white data-[state=active]:border-primary data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
                 Analytics
               </TabsTrigger>
               <TabsTrigger 
                 value="users" 
-                className="border-2 border-blue-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-blue-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+                className="border-2 border-blue-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-blue-300 transition-all duration-300 data-[state=active]:bg-blue-700 data-[state=active]:text-white data-[state=active]:border-blue-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
                 Users
               </TabsTrigger>
               <TabsTrigger 
                 value="moderation" 
-                className="border-2 border-orange-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-orange-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:border-orange-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+                className="border-2 border-orange-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-orange-300 transition-all duration-300 data-[state=active]:bg-orange-700 data-[state=active]:text-white data-[state=active]:border-orange-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
                 Moderation
               </TabsTrigger>
               <TabsTrigger 
                 value="ghost-access" 
-                className="border-2 border-amber-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-amber-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=active]:border-amber-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+                className="border-2 border-amber-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-amber-300 transition-all duration-300 data-[state=active]:bg-amber-700 data-[state=active]:text-white data-[state=active]:border-amber-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
                 <Shield className="w-4 h-4 mr-2" />
                 Ghost Access
               </TabsTrigger>
               <TabsTrigger 
                 value="treasury" 
-                className="border-2 border-emerald-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-emerald-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:border-emerald-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+                className="border-2 border-emerald-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-emerald-300 transition-all duration-300 data-[state=active]:bg-emerald-700 data-[state=active]:text-white data-[state=active]:border-emerald-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
                 <Wallet className="w-4 h-4 mr-2" />
                 Treasury
               </TabsTrigger>
               <TabsTrigger
                 value="sentinel"
-                className="border-2 border-rose-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-rose-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-rose-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:border-rose-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+                className="border-2 border-rose-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-rose-300 transition-all duration-300 data-[state=active]:bg-rose-700 data-[state=active]:text-white data-[state=active]:border-rose-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
                 <ShieldCheck className="w-4 h-4 mr-2" />
                 Sentinel
               </TabsTrigger>
               <TabsTrigger
                 value="legacy"
-                className="border-2 border-slate-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-slate-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:border-slate-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+                className="border-2 border-slate-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-slate-300 transition-all duration-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white data-[state=active]:border-slate-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
                 Legacy
               </TabsTrigger>

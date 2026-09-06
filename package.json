@@ -9,7 +9,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:payments": "vite build && playwright test"
+    "test:payments": "vite build && playwright test",
+    "audit:contrast": "vite build && node scripts/contrast-audit.mjs"
   },
   "dependencies": {
     "@axe-core/react": "^4.10.2",

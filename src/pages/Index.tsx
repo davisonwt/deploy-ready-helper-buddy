@@ -168,7 +168,7 @@ function IndexContent() {
         
         <div className="relative z-20 text-center max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           <div className="mb-4 sm:mb-8">
-            <div className="inline-flex items-center bg-amber-500/90 text-white px-4 py-2 sm:px-6 sm:py-2 rounded-full mb-4 sm:mb-8 text-xs sm:text-base">
+            <div className="inline-flex items-center bg-amber-500/90 text-amber-950 px-4 py-2 sm:px-6 sm:py-2 rounded-full mb-4 sm:mb-8 text-xs sm:text-base">
               <Sprout className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               364yhvh community farm stall
             </div>
@@ -190,7 +190,7 @@ function IndexContent() {
           
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4">
             <Link to="/register" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg rounded-full">
+              <Button size="lg" className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg rounded-full">
                 <Heart className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 sow your first seed
               </Button>
@@ -747,7 +747,7 @@ function IndexContent() {
                      {/* Start Your Journey Button - Responsive positioning */}
                      <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 z-40">
                        <Link to="/register">
-                         <Button size="lg" className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-sm sm:text-base md:text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                         <Button size="lg" className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-sm sm:text-base md:text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                            <Heart className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                            start your journey
                          </Button>

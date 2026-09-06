@@ -30,9 +30,11 @@ All colors MUST be HSL.
   --secondary: 217 33% 17%;  /* slate-800 */
   --secondary-foreground: 210 17% 98%;
 
-  /* Muted text and helpers */
-  --muted: 210 11% 71%;  /* #ADB5BD - Light gray for muted text */
-  --muted-foreground: 210 11% 46%; /* #6C757D - Medium gray */
+  /* Muted surface + text. 2026-09-06 contrast pass: muted is a dark
+     surface (slate-800) and muted-foreground a light grey that reads
+     7:1 on cards; the old #6C757D measured 3.8:1 on every card. */
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 68%;
 
   --accent: 188 78% 41%;  /* #17A2B8 - Teal accent */
   --accent-foreground: 0 0% 100%;
@@ -77,7 +79,7 @@ All colors MUST be HSL.
   --heading-bg: 24 14% 78%; /* #C8B6A6 - soft taupe */
   
   /* Custom colors for registration form */
-  --olive-green: 60 30% 45%;
+  --olive-green: 60 30% 24%; /* darkened 2026-09-06: white text on the old 45% olive measured 3.1:1 */
   --golden-brown: 30 35% 45%;
   --royal-purple: 270 75% 45%;
   --cyan-accent: 180 75% 55%;
@@ -123,7 +125,7 @@ All colors MUST be HSL.
   --glass-shadow: 0 0% 0%;
   --glass-glow: 189 94% 55%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72% 51%; /* #dc2626: 4.6:1 with white text (the old #ef4444 was 3.8:1) */
     --destructive-foreground: 0 0% 100%;
 
     --border: 217 33% 22%; /* slate-700/40 */
@@ -197,6 +199,29 @@ input:focus, select:focus, textarea:focus {
   border-color: hsl(var(--input-border-focus));
   outline: none;
   box-shadow: 0 0 0 2px hsl(var(--input-border-focus) / 0.2);
+}
+
+/* Browser autofill keeps the dark field and visible text (2026-09-06).
+   The inset shadow covers the UA autofill background; text-fill-color is
+   the only property the UA autofill style does not override. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px hsl(var(--input-bg)) inset !important;
+  box-shadow: 0 0 0 1000px hsl(var(--input-bg)) inset !important;
+  -webkit-text-fill-color: hsl(var(--input-text)) !important;
+  caret-color: hsl(var(--input-text));
+  border-color: hsl(var(--input-border));
+  transition: background-color 9999s ease-out 0s;
+}
+input:autofill,
+textarea:autofill,
+select:autofill {
+  box-shadow: 0 0 0 1000px hsl(var(--input-bg)) inset !important;
+  -webkit-text-fill-color: hsl(var(--input-text)) !important;
 }
 
 input::placeholder, textarea::placeholder, select::placeholder {
@@ -563,8 +588,17 @@ input::placeholder, textarea::placeholder, select::placeholder {
 }
 
 @layer components {
-  /* Uniform placeholder surfaces across the app */
+  /* Uniform placeholder surfaces across the app.
+     The design system is dark; many legacy screens were written for a light
+     UI. Every light surface utility is mapped to a dark surface and the text
+     inside it to light, so a light-on-light or dark-on-dark pair cannot occur.
+     2026-09-06 contrast pass: bg-white/40 and /70 (the register tier cards
+     rendered white text on a grey pill), the pastel bg-*-50/100 tints and
+     the pastel from-*-50 gradients (the register scripture block was white
+     on near-white) are now covered too, as hue-preserving dark tints. */
   .bg-white,
+  .bg-white\/40,
+  .bg-white\/70,
   .bg-white\/80,
   .bg-white\/90,
   .bg-white\/95,
@@ -576,13 +610,63 @@ input::placeholder, textarea::placeholder, select::placeholder {
     border-color: hsl(var(--border)) !important;
     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
   }
+  .bg-green-50, .bg-green-100 { background-color: rgb(20 83 45 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-emerald-50, .bg-emerald-100 { background-color: rgb(6 78 59 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-lime-50, .bg-lime-100 { background-color: rgb(54 83 20 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-teal-50, .bg-teal-100 { background-color: rgb(19 78 74 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-cyan-50, .bg-cyan-100 { background-color: rgb(22 78 99 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-sky-50, .bg-sky-100 { background-color: rgb(12 74 110 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-blue-50, .bg-blue-100 { background-color: rgb(30 58 138 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-indigo-50, .bg-indigo-100 { background-color: rgb(49 46 129 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-violet-50, .bg-violet-100 { background-color: rgb(76 29 149 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-purple-50, .bg-purple-100 { background-color: rgb(88 28 135 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-fuchsia-50, .bg-fuchsia-100 { background-color: rgb(112 26 117 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-pink-50, .bg-pink-100 { background-color: rgb(131 24 67 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-rose-50, .bg-rose-100 { background-color: rgb(136 19 55 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-red-50, .bg-red-100 { background-color: rgb(127 29 29 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-orange-50, .bg-orange-100 { background-color: rgb(124 45 18 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-amber-50, .bg-amber-100 { background-color: rgb(120 53 15 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-yellow-50, .bg-yellow-100 { background-color: rgb(113 63 18 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-gray-50, .bg-gray-100 { background-color: rgb(31 41 55 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-slate-50, .bg-slate-100 { background-color: rgb(30 41 59 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-zinc-50, .bg-zinc-100 { background-color: rgb(39 39 42 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-neutral-50, .bg-neutral-100 { background-color: rgb(38 38 38 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .bg-stone-50, .bg-stone-100 { background-color: rgb(41 37 36 / 0.45) !important; color: hsl(var(--heading-primary)) !important; border-color: hsl(var(--border)); }
+  .from-green-50, .from-green-100 { background-image: none !important; background-color: rgb(20 83 45 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-emerald-50, .from-emerald-100 { background-image: none !important; background-color: rgb(6 78 59 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-lime-50, .from-lime-100 { background-image: none !important; background-color: rgb(54 83 20 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-teal-50, .from-teal-100 { background-image: none !important; background-color: rgb(19 78 74 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-cyan-50, .from-cyan-100 { background-image: none !important; background-color: rgb(22 78 99 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-sky-50, .from-sky-100 { background-image: none !important; background-color: rgb(12 74 110 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-blue-50, .from-blue-100 { background-image: none !important; background-color: rgb(30 58 138 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-indigo-50, .from-indigo-100 { background-image: none !important; background-color: rgb(49 46 129 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-violet-50, .from-violet-100 { background-image: none !important; background-color: rgb(76 29 149 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-purple-50, .from-purple-100 { background-image: none !important; background-color: rgb(88 28 135 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-fuchsia-50, .from-fuchsia-100 { background-image: none !important; background-color: rgb(112 26 117 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-pink-50, .from-pink-100 { background-image: none !important; background-color: rgb(131 24 67 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-rose-50, .from-rose-100 { background-image: none !important; background-color: rgb(136 19 55 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-red-50, .from-red-100 { background-image: none !important; background-color: rgb(127 29 29 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-orange-50, .from-orange-100 { background-image: none !important; background-color: rgb(124 45 18 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-amber-50, .from-amber-100 { background-image: none !important; background-color: rgb(120 53 15 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-yellow-50, .from-yellow-100 { background-image: none !important; background-color: rgb(113 63 18 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-gray-50, .from-gray-100 { background-image: none !important; background-color: rgb(31 41 55 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-slate-50, .from-slate-100 { background-image: none !important; background-color: rgb(30 41 59 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-zinc-50, .from-zinc-100 { background-image: none !important; background-color: rgb(39 39 42 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-neutral-50, .from-neutral-100 { background-image: none !important; background-color: rgb(38 38 38 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
+  .from-stone-50, .from-stone-100 { background-image: none !important; background-color: rgb(41 37 36 / 0.35) !important; color: hsl(var(--heading-primary)) !important; }
   .bg-white *,
+  .bg-white\/40 *,
+  .bg-white\/70 *,
   .bg-white\/80 *,
   .bg-white\/90 *,
   .bg-white\/95 *,
   .bg-gray-50 *,
   .bg-slate-50 *,
-  .bg-neutral-50 * {
+  .bg-neutral-50 *,
+  [class*="bg-"][class*="-50"] *,
+  [class*="bg-"][class*="-100"] *,
+  [class*="from-"][class*="-50"] *,
+  [class*="from-"][class*="-100"] * {
     color: inherit !important;
   }
   /* Normalize legacy white borders */

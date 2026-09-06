@@ -193,7 +193,7 @@ export default function MySeedsPage() {
                               {pockets.get(row.sourceId)!.state.referenceUrl && (
                                 <>
                                   {' '}
-                                  <a href={pockets.get(row.sourceId)!.state.referenceUrl!} target="_blank" rel="noreferrer" className="underline text-emerald-700">view transaction</a>
+                                  <a href={pockets.get(row.sourceId)!.state.referenceUrl!} target="_blank" rel="noreferrer" className="underline text-emerald-300">view transaction</a>
                                 </>
                               )}
                               {row.itemId && (

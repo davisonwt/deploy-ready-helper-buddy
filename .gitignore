@@ -40,3 +40,6 @@ supabase/.temp/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# contrast audit output (scripts/contrast-audit.mjs)
+scripts/.contrast-audit.json

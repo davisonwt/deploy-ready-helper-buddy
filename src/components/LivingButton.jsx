@@ -53,7 +53,7 @@ const VARIANT_CONFIG = {
     defaultHeight: 52,
   },
   share: {
-    color: '#8b5cf6',
+    color: '#a78bfa',
     borderIdle:  'rgba(139,92,246,0.15)',
     borderHover: 'rgba(139,92,246,0.45)',
     bgIdle:      'rgba(139,92,246,0.03)',
