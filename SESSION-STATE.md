@@ -41,6 +41,28 @@ status" under section 6). All migrations applied server-side with
   **RED, short by 10.38** with PayPal counted as 0 (not readable from the
   CLI): cash 5.62 vs liabilities 16.00. Live smoke: A gets 403 from the
   function and 42501 from the RPC; unauthenticated gets 401.
+- **Hotfix, same day (`/admin/treasury` showed "non-2xx" for a real gosat).**
+  Root cause: `liability_snapshot()` reset its temp tables with a bare
+  `DELETE FROM _ls_owed;` / `DELETE FROM _ls_hold;`. PostgREST's database
+  role `authenticator` has `session_preload_libraries = safeupdate`, which
+  raises `21000: DELETE requires a WHERE clause` -- so every call from the
+  edge function's service-role client failed and `treasury-balances`
+  answered 500 `liability_snapshot_failed`. The Management API path used
+  for migrations and fixtures does NOT preload safeupdate, which is why
+  every proof passed. Reproduced through PostgREST with a throwaway
+  wrapper (`scripts/studio/liability-postgrest-probe.sql`, dropped after)
+  and fixed by `20260906150000_liability_snapshot_safeupdate.sql`
+  (TRUNCATE instead of DELETE). **Lesson for every future SQL function:
+  never a bare DELETE/UPDATE; and prove RPCs through PostgREST, not only
+  through `db query`.** The function now logs and returns
+  `{error, message, detail, code}` on that path; the page reads
+  supabase-js's hidden `err.context` body so it shows the real error
+  instead of "Edge Function returned a non-2xx status code". The OLD
+  layout the owner saw (NOWPayments custody / PayPal custody cards) is the
+  pre-`2ae0efa9` page: Lovable had not published; the only route is
+  `/admin/treasury` (`AppRoutes.tsx:494`) → `GosatTreasuryPage`
+  (`lazyPages.ts:155`), also embedded as the Treasury tab of `/admin`
+  (`AdminDashboardPage.jsx:440`). No second component exists.
 - Tests: `src/test/revenue-ledger.test.ts` 19, `src/test/liability-snapshot.test.ts`
   8; full suite 137 passed, the same 23 pre-existing failures. SQL fixtures:
   `revenue-ledger-tests.sql` 17/17, `liability-shortfall-tests.sql` 13/13.

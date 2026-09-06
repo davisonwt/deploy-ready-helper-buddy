@@ -294,6 +294,8 @@ Live-only figures at ship: `sale_fee` 1.90, `opening_balance` −13.95, net −1
 | Page | `/gosat/treasury`: verdict line, held-for-members / held-for-orchards / total liability / S2G own, cash on hand vs expected, explained gap, per-wallet actual vs expected, who is owed what with rail and age, orchards holding money, test-environment note, Back to Admin. |
 | Proofs | `scripts/studio/liability-shortfall-tests.sql` 13/13 (a live 1,000 holding turns the verdict RED, rolled back); `scripts/studio/bookkeeping-reconcile.sql` (assets entered by hand); `src/test/liability-snapshot.test.ts` 8 pass. |
 
+Hotfix `20260906150000_liability_snapshot_safeupdate.sql`: PostgREST's connection preloads `safeupdate`, so the snapshot's bare `DELETE FROM <temp table>` raised through the API while passing through the Management API; now `TRUNCATE`. Rule from here on: no bare DELETE/UPDATE in any SQL function, and prove every RPC through PostgREST as well.
+
 Live picture at ship (PayPal balance not readable from the CLI, entered as 0): held for members 16.00 (owed 8.00 to 3 on the Solana rail, parked 8.00), held for orchards 0.00 live (the 10.00 devnet pocket is listed under test money), total liability 16.00, S2G own 1.90, cash on hand 5.62 → **RED, short by 10.38** before PayPal. Whether PayPal's live balance closes that gap is the first thing the owner's own page view will show.
 
 Phase 1 goes first because Phase B is blocked on it and because it is invisible to members, so it is safe to ship on a weekday. Phase 2 is the one the spec calls for and should follow immediately. Phases 3 and 4 can wait.

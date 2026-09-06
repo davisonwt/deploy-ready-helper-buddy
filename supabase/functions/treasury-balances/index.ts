@@ -131,7 +131,14 @@ Deno.serve(async (req) => {
     // ---- The books: liability snapshot, live + the test environments ----
     const { data: snapshot, error: snapErr } = await service.rpc("liability_snapshot", { _environment: "live" });
     if (snapErr || !snapshot) {
-      return json({ error: "liability_snapshot_failed", detail: snapErr?.message ?? "no data" }, 500);
+      // Logged AND returned: the page shows `detail`, the function logs keep it.
+      console.error("treasury-balances: liability_snapshot failed", snapErr?.code, snapErr?.message, snapErr?.details, snapErr?.hint);
+      return json({
+        error: "liability_snapshot_failed",
+        message: `The liability snapshot could not be read: ${snapErr?.message ?? "no data returned"}`,
+        detail: snapErr?.message ?? "no data",
+        code: snapErr?.code ?? null,
+      }, 500);
     }
     const { data: devnetSnapshot } = await service.rpc("liability_snapshot", { _environment: "devnet" });
 
@@ -278,7 +285,11 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("treasury-balances error", err);
-    return json({ error: err instanceof Error ? err.message : String(err) }, 500);
+    return json({
+      error: "treasury_balances_failed",
+      message: err instanceof Error ? err.message : String(err),
+      detail: err instanceof Error ? (err.stack ?? err.message) : String(err),
+    }, 500);
   }
 });
 

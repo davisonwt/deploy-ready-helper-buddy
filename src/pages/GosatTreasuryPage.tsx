@@ -55,6 +55,30 @@ interface TreasuryResponse {
 }
 
 function fmtUsd(n: number | null | undefined) { return `$${(Number(n) || 0).toFixed(2)}`; }
+
+function describeFunctionError(body: any): string {
+  const parts = [body?.error, body?.message ?? body?.detail].filter((p) => typeof p === 'string' && p.length > 0);
+  return parts.length ? parts.join(': ') : 'The treasury function returned an error without a message.';
+}
+
+/** The function's own error body, when supabase-js swallowed it behind a generic message. */
+async function realFunctionError(err: any): Promise<string> {
+  const ctx = err?.context;
+  if (ctx && typeof ctx === 'object' && typeof ctx.status === 'number') {
+    try {
+      const text = await ctx.clone().text();
+      try {
+        const body = JSON.parse(text);
+        return `HTTP ${ctx.status}: ${describeFunctionError(body)}`;
+      } catch {
+        return `HTTP ${ctx.status}: ${text.slice(0, 300) || err?.message || 'no body'}`;
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+  return err?.message ?? 'Failed to load treasury.';
+}
 const WALLET_LABELS: Record<string, string> = { hot: 'Hot wallet', squad: 'Squad vault', launch: 'Launch Orchard wallet', uplift: 'Uplift Orchard wallet', paypal: 'PayPal' };
 
 export default function GosatTreasuryPage() {
@@ -68,11 +92,15 @@ export default function GosatTreasuryPage() {
     try {
       const { data, error } = await supabase.functions.invoke('treasury-balances', { body: {} });
       if (error) throw error;
-      if (data?.error) throw new Error(data.detail ? `${data.error}: ${data.detail}` : data.error);
+      if (data?.error) throw new Error(describeFunctionError(data));
       setData(data as TreasuryResponse);
     } catch (err: any) {
+      // supabase-js wraps any non-2xx as "Edge Function returned a non-2xx
+      // status code" and hides the body on err.context (a Response). Read
+      // it, so the page says what the function said.
+      const message = await realFunctionError(err);
       console.error('treasury-balances failed', err);
-      setError(err?.message ?? 'Failed to load treasury.');
+      setError(message);
       toast.error('Failed to load treasury.');
     } finally {
       setLoading(false);
