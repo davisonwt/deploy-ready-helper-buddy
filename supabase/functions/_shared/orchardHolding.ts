@@ -148,3 +148,71 @@ export function validatePocketRequest(args: {
   }
   return null;
 }
+
+/** One holding as the release math sees it. */
+export interface ReleasableHolding {
+  status: string;
+  pockets: number;
+  pocketType: PocketType | null | undefined;
+  sowerAmount: number;
+  s2gAmount: number;
+  grossAmount: number;
+  environment?: 'live' | 'devnet' | 'sandbox';
+}
+
+export interface ReleaseTotals {
+  holdings: number;
+  pockets: number;
+  giftUnits: number;
+  gross: number;
+  sowerTotal: number;
+  s2gTotal: number;
+  /** S2G's share per environment: one revenue row each. */
+  s2gByEnvironment: Record<string, number>;
+}
+
+/**
+ * Mirrors public.orchard_release_locked(): only HELD holdings count, the
+ * sower is owed the sum of their snapshot shares, S2G's fee is the sum of
+ * the held s2g shares split by the environment the money moved on, and a
+ * gift pocket becomes one stock unit per pocket. Released holdings are
+ * ignored, which is what makes a second release a no-op.
+ */
+export function releaseTotals(holdings: ReleasableHolding[]): ReleaseTotals {
+  const held = holdings.filter((h) => h.status === 'held');
+  const byEnv: Record<string, number> = {};
+  let pockets = 0, gift = 0, gross = 0, sower = 0, s2g = 0;
+  for (const h of held) {
+    pockets += h.pockets;
+    if (h.pocketType === 'gift') gift += h.pockets;
+    gross += h.grossAmount;
+    sower += h.sowerAmount;
+    s2g += h.s2gAmount;
+    const env = h.environment ?? 'live';
+    byEnv[env] = round2((byEnv[env] ?? 0) + h.s2gAmount);
+  }
+  return {
+    holdings: held.length,
+    pockets,
+    giftUnits: gift,
+    gross: round2(gross),
+    sowerTotal: round2(sower),
+    s2gTotal: round2(s2g),
+    s2gByEnvironment: byEnv,
+  };
+}
+
+/** Mirrors the preconditions: launch, funded, not already released, something held. */
+export function releaseRefusal(args: {
+  orchardKind: string;
+  fundingState: string;
+  funded: boolean;
+  heldHoldings: number;
+}): null | 'not_launch' | 'already_released' | 'cancelled' | 'not_funded' | 'no_held_holdings' {
+  if (args.orchardKind !== 'launch') return 'not_launch';
+  if (args.fundingState === 'released') return 'already_released';
+  if (args.fundingState === 'cancelled') return 'cancelled';
+  if (!args.funded) return 'not_funded';
+  if (args.heldHoldings === 0) return 'no_held_holdings';
+  return null;
+}

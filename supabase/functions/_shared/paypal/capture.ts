@@ -188,9 +188,16 @@ async function finalizeBestowal(
   }
 
   if (bestowal.payment_status !== "completed" && bestowal.payment_status !== "distributed") {
+    // An orchard row is marked held_for_orchard in the same update, so it
+    // never sits completed + pending (which owed_payout_balances() would
+    // count as owed) before orchard_apply_holding runs below.
     await supabase
       .from("bestowals")
-      .update({ payment_status: "completed", payment_reference: paymentReference })
+      .update({
+        payment_status: "completed",
+        payment_reference: paymentReference,
+        ...(bestowal.orchard_id ? { payout_status: "held_for_orchard" } : {}),
+      })
       .eq("id", bestowalId);
   }
 

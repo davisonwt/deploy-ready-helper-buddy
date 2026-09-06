@@ -44,6 +44,9 @@ const OrchardPage = () => {
       pocketsTotal: Number(row.pockets_total || 0),
       pocketsHeld: Number(row.pockets_held || 0),
       funded: !!row.funded,
+      released: !!row.released,
+      fundingState: row.funding_state ?? null,
+      releasedAt: row.released_at ?? null,
     });
   };
 
@@ -263,10 +266,10 @@ const OrchardPage = () => {
                 </div>
                 
                 {/* Progress Section */}
-                <div data-testid="funding-progress" data-funded={funding?.funded ? '1' : '0'}>
+                <div data-testid="funding-progress" data-funded={funding?.funded ? '1' : '0'} data-released={funding?.released ? '1' : '0'}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-orange-700">
-                      Funding Progress{funding?.funded ? ' — fully funded' : ''}
+                      Funding Progress{funding?.released ? ' — funded & released' : funding?.funded ? ' — fully funded' : ''}
                     </h3>
                     <span className="text-2xl font-bold text-orange-700" data-testid="funding-percent">
                       {getCompletionPercentage()}%
@@ -324,6 +327,7 @@ const OrchardPage = () => {
                    availablePockets={Math.max(0, (funding?.pocketsTotal ?? 0) - (funding?.pocketsHeld ?? 0))}
                    productType={orchard.product_type}
                    funded={!!funding?.funded}
+                   released={!!funding?.released}
                    onBestowed={() => loadFunding(orchard.id)}
                  />
                </CardContent>

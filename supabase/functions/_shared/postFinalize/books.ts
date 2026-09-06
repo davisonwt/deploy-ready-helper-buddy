@@ -199,9 +199,11 @@ async function syncBestowal(supabase: SupabaseLike, bestowalId: string): Promise
   const paidAt = b.updated_at ?? b.created_at;
   const incomeType = b.orchard_id ? "sale" : "gift";
 
-  if (sowerUserId) {
-    // An orchard sale belongs to that orchard's own set of books; a bare
-    // P2P gift (no orchard) has no seed behind it — recipient's default set.
+  // P0-5 Phase B: an orchard pocket is HELD until the orchard funds, so the
+  // sower's income row is written by orchard_release_locked() at release,
+  // not here. The buyer's expense below is still real at pocket time.
+  if (sowerUserId && !b.orchard_id) {
+    // A bare P2P gift (no orchard) has no seed behind it — recipient's default set.
     const sellerCompany = b.orchard_id
       ? await findCompanyIfBooksEnabled(supabase, b.orchards?.company_id ?? null)
       : await findDefaultBooksCompany(supabase, sowerUserId);

@@ -117,7 +117,9 @@ BEGIN
   INSERT INTO test_results VALUES ('4. non-orchard gift: no holding', public.orchard_apply_holding(v_gift) IS NULL
       AND NOT EXISTS (SELECT 1 FROM public.orchard_holdings WHERE bestowal_id = v_gift), 'null + no row');
 
-  -- Case 5: fill the remaining 8 pockets -> funded, nothing released.
+  -- Case 5: fill the remaining 8 pockets -> funded. Since Phase B (2026-09-06)
+  -- a funded Launch orchard releases in the same call: holdings flip to
+  -- released, the sower's rows go back to pending (owed), one orchard_fee row.
   INSERT INTO public.bestowals (orchard_id, bestower_id, amount, currency, pockets_count, payment_method, payment_status,
                                 provider, base_amount, buyer_total_amount, payout_status, payment_reference, pocket_type,
                                 distribution_data)
@@ -128,9 +130,12 @@ BEGIN
   PERFORM public.orchard_apply_holding(v_b2);
   SELECT * INTO v_funding FROM public.orchard_funding_status(v_orchard);
   SELECT filled_pockets INTO v_filled FROM public.orchards WHERE id = v_orchard;
-  INSERT INTO test_results VALUES ('5. fully funded: held 100 = target, pockets 10/10, funded = true, all holdings still held',
+  INSERT INTO test_results VALUES ('5. fully funded: held 100 = target, pockets 10/10, funded = true, Phase B released both holdings, sower owed, one orchard_fee, no ledger credit',
       v_funding.funded = true AND v_funding.held_total = 100 AND v_funding.pockets_held = 10 AND v_filled = 10
-      AND (SELECT count(*) FROM public.orchard_holdings WHERE orchard_id = v_orchard AND status = 'held') = 2
+      AND (SELECT count(*) FROM public.orchard_holdings WHERE orchard_id = v_orchard AND status = 'released') = 2
+      AND (SELECT funding_state FROM public.orchards WHERE id = v_orchard) = 'released'
+      AND (SELECT count(*) FROM public.bestowals WHERE id IN (v_b, v_b2) AND payout_status = 'pending') = 2
+      AND (SELECT count(*) FROM public.revenue_ledger WHERE kind = 'orchard_fee' AND source_id = (SELECT id FROM public.orchard_releases WHERE orchard_id = v_orchard)) >= 1
       AND (SELECT count(*) FROM public.balance_ledger WHERE reference_table = 'bestowals' AND reference_id IN (v_b, v_b2)) = 0,
       format('held=%s pockets=%s/%s funded=%s filled=%s', v_funding.held_total, v_funding.pockets_held, v_funding.pockets_total, v_funding.funded, v_filled));
 END;

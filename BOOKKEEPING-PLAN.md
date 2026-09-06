@@ -281,6 +281,10 @@ Each phase ships alone, is verified by section 7, and can stop there. Migrations
 
 Live-only figures at ship: `sale_fee` 1.90, `opening_balance` −13.95, net −12.05, operating net 1.90. This does **not** reconcile to on-chain yet, by design: reconciliation is phase 2, and today's wallets hold devnet test money and unrecorded float (section 1b). Phase B may now call `record_revenue('orchard_fee', …, 'orchard_releases', <release id>, …)`; the function already refuses that source until the table exists.
 
+### Orchard Phase B (2026-09-06)
+
+`orchard_fee` is live: `orchard_release_locked()` records `sum(s2g_amount)` of the released holdings through `record_revenue('orchard_fee', …, 'orchard_releases', <release id>, <rail>, <orchard id>)`, one row per environment. The ledger's unique key is now `(kind, source_table, source_id, environment)` so a release mixing live and devnet holdings carries two rows; every other source still has one row per environment in practice. `liability_snapshot` needs no change: released holdings leave `held_for_orchards`, the sower's rows appear in `held_for_members.owed` through `owed_payout_balances()`, and the fee appears in `s2g_own`.
+
 ### Phase 2 status (2026-09-06)
 
 **Live.** Migration `supabase/migrations/20260906140000_liability_snapshot.sql` applied server-side. Before it, the two devnet-settled earnings were reverted (`scripts/studio/revert-devnet-earnings.sql`: `b3518c23` and `904058fc` back to pending, payouts `4b7274bd` / `7fe7f2e6` failed with a note; ledger untouched, live revenue unchanged).

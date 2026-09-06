@@ -298,6 +298,18 @@ Decisions recorded from the owner's answers: target = `total_pockets × pocket_p
 
 ---
 
+### Phase B status (2026-09-06)
+
+**Built and applied; devnet proof pending the owner's go.** Migration `supabase/migrations/20260906190000_orchard_release.sql` (applied server-side): `orchards.orchard_kind` (launch, default) / `funding_state` (open → funded → released, cancelled reserved for Phase C) / `funded_at` / `released_at`; `orchard_releases` (one per orchard, totals at release, trigger auto|gosat); `orchard_stock` (gift units); `orchard_release(orchard_id)` public entry (service role or gosat/admin, idempotent) over `orchard_release_locked()`; `orchard_release_if_funded()` called at the end of `orchard_apply_holding()`, so the holding that completes the funding releases the orchard in the same transaction under the orchard row lock. `orchard_funding_status()` gains `funding_state`, `released`, `released_at`.
+
+Release, atomic: held → released; each bestowal row `held_for_orchard` → `pending`, which is exactly what `owed_payout_balances()` reads for a sale, so the sower is paid by `payout-earnings` on their own rail with the usual rules (nothing is paid inside release); `record_revenue('orchard_fee', sum(s2g_amount), env, 'orchard_releases', release_id, rail, orchard_id)`, one row per environment (the ledger's unique key now includes `environment`); gift pockets → `orchard_stock`; Books income rows per pocket written at release (`books.ts` no longer writes orchard income at pocket time; the buyer's expense still is); event + notifications to the sower and bestowers. `finalizeBestowal` now marks orchard rows `held_for_orchard` in the same update that completes them, closing the completed-but-pending instant.
+
+Trigger choice: automatic inside `orchard_apply_holding`, because every rail and retry path (webhook, capture, sweep, check) ends there under one lock, so there is one place the transition can happen and it cannot half-complete; a gosat "release now" is the same function by hand and a second call is a no-op.
+
+Proofs: `scripts/studio/phase-b-release-tests.sql` 10/10 (3-pocket fixture: 2/3 refuses `not_funded`, the 3rd pocket auto-releases, sower owed 26.10 via `owed_payout_balances`, one `orchard_fee` 3.90 live/paypal, gift unit in stock, second call `already_released`, unfunded orchard refuses); Phase A guard tests updated for auto-release, 9/9; unit tests `src/test/orchard-holding.test.ts` 16 (release totals per environment, refusals, drift). Devnet proof: `scripts/studio/phase-b-devnet-orchard.sql` (one-pocket orchard sown by B) + `scripts/studio/phase-b-devnet-proof.sql` (before/after), one 10.01 USDC devnet pocket by A.
+
+Deferred to C: cancel/refund, `payer_address` backfill. To D: Uplift (kind `uplift` is refused by release). Not done in B: My Bestowals states, the delivery-address list on the console, the optional sweep of held USDC to the orchard wallets.
+
 ## 9. Open questions
 
 Only what the rules above do not settle.

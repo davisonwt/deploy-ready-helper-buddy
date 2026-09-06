@@ -101,3 +101,42 @@ describe('pocket rules (mirrors create-orchard-bestowal-order validation)', () =
     ]) expect(client.validatePocketRequest(args)).toEqual(server.validatePocketRequest(args));
   });
 });
+
+describe('orchard release (mirrors public.orchard_release_locked, Phase B)', () => {
+  const h = (over: Partial<client.ReleasableHolding> = {}): client.ReleasableHolding => ({
+    status: 'held', pockets: 1, pocketType: 'bestowal', grossAmount: 10, sowerAmount: 8.7, s2gAmount: 1.3, environment: 'live', ...over,
+  });
+
+  it('sower total and S2G total are the sums of the HELD holdings; a gift pocket is one stock unit', () => {
+    const t = client.releaseTotals([h(), h(), h({ pocketType: 'gift' })]);
+    expect(t).toEqual({ holdings: 3, pockets: 3, giftUnits: 1, gross: 30, sowerTotal: 26.1, s2gTotal: 3.9, s2gByEnvironment: { live: 3.9 } });
+  });
+
+  it('S2G share is split per environment: a live/devnet mix records two fee rows', () => {
+    const t = client.releaseTotals([h(), h({ environment: 'devnet' }), h({ environment: 'devnet', pockets: 2, grossAmount: 20, sowerAmount: 17.39, s2gAmount: 2.61 })]);
+    expect(t.s2gByEnvironment).toEqual({ live: 1.3, devnet: 3.91 });
+    expect(t.pockets).toBe(4);
+    expect(t.sowerTotal).toBe(34.79);
+  });
+
+  it('released holdings do not count, so a second release has nothing to release', () => {
+    const t = client.releaseTotals([h({ status: 'released' }), h({ status: 'released' })]);
+    expect(t).toMatchObject({ holdings: 0, pockets: 0, sowerTotal: 0, s2gTotal: 0, s2gByEnvironment: {} });
+    expect(client.releaseRefusal({ orchardKind: 'launch', fundingState: 'released', funded: true, heldHoldings: 0 })).toBe('already_released');
+  });
+
+  it('refusals: not funded, not launch, cancelled, nothing held; a funded launch orchard with held pockets releases', () => {
+    expect(client.releaseRefusal({ orchardKind: 'launch', fundingState: 'open', funded: false, heldHoldings: 2 })).toBe('not_funded');
+    expect(client.releaseRefusal({ orchardKind: 'uplift', fundingState: 'funded', funded: true, heldHoldings: 2 })).toBe('not_launch');
+    expect(client.releaseRefusal({ orchardKind: 'launch', fundingState: 'cancelled', funded: true, heldHoldings: 2 })).toBe('cancelled');
+    expect(client.releaseRefusal({ orchardKind: 'launch', fundingState: 'funded', funded: true, heldHoldings: 0 })).toBe('no_held_holdings');
+    expect(client.releaseRefusal({ orchardKind: 'launch', fundingState: 'funded', funded: true, heldHoldings: 3 })).toBeNull();
+  });
+
+  it('client and server copies agree', () => {
+    const rows = [h(), h({ pocketType: 'gift', environment: 'devnet' })];
+    expect(client.releaseTotals(rows)).toEqual(server.releaseTotals(rows));
+    expect(client.releaseRefusal({ orchardKind: 'launch', fundingState: 'open', funded: false, heldHoldings: 1 }))
+      .toBe(server.releaseRefusal({ orchardKind: 'launch', fundingState: 'open', funded: false, heldHoldings: 1 }));
+  });
+});

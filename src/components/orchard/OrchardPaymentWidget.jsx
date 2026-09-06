@@ -19,6 +19,7 @@ const OrchardPaymentWidget = ({
   availablePockets,
   productType,
   funded = false,
+  released = false,
   onBestowed,
 }) => {
   const [pocketsCount, setPocketsCount] = useState(1);
@@ -67,7 +68,9 @@ const OrchardPaymentWidget = ({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              This orchard is fully funded. Nothing more can be bestowed into it.
+              {released
+                ? 'This orchard is fully funded and has been released to the sower. Nothing more can be bestowed into it.'
+                : 'This orchard is fully funded. Nothing more can be bestowed into it.'}
             </AlertDescription>
           </Alert>
         ) : (
