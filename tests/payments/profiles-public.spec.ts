@@ -26,7 +26,7 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
 const SUPABASE_PROJECT_REF = 'zuwkgasbkpjlxzsjzumu';
 const ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1d2tnYXNia3BqbHh6c2p6dW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDk4MjEsImV4cCI6MjA2ODQyNTgyMX0.ffH_7MzNCgyjXf8BFzGDCiVE7Qjptqb9qKBkq3gVbiU';
+  'sb_publishable_Z8-I1gu2Q1yid1Q4jKRf7Q_jSGcsVpa';
 
 const A_EMAIL = process.env.TEST_A_EMAIL;
 const A_PASSWORD = process.env.TEST_A_PASSWORD;

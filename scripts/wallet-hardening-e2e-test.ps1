@@ -27,7 +27,7 @@ Usage:
 $ErrorActionPreference = "Stop"
 
 $SupabaseUrl = if ($env:SUPABASE_URL) { $env:SUPABASE_URL } else { "https://zuwkgasbkpjlxzsjzumu.supabase.co" }
-$SupabaseAnonKey = if ($env:SUPABASE_ANON_KEY) { $env:SUPABASE_ANON_KEY } else { "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1d2tnYXNia3BqbHh6c2p6dW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDk4MjEsImV4cCI6MjA2ODQyNTgyMX0.ffH_7MzNCgyjXf8BFzGDCiVE7Qjptqb9qKBkq3gVbiU" }
+$SupabaseAnonKey = if ($env:SUPABASE_ANON_KEY) { $env:SUPABASE_ANON_KEY } else { "sb_publishable_Z8-I1gu2Q1yid1Q4jKRf7Q_jSGcsVpa" }
 $ServiceRoleKey = $env:SUPABASE_SERVICE_ROLE_KEY
 if (-not $ServiceRoleKey) {
     Write-Error "Set `$env:SUPABASE_SERVICE_ROLE_KEY first (Supabase dashboard -> Settings -> API -> service_role)."
