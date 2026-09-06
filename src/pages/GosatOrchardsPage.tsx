@@ -84,6 +84,7 @@ const HELD_STATES = new Set(['held', 'refund_pending', 'refund_failed']);
 const fmtUsd = (n: number | string | null | undefined) => `$${(Number(n) || 0).toFixed(2)}`;
 // Dark-surface tints: the app's theme is dark in both modes, and light
 // pastel badges are remapped globally (index.css); these are explicit.
+const BADGE = 'text-xs px-2 py-0.5 whitespace-nowrap font-medium';
 const toneClass: Record<PocketTone, string> = {
   held: 'bg-amber-900/50 text-amber-100 border-amber-400/50',
   released: 'bg-emerald-900/50 text-emerald-100 border-emerald-400/50',
@@ -91,6 +92,19 @@ const toneClass: Record<PocketTone, string> = {
   done: 'bg-emerald-900/50 text-emerald-100 border-emerald-400/50',
   problem: 'bg-red-900/50 text-red-100 border-red-400/50',
 };
+// Orchard state colours mean one thing each: grey open, blue funded, green
+// released, amber cancelling, red cancelled.
+const stateClass: Record<string, string> = {
+  open: 'bg-muted text-muted-foreground border-border',
+  funded: 'bg-sky-900/50 text-sky-100 border-sky-400/50',
+  released: 'bg-emerald-900/50 text-emerald-100 border-emerald-400/50',
+  cancelling: 'bg-amber-900/50 text-amber-100 border-amber-400/50',
+  cancelled: 'bg-red-900/50 text-red-100 border-red-400/50',
+};
+const refundClass = (status: string, tone: PocketTone) => (status === 'written_off' ? stateClass.open : toneClass[tone]);
+const NUM = 'text-right font-mono tabular-nums whitespace-nowrap';
+const TH = 'py-2 px-3 font-medium';
+const TD = 'py-2.5 px-3 align-middle';
 function daysSince(iso: string) { return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)); }
 function rpcError(err: any): string { return err?.message ?? err?.error ?? String(err); }
 
@@ -241,7 +255,7 @@ export default function GosatOrchardsPage() {
   const cancelReady = !!cancelTarget && cancelReason.trim().length >= 5 && cancelTyped.trim() === cancelTarget.title.trim();
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 space-y-6">
+    <div className="container max-w-6xl mx-auto py-8 px-4 space-y-6">
       <header className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost" size="sm" className="-ml-2">
@@ -279,51 +293,68 @@ export default function GosatOrchardsPage() {
           <CardTitle>Orchards</CardTitle>
           <CardDescription>
             {rows.length} shown.{' '}
-            <label className="inline-flex items-center gap-1 cursor-pointer">
+            <label className="inline-flex items-center gap-1.5 cursor-pointer">
               <input type="checkbox" checked={showEmptyOpen} onChange={(e) => setShowEmptyOpen(e.target.checked)} /> include open orchards with no pockets yet
             </label>
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading && rows.length === 0 ? <Loader2 className="h-6 w-6 animate-spin" /> : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm" data-testid="orchards-table">
-                <thead className="text-xs text-muted-foreground text-left">
-                  <tr><th className="py-2 pr-3">Orchard</th><th className="pr-3">State</th><th className="pr-3 text-right">Held</th><th className="pr-3 text-right">Pockets</th><th className="pr-3">Sower</th><th className="pr-3 text-right">Age</th><th></th></tr>
+            <div className="overflow-x-auto -mx-3">
+              <table className="w-full min-w-[56rem] table-fixed text-sm" data-testid="orchards-table">
+                <colgroup>
+                  <col />
+                  <col className="w-44" />
+                  <col className="w-24" />
+                  <col className="w-40" />
+                </colgroup>
+                <thead className="text-xs text-muted-foreground text-left border-b">
+                  <tr>
+                    <th className={TH}>Orchard</th>
+                    <th className={TH}>State</th>
+                    <th className={`${TH} text-right`}>Held</th>
+                    <th className={`${TH} text-right`}>Cancel</th>
+                  </tr>
                 </thead>
                 <tbody className="divide-y">
                   {rows.map(({ o, held, pocketsHeld, refusal, rs, needsGosat }) => {
                     const st = fundingStateLabel(o.funding_state);
+                    const isCancelled = o.funding_state === 'cancelling' || o.funding_state === 'cancelled';
                     return (
                       <tr key={o.id} data-testid="orchard-row" data-orchard-id={o.id} data-state={o.funding_state}>
-                        <td className="py-2 pr-3">
-                          <Link to={`/orchard/${o.id}`} className="font-medium hover:underline">{o.title}</Link>
-                          {o.cancel_reason && <div className="text-xs text-muted-foreground">Reason: {o.cancel_reason}</div>}
+                        <td className={`${TD} min-w-0`}>
+                          <Link to={`/orchard/${o.id}`} className="font-medium hover:underline block truncate" title={o.title}>{o.title}</Link>
+                          <div className="text-xs text-muted-foreground truncate whitespace-nowrap">
+                            {names[o.user_id] ?? o.user_id.slice(0, 8)} · {daysSince(o.created_at)} d · {pocketsHeld}/{o.total_pockets} pockets · {fmtUsd(o.pocket_price)} each
+                          </div>
+                          {isCancelled && o.cancel_reason && (
+                            <div className="text-xs text-muted-foreground/80 truncate whitespace-nowrap" title={o.cancel_reason}>Reason: {o.cancel_reason}</div>
+                          )}
                         </td>
-                        <td className="pr-3"><Badge variant="outline" className={toneClass[st.tone]} data-testid="orchard-state">{st.label}</Badge>
-                          {needsGosat > 0 && <Badge variant="outline" className={`ml-1 ${toneClass.problem}`}>{needsGosat} need a human</Badge>}
-                          {rs.length > 0 && <div className="text-xs text-muted-foreground mt-1">{rs.filter((r) => r.status === 'confirmed').length} of {rs.length} refunded</div>}
+                        <td className={TD}>
+                          <div className="flex flex-col items-start gap-1">
+                            <Badge variant="outline" className={`${BADGE} ${stateClass[o.funding_state] ?? stateClass.open}`} data-testid="orchard-state">{st.label}</Badge>
+                            {needsGosat > 0 && <Badge variant="outline" className={`${BADGE} ${toneClass.problem}`}>{needsGosat} need a human</Badge>}
+                            {rs.length > 0 && <span className="text-xs text-muted-foreground whitespace-nowrap">{rs.filter((r) => r.status === 'confirmed').length} of {rs.length} refunded</span>}
+                          </div>
                         </td>
-                        <td className="pr-3 text-right font-mono" data-testid="orchard-held">{fmtUsd(held)}</td>
-                        <td className="pr-3 text-right font-mono">{pocketsHeld} / {o.total_pockets} · {fmtUsd(o.pocket_price)} each</td>
-                        <td className="pr-3">{names[o.user_id] ?? o.user_id.slice(0, 8)}</td>
-                        <td className="pr-3 text-right">{daysSince(o.created_at)} d</td>
-                        <td className="py-2 text-right">
+                        <td className={`${TD} ${NUM}`} data-testid="orchard-held">{fmtUsd(held)}</td>
+                        <td className={`${TD} text-right`}>
                           {isCancellable(o.funding_state) && !refusal ? (
                             <Button size="sm" variant="destructive" onClick={() => { setCancelTarget(o); setCancelReason(''); setCancelTyped(''); }} data-testid="orchard-cancel">
                               <Ban className="h-4 w-4 mr-1" />Cancel
                             </Button>
                           ) : (
-                            <span className="inline-flex flex-col items-end gap-1">
+                            <div className="flex flex-col items-end gap-1">
                               <Button size="sm" variant="outline" disabled data-testid="orchard-cancel" title={refusal ?? undefined}><Ban className="h-4 w-4 mr-1" />Cancel</Button>
-                              <span className="text-xs text-muted-foreground max-w-[14rem] text-right" data-testid="orchard-cancel-refusal">{refusal}</span>
-                            </span>
+                              <span className="text-[11px] leading-tight text-muted-foreground/80 whitespace-nowrap truncate max-w-[10rem]" title={refusal ?? undefined} data-testid="orchard-cancel-refusal">{refusal}</span>
+                            </div>
                           )}
                         </td>
                       </tr>
                     );
                   })}
-                  {rows.length === 0 && <tr><td colSpan={7} className="py-6 text-center text-muted-foreground">No orchard holds or has held money.</td></tr>}
+                  {rows.length === 0 && <tr><td colSpan={4} className="py-6 text-center text-muted-foreground">No orchard holds or has held money.</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -334,61 +365,89 @@ export default function GosatOrchardsPage() {
       {/* Refund progress per cancelled / cancelling orchard */}
       {cancelling.map(({ o, hs, rs }) => (
         <Card key={o.id} data-testid="refund-progress" data-orchard-id={o.id}>
-          <CardHeader className="flex flex-row items-start justify-between gap-3">
-            <div>
-              <CardTitle>{o.title}: {fundingStateLabel(o.funding_state).label.toLowerCase()}, {rs.filter((r) => r.status === 'confirmed').length} of {rs.length} refunded</CardTitle>
+          <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+            <div className="min-w-0">
+              <CardTitle className="truncate">{o.title}: {fundingStateLabel(o.funding_state).label.toLowerCase()}, {rs.filter((r) => r.status === 'confirmed').length} of {rs.length} refunded</CardTitle>
               <CardDescription>
                 Cancelled {o.cancelled_at ? new Date(o.cancelled_at).toLocaleString() : ''}{o.cancel_reason ? ` · ${o.cancel_reason}` : ''}. The worker runs every 10 minutes; a row with a reference is never sent twice.
               </CardDescription>
             </div>
-            <Button size="sm" variant="outline" disabled={busy === `worker:${o.id}`} onClick={() => runWorker(o.id)} data-testid="run-worker">
+            <Button size="sm" variant="outline" className="shrink-0" disabled={busy === `worker:${o.id}`} onClick={() => runWorker(o.id)} data-testid="run-worker">
               {busy === `worker:${o.id}` ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Play className="h-4 w-4 mr-1" />}Run worker now
             </Button>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <table className="w-full text-sm" data-testid="refund-table">
-              <thead className="text-xs text-muted-foreground text-left">
-                <tr><th className="py-2 pr-3">Bestower</th><th className="pr-3 text-right">Paid</th><th className="pr-3">Rail</th><th className="pr-3">Destination</th><th className="pr-3">State</th><th className="pr-3 text-right">Attempts</th><th className="pr-3">Reference</th><th className="pr-3">Last error</th><th></th></tr>
-              </thead>
-              <tbody className="divide-y">
-                {rs.map((r) => {
-                  const h = holdingById.get(r.holding_id);
-                  const st = refundStatusLabel(r.status);
-                  const url = explorerUrl(r.rail, r.rail_reference, r.environment);
-                  const canRetry = (r.status === 'failed' || r.status === 'needs_human') && !r.rail_reference;
-                  const unknownPayer = r.rail === 'solana' && (h?.payer_source ?? 'unknown') === 'unknown';
-                  return (
-                    <tr key={r.id} data-testid="refund-row" data-refund-id={r.id} data-status={r.status}>
-                      <td className="py-2 pr-3">{names[r.bestower_user_id] ?? r.bestower_user_id.slice(0, 8)}</td>
-                      <td className="pr-3 text-right font-mono">{fmtUsd(r.amount)}</td>
-                      <td className="pr-3">{r.rail}{r.environment !== 'live' && <span className="text-xs text-muted-foreground"> · {r.environment}</span>}</td>
-                      <td className="pr-3 font-mono text-xs" title={r.destination ?? undefined}>{r.rail === 'solana' ? maskAddress(r.destination) : (r.destination ?? '—')}</td>
-                      <td className="pr-3"><Badge variant="outline" className={toneClass[st.tone]} data-testid="refund-state">{st.label}</Badge></td>
-                      <td className="pr-3 text-right">{r.attempts}</td>
-                      <td className="pr-3 font-mono text-xs" data-testid="refund-reference">
-                        {r.rail_reference ? (url ? <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline">{shortRef(r.rail_reference, 10, 4)}<ExternalLink className="h-3 w-3" /></a> : r.rail_reference) : '—'}
-                        {r.fee_cost > 0 && <div className="text-muted-foreground">fee {fmtUsd(r.fee_cost)}</div>}
-                      </td>
-                      <td className="pr-3 text-xs text-muted-foreground max-w-[16rem]">{r.status === 'written_off' ? `Written off: ${r.written_off_reason}` : (r.last_error ?? '')}</td>
-                      <td className="py-2 text-right whitespace-nowrap">
-                        {unknownPayer && h && h.status !== 'refunded' && h.status !== 'written_off' && (
-                          <Button size="sm" variant="outline" className="mr-1" onClick={() => { setPayerTarget(h); setPayerAddress(''); setPayerNote(''); }} data-testid="set-payer">Set payer address</Button>
-                        )}
-                        {canRetry && (
-                          <>
-                            <Button size="sm" variant="outline" className="mr-1" disabled={busy === `retry:${r.id}` || unknownPayer} title={unknownPayer ? 'Enter the payer address first' : undefined} onClick={() => retry(r)} data-testid="refund-retry">Retry</Button>
-                            <Button size="sm" variant="destructive" disabled={busy === `wo:${r.id}`} onClick={() => { setWriteOffTarget(r); setWriteOffReason(''); }} data-testid="refund-write-off">Write off</Button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {rs.length === 0 && <tr><td colSpan={9} className="py-4 text-center text-muted-foreground">No refunds: the orchard held nothing when it was cancelled.</td></tr>}
-              </tbody>
-            </table>
+          <CardContent>
+            <div className="overflow-x-auto -mx-3">
+              <table className="w-full min-w-[64rem] table-fixed text-sm" data-testid="refund-table">
+                <colgroup>
+                  <col className="w-36" />
+                  <col className="w-24" />
+                  <col className="w-24" />
+                  <col className="w-32" />
+                  <col className="w-44" />
+                  <col className="w-20" />
+                  <col className="w-48" />
+                  <col />
+                  <col className="w-56" />
+                </colgroup>
+                <thead className="text-xs text-muted-foreground text-left border-b">
+                  <tr>
+                    <th className={TH}>Bestower</th>
+                    <th className={`${TH} text-right`}>Paid</th>
+                    <th className={TH}>Rail</th>
+                    <th className={TH}>Destination</th>
+                    <th className={TH}>State</th>
+                    <th className={`${TH} text-right`}>Attempts</th>
+                    <th className={TH}>Reference</th>
+                    <th className={TH}>Last error</th>
+                    <th className={TH}></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {rs.map((r) => {
+                    const h = holdingById.get(r.holding_id);
+                    const st = refundStatusLabel(r.status);
+                    const url = explorerUrl(r.rail, r.rail_reference, r.environment);
+                    const canRetry = (r.status === 'failed' || r.status === 'needs_human') && !r.rail_reference;
+                    const unknownPayer = r.rail === 'solana' && (h?.payer_source ?? 'unknown') === 'unknown';
+                    const errorText = r.status === 'written_off' ? `Written off: ${r.written_off_reason}` : (r.last_error ?? '');
+                    return (
+                      <tr key={r.id} data-testid="refund-row" data-refund-id={r.id} data-status={r.status}>
+                        <td className={`${TD} truncate`} title={r.bestower_user_id}>{names[r.bestower_user_id] ?? r.bestower_user_id.slice(0, 8)}</td>
+                        <td className={`${TD} ${NUM}`}>{fmtUsd(r.amount)}</td>
+                        <td className={`${TD} whitespace-nowrap`}>{r.rail}{r.environment !== 'live' && <span className="text-xs text-muted-foreground"> · {r.environment}</span>}</td>
+                        <td className={`${TD} font-mono text-xs truncate`} title={r.destination ?? undefined}>{r.rail === 'solana' ? maskAddress(r.destination) : (r.destination ?? '—')}</td>
+                        <td className={TD}><Badge variant="outline" className={`${BADGE} ${refundClass(r.status, st.tone)}`} data-testid="refund-state">{st.label}</Badge></td>
+                        <td className={`${TD} ${NUM}`}>{r.attempts}</td>
+                        <td className={`${TD} font-mono text-xs whitespace-nowrap`} data-testid="refund-reference">
+                          {r.rail_reference
+                            ? (url
+                              ? <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline">{shortRef(r.rail_reference, 10, 4)}<ExternalLink className="h-3 w-3" /></a>
+                              : <span title={r.rail_reference}>{shortRef(r.rail_reference, 10, 4)}</span>)
+                            : <span className="text-muted-foreground">—</span>}
+                          {r.fee_cost > 0 && <span className="text-muted-foreground"> · fee {fmtUsd(r.fee_cost)}</span>}
+                        </td>
+                        <td className={`${TD} text-xs text-muted-foreground truncate`} title={errorText || undefined}>{errorText}</td>
+                        <td className={`${TD} text-right whitespace-nowrap`}>
+                          {unknownPayer && h && h.status !== 'refunded' && h.status !== 'written_off' && (
+                            <Button size="sm" variant="outline" className="mr-1" onClick={() => { setPayerTarget(h); setPayerAddress(''); setPayerNote(''); }} data-testid="set-payer">Set payer address</Button>
+                          )}
+                          {canRetry && (
+                            <>
+                              <Button size="sm" variant="outline" className="mr-1" disabled={busy === `retry:${r.id}` || unknownPayer} title={unknownPayer ? 'Enter the payer address first' : undefined} onClick={() => retry(r)} data-testid="refund-retry">Retry</Button>
+                              <Button size="sm" variant="destructive" disabled={busy === `wo:${r.id}`} onClick={() => { setWriteOffTarget(r); setWriteOffReason(''); }} data-testid="refund-write-off">Write off</Button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {rs.length === 0 && <tr><td colSpan={9} className="py-4 text-center text-muted-foreground">No refunds: the orchard held nothing when it was cancelled.</td></tr>}
+                </tbody>
+              </table>
+            </div>
             {hs.some((h) => !h.refund_id) && (
-              <p className="text-xs text-muted-foreground mt-2">Pockets without a refund row: {hs.filter((h) => !h.refund_id).map((h) => `${names[h.bestower_user_id] ?? h.bestower_user_id.slice(0, 8)} ${fmtUsd(h.gross_amount)} (${h.status})`).join(', ')}.</p>
+              <p className="text-xs text-muted-foreground mt-3">Pockets without a refund row: {hs.filter((h) => !h.refund_id).map((h) => `${names[h.bestower_user_id] ?? h.bestower_user_id.slice(0, 8)} ${fmtUsd(h.gross_amount)} (${h.status})`).join(', ')}.</p>
             )}
           </CardContent>
         </Card>
