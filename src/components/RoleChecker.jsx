@@ -33,7 +33,13 @@ class RoleChecker extends React.Component {
   check = async () => {
     if (this._isMounted) this.setState({ loading: true, checkError: null })
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      let { data: { session } } = await supabase.auth.getSession()
+      // A stored token at or past expiry makes the very first query 401
+      // before supabase-js's background refresh has run: refresh first.
+      if (session?.expires_at && session.expires_at * 1000 < Date.now() + 30_000) {
+        const { data: refreshed } = await supabase.auth.refreshSession().catch(() => ({ data: { session: null } }))
+        if (refreshed?.session) session = refreshed.session
+      }
 
       if (!session?.user) {
         if (this._isMounted) this.setState({ loading: false, isAuthenticated: false })
