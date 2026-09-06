@@ -28,8 +28,8 @@ SELECT
   (SELECT count(*) FROM public.orchard_holdings h WHERE h.orchard_id = o.id AND h.status = 'held') AS holdings_held,
   (SELECT count(*) FROM public.bestowals b WHERE b.orchard_id = o.id)                             AS bestowal_rows,
   (SELECT count(*) FROM public.bestowals b WHERE b.orchard_id = o.id AND b.payment_status = 'completed') AS bestowals_completed,
-  (SELECT count(*)                 FROM public.balance_ledger l WHERE l.user_id = 'de22c876-d477-4a5e-81a2-cd22091ce125') AS sower_ledger_rows,
-  (SELECT COALESCE(sum(amount), 0) FROM public.balance_ledger l WHERE l.user_id = 'de22c876-d477-4a5e-81a2-cd22091ce125') AS sower_ledger_total,
+  (SELECT count(*)                 FROM public.balance_ledger l WHERE l.user_id = 'a8872ed5-951c-4343-ba05-d4921af18eb2') AS sower_ledger_rows,
+  (SELECT COALESCE(sum(amount), 0) FROM public.balance_ledger l WHERE l.user_id = 'a8872ed5-951c-4343-ba05-d4921af18eb2') AS sower_ledger_total,
   (SELECT COALESCE(sum(gross_amount), 0) FROM public.orchard_holdings h
      WHERE h.status = 'held' AND h.rail = 'solana' AND h.location = 'hot_wallet')                   AS treasury_held_for_orchards,
   (SELECT count(*) FROM public.solana_payment_intents i WHERE i.order_kind = 'orchard')             AS orchard_solana_intents
@@ -73,6 +73,6 @@ ORDER BY h.created_at DESC;
 -- 3. any sower ledger movement today (expected: no rows)
 SELECT id, amount, kind, reference_table, reference_id, notes, created_at
 FROM public.balance_ledger
-WHERE user_id = 'de22c876-d477-4a5e-81a2-cd22091ce125'
+WHERE user_id = 'a8872ed5-951c-4343-ba05-d4921af18eb2'
   AND created_at >= date_trunc('day', now())
 ORDER BY created_at DESC;
