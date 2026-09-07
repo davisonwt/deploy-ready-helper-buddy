@@ -21,6 +21,8 @@ const OrchardPaymentWidget = ({
   funded = false,
   released = false,
   cancelled = false,
+  // P0-5 Phase D: 'launch' (sower is paid at release) or 'uplift' (S2G pays the named parties directly).
+  orchardKind = 'launch',
   onBestowed,
 }) => {
   const [pocketsCount, setPocketsCount] = useState(1);
@@ -77,8 +79,12 @@ const OrchardPaymentWidget = ({
             <Info className="h-4 w-4" />
             <AlertDescription>
               {released
-                ? 'This orchard is fully funded and has been released to the sower. Nothing more can be bestowed into it.'
-                : 'This orchard is fully funded. Nothing more can be bestowed into it.'}
+                ? (orchardKind === 'uplift'
+                  ? 'This Uplift orchard is fully funded and released. Sow2Grow pays the parties directly; the list above shows where the gifts went. Nothing more can be bestowed into it.'
+                  : 'This orchard is fully funded and has been released to the sower. Nothing more can be bestowed into it.')
+                : (orchardKind === 'uplift'
+                  ? 'This Uplift orchard is fully funded. Sow2Grow will pay the parties directly. Nothing more can be bestowed into it.'
+                  : 'This orchard is fully funded. Nothing more can be bestowed into it.')}
             </AlertDescription>
           </Alert>
         ) : (
@@ -110,8 +116,9 @@ const OrchardPaymentWidget = ({
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
-                Your money is held for this orchard and only released once every pocket is filled.
-                There is no deadline. If the orchard is ever cancelled, you are refunded in full.
+                {orchardKind === 'uplift'
+                  ? 'Your money is held for this Uplift orchard and only released once every pocket is filled; Sow2Grow then pays the parties directly and lists where the gifts went. There is no deadline. If the orchard is ever cancelled, you are refunded in full.'
+                  : 'Your money is held for this orchard and only released once every pocket is filled. There is no deadline. If the orchard is ever cancelled, you are refunded in full.'}
               </AlertDescription>
             </Alert>
 

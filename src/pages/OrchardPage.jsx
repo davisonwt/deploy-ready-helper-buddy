@@ -39,6 +39,18 @@ const OrchardPage = () => {
   // P0-5 Phase C3: the cancel reason (sower sees it) and the signed-in member's own pockets.
   const [cancelInfo, setCancelInfo] = useState(null);
   const [myPockets, setMyPockets] = useState([]);
+  // P0-5 Phase D: an Uplift's "where the gifts went" list (orchard_parties_paid_v:
+  // label, amount, rail, paid_at of paid party payments; no wallet, no reference).
+  const [partiesPaid, setPartiesPaid] = useState([]);
+  const isUplift = orchard?.orchard_kind === 'uplift';
+  const loadPartiesPaid = async (id) => {
+    const { data, error } = await supabase.from('orchard_parties_paid_v').select('label, amount, rail, paid_at').eq('orchard_id', id).order('paid_at', { ascending: true });
+    if (error) { console.error('orchard_parties_paid_v failed:', error); return; }
+    setPartiesPaid(data ?? []);
+  };
+  useEffect(() => {
+    if (orchard?.id && isUplift) loadPartiesPaid(orchard.id); else setPartiesPaid([]);
+  }, [orchard?.id, isUplift, funding?.fundingState]);
   const loadFunding = async (id) => {
     const { data, error } = await supabase.rpc('orchard_funding_status', { _orchard_id: id });
     if (error) { console.error('orchard_funding_status failed:', error); return; }
@@ -362,7 +374,30 @@ const OrchardPage = () => {
                   <p className="text-xs text-orange-600 mt-3">
                     All or nothing: every pocket must fill before anything is released, and there is no deadline.
                   </p>
+                  {isUplift && (
+                    <p className="text-sm text-orange-700 mt-2 font-medium" data-testid="uplift-notice">
+                      Uplift orchard: Sow2Grow pays the parties directly once it is fully funded, and lists here where the gifts went.
+                    </p>
+                  )}
                 </div>
+
+                {isUplift && funding?.released && (
+                  <div className="rounded-lg border border-emerald-400/40 bg-emerald-950/30 p-3" data-testid="parties-paid">
+                    <h3 className="text-sm font-semibold text-orange-700 mb-1">Where the gifts went</h3>
+                    {partiesPaid.length === 0 ? (
+                      <p className="text-sm text-orange-600" data-testid="parties-paid-pending">Sow2Grow is paying the parties now; they appear here as each payment lands.</p>
+                    ) : (
+                      <ul className="text-sm space-y-1">
+                        {partiesPaid.map((p, i) => (
+                          <li key={`${p.label}-${i}`} data-testid="party-paid" className="flex justify-between gap-3">
+                            <span>{p.label}</span>
+                            <span className="font-mono">{formatCurrency(Number(p.amount))}{p.rail === 'solana' ? ' USDC' : ''} · {p.paid_at ? new Date(p.paid_at).toLocaleDateString() : ''}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
 
                 {/* Additional Details */}
                 {orchard.why_needed && (
@@ -386,8 +421,9 @@ const OrchardPage = () => {
                    pocketPrice={orchard.pocket_price || 150}
                    availablePockets={Math.max(0, (funding?.pocketsTotal ?? 0) - (funding?.pocketsHeld ?? 0))}
                    productType={orchard.product_type}
-                   funded={!!funding?.funded}
+                   funded={!!funding?.funded || funding?.fundingState === 'funded' || funding?.fundingState === 'released'}
                    released={!!funding?.released}
+                   orchardKind={orchard.orchard_kind || 'launch'}
                    cancelled={funding?.fundingState === 'cancelling' || funding?.fundingState === 'cancelled'}
                    onBestowed={() => loadFunding(orchard.id)}
                  />

@@ -93,11 +93,19 @@ Deno.serve(async (req) => {
     // --- Resolve orchard + price (server-side) -------------------------------
     const { data: orchard, error: orchardError } = await service
       .from("orchards")
-      .select("id, title, user_id, pocket_price, currency, status, orchard_type, courier_cost, product_type")
+      .select("id, title, user_id, pocket_price, currency, status, orchard_type, courier_cost, product_type, orchard_kind, funding_state")
       .eq("id", payload.orchardId)
       .single();
     if (orchardError || !orchard) return json({ error: "orchard_not_found" }, 404);
     if (orchard.status !== "active") return json({ error: "orchard_inactive" }, 400);
+    // P0-5 Phase D: a funded (incl. gosat fund-now), released, cancelling or
+    // cancelled orchard takes no more pockets, whatever the holdings sum says.
+    const fundingState = (orchard.funding_state as string | null) ?? "open";
+    if (fundingState !== "open") return json({ error: "orchard_not_open", funding_state: fundingState }, 409);
+    // An Uplift has no sower payout at all: S2G pays the parties directly at
+    // release, so the sower-side payout-method and settlement-consent gates
+    // below do not apply to it.
+    const isUplift = (orchard.orchard_kind as string | null) === "uplift";
 
     // --- Pocket kind + delivery address (P0-5 Phase A) ------------------------
     const pocketType: PocketType = (payload.pocketType ?? "bestowal") as PocketType;
@@ -126,7 +134,7 @@ Deno.serve(async (req) => {
     // Settlement consent: block a sale on an orchard whose owner hasn't
     // accepted yet -- new orchards are already blocked at creation by a DB
     // trigger; this is the "first sale" half for anything pre-existing.
-    if (orchard.user_id && !(await hasAcceptedSettlementConsent(service, orchard.user_id))) {
+    if (!isUplift && orchard.user_id && !(await hasAcceptedSettlementConsent(service, orchard.user_id))) {
       return json({ error: "sower_settlement_consent_pending" }, 409);
     }
 
@@ -146,8 +154,8 @@ Deno.serve(async (req) => {
     const buyerTotal = quote.total;
 
     // --- Resolve sower's preferred payout wallet (shared deterministic resolver) ---
-    const wallet = await resolveSowerPayout(service, orchard.user_id);
-    if (!wallet) {
+    const wallet = isUplift ? null : await resolveSowerPayout(service, orchard.user_id);
+    if (!isUplift && !wallet) {
       return json({ error: "no_payout_method", message: "Sower has no active NOWPayments or PayPal payout wallet configured." }, 409);
     }
 
@@ -189,9 +197,9 @@ Deno.serve(async (req) => {
         processor_fee_amount: processorFee,
         processor_fee_currency: "USD",
         buyer_total_amount: buyerTotal,
-        payout_provider: wallet.payout_provider,
-        payout_destination: wallet.wallet_address,
-        payout_currency: wallet.payout_currency ?? (wallet.payout_provider === "paypal" ? "USD" : null),
+        payout_provider: wallet?.payout_provider ?? null,
+        payout_destination: wallet?.wallet_address ?? null,
+        payout_currency: wallet ? (wallet.payout_currency ?? (wallet.payout_provider === "paypal" ? "USD" : null)) : null,
         payout_status: "pending",
       })
       .select("id")

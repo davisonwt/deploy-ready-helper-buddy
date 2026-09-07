@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, RefreshCw, ArrowLeft, Trees, AlertTriangle, Ban, Play, ExternalLink } from 'lucide-react';
+import { Loader2, RefreshCw, ArrowLeft, Trees, AlertTriangle, Ban, Play, ExternalLink, HandCoins, Plus, Trash2, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
@@ -21,13 +21,19 @@ import {
   shortRef,
   type PocketTone,
 } from '@/lib/orchards/refundLabels';
+import { partyStatusLabel, upliftRemaining, validateParties } from '@/lib/orchards/upliftRules';
 
 // P0-5 Phase C3: the gosat orchard console. Lists every orchard that holds
 // or held money with its state, cancels an orchard (orchard_cancel, gosat
 // only, reason mandatory), and shows refund progress per bestower with the
 // gosat actions the C2 migration exposes: retry, write off, enter a payer
-// address by hand, run the refund worker now. Screens only: every money
-// decision stays in the SQL functions and orchard-refund-worker.
+// address by hand, run the refund worker now.
+// P0-5 Phase D: Uplift orchards. Fund-now (open -> funded by hand, note
+// required), the release form (named parties, USDC only, sum <= sower total)
+// that calls the orchard-release-uplift edge function, the party-payment
+// table with Retry / Void, and the Uplift cancel rule (refused once any
+// party row exists). Screens only: every money decision stays in the SQL
+// functions and the edge functions.
 
 interface OrchardRow {
   id: string;
@@ -40,6 +46,8 @@ interface OrchardRow {
   created_at: string;
   cancel_reason: string | null;
   cancelled_at: string | null;
+  orchard_kind: string;
+  funded_at: string | null;
 }
 interface HoldingRow {
   id: string;
@@ -48,6 +56,7 @@ interface HoldingRow {
   bestower_user_id: string;
   pockets: number;
   gross_amount: number;
+  sower_amount: number;
   rail: string;
   rail_reference: string | null;
   payer_address: string | null;
@@ -76,6 +85,24 @@ interface RefundRow {
   written_off_reason: string | null;
   updated_at: string;
 }
+interface PartyPaymentRow {
+  id: string;
+  orchard_id: string;
+  label: string;
+  amount: number;
+  rail: string;
+  destination: string;
+  reference: string | null;
+  status: string;
+  environment: string;
+  attempts: number;
+  last_error: string | null;
+  paid_at: string | null;
+  voided_reason: string | null;
+  created_at: string;
+}
+interface ReleaseRow { id: string; orchard_id: string; sower_total: number; s2g_total: number; released_at: string }
+interface PartyDraft { label: string; amount: string; destination: string }
 
 // orchard_* tables are not in the generated client types yet.
 const db = supabase as any;
@@ -101,12 +128,26 @@ const stateClass: Record<string, string> = {
   cancelling: 'bg-amber-900/50 text-amber-100 border-amber-400/50',
   cancelled: 'bg-red-900/50 text-red-100 border-red-400/50',
 };
+const KIND_CLASS = 'bg-violet-900/50 text-violet-100 border-violet-400/50';
 const refundClass = (status: string, tone: PocketTone) => (status === 'written_off' ? stateClass.open : toneClass[tone]);
 const NUM = 'text-right font-mono tabular-nums whitespace-nowrap';
 const TH = 'py-2 px-3 font-medium whitespace-nowrap';
 const TD = 'py-2.5 px-3 align-middle';
+const EMPTY_DRAFT: PartyDraft = { label: '', amount: '', destination: '' };
 function daysSince(iso: string) { return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)); }
 function rpcError(err: any): string { return err?.message ?? err?.error ?? String(err); }
+/** supabase.functions.invoke hides a non-2xx body behind a generic message; read it. */
+async function functionError(err: any): Promise<string> {
+  try {
+    const body = err?.context && typeof err.context.json === 'function' ? await err.context.json() : null;
+    if (body) {
+      const reason = body.error ?? body.reason ?? 'refused';
+      const detail = body.problems?.join(' ') ?? body.detail ?? body.message ?? (body.remaining != null ? `remaining ${fmtUsd(body.remaining)}` : '');
+      return `${reason}${detail ? `: ${detail}` : ''}`;
+    }
+  } catch { /* fall through */ }
+  return rpcError(err);
+}
 
 export default function GosatOrchardsPage() {
   const [loading, setLoading] = useState(true);
@@ -114,6 +155,8 @@ export default function GosatOrchardsPage() {
   const [orchards, setOrchards] = useState<OrchardRow[]>([]);
   const [holdings, setHoldings] = useState<HoldingRow[]>([]);
   const [refunds, setRefunds] = useState<RefundRow[]>([]);
+  const [payments, setPayments] = useState<PartyPaymentRow[]>([]);
+  const [releases, setReleases] = useState<ReleaseRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [showEmptyOpen, setShowEmptyOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -126,35 +169,50 @@ export default function GosatOrchardsPage() {
   const [payerTarget, setPayerTarget] = useState<HoldingRow | null>(null);
   const [payerAddress, setPayerAddress] = useState('');
   const [payerNote, setPayerNote] = useState('');
+  // Phase D
+  const [fundNowTarget, setFundNowTarget] = useState<OrchardRow | null>(null);
+  const [fundNowNote, setFundNowNote] = useState('');
+  const [fundNowTyped, setFundNowTyped] = useState('');
+  const [drafts, setDrafts] = useState<Record<string, PartyDraft[]>>({});
+  const [releaseTarget, setReleaseTarget] = useState<OrchardRow | null>(null);
+  const [releaseTyped, setReleaseTyped] = useState('');
+  const [voidTarget, setVoidTarget] = useState<PartyPaymentRow | null>(null);
+  const [voidReason, setVoidReason] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [o, h, r] = await Promise.all([
+      const [o, h, r, p, rl] = await Promise.all([
         db.from('orchards')
-          .select('id, title, user_id, funding_state, status, total_pockets, pocket_price, created_at, cancel_reason, cancelled_at')
+          .select('id, title, user_id, funding_state, status, total_pockets, pocket_price, created_at, cancel_reason, cancelled_at, orchard_kind, funded_at')
           .order('created_at', { ascending: false })
           .limit(500),
         db.from('orchard_holdings')
-          .select('id, orchard_id, bestowal_id, bestower_user_id, pockets, gross_amount, rail, rail_reference, payer_address, payer_source, status, refund_id, created_at')
+          .select('id, orchard_id, bestowal_id, bestower_user_id, pockets, gross_amount, sower_amount, rail, rail_reference, payer_address, payer_source, status, refund_id, created_at')
           .order('created_at', { ascending: true }),
         db.from('orchard_refunds')
           .select('id, orchard_id, holding_id, bestower_user_id, rail, amount, destination, status, attempts, last_error, rail_reference, environment, fee_cost, claimed_at, sent_at, confirmed_at, written_off_reason, updated_at')
           .order('created_at', { ascending: true }),
+        db.from('orchard_release_payments')
+          .select('id, orchard_id, label, amount, rail, destination, reference, status, environment, attempts, last_error, paid_at, voided_reason, created_at')
+          .order('created_at', { ascending: true }),
+        db.from('orchard_releases').select('id, orchard_id, sower_total, s2g_total, released_at'),
       ]);
       if (o.error) throw o.error;
       if (h.error) throw h.error;
       if (r.error) throw r.error;
+      if (p.error) throw p.error;
+      if (rl.error) throw rl.error;
       const os: OrchardRow[] = o.data ?? [];
       const hs: HoldingRow[] = h.data ?? [];
       const rs: RefundRow[] = r.data ?? [];
-      setOrchards(os); setHoldings(hs); setRefunds(rs);
+      setOrchards(os); setHoldings(hs); setRefunds(rs); setPayments(p.data ?? []); setReleases(rl.data ?? []);
       const ids = [...new Set([...os.map((x) => x.user_id), ...hs.map((x) => x.bestower_user_id)])].filter(Boolean);
       if (ids.length) {
         const { data: profiles } = await supabase.from('profiles_public').select('user_id, display_name, username, first_name, last_name').in('user_id', ids);
         const map: Record<string, string> = {};
-        for (const p of (profiles ?? []) as any[]) map[p.user_id] = p.display_name || p.username || [p.first_name, p.last_name].filter(Boolean).join(' ') || p.user_id.slice(0, 8);
+        for (const pr of (profiles ?? []) as any[]) map[pr.user_id] = pr.display_name || pr.username || [pr.first_name, pr.last_name].filter(Boolean).join(' ') || pr.user_id.slice(0, 8);
         setNames(map);
       }
     } catch (err: any) {
@@ -176,21 +234,34 @@ export default function GosatOrchardsPage() {
     for (const r of refunds) m.set(r.orchard_id, [...(m.get(r.orchard_id) ?? []), r]);
     return m;
   }, [refunds]);
+  const paymentsByOrchard = useMemo(() => {
+    const m = new Map<string, PartyPaymentRow[]>();
+    for (const p of payments) m.set(p.orchard_id, [...(m.get(p.orchard_id) ?? []), p]);
+    return m;
+  }, [payments]);
+  const releaseByOrchard = useMemo(() => new Map(releases.map((r) => [r.orchard_id, r])), [releases]);
   const holdingById = useMemo(() => new Map(holdings.map((h) => [h.id, h])), [holdings]);
 
   const rows = useMemo(() => orchards
-    .filter((o) => showEmptyOpen || o.funding_state !== 'open' || (holdingsByOrchard.get(o.id)?.length ?? 0) > 0)
+    .filter((o) => showEmptyOpen || o.funding_state !== 'open' || (holdingsByOrchard.get(o.id)?.length ?? 0) > 0 || o.orchard_kind === 'uplift')
     .map((o) => {
       const hs = holdingsByOrchard.get(o.id) ?? [];
       const held = hs.filter((h) => HELD_STATES.has(h.status)).reduce((s, h) => s + Number(h.gross_amount), 0);
       const pocketsHeld = hs.filter((h) => h.status === 'held' || h.status === 'released').reduce((s, h) => s + Number(h.pockets), 0);
       const hasReleased = hs.some((h) => h.status === 'released');
       const rs = refundsByOrchard.get(o.id) ?? [];
-      return { o, hs, held, pocketsHeld, hasReleased, rs, refusal: cancelRefusal(o.funding_state, hasReleased), needsGosat: rs.filter((r) => refundStatusLabel(r.status).needsGosat).length };
-    }), [orchards, holdingsByOrchard, refundsByOrchard, showEmptyOpen]);
+      const ps = paymentsByOrchard.get(o.id) ?? [];
+      const paidTotal = ps.filter((p) => p.status === 'paid').reduce((s, p) => s + Number(p.amount), 0);
+      return {
+        o, hs, held, pocketsHeld, hasReleased, rs, ps,
+        refusal: cancelRefusal(o.funding_state, hasReleased, o.orchard_kind, ps.length, paidTotal),
+        needsGosat: rs.filter((r) => refundStatusLabel(r.status).needsGosat).length + ps.filter((p) => partyStatusLabel(p.status).needsGosat).length,
+      };
+    }), [orchards, holdingsByOrchard, refundsByOrchard, paymentsByOrchard, showEmptyOpen]);
 
   const cancelling = rows.filter((r) => r.o.funding_state === 'cancelling' || r.o.funding_state === 'cancelled');
-  const needsGosatTotal = refunds.filter((r) => refundStatusLabel(r.status).needsGosat).length;
+  const uplifts = rows.filter((r) => r.o.orchard_kind === 'uplift' && (r.o.funding_state === 'funded' || r.o.funding_state === 'released'));
+  const needsGosatTotal = refunds.filter((r) => refundStatusLabel(r.status).needsGosat).length + payments.filter((p) => partyStatusLabel(p.status).needsGosat).length;
   const unknownPayers = holdings.filter((h) => h.rail === 'solana' && (h.payer_source ?? 'unknown') === 'unknown' && HELD_STATES.has(h.status));
 
   // ---- actions ------------------------------------------------------------
@@ -201,7 +272,7 @@ export default function GosatOrchardsPage() {
       if (error) throw error;
       const d = data as any;
       if (d && typeof d === 'object' && (d.ok === false || d.cancelled === false)) {
-        toast.error(`${label}: ${d.reason ?? 'refused'}`);
+        toast.error(`${label}: ${d.message ?? d.reason ?? 'refused'}`);
       } else {
         toast.success(`${label}: done`);
       }
@@ -251,8 +322,64 @@ export default function GosatOrchardsPage() {
     }
   };
 
+  // Phase D actions
+  const confirmFundNow = async () => {
+    if (!fundNowTarget) return;
+    const res = await runRpc('Fund now', 'orchard_uplift_fund_now', { _orchard_id: fundNowTarget.id, _note: fundNowNote.trim() }, `fundnow:${fundNowTarget.id}`);
+    if (res?.ok) { setFundNowTarget(null); setFundNowNote(''); setFundNowTyped(''); }
+  };
+  const releaseUplift = async (o: OrchardRow, parties: PartyDraft[], retryPaymentIds: string[] = []) => {
+    setBusy(`release:${o.id}`);
+    try {
+      const body = {
+        orchardId: o.id,
+        parties: parties.map((p) => ({ label: p.label.trim(), amount: Number(p.amount), destination: p.destination.trim(), rail: 'solana' })),
+        retryPaymentIds,
+      };
+      const { data, error } = await supabase.functions.invoke('orchard-release-uplift', { body });
+      if (error) throw new Error(await functionError(error));
+      const d = data as any;
+      const paid = (d?.report ?? []).filter((x: any) => String(x.result).startsWith('paid')).length;
+      const summary = (d?.report ?? []).map((x: any) => `${x.label}: ${x.result}${x.reason ? ` (${x.reason})` : x.error ? ` (${x.error})` : ''}`).join('; ');
+      if (d?.ok) toast.success(`${o.title}: ${paid} of ${d.attempted} party payment(s) paid on ${d.cluster}. ${summary}`);
+      else toast.error(`${o.title}: ${d?.failed ?? '?'} of ${d?.attempted ?? '?'} party payment(s) did not go out on ${d?.cluster ?? '?'}. ${summary || d?.error || ''}`);
+      if (parties.length) setDrafts((prev) => ({ ...prev, [o.id]: [{ ...EMPTY_DRAFT }] }));
+      await load();
+    } catch (err: any) {
+      toast.error(`Release failed: ${rpcError(err)}`);
+    } finally {
+      setBusy(null);
+    }
+  };
+  const confirmRelease = async () => {
+    if (!releaseTarget) return;
+    const parties = drafts[releaseTarget.id] ?? [];
+    setReleaseTarget(null); setReleaseTyped('');
+    await releaseUplift(releaseTarget, parties);
+  };
+  const confirmVoid = async () => {
+    if (!voidTarget) return;
+    const res = await runRpc('Void party payment', 'orchard_uplift_payment_void', { _payment_id: voidTarget.id, _reason: voidReason.trim() }, `void:${voidTarget.id}`);
+    if (res?.ok) { setVoidTarget(null); setVoidReason(''); }
+  };
+  const setDraft = (orchardId: string, i: number, patch: Partial<PartyDraft>) =>
+    setDrafts((prev) => {
+      const list = [...(prev[orchardId] ?? [{ ...EMPTY_DRAFT }])];
+      list[i] = { ...list[i], ...patch };
+      return { ...prev, [orchardId]: list };
+    });
+
   const summary = cancelTarget ? cancelSummary(holdingsByOrchard.get(cancelTarget.id) ?? []) : null;
   const cancelReady = !!cancelTarget && cancelReason.trim().length >= 5 && cancelTyped.trim() === cancelTarget.title.trim();
+  const releaseValidation = releaseTarget ? validateParties(drafts[releaseTarget.id] ?? [], upliftPool(releaseTarget).remaining) : null;
+
+  function upliftPool(o: OrchardRow) {
+    const rel = releaseByOrchard.get(o.id);
+    const hs = holdingsByOrchard.get(o.id) ?? [];
+    const sowerTotal = rel ? Number(rel.sower_total) : hs.filter((h) => h.status === 'held').reduce((s, h) => s + Number(h.sower_amount), 0);
+    const ps = paymentsByOrchard.get(o.id) ?? [];
+    return { sowerTotal: Math.round(sowerTotal * 100) / 100, release: rel, ...upliftRemaining(sowerTotal, ps) };
+  }
 
   return (
     <div className="container max-w-6xl mx-auto py-8 px-4 space-y-6">
@@ -264,7 +391,7 @@ export default function GosatOrchardsPage() {
           <Trees className="h-7 w-7 text-primary" />
           <div>
             <h1 className="text-2xl font-bold">Orchards</h1>
-            <p className="text-sm text-muted-foreground">Every orchard holding or having held money, its state, and the refunds after a cancel. Cancel is gosat-only and always refunds in full on the original rail.</p>
+            <p className="text-sm text-muted-foreground">Every orchard holding or having held money, its state, the refunds after a cancel, and Uplift releases to named parties. Cancel is gosat-only and always refunds in full on the original rail.</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -281,7 +408,7 @@ export default function GosatOrchardsPage() {
         <Alert data-testid="orchards-attention">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="text-sm">
-            {needsGosatTotal > 0 && <span className="mr-3"><strong>{needsGosatTotal}</strong> refund(s) need a human (see the refund tables below).</span>}
+            {needsGosatTotal > 0 && <span className="mr-3"><strong>{needsGosatTotal}</strong> refund(s) or party payment(s) need a human (see the tables below).</span>}
             {unknownPayers.length > 0 && <span><strong>{unknownPayers.length}</strong> held pocket(s) have no known payer wallet: enter it by hand before cancelling, or the refund parks.</span>}
           </AlertDescription>
         </Alert>
@@ -306,24 +433,28 @@ export default function GosatOrchardsPage() {
                   <col />
                   <col className="w-44" />
                   <col className="w-24" />
-                  <col className="w-40" />
+                  <col className="w-44" />
                 </colgroup>
                 <thead className="text-xs text-muted-foreground text-left border-b">
                   <tr>
                     <th className={TH}>Orchard</th>
                     <th className={TH}>State</th>
                     <th className={`${TH} text-right`}>Held</th>
-                    <th className={`${TH} text-right`}>Cancel</th>
+                    <th className={`${TH} text-right`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {rows.map(({ o, held, pocketsHeld, refusal, rs, needsGosat }) => {
+                  {rows.map(({ o, held, pocketsHeld, refusal, rs, ps, needsGosat }) => {
                     const st = fundingStateLabel(o.funding_state);
                     const isCancelled = o.funding_state === 'cancelling' || o.funding_state === 'cancelled';
+                    const isUplift = o.orchard_kind === 'uplift';
                     return (
-                      <tr key={o.id} data-testid="orchard-row" data-orchard-id={o.id} data-state={o.funding_state}>
+                      <tr key={o.id} data-testid="orchard-row" data-orchard-id={o.id} data-state={o.funding_state} data-kind={o.orchard_kind}>
                         <td className={`${TD} min-w-0`}>
-                          <Link to={`/orchard/${o.id}`} className="font-medium hover:underline block truncate" title={o.title}>{o.title}</Link>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Link to={`/orchard/${o.id}`} className="font-medium hover:underline block truncate" title={o.title}>{o.title}</Link>
+                            {isUplift && <Badge variant="outline" className={`${BADGE} ${KIND_CLASS}`} data-testid="orchard-kind">Uplift</Badge>}
+                          </div>
                           <div className="text-xs text-muted-foreground truncate whitespace-nowrap">
                             {names[o.user_id] ?? o.user_id.slice(0, 8)} · {daysSince(o.created_at)} d · {pocketsHeld}/{o.total_pockets} pockets · {fmtUsd(o.pocket_price)} each
                           </div>
@@ -336,20 +467,28 @@ export default function GosatOrchardsPage() {
                             <Badge variant="outline" className={`${BADGE} ${stateClass[o.funding_state] ?? stateClass.open}`} data-testid="orchard-state">{st.label}</Badge>
                             {needsGosat > 0 && <Badge variant="outline" className={`${BADGE} ${toneClass.problem}`}>{needsGosat} need a human</Badge>}
                             {rs.length > 0 && <span className="text-xs text-muted-foreground whitespace-nowrap">{rs.filter((r) => r.status === 'confirmed').length} of {rs.length} refunded</span>}
+                            {ps.length > 0 && <span className="text-xs text-muted-foreground whitespace-nowrap">{ps.filter((p) => p.status === 'paid').length} of {ps.filter((p) => p.status !== 'voided').length} parties paid</span>}
                           </div>
                         </td>
                         <td className={`${TD} ${NUM}`} data-testid="orchard-held">{fmtUsd(held)}</td>
                         <td className={`${TD} text-right`}>
-                          {isCancellable(o.funding_state) && !refusal ? (
-                            <Button size="sm" variant="destructive" onClick={() => { setCancelTarget(o); setCancelReason(''); setCancelTyped(''); }} data-testid="orchard-cancel">
-                              <Ban className="h-4 w-4 mr-1" />Cancel
-                            </Button>
-                          ) : (
-                            <div className="flex flex-col items-end gap-1">
-                              <Button size="sm" variant="outline" disabled data-testid="orchard-cancel" title={refusal ?? undefined}><Ban className="h-4 w-4 mr-1" />Cancel</Button>
-                              <span className="text-[11px] leading-tight text-muted-foreground/80 whitespace-nowrap truncate max-w-[10rem]" title={refusal ?? undefined} data-testid="orchard-cancel-refusal">{refusal}</span>
-                            </div>
-                          )}
+                          <div className="flex flex-col items-end gap-1">
+                            {isUplift && o.funding_state === 'open' && (
+                              <Button size="sm" variant="outline" onClick={() => { setFundNowTarget(o); setFundNowNote(''); setFundNowTyped(''); }} data-testid="fund-now" title="Mark this Uplift fully funded by hand (a top-up confirmed outside the app)">
+                                <Zap className="h-4 w-4 mr-1" />Fund now
+                              </Button>
+                            )}
+                            {isCancellable(o.funding_state) && !refusal ? (
+                              <Button size="sm" variant="destructive" onClick={() => { setCancelTarget(o); setCancelReason(''); setCancelTyped(''); }} data-testid="orchard-cancel">
+                                <Ban className="h-4 w-4 mr-1" />Cancel
+                              </Button>
+                            ) : (
+                              <>
+                                <Button size="sm" variant="outline" disabled data-testid="orchard-cancel" title={refusal ?? undefined}><Ban className="h-4 w-4 mr-1" />Cancel</Button>
+                                <span className="text-[11px] leading-tight text-muted-foreground/80 whitespace-nowrap truncate max-w-[10rem]" title={refusal ?? undefined} data-testid="orchard-cancel-refusal">{refusal}</span>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -361,6 +500,114 @@ export default function GosatOrchardsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Phase D: Uplift release to parties */}
+      {uplifts.map(({ o, ps }) => {
+        const pool = upliftPool(o);
+        const list = drafts[o.id] ?? [{ ...EMPTY_DRAFT }];
+        const v = validateParties(list, pool.remaining);
+        const anyFilled = list.some((d) => d.label || d.amount || d.destination);
+        return (
+          <Card key={`uplift-${o.id}`} data-testid="uplift-release" data-orchard-id={o.id} data-state={o.funding_state} data-remaining={pool.remaining.toFixed(2)} data-sower-total={pool.sowerTotal.toFixed(2)}>
+            <CardHeader>
+              <CardTitle className="flex flex-wrap items-center gap-2"><HandCoins className="h-5 w-5" />{o.title}: Uplift · {fundingStateLabel(o.funding_state).label.toLowerCase()}</CardTitle>
+              <CardDescription>
+                Parties pool {fmtUsd(pool.sowerTotal)} (the pockets' sower share; S2G's 15% is booked at release exactly as for a Launch) · committed {fmtUsd(pool.committed)} · paid {fmtUsd(pool.paid)} · left to pay <strong data-testid="uplift-remaining">{fmtUsd(pool.remaining)}</strong>.
+                USDC only in this phase: PayPal party payments wait for PayPal's approval of the app. Once any party row exists this orchard can no longer be cancelled.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {ps.length > 0 && (
+                <div className="overflow-x-auto -mx-3">
+                  <table className="w-full min-w-[56rem] table-fixed text-sm" data-testid="party-table">
+                    <colgroup>
+                      <col />
+                      <col className="w-24" />
+                      <col className="w-36" />
+                      <col className="w-36" />
+                      <col className="w-20" />
+                      <col className="w-44" />
+                      <col className="w-56" />
+                      <col className="w-36" />
+                    </colgroup>
+                    <thead className="text-xs text-muted-foreground text-left border-b">
+                      <tr>
+                        <th className={TH}>Party</th>
+                        <th className={`${TH} text-right`}>Amount</th>
+                        <th className={TH}>Destination</th>
+                        <th className={TH}>State</th>
+                        <th className={`${TH} text-right`}>Attempts</th>
+                        <th className={TH}>Reference</th>
+                        <th className={TH}>Last error</th>
+                        <th className={TH}></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {ps.map((p) => {
+                        const st = partyStatusLabel(p.status);
+                        const url = explorerUrl('solana', p.reference, p.environment);
+                        const canRetry = (p.status === 'failed' || p.status === 'needs_human') && !p.reference;
+                        const errorText = p.status === 'voided' ? `Voided: ${p.voided_reason}` : (p.last_error ?? '');
+                        return (
+                          <tr key={p.id} data-testid="party-row" data-payment-id={p.id} data-status={p.status}>
+                            <td className={`${TD} truncate`} title={p.label}>{p.label}</td>
+                            <td className={`${TD} ${NUM}`}>{fmtUsd(p.amount)}</td>
+                            <td className={`${TD} font-mono text-xs truncate`} title={p.destination}>{maskAddress(p.destination)}</td>
+                            <td className={TD}><Badge variant="outline" className={`${BADGE} ${toneClass[st.tone]}`} data-testid="party-state">{st.label}</Badge>{p.environment !== 'live' && <span className="text-xs text-muted-foreground"> · {p.environment}</span>}</td>
+                            <td className={`${TD} ${NUM}`}>{p.attempts}</td>
+                            <td className={`${TD} font-mono text-xs whitespace-nowrap`} data-testid="party-reference">
+                              {p.reference
+                                ? (url
+                                  ? <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline">{shortRef(p.reference, 10, 4)}<ExternalLink className="h-3 w-3" /></a>
+                                  : <span title={p.reference}>{shortRef(p.reference, 10, 4)}</span>)
+                                : <span className="text-muted-foreground">—</span>}
+                            </td>
+                            <td className={`${TD} text-xs text-muted-foreground truncate`} title={errorText || undefined}>{errorText}</td>
+                            <td className={`${TD} text-right whitespace-nowrap`}>
+                              {canRetry && (
+                                <>
+                                  <Button size="sm" variant="outline" className="mr-1" disabled={busy === `release:${o.id}`} onClick={() => releaseUplift(o, [], [p.id])} data-testid="party-retry">Retry</Button>
+                                  <Button size="sm" variant="destructive" disabled={busy === `void:${p.id}`} onClick={() => { setVoidTarget(p); setVoidReason(''); }} data-testid="party-void">Void</Button>
+                                </>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {pool.remaining > 0 ? (
+                <div className="space-y-2" data-testid="party-form">
+                  <p className="text-sm font-medium">{o.funding_state === 'funded' ? 'Release to parties' : 'Add parties'} (USDC, Solana wallets)</p>
+                  {list.map((d, i) => (
+                    <div key={i} className="grid grid-cols-1 md:grid-cols-[1fr_8rem_1fr_auto] gap-2 items-center">
+                      <Input value={d.label} placeholder="Who is paid (label shown to the tribe)" onChange={(e) => setDraft(o.id, i, { label: e.target.value })} data-testid={`party-label-${i}`} />
+                      <Input value={d.amount} inputMode="decimal" placeholder="Amount USD" onChange={(e) => setDraft(o.id, i, { amount: e.target.value })} data-testid={`party-amount-${i}`} />
+                      <Input value={d.destination} placeholder="Solana wallet address" className="font-mono text-xs" onChange={(e) => setDraft(o.id, i, { destination: e.target.value })} data-testid={`party-destination-${i}`} />
+                      <Button size="icon" variant="ghost" disabled={list.length === 1} onClick={() => setDrafts((prev) => ({ ...prev, [o.id]: list.filter((_, j) => j !== i) }))} title="Remove this party"><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                  ))}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setDrafts((prev) => ({ ...prev, [o.id]: [...list, { ...EMPTY_DRAFT }] }))} data-testid="party-add"><Plus className="h-4 w-4 mr-1" />Add a party</Button>
+                    <Button size="sm" disabled={!v.ok || busy === `release:${o.id}`} onClick={() => { setReleaseTarget(o); setReleaseTyped(''); }} data-testid="uplift-release-submit">
+                      {busy === `release:${o.id}` ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Play className="h-4 w-4 mr-1" />}
+                      {o.funding_state === 'funded' ? `Release and pay ${v.parties.length || ''} part${v.parties.length === 1 ? 'y' : 'ies'} (${fmtUsd(v.total)})` : `Pay ${v.parties.length || ''} more part${v.parties.length === 1 ? 'y' : 'ies'} (${fmtUsd(v.total)})`}
+                    </Button>
+                  </div>
+                  {anyFilled && !v.ok && (
+                    <ul className="text-xs text-red-200 list-disc pl-5" data-testid="party-problems">{v.problems.map((p) => <li key={p}>{p}</li>)}</ul>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground" data-testid="uplift-settled">{pool.paid >= pool.sowerTotal ? 'Every party has been paid.' : 'The whole pool is committed; retry or void the rows above to change it.'}</p>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
 
       {/* Refund progress per cancelled / cancelling orchard */}
       {cancelling.map(({ o, hs, rs }) => (
@@ -511,6 +758,60 @@ export default function GosatOrchardsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setPayerTarget(null)}>Back</Button>
             <Button disabled={payerAddress.trim().length < 32 || payerNote.trim().length < 5} onClick={confirmPayer} data-testid="payer-confirm">Save payer address</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Phase D: fund-now dialog */}
+      <Dialog open={!!fundNowTarget} onOpenChange={(open) => { if (!open) setFundNowTarget(null); }}>
+        <DialogContent data-testid="fund-now-dialog">
+          <DialogHeader>
+            <DialogTitle>Mark “{fundNowTarget?.title}” fully funded</DialogTitle>
+            <DialogDescription>Uplift only. Use it when a top-up was confirmed outside the app. It stops new pockets and lets you release; the parties can only be paid from what is actually held on-app ({fmtUsd(fundNowTarget ? upliftPool(fundNowTarget).sowerTotal : 0)} sower share right now). The note is logged.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea value={fundNowNote} onChange={(e) => setFundNowNote(e.target.value)} placeholder="Note (required): what was confirmed, where, by whom" data-testid="fund-now-note" />
+            <Input value={fundNowTyped} onChange={(e) => setFundNowTyped(e.target.value)} placeholder={fundNowTarget?.title} data-testid="fund-now-typed" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFundNowTarget(null)}>Back</Button>
+            <Button disabled={fundNowNote.trim().length < 5 || fundNowTyped.trim() !== (fundNowTarget?.title ?? '').trim() || busy === `fundnow:${fundNowTarget?.id}`} onClick={confirmFundNow} data-testid="fund-now-confirm">Mark funded</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Phase D: release confirmation */}
+      <Dialog open={!!releaseTarget} onOpenChange={(open) => { if (!open) setReleaseTarget(null); }}>
+        <DialogContent data-testid="release-dialog">
+          <DialogHeader>
+            <DialogTitle>{releaseTarget?.funding_state === 'funded' ? 'Release' : 'Pay more parties on'} “{releaseTarget?.title}”</DialogTitle>
+            <DialogDescription>
+              {releaseValidation?.parties.length} part{releaseValidation?.parties.length === 1 ? 'y' : 'ies'}, {fmtUsd(releaseValidation?.total)} in USDC from the hot wallet, sent one by one at finalized commitment. A row that goes out is never sent twice; a row that fails stays visible with Retry / Void.
+              {releaseTarget?.funding_state === 'funded' ? ' This first release also books S2G\'s 15% in the revenue ledger and makes the orchard uncancellable.' : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="text-sm space-y-1">
+            {releaseValidation?.parties.map((p, i) => <li key={i} className="flex justify-between gap-3"><span>{p.label}</span><span className="font-mono">{fmtUsd(p.amount)} → {maskAddress(p.destination)}</span></li>)}
+          </ul>
+          <Input value={releaseTyped} onChange={(e) => setReleaseTyped(e.target.value)} placeholder={`Type the orchard title to confirm: ${releaseTarget?.title ?? ''}`} data-testid="release-typed" />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReleaseTarget(null)}>Back</Button>
+            <Button disabled={!releaseValidation?.ok || releaseTyped.trim() !== (releaseTarget?.title ?? '').trim()} onClick={confirmRelease} data-testid="release-confirm">Pay the parties</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Phase D: void dialog */}
+      <Dialog open={!!voidTarget} onOpenChange={(open) => { if (!open) setVoidTarget(null); }}>
+        <DialogContent data-testid="void-dialog">
+          <DialogHeader>
+            <DialogTitle>Void this party payment</DialogTitle>
+            <DialogDescription>“{voidTarget?.label}” ({fmtUsd(voidTarget?.amount)}) was never sent. Voiding frees the amount so you can add a corrected party. The reason is logged.</DialogDescription>
+          </DialogHeader>
+          <Textarea value={voidReason} onChange={(e) => setVoidReason(e.target.value)} placeholder="Reason (required)" data-testid="void-reason" />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVoidTarget(null)}>Back</Button>
+            <Button variant="destructive" disabled={voidReason.trim().length < 5} onClick={confirmVoid} data-testid="void-confirm">Void</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

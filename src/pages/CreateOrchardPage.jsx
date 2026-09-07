@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
+import { useRoles } from "@/hooks/useRoles"
 import { useCurrency } from "../hooks/useCurrency"
 import { useOrchards } from "../hooks/useOrchards"
 import { useFileUpload } from "../hooks/useFileUpload.jsx"
@@ -43,6 +44,9 @@ export default function CreateOrchardPage({ isEdit = false }) {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  // P0-5 Phase D: only a gosat can open an Uplift orchard (the DB trigger
+  // trg_orchards_uplift_gate is the real gate; this just hides the choice).
+  const { isAdminOrGosat } = useRoles()
   const { currency } = useCurrency()
 // Use local API instead of hook to avoid any hook dispatcher issues in this page
 const createOrchard = async (orchardData) => {
@@ -120,6 +124,7 @@ const fetchOrchardById = async (oid) => {
     description: "",
     category: "",
     orchard_type: "standard",
+    orchard_kind: "launch", // Phase D: 'launch' (sower paid at release) | 'uplift' (gosat-only; S2G pays the parties)
     seed_value: "",
     pocket_price: "150",
     number_of_pockets: "1", // New field for full value orchards
@@ -171,6 +176,7 @@ const fetchOrchardById = async (oid) => {
           description: orchard.description || "",
           category: orchard.category || "",
           orchard_type: orchard.orchard_type || "standard",
+          orchard_kind: orchard.orchard_kind || "launch",
           seed_value: orchard.original_seed_value?.toString() || "",
           pocket_price: orchard.pocket_price?.toString() || "150",
           number_of_pockets: orchard.total_pockets?.toString() || "1", // Map total_pockets from DB to number_of_pockets in form
@@ -405,6 +411,7 @@ const fetchOrchardById = async (oid) => {
         description: formData.description.trim(),
         category: formData.category || "General",
         orchard_type: formData.orchard_type,
+        orchard_kind: isAdminOrGosat && formData.orchard_kind === 'uplift' ? 'uplift' : 'launch',
         seed_value: finalSeedValue,
         original_seed_value: originalSeedValue,
         courier_cost: breakdown ? breakdown.courierCost : 0,
@@ -852,6 +859,30 @@ const fetchOrchardById = async (oid) => {
                     <p className="text-xs text-gray-500">Each pocket contains the full seed value + fees</p>
                   </div>
                 </div>
+                {/* P0-5 Phase D: orchard kind. Launch for everyone; Uplift only offered to a gosat/admin. */}
+                {isAdminOrGosat && !isEdit && (
+                  <div className="mt-6" data-testid="orchard-kind">
+                    <label className="block text-sm font-medium text-sky-400 mb-2">Orchard kind (gosat only)</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.orchard_kind !== 'uplift' ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-green-400'}`}
+                        onClick={() => setFormData(prev => ({ ...prev, orchard_kind: 'launch' }))}
+                        data-testid="orchard-kind-launch"
+                      >
+                        <h3 className="font-semibold text-gray-800">Launch</h3>
+                        <p className="text-xs text-gray-500">The sower is paid at release through the normal payout pipeline.</p>
+                      </div>
+                      <div
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.orchard_kind === 'uplift' ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-green-400'}`}
+                        onClick={() => setFormData(prev => ({ ...prev, orchard_kind: 'uplift' }))}
+                        data-testid="orchard-kind-uplift"
+                      >
+                        <h3 className="font-semibold text-gray-800">Uplift</h3>
+                        <p className="text-xs text-gray-500">Sow2Grow pays the named parties directly at release (USDC), from the orchard console. No sower payout.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {/* Number of Pockets for Full Value Orchard */}
                 {formData.orchard_type === 'full_value' && (
                   <div className="mt-4">

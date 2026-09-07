@@ -34,9 +34,13 @@ async function attachRefunds(holdings: any[]): Promise<PocketRow[]> {
     gross: Number(h.gross_amount || 0),
     pockets: Number(h.pockets || 1),
     rail: h.rail,
-    state: pocketState(h.status, h.refund_id ? refundById.get(h.refund_id) ?? null : null),
+    // Phase D: the wording for a released pocket depends on the orchard kind
+    // (Launch: released to the sower; Uplift: S2G pays the parties).
+    state: pocketState(h.status, h.refund_id ? refundById.get(h.refund_id) ?? null : null, h.orchards?.orchard_kind ?? 'launch'),
   }));
 }
+
+const HOLDING_SELECT = 'id, bestowal_id, orchard_id, status, gross_amount, pockets, rail, refund_id, orchards:orchard_id ( orchard_kind )';
 
 /** Pocket states for a set of bestowal ids (My Seeds). Missing ids simply have no entry. */
 export async function pocketStatesForBestowals(bestowalIds: string[]): Promise<Map<string, PocketRow>> {
@@ -44,7 +48,7 @@ export async function pocketStatesForBestowals(bestowalIds: string[]): Promise<M
   if (bestowalIds.length === 0) return out;
   const { data, error } = await db
     .from('orchard_holdings')
-    .select('id, bestowal_id, orchard_id, status, gross_amount, pockets, rail, refund_id')
+    .select(HOLDING_SELECT)
     .in('bestowal_id', bestowalIds);
   if (error || !data) return out;
   for (const row of await attachRefunds(data)) out.set(row.bestowalId, row);
@@ -55,7 +59,7 @@ export async function pocketStatesForBestowals(bestowalIds: string[]): Promise<M
 export async function myPocketsForOrchard(orchardId: string, userId: string): Promise<PocketRow[]> {
   const { data, error } = await db
     .from('orchard_holdings')
-    .select('id, bestowal_id, orchard_id, status, gross_amount, pockets, rail, refund_id')
+    .select(HOLDING_SELECT)
     .eq('orchard_id', orchardId)
     .eq('bestower_user_id', userId)
     .order('created_at', { ascending: true });

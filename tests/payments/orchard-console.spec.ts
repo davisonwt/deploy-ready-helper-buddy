@@ -109,9 +109,11 @@ test.describe('orchard console (Phase C3)', () => {
     await expect(page.getByTestId('orchard-cancel-reason')).toHaveCount(0);
 
     await page.goto('/my-seeds', { waitUntil: 'networkidle' });
-    const seedsPocket = page.getByTestId('pocket-state').filter({ hasText: 'Refunded' });
+    // A has more than one refunded pocket since the 2026-09-06 mainnet
+    // refund proof, so pick this orchard's pocket by its own signature.
+    const seedsPocket = page.getByTestId('pocket-state').filter({ hasText: 'tx 2iuoASMs…iHva' });
     await expect(seedsPocket.first()).toBeVisible({ timeout: 30_000 });
-    await expect(seedsPocket.first()).toContainText('tx 2iuoASMs…iHva');
+    await expect(seedsPocket.first()).toContainText('Refunded');
   });
 
   test('as the sower (B): the Cancelled badge with the reason, and no bestow button', async ({ page }) => {

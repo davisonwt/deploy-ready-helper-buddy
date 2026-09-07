@@ -54,13 +54,16 @@ export function explorerUrl(rail: string | null | undefined, reference: string |
 }
 
 /** What a bestower reads about one pocket. */
-export function pocketState(holdingStatus: HoldingStatus | string | null | undefined, refund?: RefundFacts | null): PocketState {
+export function pocketState(holdingStatus: HoldingStatus | string | null | undefined, refund?: RefundFacts | null, orchardKind: string | null = 'launch'): PocketState {
   const none = { reference: null, referenceUrl: null };
   switch (holdingStatus) {
     case 'held':
       return { label: 'Held for this orchard', tone: 'held', ...none };
     case 'released':
-      return { label: 'Funded — released to the sower', tone: 'released', ...none };
+      // Phase D: an Uplift has no sower payout; S2G pays the named parties.
+      return orchardKind === 'uplift'
+        ? { label: 'Funded — Sow2Grow pays the parties directly', tone: 'released', ...none }
+        : { label: 'Funded — released to the sower', tone: 'released', ...none };
     case 'refund_pending':
     case 'refund_failed':
       // A failed attempt is a gosat's problem, not the member's: the money is still coming.
@@ -116,8 +119,20 @@ export function isCancellable(state: FundingState | string | null | undefined): 
   return state === 'open' || state === 'funded';
 }
 
-/** Why cancel is refused, or null when it is allowed. Mirrors orchard_cancel()'s own checks. */
-export function cancelRefusal(state: FundingState | string | null | undefined, hasReleasedHolding = false): string | null {
+/** Why cancel is refused, or null when it is allowed. Mirrors orchard_cancel()'s own checks (Phase D: the Uplift rule first). */
+export function cancelRefusal(
+  state: FundingState | string | null | undefined,
+  hasReleasedHolding = false,
+  orchardKind: string | null = 'launch',
+  partyRows = 0,
+  partyPaidTotal = 0,
+): string | null {
+  if (orchardKind === 'uplift') {
+    if (partyRows > 0) {
+      return `This Uplift orchard already has ${partyRows} party payment${partyRows === 1 ? '' : 's'} ($${(Math.round(partyPaidTotal * 100) / 100).toFixed(2)} paid). It cannot be cancelled: finish it with further release payments, and route anything unresolved to needs-human.`;
+    }
+    if (state === 'released' || hasReleasedHolding) return 'This Uplift orchard has been released to its parties and cannot be cancelled.';
+  }
   if (state === 'released' || hasReleasedHolding) return 'Released orchards cannot be cancelled: the sower has already been paid.';
   if (state === 'cancelling') return 'Already cancelling: refunds are in progress.';
   if (state === 'cancelled') return 'Already cancelled.';

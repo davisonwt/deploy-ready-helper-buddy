@@ -13,7 +13,8 @@
 --   2. the 3rd holding completes the funding: release fires automatically inside
 --      orchard_apply_holding (no explicit call)
 --   3. every holding is released; filled_pockets = 3
---   4. the sower is now OWED the sower total through owed_payout_balances (3 x 8.70 = 26.10)
+--   4. the sower is now OWED the sower total through owed_payout_balances (3 x 8.70 = 26.10 on top of
+--      whatever B was already owed before the fixture -- B has real owed rows since the Phase B devnet release)
 --   5. exactly one orchard_fee revenue row, 3.90, environment live (PayPal), rail paypal,
 --      release_ref = orchard id
 --   6. gift units: orchard_stock row with 1 unit for the sower
@@ -37,6 +38,7 @@ DECLARE
   v_id       uuid;
   v_res      jsonb;
   v_owed     numeric;
+  v_base     numeric;   -- B's owed balance before the fixture (B has real owed rows since the 2026-09-06 devnet release)
   v_fee_rows int;
   v_fee      numeric;
   v_f        record;
@@ -46,6 +48,7 @@ BEGIN
   VALUES ('Phase B release fixture', 'phase-b-release-tests.sql; rolled back', 'general', v_b,
           (SELECT id FROM public.profiles WHERE user_id = v_b), 26.09, 26.09, 10, 'active', 'USDC', 'physical')
   RETURNING id INTO v_orchard;
+  SELECT COALESCE(sum(amount_usd), 0) INTO v_base FROM public.owed_payout_balances() WHERE recipient_user_id = v_b;
   SELECT * INTO v_o FROM public.orchards WHERE id = v_orchard;
   INSERT INTO test_results VALUES ('0. fixture: 3 pockets x 10, launch, open',
     v_o.total_pockets = 3 AND v_o.orchard_kind = 'launch' AND v_o.funding_state = 'open',
@@ -70,7 +73,7 @@ BEGIN
   v_res := public.orchard_release(v_orchard);
   SELECT COALESCE(sum(amount_usd), 0) INTO v_owed FROM public.owed_payout_balances() WHERE recipient_user_id = v_b;
   INSERT INTO test_results VALUES ('1. 2/3 pockets: release refuses (not_funded), sower owed nothing, holdings held',
-    v_res ->> 'reason' = 'not_funded' AND v_owed = 0
+    v_res ->> 'reason' = 'not_funded' AND v_owed = v_base
     AND (SELECT count(*) FROM public.orchard_holdings WHERE orchard_id = v_orchard AND status = 'held') = 2
     AND (SELECT funding_state FROM public.orchards WHERE id = v_orchard) = 'open',
     v_res::text);
@@ -99,8 +102,8 @@ BEGIN
   -- 4. sower owed through the normal pipeline
   SELECT COALESCE(sum(amount_usd), 0) INTO v_owed FROM public.owed_payout_balances() WHERE recipient_user_id = v_b;
   INSERT INTO test_results VALUES ('4. sower owed 26.10 via owed_payout_balances (bestowals rows pending again)',
-    v_owed = 26.10 AND (SELECT count(*) FROM public.bestowals WHERE orchard_id = v_orchard AND payout_status = 'pending') = 3,
-    format('owed=%s', v_owed));
+    v_owed = v_base + 26.10 AND (SELECT count(*) FROM public.bestowals WHERE orchard_id = v_orchard AND payout_status = 'pending') = 3,
+    format('owed=%s base=%s', v_owed, v_base));
 
   -- 5. exactly one orchard_fee row
   SELECT count(*), COALESCE(sum(amount), 0) INTO v_fee_rows, v_fee FROM public.revenue_ledger
@@ -125,7 +128,7 @@ BEGIN
    WHERE kind = 'orchard_fee' AND source_id = (SELECT id FROM public.orchard_releases WHERE orchard_id = v_orchard);
   INSERT INTO test_results VALUES ('7. second orchard_release is a no-op (already_released); still one fee row; still 26.10 owed',
     v_res ->> 'reason' = 'already_released' AND v_fee_rows = 1
-    AND (SELECT COALESCE(sum(amount_usd), 0) FROM public.owed_payout_balances() WHERE recipient_user_id = v_b) = 26.10,
+    AND (SELECT COALESCE(sum(amount_usd), 0) FROM public.owed_payout_balances() WHERE recipient_user_id = v_b) = v_base + 26.10,
     v_res::text);
 
   -- 8. status + event

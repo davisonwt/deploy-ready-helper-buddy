@@ -360,6 +360,15 @@ verify_jwt = false
 [functions.orchard-shepherd]
 verify_jwt = false
 
+# P0-5 Phase C2 / Phase D: both do their own auth (CRON_SECRET / service
+# apikey / gosat session), so the gateway must not demand a JWT. Live value
+# for orchard-refund-worker confirmed false on 2026-09-07.
+[functions.orchard-refund-worker]
+verify_jwt = false
+
+[functions.orchard-release-uplift]
+verify_jwt = false
+
 [functions.parse-contract]
 verify_jwt = false
 
