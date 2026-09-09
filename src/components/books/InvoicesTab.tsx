@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { useBooksCurrency } from '@/lib/books/currency';
+import { useBooksCurrency, moneyOrUnavailable } from '@/lib/books/currency';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -28,7 +28,7 @@ const statusStyles: Record<InvoiceRow['status'], string> = {
 };
 
 export default function InvoicesTab({ businessId, invoices, items, onChanged }: Props) {
-  const { fmt, currency, symbol } = useBooksCurrency();
+  const { fmt, currency, fmtConverted, loading: ratesLoading } = useBooksCurrency();
   const [client, setClient] = useState('');
   const [amount, setAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -152,7 +152,7 @@ export default function InvoicesTab({ businessId, invoices, items, onChanged }: 
               <div className="min-w-0">
                 <p className="truncate font-medium">{inv.client_name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {fmt(inv.amount)}
+                  {moneyOrUnavailable(fmtConverted(inv.amount, inv.currency), ratesLoading)}
                   {inv.due_date ? ` · due ${new Date(inv.due_date).toLocaleDateString()}` : ''}
                 </p>
               </div>

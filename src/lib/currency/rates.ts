@@ -1,11 +1,17 @@
-// App-wide USD -> display-currency conversion. Every money column in this
-// app (expenses.amount, books_income.amount, bestowals.*, product_bestowals.*,
-// etc.) is stored in USD -- this is the only place that converts a USD
-// figure for display, reading public.exchange_rates (refreshed hourly by
-// the refresh-exchange-rates cron; see 20260903120000_exchange_rates.sql).
-// A currency missing from the table (API hasn't run yet, or an unrecognized
-// code) falls back to showing the USD figure unconverted rather than
-// guessing or blocking render.
+// App-wide currency conversion, reading public.exchange_rates (refreshed
+// hourly by the refresh-exchange-rates cron; see
+// 20260903120000_exchange_rates.sql). Most money columns (bestowals.*,
+// product_bestowals.*, books_income.amount, auto-synced expenses.amount)
+// are stored in USD, and convertFromUsd/formatConverted below is the
+// USD -> display-currency path for those. Books' own manually-entered
+// rows (expenses.amount, invoices.amount) are stored in the business's
+// own currency instead (companies.currency, alongside a per-row
+// `currency` column) -- convertBetween/sumConverted handle that general
+// any-currency-to-any-currency case, used by src/lib/books/currency.tsx.
+// A currency missing from the table (API hasn't run yet, or an
+// unrecognized code) falls back to showing the figure unconverted (for
+// convertFromUsd/formatConverted) or returns null (for convertBetween/
+// sumConverted) rather than guessing.
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -78,6 +84,65 @@ function formatCurrency(value: number, currency: string): string {
 export function formatConverted(amountUsd: number, toCurrency: string, rates: RatesMap): string {
   const code = (toCurrency || 'USD').toUpperCase();
   return formatCurrency(convertFromUsd(amountUsd, code, rates), code);
+}
+
+/**
+ * Converts an amount between ANY two currencies via USD as the pivot,
+ * using this same live rates table -- the general case `convertFromUsd`
+ * above doesn't cover, needed because Books rows aren't all USD: a
+ * manually-entered invoice/expense is stored in the business's own
+ * currency (companies.currency), while auto-synced rows (platform
+ * purchases, books_income) are stored in USD. Returns null when a rate
+ * this conversion needs isn't in the table -- the caller's job is to show
+ * a visible "rates unavailable" state, never a wrong number by silently
+ * treating the figure as already being in the target currency.
+ */
+export function convertBetween(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+  rates: RatesMap
+): number | null {
+  const from = (fromCurrency || 'USD').toUpperCase();
+  const to = (toCurrency || 'USD').toUpperCase();
+  if (from === to) return amount;
+
+  let usd: number;
+  if (from === 'USD') {
+    usd = amount;
+  } else {
+    const fromRate = rates[from];
+    if (!fromRate) return null;
+    usd = amount / fromRate;
+  }
+
+  if (to === 'USD') return usd;
+  const toRate = rates[to];
+  if (!toRate) return null;
+  return usd * toRate;
+}
+
+export interface MoneyRow {
+  amount: number;
+  currency: string;
+}
+
+/**
+ * Sums a list of rows stored in mixed currencies into one figure in
+ * `toCurrency`, via convertBetween for every row -- the one place Books
+ * money gets summed across currencies, so no tab does its own FX math.
+ * Null (rather than a partial/best-effort total) the moment any row can't
+ * be converted, so a caller never silently drops or mis-sums a row whose
+ * rate is missing.
+ */
+export function sumConverted(rows: MoneyRow[], toCurrency: string, rates: RatesMap): number | null {
+  let total = 0;
+  for (const row of rows) {
+    const converted = convertBetween(row.amount, row.currency, toCurrency, rates);
+    if (converted === null) return null;
+    total += converted;
+  }
+  return total;
 }
 
 /**

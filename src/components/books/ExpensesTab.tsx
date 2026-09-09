@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useBooksCurrency } from '@/lib/books/currency';
+import { useBooksCurrency, moneyOrUnavailable } from '@/lib/books/currency';
 import { EXPENSE_CATEGORIES, autoCategorize, normalizeCategory, type ExpenseCategory } from '@/lib/books/categorize';
 import type { ExpenseRow } from '@/hooks/useBooksData';
 
@@ -25,7 +25,7 @@ interface Props {
 }
 
 export default function ExpensesTab({ businessId, expenses, onChanged }: Props) {
-  const { fmt, currency, symbol } = useBooksCurrency();
+  const { currency, fmtConverted, loading: ratesLoading } = useBooksCurrency();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [merchant, setMerchant] = useState('');
@@ -122,7 +122,7 @@ export default function ExpensesTab({ businessId, expenses, onChanged }: Props) 
               <Input id="exp-desc" value={description} onChange={(e) => onDescription(e.target.value)} placeholder="e.g. Adobe subscription" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="exp-amount">Amount (ZAR)</Label>
+              <Label htmlFor="exp-amount">Amount ({currency})</Label>
               <Input id="exp-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
             </div>
             <div className="space-y-1.5">
@@ -203,7 +203,9 @@ export default function ExpensesTab({ businessId, expenses, onChanged }: Props) 
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="uppercase">{e.category}</Badge>
-                <span className="text-sm text-orange-400">{fmt(e.amount)}</span>
+                <span className="text-sm text-orange-400">
+                  {moneyOrUnavailable(fmtConverted(e.amount, e.currency), ratesLoading)}
+                </span>
               </div>
             </div>
           ))}

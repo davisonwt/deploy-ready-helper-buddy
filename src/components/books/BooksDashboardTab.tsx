@@ -3,7 +3,8 @@ import { ArrowDownRight, ArrowUpRight, Clock, Wallet } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import MoneyRiver from './MoneyRiver';
-import { useBooksCurrency } from '@/lib/books/currency';
+import { useBooksCurrency, moneyOrUnavailable } from '@/lib/books/currency';
+import type { MoneyRow } from '@/lib/currency/rates';
 import type { BooksIncomeRow, ExpenseRow, InvoiceRow } from '@/hooks/useBooksData';
 
 interface Props {
@@ -47,36 +48,54 @@ function StatCard({
 }
 
 export default function BooksDashboardTab({ invoices, expenses, income }: Props) {
-  const { fmt, currency, symbol } = useBooksCurrency();
+  const { sum, convert, format, loading: ratesLoading } = useBooksCurrency();
+
   const stats = useMemo(() => {
     // Two separate income sources: books_income (auto-synced from real
-    // platform orders) and invoices (manually created/sent, tracked in
-    // their own table) -- a paid invoice is real income exactly like a
-    // synced order and must count here too. This card previously only
-    // summed books_income, silently excluding every paid invoice from
-    // both Income and Balance (net) even though the money-river chart's
-    // `inflows` below already correctly included them.
-    const syncedIncome = income.reduce((s, i) => s + i.amount, 0);
-    const paidInvoiceIncome = invoices.filter((i) => i.status === 'paid').reduce((s, i) => s + i.amount, 0);
-    const totalIncome = syncedIncome + paidInvoiceIncome;
-    const outstanding = invoices.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.amount, 0);
-    const spend = expenses.reduce((s, e) => s + e.amount, 0);
-    return { income: totalIncome, outstanding, spend, net: totalIncome - spend };
-  }, [income, invoices, expenses]);
+    // platform orders, always USD) and invoices (manually created/sent,
+    // tracked in their own table, stored in the business's own currency)
+    // -- a paid invoice is real income exactly like a synced order and
+    // must count here too. Every row carries its own `currency`, so each
+    // is converted to the business's currency (via the live FX table)
+    // before being summed -- summing raw amounts across currencies would
+    // silently add unrelated units together.
+    const incomeRows: MoneyRow[] = income.map((i) => ({ amount: i.amount, currency: i.currency }));
+    const paidInvoiceRows: MoneyRow[] = invoices
+      .filter((i) => i.status === 'paid')
+      .map((i) => ({ amount: i.amount, currency: i.currency }));
+    const outstandingRows: MoneyRow[] = invoices
+      .filter((i) => i.status !== 'paid')
+      .map((i) => ({ amount: i.amount, currency: i.currency }));
+    const expenseRows: MoneyRow[] = expenses.map((e) => ({ amount: e.amount, currency: e.currency }));
+
+    const totalIncome = sum([...incomeRows, ...paidInvoiceRows]);
+    const outstanding = sum(outstandingRows);
+    const spend = sum(expenseRows);
+    const net = totalIncome !== null && spend !== null ? totalIncome - spend : null;
+    return { income: totalIncome, outstanding, spend, net };
+  }, [income, invoices, expenses, sum]);
 
   const inflows = useMemo(() => {
-    const map = new Map<string, number>();
+    const map = new Map<string, MoneyRow[]>();
     invoices
       .filter((i) => i.status === 'paid')
-      .forEach((i) => map.set(i.client_name, (map.get(i.client_name) ?? 0) + i.amount));
-    return Array.from(map, ([label, amount]) => ({ label, amount }));
-  }, [invoices]);
+      .forEach((i) => {
+        const rows = map.get(i.client_name) ?? [];
+        rows.push({ amount: i.amount, currency: i.currency });
+        map.set(i.client_name, rows);
+      });
+    return Array.from(map, ([label, rows]) => ({ label, amount: sum(rows) }));
+  }, [invoices, sum]);
 
   const outflows = useMemo(() => {
-    const map = new Map<string, number>();
-    expenses.forEach((e) => map.set(e.category, (map.get(e.category) ?? 0) + e.amount));
-    return Array.from(map, ([label, amount]) => ({ label, amount }));
-  }, [expenses]);
+    const map = new Map<string, MoneyRow[]>();
+    expenses.forEach((e) => {
+      const rows = map.get(e.category) ?? [];
+      rows.push({ amount: e.amount, currency: e.currency });
+      map.set(e.category, rows);
+    });
+    return Array.from(map, ([label, rows]) => ({ label, amount: sum(rows) }));
+  }, [expenses, sum]);
 
   const activity = useMemo(() => {
     const items = [
@@ -84,7 +103,7 @@ export default function BooksDashboardTab({ invoices, expenses, income }: Props)
         id: `inv-${i.id}`,
         when: i.paid_at ?? i.created_at,
         title: `${i.status === 'paid' ? 'Paid' : 'Invoice'} · ${i.client_name}`,
-        amount: i.amount,
+        amount: convert(i.amount, i.currency),
         positive: true,
         tag: i.status,
       })),
@@ -92,21 +111,23 @@ export default function BooksDashboardTab({ invoices, expenses, income }: Props)
         id: `exp-${e.id}`,
         when: e.created_at,
         title: `${e.description}`,
-        amount: e.amount,
+        amount: convert(e.amount, e.currency),
         positive: false,
         tag: e.category,
       })),
     ];
     return items.sort((a, b) => new Date(b.when).getTime() - new Date(a.when).getTime()).slice(0, 8);
-  }, [invoices, expenses]);
+  }, [invoices, expenses, convert]);
+
+  const moneyText = (value: number | null) => moneyOrUnavailable(value === null ? null : format(value), ratesLoading);
 
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Balance" value={fmt(stats.net)} icon={Wallet} tone={stats.net >= 0 ? 'primary' : 'negative'} />
-        <StatCard label="Income (paid)" value={fmt(stats.income)} icon={ArrowUpRight} tone="positive" />
-        <StatCard label="Expenses" value={fmt(stats.spend)} icon={ArrowDownRight} tone="negative" />
-        <StatCard label="Outstanding" value={fmt(stats.outstanding)} icon={Clock} tone="muted" />
+        <StatCard label="Balance" value={moneyText(stats.net)} icon={Wallet} tone={stats.net === null || stats.net >= 0 ? 'primary' : 'negative'} />
+        <StatCard label="Income (paid)" value={moneyText(stats.income)} icon={ArrowUpRight} tone="positive" />
+        <StatCard label="Expenses" value={moneyText(stats.spend)} icon={ArrowDownRight} tone="negative" />
+        <StatCard label="Outstanding" value={moneyText(stats.outstanding)} icon={Clock} tone="muted" />
       </div>
 
       <Card className="border-border/60 bg-card/50 backdrop-blur">
@@ -114,7 +135,13 @@ export default function BooksDashboardTab({ invoices, expenses, income }: Props)
           <CardTitle className="text-base">Money river</CardTitle>
         </CardHeader>
         <CardContent>
-          <MoneyRiver inflows={inflows} outflows={outflows} net={stats.net} />
+          {stats.net === null ? (
+            <div className="flex h-48 items-center justify-center rounded-xl border border-border/60 bg-card/40 text-sm text-muted-foreground">
+              {ratesLoading ? 'Loading exchange rates…' : 'Rates unavailable — the money river needs a live rate for every currency in play.'}
+            </div>
+          ) : (
+            <MoneyRiver inflows={inflows} outflows={outflows} net={stats.net} />
+          )}
         </CardContent>
       </Card>
 
@@ -137,7 +164,7 @@ export default function BooksDashboardTab({ invoices, expenses, income }: Props)
               <div className="flex shrink-0 items-center gap-2">
                 <Badge variant="outline" className="text-[10px] uppercase">{a.tag}</Badge>
                 <span className={a.positive ? 'text-sm text-emerald-400' : 'text-sm text-orange-400'}>
-                  {a.positive ? '+' : '−'}{fmt(a.amount)}
+                  {a.amount === null ? moneyText(null) : `${a.positive ? '+' : '−'}${format(a.amount)}`}
                 </span>
               </div>
             </div>

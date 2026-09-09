@@ -15,6 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { monthLabel } from '@/lib/books/format';
 import { useBooksCurrency } from '@/lib/books/currency';
+import type { MoneyRow } from '@/lib/currency/rates';
 import type { ExpenseRow, InvoiceRow } from '@/hooks/useBooksData';
 
 interface Props {
@@ -33,13 +34,14 @@ const PIE_COLORS = [
 ];
 
 export default function ReportsTab({ invoices, expenses }: Props) {
-  const { fmt, currency, symbol } = useBooksCurrency();
-  const months = useMemo(() => {
+  const { symbol, sum, format, loading: ratesLoading } = useBooksCurrency();
+
+  const monthsRaw = useMemo(() => {
     const now = new Date();
-    const buckets: { key: string; label: string; income: number; expenses: number }[] = [];
+    const buckets: { key: string; label: string; incomeRows: MoneyRow[]; expenseRows: MoneyRow[] }[] = [];
     for (let i = 5; i >= 0; i -= 1) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      buckets.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label: monthLabel(d), income: 0, expenses: 0 });
+      buckets.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label: monthLabel(d), incomeRows: [], expenseRows: [] });
     }
     const index = new Map(buckets.map((b) => [b.key, b]));
     const keyOf = (iso: string) => {
@@ -51,21 +53,39 @@ export default function ReportsTab({ invoices, expenses }: Props) {
       .filter((i) => i.status === 'paid')
       .forEach((i) => {
         const b = index.get(keyOf(i.paid_at ?? i.created_at));
-        if (b) b.income += i.amount;
+        if (b) b.incomeRows.push({ amount: i.amount, currency: i.currency });
       });
     expenses.forEach((e) => {
       const b = index.get(keyOf(e.spent_on ?? e.created_at));
-      if (b) b.expenses += e.amount;
+      if (b) b.expenseRows.push({ amount: e.amount, currency: e.currency });
     });
 
     return buckets;
   }, [invoices, expenses]);
 
-  const byCategory = useMemo(() => {
-    const map = new Map<string, number>();
-    expenses.forEach((e) => map.set(e.category, (map.get(e.category) ?? 0) + e.amount));
-    return Array.from(map, ([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  const months = useMemo(
+    () => monthsRaw.map((b) => ({ key: b.key, label: b.label, income: sum(b.incomeRows), expenses: sum(b.expenseRows) })),
+    [monthsRaw, sum]
+  );
+  const monthsUnavailable = months.some((b) => b.income === null || b.expenses === null);
+
+  const byCategoryRaw = useMemo(() => {
+    const map = new Map<string, MoneyRow[]>();
+    expenses.forEach((e) => {
+      const rows = map.get(e.category) ?? [];
+      rows.push({ amount: e.amount, currency: e.currency });
+      map.set(e.category, rows);
+    });
+    return map;
   }, [expenses]);
+
+  const byCategory = useMemo(
+    () =>
+      Array.from(byCategoryRaw, ([name, rows]) => ({ name, value: sum(rows) }))
+        .sort((a, b) => (b.value ?? 0) - (a.value ?? 0)),
+    [byCategoryRaw, sum]
+  );
+  const byCategoryUnavailable = byCategory.some((c) => c.value === null);
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -74,21 +94,27 @@ export default function ReportsTab({ invoices, expenses }: Props) {
           <CardTitle className="text-base">Income vs expenses — last 6 months</CardTitle>
         </CardHeader>
         <CardContent className="h-[320px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={months}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-              <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-              <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} width={70}
-                tickFormatter={(v) => `${symbol}${Math.round(Number(v) / 1000)}k`} />
-              <Tooltip
-                formatter={(v: any) => fmt(Number(v))}
-                contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
-              />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="income" name="Income" fill="hsl(152 70% 50%)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="expenses" name="Expenses" fill="hsl(20 90% 62%)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {monthsUnavailable ? (
+            <p className="pt-10 text-center text-sm text-muted-foreground">
+              {ratesLoading ? 'Loading exchange rates…' : 'Rates unavailable — figures can’t be shown accurately.'}
+            </p>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={months.map((m) => ({ label: m.label, income: m.income ?? 0, expenses: m.expenses ?? 0 }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+                <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} width={70}
+                  tickFormatter={(v) => `${symbol}${Math.round(Number(v) / 1000)}k`} />
+                <Tooltip
+                  formatter={(v: any) => format(Number(v))}
+                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="income" name="Income" fill="hsl(152 70% 50%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expenses" name="Expenses" fill="hsl(20 90% 62%)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
 
@@ -99,6 +125,10 @@ export default function ReportsTab({ invoices, expenses }: Props) {
         <CardContent className="h-[320px]">
           {byCategory.length === 0 ? (
             <p className="pt-10 text-center text-sm text-muted-foreground">No expenses to report yet.</p>
+          ) : byCategoryUnavailable ? (
+            <p className="pt-10 text-center text-sm text-muted-foreground">
+              {ratesLoading ? 'Loading exchange rates…' : 'Rates unavailable — figures can’t be shown accurately.'}
+            </p>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -108,7 +138,7 @@ export default function ReportsTab({ invoices, expenses }: Props) {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(v: any) => fmt(Number(v))}
+                  formatter={(v: any) => format(Number(v))}
                   contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />

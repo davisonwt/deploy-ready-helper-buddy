@@ -3,7 +3,8 @@ import { useBooksCurrency } from '@/lib/books/currency';
 
 interface Source {
   label: string;
-  amount: number;
+  /** Already converted to the business's currency by the caller. */
+  amount: number | null;
 }
 
 interface Props {
@@ -22,18 +23,26 @@ const OUT_COLOR = 'hsl(20 90% 62%)';
  * through the business, out to expense categories.
  */
 export default function MoneyRiver({ inflows, outflows, net }: Props) {
-  const { fmt, currency, symbol } = useBooksCurrency();
+  const { format } = useBooksCurrency();
   const W = 900;
   const H = 360;
   const CX = W / 2;
   const CY = H / 2;
 
   const left = useMemo(
-    () => inflows.filter((s) => s.amount > 0).sort((a, b) => b.amount - a.amount).slice(0, 5),
+    () =>
+      inflows
+        .filter((s): s is { label: string; amount: number } => s.amount !== null && s.amount > 0)
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 5),
     [inflows]
   );
   const right = useMemo(
-    () => outflows.filter((s) => s.amount > 0).sort((a, b) => b.amount - a.amount).slice(0, 6),
+    () =>
+      outflows
+        .filter((s): s is { label: string; amount: number } => s.amount !== null && s.amount > 0)
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 6),
     [outflows]
   );
 
@@ -82,7 +91,7 @@ export default function MoneyRiver({ inflows, outflows, net }: Props) {
                 <animateMotion dur={`${2.6 + i * 0.35}s`} repeatCount="indefinite" path={d} />
               </circle>
               <text x="140" y={y - 10} textAnchor="end" className="fill-foreground" fontSize="13">{s.label}</text>
-              <text x="140" y={y + 8} textAnchor="end" fill={IN_COLOR} fontSize="12">{fmt(s.amount)}</text>
+              <text x="140" y={y + 8} textAnchor="end" fill={IN_COLOR} fontSize="12">{format(s.amount)}</text>
             </g>
           );
         })}
@@ -97,7 +106,7 @@ export default function MoneyRiver({ inflows, outflows, net }: Props) {
                 <animateMotion dur={`${2.4 + i * 0.3}s`} repeatCount="indefinite" path={d} />
               </circle>
               <text x={W - 140} y={y - 10} className="fill-foreground" fontSize="13">{s.label}</text>
-              <text x={W - 140} y={y + 8} fill={OUT_COLOR} fontSize="12">{fmt(s.amount)}</text>
+              <text x={W - 140} y={y + 8} fill={OUT_COLOR} fontSize="12">{format(s.amount)}</text>
             </g>
           );
         })}
@@ -109,7 +118,7 @@ export default function MoneyRiver({ inflows, outflows, net }: Props) {
         </circle>
         <text x={CX} y={CY - 6} textAnchor="middle" className="fill-muted-foreground" fontSize="11">NET</text>
         <text x={CX} y={CY + 14} textAnchor="middle" fill={net >= 0 ? IN_COLOR : OUT_COLOR} fontSize="15" fontWeight="600">
-          {fmt(net)}
+          {format(net)}
         </text>
       </svg>
     </div>
