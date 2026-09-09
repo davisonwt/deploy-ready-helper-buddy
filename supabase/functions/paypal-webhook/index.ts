@@ -187,6 +187,9 @@ function parseCustomId(customId: string): ParsedOrder {
   if (customId.startsWith("booking:")) {
     return { kind: "booking", recordId: customId.slice("booking:".length) };
   }
+  if (customId.startsWith("invoice:")) {
+    return { kind: "invoice", recordId: customId.slice("invoice:".length) };
+  }
   return { kind: "orchard", recordId: customId };
 }
 

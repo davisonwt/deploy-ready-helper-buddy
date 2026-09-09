@@ -14,7 +14,7 @@ import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_s
 import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
 
 const BodySchema = z.object({
-  kind: z.enum(["basket", "content", "gift", "orchard", "topup", "booking"]),
+  kind: z.enum(["basket", "content", "gift", "orchard", "topup", "booking", "invoice"]),
   recordId: z.string().uuid(),
 });
 
@@ -22,6 +22,9 @@ interface KindConfig {
   table: string;
   ownerColumn: string;
   statusColumn: string;
+  /** Column holding the provider name — "provider" everywhere except
+   * invoice_payments, which calls it "rail" (it also carries "solana"). */
+  providerColumn?: string;
   /** Status values that mean "already finalized" — short-circuit without touching PayPal again. */
   doneValues: string[];
 }
@@ -36,6 +39,12 @@ const KIND_CONFIG: Record<PaypalOrderKind, KindConfig> = {
   orchard: { table: "bestowals", ownerColumn: "bestower_id", statusColumn: "payment_status", doneValues: ["completed", "distributed"] },
   topup: { table: "topups", ownerColumn: "user_id", statusColumn: "status", doneValues: ["completed"] },
   booking: { table: "bookings", ownerColumn: "grower_user_id", statusColumn: "status", doneValues: ["paid"] },
+  // No Supabase session exists for a guest paying by public_token — this
+  // recovery endpoint only ever reaches invoice payments via the
+  // service-role bypass (an admin recovery script) or a signed-in customer
+  // who happens to be payer_user_id; the ordinary guest path is
+  // paypal-webhook + the sweep, same as the plan's section 4 says.
+  invoice: { table: "invoice_payments", ownerColumn: "payer_user_id", statusColumn: "status", providerColumn: "rail", doneValues: ["completed"] },
 };
 
 Deno.serve(async (req) => {
@@ -77,11 +86,12 @@ Deno.serve(async (req) => {
   }
 
   const config = KIND_CONFIG[parsed.kind];
+  const providerColumn = config.providerColumn ?? "provider";
   const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
   const selectCols = parsed.kind === "basket"
-    ? `id, ${config.ownerColumn}, provider, provider_order_id, provider_invoice_id, ${config.statusColumn}`
-    : `id, ${config.ownerColumn}, provider, provider_order_id, ${config.statusColumn}`;
+    ? `id, ${config.ownerColumn}, ${providerColumn}, provider_order_id, provider_invoice_id, ${config.statusColumn}`
+    : `id, ${config.ownerColumn}, ${providerColumn}, provider_order_id, ${config.statusColumn}`;
 
   const { data: order, error: orderError } = await service
     .from(config.table)
@@ -102,7 +112,7 @@ Deno.serve(async (req) => {
     if (!isAdmin && !isGosat) return json({ error: "forbidden" }, 403);
   }
 
-  if (row.provider !== "paypal") return json({ error: "not_paypal_order" }, 400);
+  if (row[providerColumn] !== "paypal") return json({ error: "not_paypal_order" }, 400);
 
   const status = row[config.statusColumn] as string;
   if (config.doneValues.includes(status)) return json({ status: "completed" });
