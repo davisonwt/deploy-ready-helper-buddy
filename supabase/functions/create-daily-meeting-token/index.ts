@@ -70,6 +70,12 @@ Deno.serve(async (req) => {
 
     const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
+    // Default naming: kind + the room's own id. Overridden below only for
+    // call_session, the one kind with a fixed, known two-person shape --
+    // chat_room can hold more than two participants (GroupChatRoomEnhanced
+    // uses this same kind), so a "1v1" name would be actively wrong there.
+    let dailyRoomName = `${roomKind}-${roomId}`;
+
     if (roomKind === "call_session") {
       const { data: call, error } = await service
         .from("call_sessions")
@@ -80,6 +86,12 @@ Deno.serve(async (req) => {
       if (!call || (call.caller_id !== user.id && call.receiver_id !== user.id)) {
         return json({ error: "forbidden" }, 403);
       }
+      // Sorted so both parties land on the same name regardless of who
+      // initiated -- also means successive calls between the same two
+      // people reuse the same Daily room instead of minting a fresh one
+      // per call_sessions row, which is the intended UX (an identifiable,
+      // persistent "room for us two"), not an incidental side effect.
+      dailyRoomName = `s2g-1v1-${[call.caller_id, call.receiver_id].sort().join('-')}`;
     } else if (roomKind === "chat_room") {
       const { data: participant, error } = await service
         .from("chat_participants")
@@ -93,7 +105,7 @@ Deno.serve(async (req) => {
     // "custom" rooms: authenticated is the whole check, same trust floor the
     // Jitsi rooms they replace had (a public domain with no JWT at all).
 
-    const dailyRoomName = `${roomKind}-${roomId}`.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 60);
+    dailyRoomName = dailyRoomName.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 60);
 
     const roomUrl = await getOrCreateDailyRoom(dailyApiKey, dailyRoomName);
 

@@ -877,9 +877,12 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
         </div>
       </div>
 
-      {/* Jitsi Call - Show when call is accepted */}
+      {/* Video call - Show when call is accepted */}
       {currentCall && currentCall.status === 'accepted' && (
         <div className="p-4 border-b">
+          <p className="mb-2 text-sm font-medium">
+            {currentCall.caller_id === user?.id ? currentCall.receiver_name : currentCall.caller_name}
+          </p>
           <JitsiCall
             roomName={currentCall.id}
             roomKind="call_session"
