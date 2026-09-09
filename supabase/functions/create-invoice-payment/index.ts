@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
       return await createSolanaPaymentAttempt(service, invoice, amountDue);
     }
 
-    return await createPaypalPaymentAttempt(service, invoice, amountDue, existingPayment, payload.redirectBaseUrl);
+    return await createPaypalPaymentAttempt(service, invoice, amountDue, existingPayment, payload.publicToken, payload.redirectBaseUrl);
   } catch (err) {
     console.error("create-invoice-payment error", err);
     await logFunctionFailure("create-invoice-payment", err);
@@ -187,6 +187,7 @@ async function createPaypalPaymentAttempt(
   invoice: InvoiceRef,
   amountDue: number,
   existingPayment: { id: string; provider_order_id: string | null } | null | undefined,
+  publicToken: string,
   redirectBaseUrl?: string,
 ) {
   const paypalClientId = Deno.env.get("PAYPAL_CLIENT_ID");
@@ -266,8 +267,14 @@ async function createPaypalPaymentAttempt(
               shipping_preference: "NO_SHIPPING",
               landing_page: "LOGIN",
               payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
-              return_url: `${redirectBase}/payment-success?invoicePayment=${payment.id}`,
-              cancel_url: `${redirectBase}/payment-cancelled?invoicePayment=${payment.id}`,
+              // Back to the public pay page, not /payment-success -- that
+              // page requires a signed-in session (it calls
+              // capture-paypal-order with a Bearer token) and a guest paying
+              // by public_token has none. /pay/:publicToken already polls
+              // get_public_invoice() with no auth and already renders
+              // "Paid" once paypal-webhook finalizes it server-side.
+              return_url: `${redirectBase}/pay/${publicToken}`,
+              cancel_url: `${redirectBase}/pay/${publicToken}`,
             },
           },
         },

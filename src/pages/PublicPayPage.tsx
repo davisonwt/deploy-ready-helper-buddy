@@ -45,13 +45,19 @@ interface SolanaPayment {
   solanaPayUrl: string;
 }
 
+interface PaypalPayment {
+  orderId: string;
+  approveUrl: string | null;
+}
+
 const S2G_FEE_RATE = 0.15;
 
 export default function PublicPayPage() {
   const { publicToken } = useParams<{ publicToken: string }>();
   const [invoice, setInvoice] = useState<PublicInvoice | null | undefined>(undefined); // undefined = loading
-  const [starting, setStarting] = useState(false);
+  const [starting, setStarting] = useState<'solana' | 'paypal' | null>(null);
   const [payment, setPayment] = useState<SolanaPayment | null>(null);
+  const [paypalPayment, setPaypalPayment] = useState<PaypalPayment | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -84,22 +90,34 @@ export default function PublicPayPage() {
     QRCode.toDataURL(payment.solanaPayUrl, { width: 240, margin: 1 }).then(setQrDataUrl).catch(() => setQrDataUrl(null));
   }, [payment]);
 
-  const startPayment = async () => {
+  const startPayment = async (rail: 'solana' | 'paypal') => {
     if (!invoice || !publicToken) return;
-    setStarting(true);
+    setStarting(rail);
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/create-invoice-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
-        body: JSON.stringify({ invoiceId: invoice.id, publicToken, rail: 'solana' }),
+        body: JSON.stringify({ invoiceId: invoice.id, publicToken, rail, redirectBaseUrl: window.location.origin }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body?.message || body?.error || 'Could not start the payment');
-      setPayment(body.solanaPayment);
+      if (rail === 'solana') {
+        setPayment(body.solanaPayment);
+      } else {
+        // PayPal's own hosted checkout does the rest -- the buyer comes
+        // straight back to this same page (return_url = /pay/:publicToken)
+        // once approved, and this page's polling picks up the webhook's
+        // finalize.
+        if (body.paypalPayment?.approveUrl) {
+          window.location.href = body.paypalPayment.approveUrl;
+        } else {
+          setPaypalPayment(body.paypalPayment);
+        }
+      }
     } catch (e: any) {
       alert(e?.message || 'Could not start the payment. Please try again.');
     } finally {
-      setStarting(false);
+      setStarting(null);
     }
   };
 
@@ -159,11 +177,17 @@ export default function PublicPayPage() {
             <p className="text-sm text-muted-foreground">This invoice hasn't been sent yet.</p>
           )}
 
-          {invoice.status === 'sent' && !payment && (
-            <Button onClick={startPayment} disabled={starting} className="w-full">
-              {starting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wallet className="mr-2 h-4 w-4" />}
-              Pay with USDC
-            </Button>
+          {invoice.status === 'sent' && !payment && !paypalPayment && (
+            <div className="space-y-2">
+              <Button onClick={() => startPayment('solana')} disabled={starting !== null} className="w-full">
+                {starting === 'solana' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wallet className="mr-2 h-4 w-4" />}
+                Pay with USDC
+              </Button>
+              <Button onClick={() => startPayment('paypal')} disabled={starting !== null} variant="outline" className="w-full">
+                {starting === 'paypal' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Pay with PayPal
+              </Button>
+            </div>
           )}
 
           {invoice.status === 'sent' && payment && (
@@ -172,6 +196,12 @@ export default function PublicPayPage() {
               <p className="text-xs text-muted-foreground break-all">{payment.solanaPayUrl}</p>
               <p className="text-xs text-muted-foreground">Scan with any Solana wallet, or open the link on your phone. This page updates on its own once payment is confirmed.</p>
             </div>
+          )}
+
+          {invoice.status === 'sent' && paypalPayment && !paypalPayment.approveUrl && (
+            <p className="text-sm text-muted-foreground text-center">
+              Could not open PayPal's checkout. Please try again.
+            </p>
           )}
         </CardContent>
       </Card>
