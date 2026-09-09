@@ -39,20 +39,6 @@ export interface InvoiceRow {
   customer_name: string | null;
 }
 
-export interface LineItemRow {
-  id: string;
-  invoice_id: string;
-  position: number;
-  description: string;
-  quantity: number;
-  unit: string | null;
-  unit_price: number;
-  taxable: boolean;
-  tax_rate_percent: number;
-  line_total: number;
-  books_item_id: string | null;
-}
-
 const num = (row: any, key: string) => toNumber(row?.[key]);
 
 export function useInvoicing(businessId: string | null) {
@@ -132,102 +118,12 @@ export interface DraftLine {
   books_item_id: string | null;
 }
 
-/** Create a draft invoice with its line items in one call, then fetch it back with lines. */
-export async function createDraftInvoice(
-  businessId: string,
-  customerId: string,
-  lines: DraftLine[],
-  notesToCustomer: string | null
-): Promise<{ invoiceId: string; number: string }> {
-  const { data: number, error: numErr } = await supabase.rpc('next_invoice_number' as any, { _business_id: businessId } as any);
-  if (numErr) throw numErr;
-
-  const totals = computeInvoiceTotalsFromLines(lines);
-  const { data: invoice, error: invErr } = await supabase
-    .from('invoices' as any)
-    .insert({
-      business_id: businessId,
-      customer_id: customerId,
-      number,
-      status: 'draft',
-      subtotal: totals.subtotal,
-      tax_total: totals.taxTotal,
-      total: totals.total,
-      notes_to_customer: notesToCustomer,
-    } as any)
-    .select('id, number')
-    .single();
-  if (invErr || !invoice) throw invErr ?? new Error('Could not create the invoice');
-
-  if (lines.length > 0) {
-    const { error: lineErr } = await supabase.from('line_items' as any).insert(
-      lines.map((l, i) => ({
-        invoice_id: (invoice as any).id,
-        position: i,
-        description: l.description,
-        quantity: l.quantity,
-        unit: l.unit,
-        unit_price: l.unit_price,
-        taxable: l.taxable,
-        tax_rate_percent: l.tax_rate_percent,
-        books_item_id: l.books_item_id,
-      })) as any
-    );
-    if (lineErr) throw lineErr;
-  }
-
-  return { invoiceId: (invoice as any).id, number: (invoice as any).number };
-}
-
-export async function sendInvoice(invoiceId: string): Promise<void> {
-  const { error } = await supabase
-    .from('invoices' as any)
-    .update({ status: 'sent', sent_at: new Date().toISOString() } as any)
-    .eq('id', invoiceId);
-  if (error) throw error;
-  await supabase.from('document_events' as any).insert({
-    document_kind: 'invoice',
-    document_id: invoiceId,
-    event: 'sent',
-    from_state: 'draft',
-    to_state: 'sent',
-    actor: 'member',
-  } as any);
-}
-
-export async function voidInvoice(invoiceId: string, reason: string): Promise<void> {
-  const { error } = await supabase
-    .from('invoices' as any)
-    .update({ status: 'void', voided_at: new Date().toISOString(), void_reason: reason } as any)
-    .eq('id', invoiceId);
-  if (error) throw error;
-  await supabase.from('document_events' as any).insert({
-    document_kind: 'invoice',
-    document_id: invoiceId,
-    event: 'void',
-    to_state: 'void',
-    actor: 'member',
-    notes: reason,
-  } as any);
-}
-
-export async function fetchLineItems(invoiceId: string): Promise<LineItemRow[]> {
-  const { data, error } = await supabase
-    .from('line_items' as any)
-    .select('*')
-    .eq('invoice_id', invoiceId)
-    .order('position', { ascending: true });
-  if (error) throw error;
-  return ((data as any[]) ?? []).map((r) => ({
-    ...r,
-    quantity: num(r, 'quantity'),
-    unit_price: num(r, 'unit_price'),
-    tax_rate_percent: num(r, 'tax_rate_percent'),
-    line_total: num(r, 'line_total'),
-  })) as LineItemRow[];
-}
-
-/** Pure totals math, exported for the unit test twin. Mirrors line_items.line_total's own generated-column formula. */
+/**
+ * Pure totals math, exported for the unit test twin. Mirrors
+ * line_items.line_total's own generated-column formula. Still used by
+ * EstimateBuilderPage's twin (useJobInvoicing's computeEstimateTotals) --
+ * kept here too since src/test/invoicing-phase1.test.ts pins this one.
+ */
 export function computeInvoiceTotalsFromLines(lines: DraftLine[]): { subtotal: number; taxTotal: number; total: number } {
   let subtotal = 0;
   let taxTotal = 0;

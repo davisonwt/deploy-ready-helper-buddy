@@ -87,9 +87,14 @@ import {
   EscrowQueuePage,
   BooksPage,
   BooksCatalogItemPage,
-  InvoiceBuilderPage,
   InvoiceViewPage,
   PublicPayPage,
+  JobInvoicingDashboardPage,
+  JobNoteFormPage,
+  JobDetailPage,
+  EstimateBuilderPage,
+  PublicEstimateApprovalPage,
+  JoinPage,
   GosatSubscriptionsPage,
   MyWalletPage,
   GosatTreasuryPage,
@@ -551,17 +556,37 @@ const AppRoutes = () => (
     <Route path="/books/catalog/:itemId" element={
       <ProtectedRoute><Layout><BooksCatalogItemPage /></Layout></ProtectedRoute>
     } />
-    <Route path="/books/invoices/new" element={
-      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><Layout><InvoiceBuilderPage /></Layout></Suspense></ProtectedRoute>
-    } />
+    {/* Standalone invoice creation is superseded by the job/estimate flow
+        below (an invoice now always belongs to an estimate's payment
+        schedule) -- redirected rather than left live and broken. */}
+    <Route path="/books/invoices/new" element={<Navigate to="/books/jobs/new" replace />} />
     <Route path="/books/invoices/:id" element={
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><Layout><InvoiceViewPage /></Layout></Suspense></ProtectedRoute>
     } />
-    {/* Public: a customer paying an invoice may have no S2G account at all
-        -- no ProtectedRoute, no Layout (nothing here assumes a signed-in
-        member's chrome). Keyed by the invoice's own unguessable token. */}
+    <Route path="/books/invoicing" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><Layout><JobInvoicingDashboardPage /></Layout></Suspense></ProtectedRoute>
+    } />
+    <Route path="/books/jobs/new" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><Layout><JobNoteFormPage /></Layout></Suspense></ProtectedRoute>
+    } />
+    <Route path="/books/jobs/:id" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><Layout><JobDetailPage /></Layout></Suspense></ProtectedRoute>
+    } />
+    <Route path="/books/estimates/new" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><Layout><EstimateBuilderPage /></Layout></Suspense></ProtectedRoute>
+    } />
+    {/* Public: a customer paying an invoice or approving an estimate may
+        have no S2G account at all -- no ProtectedRoute, no Layout (nothing
+        here assumes a signed-in member's chrome). Keyed by the invoice's/
+        estimate's own unguessable token. */}
     <Route path="/pay/:publicToken" element={
       <Suspense fallback={<LoadingFallback />}><PublicPayPage /></Suspense>
+    } />
+    <Route path="/estimate/:publicToken" element={
+      <Suspense fallback={<LoadingFallback />}><PublicEstimateApprovalPage /></Suspense>
+    } />
+    <Route path="/join" element={
+      <Suspense fallback={<LoadingFallback />}><JoinPage /></Suspense>
     } />
     <Route path="/admin/subscriptions" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}><Suspense fallback={<LoadingFallback />}><Layout><GosatSubscriptionsPage /></Layout></Suspense></ProtectedRoute>

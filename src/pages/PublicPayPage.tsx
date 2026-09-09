@@ -10,10 +10,10 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://zuwkgasbkpjlx
 const SUPABASE_ANON_KEY =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_Z8-I1gu2Q1yid1Q4jKRf7Q_jSGcsVpa';
 
-interface LineItem {
-  id: string;
+interface EstimateLine {
   description: string;
   quantity: number;
+  unit: string | null;
   line_total: number;
 }
 
@@ -21,6 +21,10 @@ interface PublicInvoice {
   id: string;
   number: string;
   status: 'draft' | 'sent' | 'paid' | 'void';
+  kind: 'standard' | 'deposit' | 'milestone' | 'balance';
+  schedule_label: string | null;
+  business_name: string | null;
+  job_title: string | null;
   subtotal: number;
   tax_total: number;
   total: number;
@@ -28,8 +32,7 @@ interface PublicInvoice {
   amount_due: number;
   paid_at: string | null;
   customer_name: string | null;
-  line_items: LineItem[];
-  pending_payment: { id: string; status: string; rail: string; amount: number } | null;
+  estimate_lines: EstimateLine[];
 }
 
 interface SolanaPayment {
@@ -114,13 +117,17 @@ export default function PublicPayPage() {
     <div className="mx-auto max-w-lg px-4 py-10 space-y-6">
       <Card className="border-border/60 bg-card/50 backdrop-blur">
         <CardHeader>
-          <CardTitle className="text-base">Invoice {invoice.number}</CardTitle>
-          <p className="text-sm text-muted-foreground">{invoice.customer_name ?? 'Customer'}</p>
+          <CardTitle className="text-base">
+            Invoice {invoice.number}{invoice.schedule_label ? ` — ${invoice.schedule_label}` : ''}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {[invoice.business_name, invoice.job_title].filter(Boolean).join(' · ') || (invoice.customer_name ?? 'Customer')}
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            {invoice.line_items.map((l) => (
-              <div key={l.id} className="flex justify-between text-sm">
+            {invoice.estimate_lines.map((l, i) => (
+              <div key={i} className="flex justify-between text-sm">
                 <span>{l.description}{l.quantity !== 1 ? ` × ${l.quantity}` : ''}</span>
                 <span>${l.line_total.toFixed(2)}</span>
               </div>

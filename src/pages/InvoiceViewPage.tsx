@@ -11,7 +11,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
-import { voidInvoice, fetchLineItems, type InvoiceRow, type LineItemRow } from '@/hooks/useInvoicing';
+import type { InvoiceRow } from '@/hooks/useInvoicing';
+import { voidInvoice, fetchEstimateLines, type DraftLine } from '@/hooks/useJobInvoicing';
+
+interface DisplayLine extends DraftLine {
+  line_total: number;
+}
 
 const statusStyles: Record<string, string> = {
   draft: 'bg-slate-500/15 text-slate-300 border-slate-400/30',
@@ -34,7 +39,8 @@ export default function InvoiceViewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState<(InvoiceRow & { customers?: { name: string } }) | null>(null);
-  const [lines, setLines] = useState<LineItemRow[]>([]);
+  const [lines, setLines] = useState<DisplayLine[]>([]);
+  const [scheduleLabel, setScheduleLabel] = useState<string | null>(null);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [voidReason, setVoidReason] = useState('');
@@ -43,13 +49,18 @@ export default function InvoiceViewPage() {
     if (!id) return;
     setLoading(true);
     try {
-      const [{ data: inv }, ls, { data: pays }] = await Promise.all([
-        supabase.from('invoices' as any).select('*, customers(name)').eq('id', id).maybeSingle(),
-        fetchLineItems(id),
+      const { data: inv } = await supabase.from('invoices' as any).select('*, customers(name)').eq('id', id).maybeSingle();
+      const invoiceRow = inv as any;
+      const [ls, sched, { data: pays }] = await Promise.all([
+        invoiceRow ? fetchEstimateLines(invoiceRow.estimate_id) : Promise.resolve([]),
+        invoiceRow?.linked_schedule_item_id
+          ? supabase.from('payment_schedule_items' as any).select('label').eq('id', invoiceRow.linked_schedule_item_id).maybeSingle()
+          : Promise.resolve({ data: null }),
         supabase.from('invoice_payments' as any).select('*').eq('invoice_id', id).order('created_at', { ascending: false }),
       ]);
-      setInvoice(inv as any);
-      setLines(ls);
+      setInvoice(invoiceRow);
+      setLines(ls.map((l) => ({ ...l, line_total: Math.round(l.quantity * l.unit_price * 100) / 100 })));
+      setScheduleLabel((sched as any)?.data?.label ?? null);
       setPayments(((pays as any[]) ?? []) as PaymentRow[]);
     } finally {
       setLoading(false);
@@ -104,15 +115,15 @@ export default function InvoiceViewPage() {
       <Card className="border-border/60 bg-card/50 backdrop-blur">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-base">{invoice.number}</CardTitle>
+            <CardTitle className="text-base">{invoice.number}{scheduleLabel ? ` · ${scheduleLabel}` : ''}</CardTitle>
             <p className="text-sm text-muted-foreground">{(invoice as any).customers?.name ?? 'Customer'}</p>
           </div>
           <Badge variant="outline" className={`uppercase ${statusStyles[invoice.status]}`}>{invoice.status}</Badge>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            {lines.map((l) => (
-              <div key={l.id} className="flex justify-between text-sm">
+            {lines.map((l, i) => (
+              <div key={i} className="flex justify-between text-sm">
                 <span>{l.description} {l.quantity !== 1 && <span className="text-muted-foreground">× {l.quantity}</span>}</span>
                 <span>${l.line_total.toFixed(2)}</span>
               </div>

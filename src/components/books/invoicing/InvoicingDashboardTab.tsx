@@ -43,9 +43,12 @@ export default function InvoicingDashboardTab({ invoices }: Props) {
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <Link to="/books/invoices/new">
-          <Button size="sm"><Plus className="mr-2 h-4 w-4" /> New invoice</Button>
+      <div className="flex justify-end gap-2">
+        <Link to="/books/invoicing">
+          <Button size="sm" variant="outline">Jobs &amp; estimates</Button>
+        </Link>
+        <Link to="/books/jobs/new">
+          <Button size="sm"><Plus className="mr-2 h-4 w-4" /> New job</Button>
         </Link>
       </div>
 
