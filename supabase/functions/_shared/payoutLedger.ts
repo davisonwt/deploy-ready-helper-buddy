@@ -17,7 +17,7 @@
 type SupabaseLike = any;
 
 export interface CoveredRow {
-  source_table: "product_bestowals" | "content_purchases" | "bestowals" | "whisperer_earnings";
+  source_table: "product_bestowals" | "content_purchases" | "bestowals" | "whisperer_earnings" | "invoice_payments";
   source_id: string;
 }
 
@@ -62,6 +62,14 @@ const TABLE_CONFIG: Record<CoveredRow["source_table"], TableConfig> = {
     paidValue: "paid",
     completedAtCol: "processed_at",
     errorCol: null,
+  },
+  invoice_payments: {
+    statusCol: "payout_status",
+    pendingValue: "pending",
+    processingValue: "processing",
+    paidValue: "paid",
+    completedAtCol: "payout_completed_at",
+    errorCol: "payout_error",
   },
 };
 

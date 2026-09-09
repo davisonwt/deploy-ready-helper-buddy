@@ -49,7 +49,7 @@ import { resolveContentTitle } from "./messaging.ts";
 // deno-lint-ignore no-explicit-any
 type SupabaseLike = any;
 
-export type BooksSyncKind = "basket" | "content" | "gift" | "orchard" | "topup" | "booking";
+export type BooksSyncKind = "basket" | "content" | "gift" | "orchard" | "topup" | "booking" | "invoice";
 
 interface Company {
   id: string;
@@ -66,6 +66,7 @@ export async function syncBooksEntries(
     if (kind === "content") return await syncContentPurchase(supabase, recordId);
     if (kind === "topup") return await syncTopup(supabase, recordId);
     if (kind === "booking") return await syncBooking(supabase, recordId);
+    if (kind === "invoice") return await syncInvoicePayment(supabase, recordId);
     return await syncBestowal(supabase, recordId); // gift | orchard
   } catch (err) {
     console.error("syncBooksEntries failed", kind, recordId, err);
@@ -299,6 +300,51 @@ async function syncBooking(supabase: SupabaseLike, bookingId: string): Promise<v
   });
 }
 
+/**
+ * Member invoicing Phase 1 (MEMBER-INVOICING-PLAN.md section 4): a paid
+ * invoice becomes a books_income row the same way a sale does, on the
+ * invoicing business's own set of books (never "the buyer's" — an invoice
+ * customer is billed, not a books workspace). Amount is the member's net
+ * (the payment minus S2G's 15% fee), matching sower_amount for every other
+ * income kind here — not the gross the customer paid.
+ */
+async function syncInvoicePayment(supabase: SupabaseLike, paymentId: string): Promise<void> {
+  const { data: payment } = await supabase
+    .from("invoice_payments")
+    .select("id, invoice_id, amount, fee_amount, rail, completed_at")
+    .eq("id", paymentId)
+    .maybeSingle();
+  if (!payment || !payment.completed_at) return;
+
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("id, business_id, number, customer_id")
+    .eq("id", payment.invoice_id)
+    .maybeSingle();
+  if (!invoice) return;
+
+  const sellerCompany = await findCompanyIfBooksEnabled(supabase, invoice.business_id);
+  if (!sellerCompany) return; // Books not enabled on this business — nowhere to attach it
+
+  const { data: customer } = await supabase
+    .from("customers")
+    .select("name")
+    .eq("id", invoice.customer_id)
+    .maybeSingle();
+
+  await upsertIncome(supabase, sellerCompany.id, {
+    income_type: "invoice",
+    description: `Invoice ${invoice.number}`,
+    amount: round2(Number(payment.amount || 0) - Number(payment.fee_amount || 0)),
+    platform_fee: round2(Number(payment.fee_amount || 0)),
+    payment_method: payment.rail,
+    buyer_reference: customer?.name ?? "Customer",
+    source_table: "invoice_payments",
+    source_id: payment.id,
+    occurred_at: payment.completed_at,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
@@ -349,7 +395,7 @@ async function resolveSowerName(supabase: SupabaseLike, userId: string): Promise
 }
 
 interface IncomeParams {
-  income_type: "sale" | "gift";
+  income_type: "sale" | "gift" | "invoice";
   description: string;
   amount: number;
   platform_fee: number;

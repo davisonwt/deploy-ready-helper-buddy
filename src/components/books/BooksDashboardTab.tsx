@@ -5,9 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import MoneyRiver from './MoneyRiver';
 import { useBooksCurrency, moneyOrUnavailable } from '@/lib/books/currency';
 import type { MoneyRow } from '@/lib/currency/rates';
-import type { BooksIncomeRow, ExpenseRow, InvoiceRow } from '@/hooks/useBooksData';
+import type { BooksIncomeRow, ExpenseRow } from '@/hooks/useBooksData';
+import type { InvoiceRow } from '@/hooks/useInvoicing';
 
 interface Props {
+  /** New invoicing system (MEMBER-INVOICING-PLAN.md) -- always USD, unlike expenses/income which carry their own currency. */
   invoices: InvoiceRow[];
   expenses: ExpenseRow[];
   income: BooksIncomeRow[];
@@ -52,20 +54,18 @@ export default function BooksDashboardTab({ invoices, expenses, income }: Props)
 
   const stats = useMemo(() => {
     // Two separate income sources: books_income (auto-synced from real
-    // platform orders, always USD) and invoices (manually created/sent,
-    // tracked in their own table, stored in the business's own currency)
-    // -- a paid invoice is real income exactly like a synced order and
-    // must count here too. Every row carries its own `currency`, so each
-    // is converted to the business's currency (via the live FX table)
-    // before being summed -- summing raw amounts across currencies would
-    // silently add unrelated units together.
+    // platform orders, always USD) and paid invoices (the new invoicing
+    // system, MEMBER-INVOICING-PLAN.md -- also always USD, unlike the
+    // rest of Books). Every row carries a currency for sum()'s sake, so
+    // income and invoices can share one conversion path even though
+    // invoices never actually need converting.
     const incomeRows: MoneyRow[] = income.map((i) => ({ amount: i.amount, currency: i.currency }));
     const paidInvoiceRows: MoneyRow[] = invoices
       .filter((i) => i.status === 'paid')
-      .map((i) => ({ amount: i.amount, currency: i.currency }));
+      .map((i) => ({ amount: i.total, currency: 'USD' }));
     const outstandingRows: MoneyRow[] = invoices
-      .filter((i) => i.status !== 'paid')
-      .map((i) => ({ amount: i.amount, currency: i.currency }));
+      .filter((i) => i.status === 'sent')
+      .map((i) => ({ amount: i.amount_due, currency: 'USD' }));
     const expenseRows: MoneyRow[] = expenses.map((e) => ({ amount: e.amount, currency: e.currency }));
 
     const totalIncome = sum([...incomeRows, ...paidInvoiceRows]);
@@ -80,9 +80,10 @@ export default function BooksDashboardTab({ invoices, expenses, income }: Props)
     invoices
       .filter((i) => i.status === 'paid')
       .forEach((i) => {
-        const rows = map.get(i.client_name) ?? [];
-        rows.push({ amount: i.amount, currency: i.currency });
-        map.set(i.client_name, rows);
+        const label = i.customer_name ?? 'Customer';
+        const rows = map.get(label) ?? [];
+        rows.push({ amount: i.total, currency: 'USD' });
+        map.set(label, rows);
       });
     return Array.from(map, ([label, rows]) => ({ label, amount: sum(rows) }));
   }, [invoices, sum]);
@@ -99,14 +100,16 @@ export default function BooksDashboardTab({ invoices, expenses, income }: Props)
 
   const activity = useMemo(() => {
     const items = [
-      ...invoices.map((i) => ({
-        id: `inv-${i.id}`,
-        when: i.paid_at ?? i.created_at,
-        title: `${i.status === 'paid' ? 'Paid' : 'Invoice'} · ${i.client_name}`,
-        amount: convert(i.amount, i.currency),
-        positive: true,
-        tag: i.status,
-      })),
+      ...invoices
+        .filter((i) => i.status !== 'draft')
+        .map((i) => ({
+          id: `inv-${i.id}`,
+          when: i.paid_at ?? i.sent_at ?? i.created_at,
+          title: `${i.status === 'paid' ? 'Paid' : 'Invoice'} · ${i.customer_name ?? 'Customer'}`,
+          amount: i.status === 'paid' ? convert(i.total, 'USD') : null,
+          positive: true,
+          tag: i.status,
+        })),
       ...expenses.map((e) => ({
         id: `exp-${e.id}`,
         when: e.created_at,

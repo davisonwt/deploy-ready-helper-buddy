@@ -11,6 +11,7 @@ export type RevenueKind =
   | "content_fee"
   | "booking_fee"
   | "orchard_fee"
+  | "invoice_fee"
   | "processor_fee_income"
   | "refund_cost"
   | "payout_fee_cost"
@@ -22,7 +23,7 @@ export type RevenueEnvironment = "live" | "devnet" | "sandbox";
 export type RevenueRail = "solana" | "paypal" | "balance" | "nowpayments" | "none";
 
 export const INCOME_KINDS: readonly RevenueKind[] = [
-  "sale_fee", "gift_fee", "content_fee", "booking_fee", "orchard_fee", "processor_fee_income",
+  "sale_fee", "gift_fee", "content_fee", "booking_fee", "orchard_fee", "invoice_fee", "processor_fee_income",
 ];
 export const COST_KINDS: readonly RevenueKind[] = ["refund_cost", "payout_fee_cost"];
 export const SIGNED_KINDS: readonly RevenueKind[] = ["correction", "opening_balance"];
@@ -124,6 +125,8 @@ export function isReleasedSource(
       return kind === "refund_cost" && row.exists === true;
     case "payouts":
       return kind === "payout_fee_cost" && row.status === "paid";
+    case "invoice_payments":
+      return kind === "invoice_fee" && row.status === "completed";
     default:
       return false;
   }

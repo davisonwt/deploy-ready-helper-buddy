@@ -16,7 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { monthLabel } from '@/lib/books/format';
 import { useBooksCurrency } from '@/lib/books/currency';
 import type { MoneyRow } from '@/lib/currency/rates';
-import type { ExpenseRow, InvoiceRow } from '@/hooks/useBooksData';
+import type { ExpenseRow } from '@/hooks/useBooksData';
+import type { InvoiceRow } from '@/hooks/useInvoicing';
 
 interface Props {
   invoices: InvoiceRow[];
@@ -53,7 +54,7 @@ export default function ReportsTab({ invoices, expenses }: Props) {
       .filter((i) => i.status === 'paid')
       .forEach((i) => {
         const b = index.get(keyOf(i.paid_at ?? i.created_at));
-        if (b) b.incomeRows.push({ amount: i.amount, currency: i.currency });
+        if (b) b.incomeRows.push({ amount: i.total, currency: 'USD' });
       });
     expenses.forEach((e) => {
       const b = index.get(keyOf(e.spent_on ?? e.created_at));

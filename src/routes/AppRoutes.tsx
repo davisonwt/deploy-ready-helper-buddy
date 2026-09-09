@@ -87,6 +87,10 @@ import {
   EscrowQueuePage,
   BooksPage,
   BooksCatalogItemPage,
+  InvoiceBuilderPage,
+  InvoiceViewPage,
+  PublicPayPage,
+  GosatSubscriptionsPage,
   MyWalletPage,
   GosatTreasuryPage,
   AdminPayoutsPage,
@@ -546,6 +550,21 @@ const AppRoutes = () => (
     } />
     <Route path="/books/catalog/:itemId" element={
       <ProtectedRoute><Layout><BooksCatalogItemPage /></Layout></ProtectedRoute>
+    } />
+    <Route path="/books/invoices/new" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><Layout><InvoiceBuilderPage /></Layout></Suspense></ProtectedRoute>
+    } />
+    <Route path="/books/invoices/:id" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><Layout><InvoiceViewPage /></Layout></Suspense></ProtectedRoute>
+    } />
+    {/* Public: a customer paying an invoice may have no S2G account at all
+        -- no ProtectedRoute, no Layout (nothing here assumes a signed-in
+        member's chrome). Keyed by the invoice's own unguessable token. */}
+    <Route path="/pay/:publicToken" element={
+      <Suspense fallback={<LoadingFallback />}><PublicPayPage /></Suspense>
+    } />
+    <Route path="/admin/subscriptions" element={
+      <ProtectedRoute allowedRoles={['admin', 'gosat']}><Suspense fallback={<LoadingFallback />}><Layout><GosatSubscriptionsPage /></Layout></Suspense></ProtectedRoute>
     } />
     {/* S2G Balance is feature-flagged off (non-custodial model, 2026-09-03
         legal decision) -- route kept, page hidden behind the flag rather

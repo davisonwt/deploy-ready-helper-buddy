@@ -208,14 +208,14 @@ function json(body: unknown, status = 200): Response {
 }
 
 interface OwedRow {
-  recipient_type: "sower" | "whisperer";
+  recipient_type: "sower" | "whisperer" | "invoice";
   recipient_user_id: string;
   amount_usd: number;
   covered_rows: CoveredRow[];
 }
 
 interface RecipientOutcome {
-  recipient_type: "sower" | "whisperer";
+  recipient_type: "sower" | "whisperer" | "invoice";
   recipient_user_id: string;
   amount_usd: number;
   rail: "paypal" | "solana_usdc";

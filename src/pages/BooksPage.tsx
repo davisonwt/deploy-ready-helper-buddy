@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBooksBusiness } from '@/hooks/useBooksBusiness';
 import { useBooksData } from '@/hooks/useBooksData';
+import { useInvoicing } from '@/hooks/useInvoicing';
 import { BooksCurrencyProvider } from '@/lib/books/currency';
 import BooksDashboardTab from '@/components/books/BooksDashboardTab';
-import InvoicesTab from '@/components/books/InvoicesTab';
+import InvoicingDashboardTab from '@/components/books/invoicing/InvoicingDashboardTab';
 import ExpensesTab from '@/components/books/ExpensesTab';
 import PayrollTab from '@/components/books/PayrollTab';
 import ReportsTab from '@/components/books/ReportsTab';
@@ -22,6 +23,7 @@ export default function BooksPage() {
     updateBusiness, applyCountryPreset,
   } = useBooksBusiness();
   const books = useBooksData(current?.id ?? null);
+  const invoicing = useInvoicing(current?.id ?? null);
 
   const header = (
     <div className="mb-6 space-y-4">
@@ -123,15 +125,10 @@ export default function BooksPage() {
           </TabsList>
 
           <TabsContent value="dashboard">
-            <BooksDashboardTab invoices={books.invoices} expenses={books.expenses} income={books.income} />
+            <BooksDashboardTab invoices={invoicing.invoices} expenses={books.expenses} income={books.income} />
           </TabsContent>
           <TabsContent value="invoices">
-            <InvoicesTab
-              businessId={current.id}
-              invoices={books.invoices}
-              items={books.items}
-              onChanged={books.reload}
-            />
+            <InvoicingDashboardTab invoices={invoicing.invoices} />
           </TabsContent>
           <TabsContent value="expenses">
             <ExpensesTab businessId={current.id} expenses={books.expenses} onChanged={books.reload} />
@@ -157,7 +154,7 @@ export default function BooksPage() {
             />
           </TabsContent>
           <TabsContent value="reports">
-            <ReportsTab invoices={books.invoices} expenses={books.expenses} />
+            <ReportsTab invoices={invoicing.invoices} expenses={books.expenses} />
           </TabsContent>
           <TabsContent value="settings">
             <BooksSettingsTab

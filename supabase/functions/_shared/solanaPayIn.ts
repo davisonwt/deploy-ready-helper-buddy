@@ -264,6 +264,7 @@ export const ORDER_TABLE: Record<SolanaOrderKind, string> = {
   gift: "bestowals",
   orchard: "bestowals",
   topup: "topups",
+  invoice: "invoice_payments",
 };
 // basket_orders/topups use `status`; content_purchases/bestowals use `payment_status`.
 const ORDER_STATUS_COLUMN: Record<SolanaOrderKind, string> = {
@@ -272,15 +273,21 @@ const ORDER_STATUS_COLUMN: Record<SolanaOrderKind, string> = {
   gift: "payment_status",
   orchard: "payment_status",
   topup: "status",
+  invoice: "status",
 };
 // Exported so check-solana-payment's ownership check builds off the same
-// map rather than keeping its own separate copy.
+// map rather than keeping its own separate copy. invoice_payments.payer_user_id
+// is null for a guest customer — resolveBuyerUserId then returns null, which
+// is fine: a guest never calls check-solana-payment directly (no session to
+// call it with), so this column only matters for a signed-in customer or an
+// admin/gosat override.
 export const ORDER_OWNER_COLUMN: Record<SolanaOrderKind, string> = {
   basket: "user_id",
   content: "buyer_id",
   gift: "bestower_id",
   orchard: "bestower_id",
   topup: "user_id",
+  invoice: "payer_user_id",
 };
 
 /**

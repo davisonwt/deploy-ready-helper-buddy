@@ -21,7 +21,7 @@
 // deno-lint-ignore no-explicit-any
 type SupabaseLike = any;
 
-export type FinalizeMessagingKind = "basket" | "content" | "gift" | "orchard" | "topup" | "booking";
+export type FinalizeMessagingKind = "basket" | "content" | "gift" | "orchard" | "topup" | "booking" | "invoice";
 
 interface SeedLine {
   title: string;
@@ -73,6 +73,10 @@ export async function deliverFinalizeMessages(
     }
     if (kind === "booking") {
       await postBookingConfirmation(supabase, recordId);
+      return;
+    }
+    if (kind === "invoice") {
+      await postInvoicePaidNotification(supabase, recordId);
       return;
     }
     const order = await resolveOrder(supabase, kind, recordId);
@@ -545,6 +549,61 @@ async function postBookingConfirmation(supabase: SupabaseLike, bookingId: string
       starts_at: booking.starts_at,
       total: round2(Number(booking.total || 0)),
     },
+  });
+}
+
+/**
+ * Member invoicing Phase 1: the one notification a paid invoice sends,
+ * "your invoice was paid," to the business owner alone -- a
+ * `user_notifications` row, not a chat message, because the customer on
+ * the other end may have no S2G account to open a room with (guest pay
+ * page). Idempotent per payment id, since a finalize can run twice.
+ */
+async function postInvoicePaidNotification(supabase: SupabaseLike, paymentId: string): Promise<void> {
+  const { data: payment } = await supabase
+    .from("invoice_payments")
+    .select("id, invoice_id, amount")
+    .eq("id", paymentId)
+    .maybeSingle();
+  if (!payment) return;
+
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("id, business_id, number, customer_id")
+    .eq("id", payment.invoice_id)
+    .maybeSingle();
+  if (!invoice) return;
+
+  const { data: company } = await supabase
+    .from("companies")
+    .select("owner_user_id")
+    .eq("id", invoice.business_id)
+    .maybeSingle();
+  if (!company?.owner_user_id) return;
+
+  const { data: customer } = await supabase
+    .from("customers")
+    .select("name")
+    .eq("id", invoice.customer_id)
+    .maybeSingle();
+
+  // Phase 1 has no partial payments -- an invoice is paid exactly once, so
+  // one notification per invoice (not per payment) is correct and simpler
+  // than tracking payment_id (user_notifications has no metadata column).
+  const { data: existing } = await supabase
+    .from("user_notifications")
+    .select("id")
+    .eq("type", "invoice_paid")
+    .eq("action_url", `/books/invoices/${invoice.id}`)
+    .maybeSingle();
+  if (existing?.id) return; // already posted — idempotent, never re-run
+
+  await supabase.from("user_notifications").insert({
+    user_id: company.owner_user_id,
+    type: "invoice_paid",
+    title: "Invoice paid",
+    message: `${invoice.number} — ${customer?.name ?? "a customer"} paid $${round2(Number(payment.amount || 0)).toFixed(2)}.`,
+    action_url: `/books/invoices/${invoice.id}`,
   });
 }
 

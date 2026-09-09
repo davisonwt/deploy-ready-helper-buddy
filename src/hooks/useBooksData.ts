@@ -3,18 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import type { ParsedTerms, StatutoryDeductionInput } from '@/lib/books/payroll';
 import { toNumber } from '@/lib/books/format';
 
-export interface InvoiceRow {
-  id: string;
-  business_id: string;
-  client_name: string;
-  amount: number;
-  currency: string;
-  status: 'draft' | 'sent' | 'paid';
-  due_date: string | null;
-  paid_at: string | null;
-  notes: string | null;
-  created_at: string;
-}
+// Invoices live in @/hooks/useInvoicing now (MEMBER-INVOICING-PLAN.md Phase
+// 1 replaced the old client_name/amount table with a customer/line-items
+// model; see the migration for why nothing else could keep reading this
+// table's old shape).
 
 export interface ExpenseRow {
   id: string;
@@ -109,7 +101,6 @@ const num = (row: any, key: string) => toNumber(row?.[key]);
 
 export function useBooksData(businessId: string | null) {
   const [loading, setLoading] = useState(true);
-  const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [contracts, setContracts] = useState<ContractRow[]>([]);
@@ -125,8 +116,7 @@ export function useBooksData(businessId: string | null) {
     }
     setLoading(true);
     try {
-      const [inv, exp, emp, con, run, ded, itm, inc] = await Promise.all([
-        supabase.from('invoices' as any).select('*').eq('business_id', businessId).order('created_at', { ascending: false }),
+      const [exp, emp, con, run, ded, itm, inc] = await Promise.all([
         supabase.from('expenses' as any).select('*').eq('business_id', businessId).order('created_at', { ascending: false }),
         supabase.from('employees' as any).select('*').eq('business_id', businessId).order('created_at', { ascending: true }),
         supabase.from('employee_contracts' as any).select('*').eq('business_id', businessId).order('uploaded_at', { ascending: false }),
@@ -136,7 +126,6 @@ export function useBooksData(businessId: string | null) {
         supabase.from('books_income' as any).select('*').eq('business_id', businessId).order('occurred_at', { ascending: false }),
       ]);
 
-      setInvoices(((inv.data as any[]) ?? []).map((r) => ({ ...r, amount: num(r, 'amount') })) as InvoiceRow[]);
       setExpenses(((exp.data as any[]) ?? []).map((r) => ({ ...r, amount: num(r, 'amount') })) as ExpenseRow[]);
       setEmployees(((emp.data as any[]) ?? []).map((r) => ({
         ...r,
@@ -181,7 +170,6 @@ export function useBooksData(businessId: string | null) {
 
   return {
     loading,
-    invoices,
     expenses,
     employees,
     contracts,

@@ -23,7 +23,7 @@ import { paypalFetch } from "./client.ts";
 import { paypalEnvironment, recordRevenue, resolveOrderEnvironment } from "../revenue.ts";
 import { railFor } from "../revenueRules.ts";
 
-export type PaypalOrderKind = "basket" | "content" | "gift" | "orchard" | "topup" | "booking";
+export type PaypalOrderKind = "basket" | "content" | "gift" | "orchard" | "topup" | "booking" | "invoice";
 
 // deno-lint-ignore no-explicit-any
 type SupabaseLike = any;
@@ -146,6 +146,10 @@ async function finalize(
     }
     case "booking": {
       await finalizeBooking(supabase, recordId, paymentReference);
+      break;
+    }
+    case "invoice": {
+      await finalizeInvoicePayment(supabase, recordId, paymentReference);
       break;
     }
   }
@@ -449,6 +453,41 @@ async function finalizeBooking(
       })
       .eq("id", assignment.assignment_id);
   }
+}
+
+/**
+ * Member invoicing Phase 1 (MEMBER-INVOICING-PLAN.md section 4). `recordId`
+ * is the `invoice_payments` row's own id (the "order" for this rail, same
+ * shape as every other kind's own order table). All the actual state
+ * transition — payment completed, invoice paid, document_events, the
+ * invoice_fee ledger row — happens in one SQL transaction
+ * (`finalize_invoice_payment`), for the same reason finalize_basket_order
+ * is one SQL function: the payment, the invoice and the money-owed figure
+ * can never be left to drift apart from each other.
+ */
+async function finalizeInvoicePayment(
+  supabase: SupabaseLike,
+  paymentId: string,
+  paymentReference: string | null,
+): Promise<void> {
+  const { data: payment, error: lookupError } = await supabase
+    .from("invoice_payments")
+    .select("id, environment, status")
+    .eq("id", paymentId)
+    .maybeSingle();
+  if (lookupError) throw new Error(`invoice_payment_lookup_failed:${lookupError.message}`);
+  if (!payment) {
+    console.warn("finalizeInvoicePayment: payment not found", paymentId);
+    return;
+  }
+  if (payment.status === "completed") return; // already finalized — idempotent short-circuit
+
+  const { error } = await supabase.rpc("finalize_invoice_payment", {
+    _payment_id: paymentId,
+    _environment: payment.environment,
+    _reference: paymentReference,
+  });
+  if (error) throw new Error(`finalize_invoice_payment_failed:${error.message}`);
 }
 
 function round2(n: number): number {
