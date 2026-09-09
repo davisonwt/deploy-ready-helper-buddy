@@ -36,17 +36,41 @@ function json(body: unknown, status = 200): Response {
 
 interface UserInfo {
   email?: string;
+  emails?: Array<{ value?: string; primary?: boolean; confirmed?: boolean }>;
   payer_id?: string;
   user_id?: string; // a full https://www.paypal.com/webapps/.../<payer_id> URI on some accounts
+  sub?: string; // same shape as user_id, on the id_token's own claims
 }
 
 function extractPayerId(info: UserInfo): string | null {
   if (info.payer_id) return info.payer_id;
-  if (info.user_id) {
-    const parts = info.user_id.split("/").filter(Boolean);
+  const uri = info.user_id || info.sub;
+  if (uri) {
+    const parts = uri.split("/").filter(Boolean);
     return parts[parts.length - 1] || null;
   }
   return null;
+}
+
+// Decodes an id_token's payload claims WITHOUT verifying its signature.
+// Safe only because this id_token never touches the browser or any other
+// untrusted party -- it comes straight back from PayPal's own /v1/oauth2/token
+// endpoint in this same server-to-server, TLS-protected call, the same trust
+// boundary this function already extends to access_token (also unverified,
+// also used as-is against PayPal's own APIs).
+function decodeIdTokenClaims(idToken: string): UserInfo | null {
+  try {
+    const payload = idToken.split(".")[1];
+    if (!payload) return null;
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const binary = atob(base64 + "===".slice((base64.length + 3) % 4));
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    const json = new TextDecoder("utf-8").decode(bytes);
+    return JSON.parse(json) as UserInfo;
+  } catch (err) {
+    console.warn("paypal-connect: id_token decode failed", err instanceof Error ? err.message : String(err));
+    return null;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -109,23 +133,47 @@ Deno.serve(async (req) => {
         console.error("paypal-connect: token exchange failed", tokenRes.status, tokenRaw);
         return json({ error: "paypal_token_exchange_failed", detail: tokenRaw }, 502);
       }
-      const tokenJson = JSON.parse(tokenRaw) as { access_token?: string };
+      const tokenJson = JSON.parse(tokenRaw) as { access_token?: string; scope?: string; id_token?: string };
+      console.log("paypal-connect: token granted scope:", tokenJson.scope, "has id_token:", !!tokenJson.id_token);
       if (!tokenJson.access_token) {
         return json({ error: "paypal_token_exchange_failed", detail: "no_access_token" }, 502);
       }
 
-      const infoRes = await fetch(
-        `${paypalBaseUrl()}/v1/identity/oauth2/userinfo?schema=paypalv1.1`,
-        { headers: { Authorization: `Bearer ${tokenJson.access_token}` } },
-      );
-      const infoRaw = await infoRes.text();
-      if (!infoRes.ok) {
-        console.error("paypal-connect: userinfo failed", infoRes.status, infoRaw);
-        return json({ error: "paypal_userinfo_failed", detail: infoRaw }, 502);
+      // Prefer the id_token's own claims -- PayPal live has been rejecting
+      // the userinfo call, and the token exchange already handed us
+      // everything we need (email, payer id) without a second round trip.
+      // userinfo stays as the fallback for accounts/flows that don't get
+      // an id_token or whose id_token is missing an email claim.
+      let info: UserInfo | null = tokenJson.id_token ? decodeIdTokenClaims(tokenJson.id_token) : null;
+      if (info?.email) {
+        console.log("paypal-connect: identity resolved via id_token claims");
+      } else {
+        info = null;
+        const infoRes = await fetch(
+          `${paypalBaseUrl()}/v1/identity/oauth2/userinfo?schema=paypalv1.1`,
+          { headers: { Authorization: `Bearer ${tokenJson.access_token}` } },
+        );
+        const infoRaw = await infoRes.text();
+        if (!infoRes.ok) {
+          console.error("paypal-connect: userinfo failed", infoRes.status, infoRaw,
+            "| granted scope:", tokenJson.scope,
+            "| has id_token:", !!tokenJson.id_token,
+            "| id_token email present:", !!(tokenJson.id_token && decodeIdTokenClaims(tokenJson.id_token)?.email));
+          return json({ error: "paypal_userinfo_failed", detail: infoRaw }, 502);
+        }
+        info = JSON.parse(infoRaw) as UserInfo;
+        console.log("paypal-connect: identity resolved via userinfo fallback");
       }
-      const info = JSON.parse(infoRaw) as UserInfo;
-      const email = (info.email ?? "").trim().toLowerCase();
-      if (!email) return json({ error: "paypal_email_missing" }, 502);
+      const emailRaw =
+        info.email ??
+        info.emails?.find((e) => e.primary)?.value ??
+        info.emails?.[0]?.value ??
+        "";
+      const email = emailRaw.trim().toLowerCase();
+      if (!email) {
+        console.error("paypal-connect: no email in resolved identity, keys:", Object.keys(info));
+        return json({ error: "paypal_email_missing" }, 502);
+      }
       const payerId = extractPayerId(info);
 
       const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -157,10 +205,16 @@ Deno.serve(async (req) => {
 
       if (existing) {
         const { error: updateErr } = await admin.from("user_wallets").update(row).eq("id", existing.id);
-        if (updateErr) return json({ error: "wallet_update_failed", detail: updateErr.message }, 500);
+        if (updateErr) {
+          console.error("paypal-connect: wallet update failed", updateErr.message);
+          return json({ error: "wallet_update_failed", detail: updateErr.message }, 500);
+        }
       } else {
         const { error: insertErr } = await admin.from("user_wallets").insert({ ...row, is_primary: true });
-        if (insertErr) return json({ error: "wallet_insert_failed", detail: insertErr.message }, 500);
+        if (insertErr) {
+          console.error("paypal-connect: wallet insert failed", insertErr.message);
+          return json({ error: "wallet_insert_failed", detail: insertErr.message }, 500);
+        }
       }
 
       return json({ success: true, email });
