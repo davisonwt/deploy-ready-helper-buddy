@@ -7,37 +7,38 @@ import VideoGeneration from '../components/ai/VideoGeneration';
 import ContentCreationWorkflow from '../components/ai/ContentCreationWorkflow';
 import { useUsageLimit } from '../hooks/useUsageLimit';
 
-// Mock Supabase
-const mockSupabase = {
-  from: vi.fn().mockReturnValue({
-    insert: vi.fn().mockResolvedValue({ 
-      data: [{ id: 'gen1' }], 
-      error: null 
-    }),
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({ 
-          data: { 
-            metadata: { 
-              status: 'completed', 
-              video_url: 'mock-video-url' 
-            } 
-          }, 
-          error: null 
+// Mock Supabase -- the mock object must be declared INSIDE the factory
+// (not as a top-level const referenced from it): vi.mock() calls are
+// hoisted above all other top-level code, so a factory that closes over
+// a top-level variable runs before that variable is initialized.
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: vi.fn().mockReturnValue({
+      insert: vi.fn().mockResolvedValue({
+        data: [{ id: 'gen1' }],
+        error: null
+      }),
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: {
+              metadata: {
+                status: 'completed',
+                video_url: 'mock-video-url'
+              }
+            },
+            error: null
+          }),
         }),
       }),
     }),
-  }),
-  functions: {
-    invoke: vi.fn().mockResolvedValue({ 
-      data: { script: 'mock script text', imageUrl: 'mock-image-url' }, 
-      error: null 
-    }),
+    functions: {
+      invoke: vi.fn().mockResolvedValue({
+        data: { script: 'mock script text', imageUrl: 'mock-image-url' },
+        error: null
+      }),
+    },
   },
-};
-
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: mockSupabase,
 }));
 
 vi.mock('@/hooks/useAuth', () => ({
