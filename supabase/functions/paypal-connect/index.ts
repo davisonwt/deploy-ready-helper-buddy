@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       }
 
       const infoRes = await fetch(
-        `${paypalBaseUrl()}/v1/identity/openidconnect/userinfo?schema=openid`,
+        `${paypalBaseUrl()}/v1/identity/oauth2/userinfo?schema=paypalv1.1`,
         { headers: { Authorization: `Bearer ${tokenJson.access_token}` } },
       );
       const infoRaw = await infoRes.text();
