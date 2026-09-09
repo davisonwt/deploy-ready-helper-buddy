@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import ConnectPaypalButton from '@/components/payouts/ConnectPaypalButton';
+import ManualPaypalEmailForm from '@/components/payouts/ManualPaypalEmailForm';
 import CryptoPayoutSettings from '@/components/payouts/CryptoPayoutSettings';
 import EarningsPayoutCard from '@/components/payouts/EarningsPayoutCard';
 import { SettlementConsentPrompt } from '@/components/payouts/SettlementConsentPrompt';
@@ -345,7 +346,12 @@ export default function PayoutSettingsPage() {
                           <CheckCircle2 className="w-3 h-3 mr-1" />Active default
                         </Badge>
                       )}
-                      {r.verified_at ? (
+                      {/* PayPal itself only confirms an email on the OAuth
+                          path -- a manual_entry row has verified_at set too
+                          (so the payout gate opens), so this badge keys off
+                          verification_method, not verified_at, to still
+                          flag it as self-reported. */}
+                      {r.verification_method === 'paypal_oauth' ? (
                         <Badge variant="outline" className="text-xs">Verified</Badge>
                       ) : (
                         <Badge variant="outline" className="text-xs text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700">
@@ -367,6 +373,7 @@ export default function PayoutSettingsPage() {
             </ul>
           )}
           <ConnectPaypalButton />
+          <ManualPaypalEmailForm onSaved={load} />
         </CardContent>
       </Card>
     </div>

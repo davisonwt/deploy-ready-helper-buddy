@@ -11,11 +11,19 @@
 // action: 'callback'      — body { code, redirect_uri }. redirect_uri MUST
 //   be the exact same value used to build the authorize_url, or PayPal's
 //   token exchange rejects it. Exchanges the code for an access token
-//   (authorization_code grant), calls PayPal's OpenID Connect userinfo
-//   endpoint for the verified email + payer id, and upserts the caller's
-//   own paypal_email user_wallets row.
+//   (authorization_code grant), reads the id_token's own claims for the
+//   verified email + payer id (falling back to the userinfo endpoint only
+//   if the id_token is missing one), and upserts the caller's own
+//   paypal_email user_wallets row.
+// action: 'save_manual_email' — body { email }. Fallback for when Log in
+//   with PayPal itself is unavailable to the member. Writes the same
+//   user_wallets row shape as 'callback', but verification_method is
+//   'manual_entry' instead of 'paypal_oauth' -- verified_at is still
+//   stamped (a product decision, not a PayPal confirmation) so the
+//   payout-earnings gate opens the same way; the UI badge keys off
+//   verification_method, not verified_at, to still flag it as unverified.
 //
-// Auth: real user session only, both actions — self-service, no admin/
+// Auth: real user session only, every action — self-service, no admin/
 // service-role bypass (same reasoning as the retired paypal-email-verify:
 // nobody connects a PayPal account on someone else's behalf).
 
@@ -91,6 +99,65 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const action = body?.action;
+
+    // Manual fallback for when Log in with PayPal itself is unavailable --
+    // needs neither redirect_uri nor PayPal API credentials, so it's
+    // handled before the OAuth-only gates below that both other actions
+    // require.
+    if (action === "save_manual_email") {
+      const emailInput = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+      if (!emailInput || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
+        return json({ error: "invalid_email" }, 400);
+      }
+
+      const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+      // Same "reuse the newest active row" shape the OAuth callback uses.
+      const { data: existingRows } = await admin
+        .from("user_wallets")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("wallet_type", "paypal_email")
+        .eq("is_active", true)
+        .order("is_primary", { ascending: false })
+        .order("updated_at", { ascending: false })
+        .limit(1);
+      const existing = existingRows?.[0] ?? null;
+
+      // verified_at is stamped immediately (product decision, not a PayPal
+      // confirmation) so the payout gate in payout-earnings -- which
+      // requires verified_at IS NOT NULL -- opens right away for a manually
+      // typed email, same as an OAuth-connected one. verification_method
+      // stays distinct ("manual_entry" vs "paypal_oauth") purely so the UI
+      // can still flag it as self-reported, and so support/audit can tell
+      // the two apart later.
+      const row = {
+        user_id: userId,
+        wallet_type: "paypal_email",
+        wallet_address: emailInput,
+        payout_currency: "USD",
+        is_active: true,
+        verified_at: new Date().toISOString(),
+        verification_method: "manual_entry",
+      };
+
+      if (existing) {
+        const { error: updateErr } = await admin.from("user_wallets").update(row).eq("id", existing.id);
+        if (updateErr) {
+          console.error("paypal-connect: manual email update failed", updateErr.message);
+          return json({ error: "wallet_update_failed", detail: updateErr.message }, 500);
+        }
+      } else {
+        const { error: insertErr } = await admin.from("user_wallets").insert({ ...row, is_primary: true });
+        if (insertErr) {
+          console.error("paypal-connect: manual email insert failed", insertErr.message);
+          return json({ error: "wallet_insert_failed", detail: insertErr.message }, 500);
+        }
+      }
+
+      return json({ success: true, email: emailInput });
+    }
+
     const redirectUri = typeof body?.redirect_uri === "string" ? body.redirect_uri : "";
     if (!redirectUri) return json({ error: "missing_redirect_uri" }, 400);
 
