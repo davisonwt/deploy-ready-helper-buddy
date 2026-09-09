@@ -122,6 +122,16 @@ export default function BooksPage() {
                 {label}
               </TabsTrigger>
             ))}
+            {/* Not a TabsTrigger -- Job Invoicing is its own routed page
+                (JobInvoicingDashboardPage: My Jobs/My Estimates/My Invoices),
+                not content that fits in this Tabs' value space. Styled to
+                match so it reads as one more tab in the row. */}
+            <Link
+              to="/books/invoicing"
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent/50"
+            >
+              Job Invoicing
+            </Link>
           </TabsList>
 
           <TabsContent value="dashboard">
