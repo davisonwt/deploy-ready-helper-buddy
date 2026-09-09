@@ -22,7 +22,7 @@ import {
   Hand, Mic, MicOff, Video, VideoOff, X, Check, UserMinus,
   ChevronLeft, ChevronRight, Music, Heart, Search, Star, Crown,
 } from 'lucide-react';
-import { JITSI_DOMAIN } from '@/lib/jitsi-config';
+import { useDailyIframeSrc } from '@/lib/daily-config';
 import { useAuth } from '@/hooks/useAuth';
 import { useLiveStage, type StageMode, type NowPlaying } from '@/hooks/useLiveStage';
 import { supabase } from '@/integrations/supabase/client';
@@ -165,15 +165,16 @@ export default function LiveStage({
 
   const displayName = (user as any)?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Tribe';
 
-  // Whether the local user should actually have a Jitsi audio/video transport
+  // Whether the local user should actually have an audio/video transport.
   // Hosts always join; viewers only join when approved (so we save bandwidth).
   const inCall = isHost || iAmApproved;
 
-  const jitsiSrc = useMemo(() => {
-    const startMuted = !isHost && approved.find(g => g.user_id === user?.id)?.muted ? 1 : 0;
-    const startVideoMuted = !isHost && (approved.find(g => g.user_id === user?.id)?.mode !== 'video') ? 1 : 0;
-    return `https://${JITSI_DOMAIN}/${jitsiRoom}#config.prejoinPageEnabled=false&config.disableDeepLinking=true&config.startWithAudioMuted=${startMuted}&config.startWithVideoMuted=${startVideoMuted}&userInfo.displayName=%22${encodeURIComponent(displayName)}%22`;
-  }, [jitsiRoom, isHost, approved, user?.id, displayName]);
+  // P1-6: was a bare iframe against a raw meet.sow2growapp.com URL with no
+  // JWT. Daily's own prebuilt UI doesn't support the old start-muted/
+  // start-video-off URL hints (those were config.* Jitsi params) -- a
+  // viewer who joins muted-by-approval now un-mutes themselves manually
+  // inside Daily's own controls instead of it being pre-set for them.
+  const { src: jitsiSrc, loading: callLoading } = useDailyIframeSrc(inCall ? 'custom' : null, jitsiRoom, displayName);
 
   // Stage content (what occupies the big tile)
   const stageImage = stage.mode === 'image'
@@ -271,14 +272,17 @@ export default function LiveStage({
             )}
           </div>
         )}
-        {/* Camera mode → Jitsi iframe */}
-        {stage.mode === 'camera' && inCall && (
+        {/* Camera mode → Daily call iframe */}
+        {stage.mode === 'camera' && inCall && jitsiSrc && (
           <iframe
             title={title}
             src={jitsiSrc}
             allow="camera; microphone; fullscreen; display-capture; autoplay"
             className="absolute inset-0 h-full w-full border-0"
           />
+        )}
+        {stage.mode === 'camera' && inCall && !jitsiSrc && callLoading && (
+          <div className="absolute inset-0 flex items-center justify-center text-white/50 text-sm">Connecting…</div>
         )}
         {stage.mode === 'camera' && !inCall && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -371,7 +375,7 @@ export default function LiveStage({
         )}
 
         {/* Picture-in-picture host camera when not in camera mode (host preview) */}
-        {isHost && stage.mode !== 'camera' && (
+        {isHost && stage.mode !== 'camera' && jitsiSrc && (
           <div className="absolute bottom-3 right-3 z-[5] h-32 w-44 overflow-hidden rounded-lg border border-emerald-500/30 bg-black shadow-2xl">
             <iframe
               title="host-cam"

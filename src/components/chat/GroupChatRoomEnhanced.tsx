@@ -167,7 +167,8 @@ export function GroupChatRoomEnhanced({
       {activeCall && (
         <div className="absolute inset-0 bg-background z-50">
           <JitsiCall
-            roomName={`${roomId}-${activeCall}`}
+            roomName={roomId}
+            roomKind="chat_room"
             userInfo={{ displayName: roomName, email: '' }}
             onLeave={handleEndCall}
             isAudioOnly={activeCall === 'voice' || activeCall === 'radio'}

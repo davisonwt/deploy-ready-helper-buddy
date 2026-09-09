@@ -9,7 +9,8 @@ import { useClassroomLive } from '@/hooks/useClassroomLive';
 import { useClassroomPresence, type AttendanceMode } from '@/hooks/useClassroomPresence';
 import { useClassroomInvites } from '@/hooks/useClassroomInvites';
 import { useToast } from '@/hooks/use-toast';
-import { JITSI_CONFIG } from '@/lib/jitsi-config';
+import DailyIframe, { type DailyCall } from '@daily-co/daily-js';
+import { fetchDailyMeetingToken } from '@/lib/daily-config';
 import { HandQueuePanel } from './HandQueuePanel';
 import { DocumentsPanel } from './DocumentsPanel';
 import { SubmissionsPanel } from './SubmissionsPanel';
@@ -83,9 +84,9 @@ export default function ClassroomLiveRoom({ session }: Props) {
     joined,
   });
 
-  /* -------------------- Jitsi container + api -------------------- */
+  /* -------------------- Daily container + call (P1-6, was Jitsi) -------------------- */
   const containerRef = useRef<HTMLDivElement>(null);
-  const apiRef = useRef<any>(null);
+  const apiRef = useRef<DailyCall | null>(null);
   const [jitsiLoading, setJitsiLoading] = useState(true);
   const [audioMuted, setAudioMuted] = useState(true);
   const audioMutedRef = useRef(true);
@@ -105,60 +106,66 @@ export default function ClassroomLiveRoom({ session }: Props) {
       .eq('id', session.id);
   }, [isHost, joined, session.started_at, session.id]);
 
-  /* On mount: join DB and Jitsi */
+  /* On mount: join DB and the call */
   useEffect(() => {
     if (!userId) return;
     joinSession();
     const onUnload = () => {
       // Best-effort cleanup
-      if (apiRef.current) { try { apiRef.current.dispose(); } catch {} }
+      if (apiRef.current) { try { apiRef.current.destroy(); } catch {} }
     };
     window.addEventListener('beforeunload', onUnload);
     return () => {
       window.removeEventListener('beforeunload', onUnload);
       leaveSession();
-      if (apiRef.current) { try { apiRef.current.dispose(); } catch {}; apiRef.current = null; }
+      if (apiRef.current) {
+        const call = apiRef.current;
+        apiRef.current = null;
+        call.leave().catch(() => {});
+        call.destroy().catch(() => {});
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, session.id]);
 
-  /* Load Jitsi once user has joined */
+  /* Join Daily once the user has joined the classroom (P1-6, was Jitsi:
+     a public meet.jit.si room with no JWT -- classroom_sessions.id isn't
+     one of create-daily-meeting-token's verified room kinds yet, so this
+     runs at the 'custom' authorization floor -- must be logged in, same
+     trust level the Jitsi room had, plus a real signed per-user token this
+     time. useClassroomLive's own joined/isHost gating still fully applies
+     before this component renders at all. */
   useEffect(() => {
     if (!joined || !user) return;
     if (apiRef.current) return;
-    const roomName = JITSI_CONFIG.generateRoomName('classroom', session.id);
+    let cancelled = false;
+    const roomId = `classroom-${session.id}`;
     const displayName =
       (user as any).user_metadata?.display_name ||
       (user as any).user_metadata?.full_name ||
       user.email?.split('@')[0] ||
       'Sower';
 
-    const start = () => {
+    const start = async () => {
       if (!containerRef.current) return;
       try {
-        const options = JITSI_CONFIG.createJitsiOptions(roomName, displayName, 'live', {
-          configOverwrite: {
-            ...JITSI_CONFIG.getLiveRoomConfig(),
-            startWithAudioMuted: !isHost,
-            startWithVideoMuted: isHost ? false : !requireCamera,
-            subject: session.title,
-          },
-          interfaceConfigOverwrite: JITSI_CONFIG.getInterfaceConfig({
-            toolbarButtons: isHost
-              ? ['microphone', 'camera', 'desktop', 'tileview', 'settings', 'hangup']
-              : ['microphone', 'camera', 'settings', 'hangup'],
-          }),
+        const { room_url, token } = await fetchDailyMeetingToken({ roomKind: 'custom', roomId, displayName });
+        if (cancelled || !containerRef.current) return;
+
+        const call = DailyIframe.createFrame(containerRef.current, {
+          iframeStyle: { width: '100%', height: '100%', border: '0' },
+          showLeaveButton: false,
+          showFullscreenButton: false,
         });
-        (options as any).parentNode = containerRef.current;
-        const api = new (window as any).JitsiMeetExternalAPI(JITSI_CONFIG.domain, options);
-        apiRef.current = api;
-        api.addListener('videoConferenceJoined', () => setJitsiLoading(false));
-        api.addListener('audioMuteStatusChanged', ({ muted }: { muted: boolean }) => {
-          setAudioMuted(muted);
-        });
-        api.addListener('videoMuteStatusChanged', ({ muted }: { muted: boolean }) => {
+        apiRef.current = call;
+
+        call.on('joined-meeting', () => setJitsiLoading(false));
+        call.on('participant-updated', (ev: any) => {
+          if (!ev?.participant?.local) return;
+          setAudioMuted(!ev.participant.audio);
           if (!requireCamera || isHost) return;
-          if (muted) {
+          const videoOn = !!ev.participant.video;
+          if (!videoOn) {
             toast({
               title: '📷 Camera required',
               description: 'This session needs cameras on. Turn it back on within 5s or you will be removed.',
@@ -173,24 +180,30 @@ export default function ClassroomLiveRoom({ session }: Props) {
             cameraGraceRef.current = null;
           }
         });
-        api.addListener('readyToClose', () => {
-          handleLeave();
+        call.on('left-meeting', () => { handleLeave(); });
+        call.on('error', (e: any) => {
+          console.error('Daily init', e);
+          setJitsiLoading(false);
+        });
+
+        await call.join({
+          url: room_url,
+          token,
+          userName: displayName,
+          startVideoOff: isHost ? false : !requireCamera,
+          startAudioOff: !isHost,
         });
       } catch (e) {
-        console.error('Jitsi init', e);
+        console.error('Daily init', e);
         setJitsiLoading(false);
       }
     };
 
-    if ((window as any).JitsiMeetExternalAPI) start();
-    else {
-      const s = document.createElement('script');
-      s.src = `https://${JITSI_CONFIG.domain}/external_api.js`;
-      s.async = true;
-      s.onload = start;
-      s.onerror = () => setJitsiLoading(false);
-      document.body.appendChild(s);
-    }
+    start();
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [joined, user?.id, session.id, isHost]);
 
@@ -210,23 +223,30 @@ export default function ClassroomLiveRoom({ session }: Props) {
       });
     }
     if (!canSpeak && !audioMutedRef.current) {
-      // Force-mute via Jitsi
-      try { apiRef.current.executeCommand('toggleAudio'); } catch {}
+      // Force-mute
+      try { apiRef.current?.setLocalAudio(false); } catch {}
       if (!wasNull) toast({ title: 'Mic returned to the instructor', description: 'You have been re-muted.' });
     }
   }, [me?.can_speak, isHost, me, toast]);
 
   const handleRaiseHand = async () => {
+    // Daily has no native raise-hand concept (Jitsi did) -- this app's own
+    // hand_raised state (HandQueuePanel, the floating button below) is the
+    // real mechanism; there's nothing further to signal into the call itself.
     const next = !(me?.hand_raised);
     handRaisedJitsiRef.current = next;
-    try { apiRef.current?.executeCommand('toggleRaiseHand'); } catch {}
     await setHandRaised(next);
   };
 
   const handleLeave = async () => {
     if (cameraGraceRef.current) { window.clearTimeout(cameraGraceRef.current); cameraGraceRef.current = null; }
     await leaveSession();
-    if (apiRef.current) { try { apiRef.current.dispose(); } catch {}; apiRef.current = null; }
+    if (apiRef.current) {
+      const call = apiRef.current;
+      apiRef.current = null;
+      call.leave().catch(() => {});
+      call.destroy().catch(() => {});
+    }
     navigate('/communications-hub');
   };
 
@@ -367,7 +387,7 @@ export default function ClassroomLiveRoom({ session }: Props) {
                 {me?.can_speak && audioMuted && (
                   <Button
                     size="sm"
-                    onClick={() => { try { apiRef.current?.executeCommand('toggleAudio'); } catch {} }}
+                    onClick={() => { try { apiRef.current?.setLocalAudio(true); } catch {} }}
                     className="bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg"
                   >
                     Unmute now

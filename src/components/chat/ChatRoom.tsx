@@ -630,20 +630,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
   const stopRecording = () => recorder.stop();
 
 
-  // REMOVED: React call flow - using direct Jitsi links instead
-  const handleCallClick = () => {
-    // Generate room name and open Jitsi
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let roomName = '';
-    for (let i = 0; i < 12; i++) {
-      roomName += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    const jitsiDomain = import.meta.env.VITE_JITSI_DOMAIN || '197.245.26.199';
-    const jitsiUrl = `https://${jitsiDomain}/${roomName}`;
-    window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
-  };
-
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -895,7 +881,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
       {currentCall && currentCall.status === 'accepted' && (
         <div className="p-4 border-b">
           <JitsiCall
-            roomName={currentCall.id.replace(/-/g, '').substring(0, 12)}
+            roomName={currentCall.id}
+            roomKind="call_session"
             onLeave={() => {
               if (currentCall?.id) {
                 endCall(currentCall.id, 'ended');

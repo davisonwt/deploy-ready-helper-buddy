@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
+import DailyIframe, { type DailyCall } from '@daily-co/daily-js';
 import { launchConfetti, launchSparkles, playSoundEffect } from '@/utils/confetti';
+import { fetchDailyMeetingToken } from '@/lib/daily-config';
 
-// Remove global Window declaration - it conflicts with jitsi types
+// P1-6: was a JitsiMeetExternalAPI room on the public meet.jit.si domain
+// with a soft "room password" and no JWT at all. Now a Daily.co call with a
+// real per-user meeting token (create-daily-meeting-token) -- the token
+// itself is the access control now, so `password` is accepted (existing
+// callers like OrchardVoiceChatButton still pass one) but no longer does
+// anything; it's not a Daily concept.
 
 interface JitsiVideoWindowProps {
   isOpen: boolean;
@@ -15,120 +22,83 @@ export function JitsiVideoWindow({
   isOpen,
   roomName,
   displayName = 'Sower',
-  password = null,
   onClose,
 }: JitsiVideoWindowProps) {
-  const jitsiContainerRef = useRef<HTMLDivElement>(null);
-  const jitsiMeetRef = useRef<HTMLDivElement>(null);
-  const jitsiAPIRef = useRef<any>(null);
+  const callContainer = useRef<HTMLDivElement>(null);
+  const callRef = useRef<DailyCall | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isOpen || !jitsiMeetRef.current) return;
+    if (!isOpen || !callContainer.current) return;
+    let cancelled = false;
+    setIsLoading(true);
 
-    // Load Jitsi external API script if not already loaded
-    if (!window.JitsiMeetExternalAPI) {
-      const script = document.createElement('script');
-      script.src = 'https://meet.jit.si/external_api.js';
-      script.async = true;
-      script.onload = () => {
-        initializeJitsi();
-      };
-      document.body.appendChild(script);
-    } else {
-      initializeJitsi();
-    }
+    const start = async () => {
+      try {
+        const { room_url, token } = await fetchDailyMeetingToken({ roomKind: 'custom', roomId: roomName, displayName });
+        if (cancelled || !callContainer.current) return;
 
-    return () => {
-      if (jitsiAPIRef.current) {
-        jitsiAPIRef.current.dispose();
-        jitsiAPIRef.current = null;
+        callContainer.current.innerHTML = '';
+        const call = DailyIframe.createFrame(callContainer.current, {
+          iframeStyle: { width: '100%', height: '100%', border: '0' },
+          showLeaveButton: false,
+          showFullscreenButton: false,
+        });
+        callRef.current = call;
+
+        call.on('joined-meeting', () => {
+          setIsLoading(false);
+          launchSparkles();
+          playSoundEffect('mysterySeed', 0.6);
+          document.body.style.overflow = 'hidden';
+        });
+        call.on('participant-joined', () => launchConfetti());
+        call.on('left-meeting', () => handleEndCall());
+        call.on('error', (e: any) => {
+          console.error('Error initializing Daily call:', e);
+          setIsLoading(false);
+        });
+
+        await call.join({ url: room_url, token, userName: displayName });
+      } catch (error) {
+        console.error('Error loading Daily call:', error);
+        setIsLoading(false);
       }
     };
-  }, [isOpen, roomName, displayName, password]);
 
-  const initializeJitsi = () => {
-    if (!jitsiMeetRef.current || !window.JitsiMeetExternalAPI) return;
+    start();
 
-    // Clear any existing content
-    jitsiMeetRef.current.innerHTML = '';
-
-    const domain = 'meet.jit.si';
-    const options = {
-      roomName: `S2G-${roomName}`,
-      width: '100%',
-      height: '100%',
-      parentNode: jitsiMeetRef.current,
-      interfaceConfigOverwrite: {
-        filmStripOnly: false,
-        SHOW_JITSI_WATERMARK: false,
-        DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-        TOOLBAR_BUTTONS: [
-          'microphone',
-          'camera',
-          'fullscreen',
-          'fodeviceselection',
-          'hangup',
-          'chat',
-          'tileview',
-          'raisehand',
-        ],
-      },
-      userInfo: { displayName, email: '' },
-      password: password || undefined,
-      configOverwrite: {
-        startWithAudioMuted: false,
-        startWithVideoMuted: true,
-        disableDeepLinking: true,
-      },
+    return () => {
+      cancelled = true;
+      if (callRef.current) {
+        const call = callRef.current;
+        callRef.current = null;
+        call.leave().catch(() => {});
+        call.destroy().catch(() => {});
+      }
     };
-
-    jitsiAPIRef.current = new window.JitsiMeetExternalAPI(domain, options);
-
-    // Garden-style UI touches
-    jitsiAPIRef.current.addEventListener('videoConferenceJoined', () => {
-      launchSparkles();
-      playSoundEffect('mysterySeed', 0.6);
-      document.body.style.overflow = 'hidden';
-    });
-
-    jitsiAPIRef.current.addEventListener('participantJoined', () => {
-      launchConfetti();
-    });
-
-    jitsiAPIRef.current.addEventListener('videoConferenceLeft', () => {
-      handleEndCall();
-    });
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, roomName, displayName]);
 
   const handleEndCall = () => {
-    if (jitsiAPIRef.current) {
-      jitsiAPIRef.current.dispose();
-      jitsiAPIRef.current = null;
+    if (callRef.current) {
+      const call = callRef.current;
+      callRef.current = null;
+      call.leave().catch(() => {});
+      call.destroy().catch(() => {});
     }
     document.body.style.overflow = 'auto';
     onClose();
   };
 
-  const toggleFullscreen = () => {
-    if (jitsiAPIRef.current) {
-      jitsiAPIRef.current.executeCommand('toggleLobby');
-    }
-  };
-
   if (!isOpen) return null;
 
   return (
-    <div
-      ref={jitsiContainerRef}
-      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl"
-    >
+    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl">
       <div className="absolute top-4 right-4 z-10 flex gap-4">
-        <button
-          onClick={toggleFullscreen}
-          className="bg-white/20 hover:bg-white/30 backdrop-blur p-4 rounded-full text-white font-semibold transition"
-        >
-          Fullscreen
-        </button>
+        {isLoading && (
+          <div className="bg-white/20 backdrop-blur p-4 rounded-full text-white font-semibold">Connecting…</div>
+        )}
         <button
           onClick={handleEndCall}
           className="bg-red-600 hover:bg-red-500 p-4 rounded-full text-white text-2xl font-bold transition"
@@ -136,12 +106,12 @@ export function JitsiVideoWindow({
           End Call
         </button>
       </div>
-      <div ref={jitsiMeetRef} className="w-full h-full" />
+      <div ref={callContainer} className="w-full h-full" />
     </div>
   );
 }
 
-// Global function to start Jitsi call (for use from anywhere)
+// Global function to start a video call (for use from anywhere)
 export function startJitsiCall(
   roomName: string,
   displayName: string = 'Sower',
@@ -154,4 +124,3 @@ export function startJitsiCall(
     })
   );
 }
-

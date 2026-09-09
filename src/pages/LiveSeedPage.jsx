@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth'
 import { toast } from 'sonner'
 import { Heart, Loader2 } from 'lucide-react'
 import SignedImg from '@/components/media/SignedImg'
+import { useDailyIframeSrc } from '@/lib/daily-config'
 
 const SESSION_TYPES = [
   { value: 'training', label: 'Training', emoji: '🎓', color: '#6366f1', desc: 'Teach skills related to this seed' },
@@ -53,6 +54,12 @@ export default function LiveSeedPage() {
   const pocketPrice = seed?.pocket_bestow || seed?.pocket_price || 2
   const typeConfig = sessionType || SESSION_TYPES[0]
 
+  // P1-6: was a bare iframe against a raw meet.sow2growapp.com URL with no
+  // JWT. Called unconditionally (hook rule) -- roomId is null until a
+  // session type is picked, which the hook already treats as "no fetch."
+  const dailyRoomId = sessionType ? `s2g-seed-${orchardId}-${sessionType.value}` : null
+  const { src: roomUrl, loading: roomLoading } = useDailyIframeSrc(sessionType ? 'custom' : null, dailyRoomId)
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: '#020617', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -86,8 +93,6 @@ export default function LiveSeedPage() {
     )
   }
 
-  const roomUrl = `https://meet.sow2growapp.com/s2g-seed-${orchardId}-${sessionType.value}`
-
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #020617 0%, #0f172a 100%)', color: '#f1f5f9' }}>
       <style>{`@keyframes glow{0%,100%{box-shadow:0 0 10px rgba(239,68,68,0.4)}50%{box-shadow:0 0 30px rgba(239,68,68,0.8)}}.live-badge{animation:glow 2s infinite}`}</style>
@@ -105,9 +110,13 @@ export default function LiveSeedPage() {
         </button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', height: 'calc(100vh - 53px)', overflow: 'hidden' }}>
-        <div style={{ background: '#000' }}>
-          <iframe src={roomUrl} style={{ width: '100%', height: '100%', border: 'none' }}
-            allow="camera; microphone; fullscreen; display-capture" title="Live Session" />
+        <div style={{ background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {roomUrl ? (
+            <iframe src={roomUrl} style={{ width: '100%', height: '100%', border: 'none' }}
+              allow="camera; microphone; fullscreen; display-capture" title="Live Session" />
+          ) : roomLoading ? (
+            <Loader2 style={{ width: 32, height: 32, color: '#10b981' }} />
+          ) : null}
         </div>
         <div style={{ background: 'linear-gradient(180deg, #0f172a 0%, #020617 100%)', borderLeft: '1px solid rgba(255,255,255,0.06)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           {seed?.images?.[0] && (

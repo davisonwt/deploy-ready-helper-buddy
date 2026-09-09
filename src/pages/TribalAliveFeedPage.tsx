@@ -37,7 +37,7 @@ import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { useGiftBestowal, type GiftContextKind } from '@/hooks/useGiftBestowal';
 import { useMusicPurchase } from '@/hooks/useMusicPurchase';
-import { JITSI_DOMAIN } from '@/lib/jitsi-config';
+import { useDailyIframeSrc } from '@/lib/daily-config';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/WanderingBadgeBar';
@@ -1376,34 +1376,48 @@ export default function TribalAliveFeedPage() {
           />
         )}
         {activeRoom && !activeRoom.liveSeed && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex flex-col bg-black"
-          >
-            <div className="flex items-center justify-between border-b border-emerald-500/20 bg-emerald-950/60 px-4 py-2">
-              <div className="flex items-center gap-2 text-sm text-white">
-                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-400" />
-                {activeRoom.title}
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-white hover:bg-white/10"
-                onClick={() => setActiveRoom(null)}
-              >
-                Close
-              </Button>
-            </div>
-            <iframe
-              title={activeRoom.title}
-              src={`https://${JITSI_DOMAIN}/${activeRoom.room}#config.prejoinPageEnabled=false&config.disableDeepLinking=true${activeRoom.mode === 'audio' ? '&config.startWithVideoMuted=true' : ''}`}
-              allow="camera; microphone; fullscreen; display-capture; autoplay"
-              className="flex-1 border-0"
-            />
-          </motion.div>
+          <DirectCallOverlay room={activeRoom.room} title={activeRoom.title} onClose={() => setActiveRoom(null)} />
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/* P1-6: was a bare iframe against a raw meet.sow2growapp.com URL with no
+   JWT. A separate component because useDailyIframeSrc is a hook -- it can
+   only be called unconditionally in its own render, not inline inside the
+   parent's conditional JSX. */
+function DirectCallOverlay({ room, title, onClose }: { room: string; title: string; onClose: () => void }) {
+  const { src, loading, error } = useDailyIframeSrc('custom', room);
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex flex-col bg-black"
+    >
+      <div className="flex items-center justify-between border-b border-emerald-500/20 bg-emerald-950/60 px-4 py-2">
+        <div className="flex items-center gap-2 text-sm text-white">
+          <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-400" />
+          {title}
+        </div>
+        <Button size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={onClose}>
+          Close
+        </Button>
+      </div>
+      {loading && (
+        <div className="flex flex-1 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-300" /></div>
+      )}
+      {error && (
+        <div className="flex flex-1 items-center justify-center text-sm text-red-300">{error}</div>
+      )}
+      {src && (
+        <iframe
+          title={title}
+          src={src}
+          allow="camera; microphone; fullscreen; display-capture; autoplay"
+          className="flex-1 border-0"
+        />
+      )}
+    </motion.div>
   );
 }
 

@@ -1,4 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Mock all the dependencies
 vi.mock('@/integrations/supabase/client', () => ({
@@ -53,29 +57,24 @@ describe('Radio Station Features', () => {
   });
 
   it('should mock supabase client correctly', () => {
-    const { supabase } = require('@/integrations/supabase/client');
     expect(supabase).toBeDefined();
     expect(supabase.from).toBeDefined();
     expect(supabase.storage).toBeDefined();
   });
 
   it('should mock auth hook correctly', () => {
-    const { useAuth } = require('@/hooks/useAuth');
     const result = useAuth();
     expect(result.user).toBeDefined();
     expect(result.user.id).toBe('user1');
   });
 
   it('should mock toast hook correctly', () => {
-    const { useToast } = require('@/hooks/use-toast');
     const result = useToast();
     expect(result.toast).toBeDefined();
     expect(typeof result.toast).toBe('function');
   });
 
   it('should mock react-query hooks correctly', () => {
-    const { useQuery, useMutation, useQueryClient } = require('@tanstack/react-query');
-    
     const queryResult = useQuery();
     expect(queryResult.data).toEqual([]);
     expect(queryResult.isLoading).toBe(false);

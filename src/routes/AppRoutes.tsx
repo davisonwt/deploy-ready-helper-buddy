@@ -95,6 +95,7 @@ import {
   EstimateBuilderPage,
   PublicEstimateApprovalPage,
   JoinPage,
+  CallPage,
   GosatSubscriptionsPage,
   MyWalletPage,
   GosatTreasuryPage,
@@ -587,6 +588,9 @@ const AppRoutes = () => (
     } />
     <Route path="/join" element={
       <Suspense fallback={<LoadingFallback />}><JoinPage /></Suspense>
+    } />
+    <Route path="/call/:roomKind/:roomId" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><CallPage /></Suspense></ProtectedRoute>
     } />
     <Route path="/admin/subscriptions" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}><Suspense fallback={<LoadingFallback />}><Layout><GosatSubscriptionsPage /></Layout></Suspense></ProtectedRoute>

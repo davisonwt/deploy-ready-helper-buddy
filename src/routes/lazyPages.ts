@@ -159,6 +159,7 @@ export const JobDetailPage = lazy(() => import('@/pages/JobDetailPage'));
 export const EstimateBuilderPage = lazy(() => import('@/pages/EstimateBuilderPage'));
 export const PublicEstimateApprovalPage = lazy(() => import('@/pages/PublicEstimateApprovalPage'));
 export const JoinPage = lazy(() => import('@/pages/JoinPage'));
+export const CallPage = lazy(() => import('@/pages/CallPage'));
 export const GosatSubscriptionsPage = lazy(() => import('@/pages/GosatSubscriptionsPage'));
 export const MyWalletPage = lazy(() => import('@/pages/MyWalletPage'));
 export const GosatTreasuryPage = lazy(() => import('@/pages/GosatTreasuryPage'));

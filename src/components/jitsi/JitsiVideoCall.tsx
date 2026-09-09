@@ -13,7 +13,7 @@ import {
   Maximize2,
   Users,
 } from 'lucide-react';
-import { useJitsiCall } from '@/hooks/useJitsiCall';
+import { useDailyCall } from '@/hooks/useDailyCall';
 import { useState } from 'react';
 
 interface JitsiVideoCallProps {
@@ -40,7 +40,7 @@ export default function JitsiVideoCall({
   const [isMinimized, setIsMinimized] = useState(false);
 
   const {
-    jitsiContainerRef,
+    callContainerRef,
     isLoading,
     isAudioMuted,
     isVideoMuted,
@@ -50,7 +50,7 @@ export default function JitsiVideoCall({
     toggleAudio,
     toggleVideo,
     hangUp,
-  } = useJitsiCall({
+  } = useDailyCall({
     callSession,
     currentUserId,
     displayName: callerInfo.display_name || 'User',
@@ -109,7 +109,7 @@ export default function JitsiVideoCall({
 
             {/* Mini video preview */}
             <div className="relative w-full h-32 bg-muted rounded-lg overflow-hidden">
-              <div ref={jitsiContainerRef} className="w-full h-full" />
+              <div ref={callContainerRef} className="w-full h-full" />
             </div>
 
             {/* Mini controls */}
@@ -180,7 +180,7 @@ export default function JitsiVideoCall({
             </Card>
           </div>
         )}
-        <div ref={jitsiContainerRef} className="w-full h-full" />
+        <div ref={callContainerRef} className="w-full h-full" />
       </div>
 
       {/* Controls */}

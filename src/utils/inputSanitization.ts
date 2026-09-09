@@ -256,13 +256,13 @@ export const validateFileType = (file: File, allowedTypes: string[]): boolean =>
  */
 export const cspDirectives = {
   'default-src': "'self'",
-  'script-src': "'self' 'unsafe-inline' 'unsafe-eval' https://meet.sow2growapp.com",
+  'script-src': "'self' 'unsafe-inline' 'unsafe-eval'",
   'style-src': "'self' 'unsafe-inline'",
-  'font-src': "'self' data: https://meet.sow2growapp.com",
-  'img-src': "'self' data: https: blob: https://meet.sow2growapp.com",
+  'font-src': "'self' data:",
+  'img-src': "'self' data: https: blob:",
   'media-src': "'self' https: blob:",
-  'connect-src': "'self' https://*.supabase.co wss://*.supabase.co wss://meet.sow2growapp.com https://meet.sow2growapp.com",
-  'frame-src': "'self' https://meet.sow2growapp.com",
+  'connect-src': "'self' https://*.supabase.co wss://*.supabase.co",
+  'frame-src': "'self' https://*.daily.co",
   'object-src': "'none'",
   'base-uri': "'self'",
   'form-action': "'self'"

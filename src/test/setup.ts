@@ -4,6 +4,24 @@ import { vi } from 'vitest';
 // Global test utilities
 global.vi = vi;
 
+// jsdom has no matchMedia implementation; next-themes calls it on mount
+// (ThemeProvider -> useTheme), which otherwise throws
+// "TypeError: window.matchMedia is not a function" in every test that
+// renders anything wrapped in it (P1-7).
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {

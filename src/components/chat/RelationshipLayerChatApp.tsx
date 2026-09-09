@@ -326,25 +326,25 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     }
   };
 
-  const handleStartCall = async (userId: string, callType: 'audio' | 'video') => {
+  const handleStartCall = async (userId: string, _callType: 'audio' | 'video') => {
     if (!user) return;
-    
+
     try {
-      // Generate unique room name for Jitsi
-      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let roomName = '';
-      for (let i = 0; i < 12; i++) {
-        roomName += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      
-      const jitsiDomain = import.meta.env.VITE_JITSI_DOMAIN || '197.245.26.199';
-      const jitsiUrl = `https://${jitsiDomain}/${roomName}${callType === 'audio' ? '?config.startAudioOnly=true' : ''}`;
-      
-      // Open Jitsi in new window
-      window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
-      
+      // P1-6: the old flow generated a Math.random() room name and opened
+      // it in a new tab with no way for the other party to ever learn that
+      // name -- structurally not a working two-person call. Using the same
+      // deterministic direct-room id handleStartChat gets (both sides land
+      // in the same Daily room), authorized via chat_participants.
+      const { data: roomId, error } = await supabase.rpc('get_or_create_direct_room', {
+        user1_id: user.id,
+        user2_id: userId,
+      });
+      if (error) throw error;
+
+      window.open(`/call/chat_room/${roomId}`, '_blank', 'noopener,noreferrer');
+
       toast({
-        title: `${callType === 'audio' ? 'Voice' : 'Video'} call started`,
+        title: 'Call started',
         description: 'Call window opened in new tab',
       });
     } catch (error) {

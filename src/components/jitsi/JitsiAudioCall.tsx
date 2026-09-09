@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Phone, PhoneOff, Mic, MicOff } from 'lucide-react';
-import { useJitsiCall } from '@/hooks/useJitsiCall';
+import { useDailyCall } from '@/hooks/useDailyCall';
 
 interface JitsiAudioCallProps {
   callSession: {
@@ -26,14 +26,14 @@ export default function JitsiAudioCall({
   onEndCall,
 }: JitsiAudioCallProps) {
   const {
-    jitsiContainerRef,
+    callContainerRef,
     isLoading,
     isAudioMuted,
     callDuration,
     connectionState,
     toggleAudio,
     hangUp,
-  } = useJitsiCall({
+  } = useDailyCall({
     callSession,
     currentUserId,
     displayName: callerInfo.display_name || 'User',
@@ -50,7 +50,7 @@ export default function JitsiAudioCall({
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
       {/* Hidden Jitsi container */}
-      <div ref={jitsiContainerRef} style={{ display: 'none' }} />
+      <div ref={callContainerRef} style={{ display: 'none' }} />
 
       <Card className="p-8 max-w-md w-full mx-4">
         <div className="text-center space-y-6">
