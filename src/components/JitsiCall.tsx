@@ -122,8 +122,21 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
       callRef.current = null;
       teardownDailyCall(call);
     };
+    // Deliberately empty: create the frame exactly once per mount, using
+    // whichever roomName/roomKind/isAudioOnly/userInfo this component was
+    // mounted with. A production crash ("null is not an object (evaluating
+    // 'u.postMessage')") traced to this effect re-running mid-call --
+    // something upstream re-rendering with new-but-equal prop values was
+    // enough to tear the live frame down and recreate it while daily-js
+    // still had in-flight postMessage calls against the old one. This
+    // component's contract is "one Daily call for as long as I'm mounted";
+    // if a caller ever needs to switch rooms without unmounting, that
+    // should be an explicit `key` change from the parent, not this effect
+    // silently resyncing. StrictMode's dev-only double-invoke is already
+    // handled correctly by the `cancelled` guard above + the idempotent
+    // teardownDailyCall on cleanup -- it settles to exactly one live frame.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomName, roomKind, isAudioOnly]);
+  }, []);
 
   return (
     <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border relative">
