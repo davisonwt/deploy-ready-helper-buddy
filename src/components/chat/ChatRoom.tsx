@@ -62,11 +62,18 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
 
   // Live camera preview while recording a video clip. playsInline + muted
   // are required for iOS Safari to render the stream at all instead of
-  // trying to hand off to the native fullscreen player.
+  // trying to hand off to the native fullscreen player -- but Safari has
+  // also been observed to not reliably start playback of a MediaStream
+  // srcObject assigned after mount from the `autoplay` attribute alone;
+  // an explicit .play() call after assigning srcObject is the standard
+  // fix. play() can reject (AbortError) if the stream/element changes
+  // again before it resolves -- harmless, swallowed.
   useEffect(() => {
     const el = videoPreviewRef.current;
     if (!el) return;
-    el.srcObject = recorder.kind === 'video' ? recorder.stream : null;
+    const stream = recorder.kind === 'video' ? recorder.stream : null;
+    el.srcObject = stream;
+    if (stream) el.play().catch(() => undefined);
   }, [recorder.stream, recorder.kind]);
 
 
