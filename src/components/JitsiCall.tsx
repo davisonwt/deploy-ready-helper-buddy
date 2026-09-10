@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import DailyIframe, { type DailyCall } from '@daily-co/daily-js';
-import { checkDeviceAvailability, fetchDailyMeetingToken, shortenDailyRoomName, startDailyJoinWatchdog, teardownDailyCall, type DailyRoomKind } from '@/lib/daily-config';
+import { checkDeviceAvailability, fetchDailyMeetingToken, logCallEvent, shortenDailyRoomName, startDailyJoinWatchdog, teardownDailyCall, type DailyRoomKind } from '@/lib/daily-config';
 import { NoDeviceBanner } from '@/components/media/NoDeviceBanner';
 import { useToast } from '@/hooks/use-toast';
 
@@ -103,10 +103,14 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
           watchdog?.clear();
           setIsLoading(false);
           updateParticipantCount();
+          void logCallEvent(room_name, 'join');
         });
         call.on('participant-joined', updateParticipantCount);
         call.on('participant-left', updateParticipantCount);
-        call.on('left-meeting', () => onLeave());
+        call.on('left-meeting', () => {
+          if (joinedRef.current) void logCallEvent(room_name, 'leave');
+          onLeave();
+        });
         call.on('camera-error', () => {
           toast({ title: 'Camera/mic error', description: 'Could not access your camera or microphone.', variant: 'destructive' });
         });

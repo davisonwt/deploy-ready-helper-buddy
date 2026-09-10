@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Mic, MicOff, Video, VideoOff, Phone, Hand } from 'lucide-react';
-import { checkDeviceAvailability, fetchDailyMeetingToken, shortenDailyRoomName, startDailyJoinWatchdog, teardownDailyCall } from '@/lib/daily-config';
+import { checkDeviceAvailability, fetchDailyMeetingToken, logCallEvent, shortenDailyRoomName, startDailyJoinWatchdog, teardownDailyCall } from '@/lib/daily-config';
 import { NoDeviceBanner } from '@/components/media/NoDeviceBanner';
 
 // P1-6: was a JitsiMeetExternalAPI room against a public/self-hosted domain
@@ -115,8 +115,12 @@ export default function JitsiRoom({
           watchdog?.clear();
           setIsLoading(false);
           toast({ title: 'Connected', description: 'You joined the live room' });
+          void logCallEvent(room_name, 'join');
         });
-        call.on('left-meeting', () => handleLeave());
+        call.on('left-meeting', () => {
+          if (joinedRef.current) void logCallEvent(room_name, 'leave');
+          handleLeave();
+        });
         call.on('participant-joined', () => updateParticipantCount(call));
         call.on('participant-left', () => updateParticipantCount(call));
         call.on('app-message', (ev: any) => {

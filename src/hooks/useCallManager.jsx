@@ -1178,6 +1178,64 @@ export const useCallManagerInternal = () => {
     };
   }, [hasUser, userId, incomingCall, currentCall, handleIncomingCall]);
 
+  // CALLER-SIDE FIX: the receiver's "is someone calling me" detection above
+  // has three independent layers -- broadcast, a postgres_changes INSERT
+  // listener, AND this same poll -- but the caller's "did they answer"
+  // detection only ever had two (broadcast + a postgres_changes UPDATE
+  // listener), with no polling fallback. If both of those are missed --
+  // a dropped/reconnecting realtime WebSocket, which is exactly what
+  // happens on mobile Safari when the screen dims/locks while the caller
+  // is just standing there waiting for the other party to pick up -- the
+  // caller had no way to ever find out their call was accepted; they'd
+  // stay on the outgoing "Calling..." screen and never join the Daily
+  // room the callee is already in. Mirrors the receiver's poll above,
+  // scoped to the caller's own single outgoing call.
+  useEffect(() => {
+    if (!hasUser || !userId) return;
+    if (!outgoingCall || currentCall) return;
+
+    const outgoingId = outgoingCall.id;
+    const poll = setInterval(async () => {
+      try {
+        const { data, error } = await supabase
+          .from('call_sessions')
+          .select('id, caller_id, receiver_id, call_type, status')
+          .eq('id', outgoingId)
+          .maybeSingle();
+
+        if (error) {
+          console.warn('⚠️ [CALL][POLL] Outgoing-call poll query error:', error);
+          return;
+        }
+        if (!data) return;
+        // Stale by the time this tick runs (answered/cleared via a
+        // faster path already) -- nothing to do.
+        if (outgoingCallRef.current?.id !== outgoingId || currentCallRef.current) return;
+
+        if (data.status === 'accepted') {
+          console.log('📞 [CALL][POLL] Outgoing call accepted (caught by poll -- broadcast/realtime UPDATE was missed):', outgoingId);
+          handleCallAnswered({
+            id: data.id,
+            caller_id: data.caller_id,
+            receiver_id: data.receiver_id,
+            type: data.call_type || 'audio',
+            status: 'accepted',
+            isIncoming: false,
+            startTime: Date.now(),
+          });
+        } else if (data.status === 'declined') {
+          handleCallDeclined({ id: data.id, reason: 'declined' });
+        } else if (data.status === 'ended') {
+          handleCallEnded({ id: data.id, reason: 'ended' });
+        }
+      } catch (e) {
+        console.error('⚠️ [CALL] Outgoing-call poll error:', e);
+      }
+    }, 2000);
+
+    return () => clearInterval(poll);
+  }, [hasUser, userId, outgoingCall, currentCall, handleCallAnswered, handleCallDeclined, handleCallEnded]);
+
   // ============================================
   // RETURN - Conditional on hasUser for stubs
   // ============================================

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { DailyCall } from '@daily-co/daily-js';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Daily.co call setup (P1-6, replacing Jitsi). Every existing Jitsi
@@ -130,6 +131,28 @@ export function teardownDailyCall(call: DailyCall | null): void {
   if (!call) return;
   try { call.leave()?.catch?.(() => {}); } catch { /* frame already torn down */ }
   try { call.destroy()?.catch?.(() => {}); } catch { /* frame already torn down */ }
+}
+
+/**
+ * One row per join/leave in public.call_events -- "who was in which room
+ * when," queryable/exportable-as-CSV from Supabase directly (Daily's own
+ * Meetings API has the same data per-room, see
+ * scripts/studio/daily-sessions.md, but only reachable via a manual curl).
+ * Fire-and-forget: a logging failure must never block or fail a call.
+ */
+export async function logCallEvent(roomName: string, eventType: 'join' | 'leave'): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from('call_events' as any).insert({
+      room_name: roomName,
+      user_id: user.id,
+      event_type: eventType,
+    });
+    if (error) console.error('logCallEvent: insert failed', error);
+  } catch (err) {
+    console.error('logCallEvent: unexpected error', err);
+  }
 }
 
 /**
