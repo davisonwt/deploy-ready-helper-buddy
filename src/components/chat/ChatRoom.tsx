@@ -58,8 +58,18 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
   
   // Voice + video clip recording (uses chat-media bucket via useMediaRecorder)
   const recorder = useMediaRecorder();
+  const videoPreviewRef = useRef<HTMLVideoElement | null>(null);
 
-  
+  // Live camera preview while recording a video clip. playsInline + muted
+  // are required for iOS Safari to render the stream at all instead of
+  // trying to hand off to the native fullscreen player.
+  useEffect(() => {
+    const el = videoPreviewRef.current;
+    if (!el) return;
+    el.srcObject = recorder.kind === 'video' ? recorder.stream : null;
+  }, [recorder.stream, recorder.kind]);
+
+
   // Donations
   const [showDonate, setShowDonate] = useState(false);
 
@@ -604,8 +614,19 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
     try {
       await ensureMembership();
       const blob = await recorder.start(kind, maxSeconds);
-      if (!blob) return;
-      const ext = kind === 'audio' ? 'webm' : 'webm';
+      if (!blob || blob.size === 0) {
+        if (blob) {
+          // Recording ran but produced no usable data -- tell the member
+          // instead of silently doing nothing (the previous iOS symptom:
+          // "Stop & send" appeared to work but nothing was ever sent).
+          toast({ variant: 'destructive', title: 'Recording failed', description: 'Nothing was captured — please try again.' });
+        }
+        return;
+      }
+      // Derived from the blob's own type (set by useMediaRecorder from
+      // whichever mimeType actually got used) rather than hardcoded --
+      // iOS Safari records video/mp4, not video/webm.
+      const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
       const { signedUrl } = await uploadChatMedia(roomId, blob, ext);
       const isVoice = kind === 'audio';
       const { data: inserted, error } = await supabase.rpc('send_chat_message', {
@@ -613,7 +634,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
         p_content: isVoice ? '[Voice Note]' : '[Video Clip]',
         p_message_type: isVoice ? 'voice' : 'video',
         p_file_url: signedUrl,
-        p_file_name: isVoice ? 'voice-note.webm' : 'video-clip.webm',
+        p_file_name: isVoice ? `voice-note.${ext}` : `video-clip.${ext}`,
         p_file_type: isVoice ? 'audio' : 'video',
         p_file_size: blob.size,
       });
@@ -876,6 +897,22 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
           </div>
         </div>
       </div>
+
+      {/* Video clip recording - live camera preview. playsInline + muted +
+          autoPlay are required for iOS Safari to actually render the
+          stream instead of showing nothing. */}
+      {recorder.recording && recorder.kind === 'video' && (
+        <div className="p-4 border-b border-[#4FA876]/15 bg-[#0E1B15]/95 flex items-center gap-3">
+          <video
+            ref={videoPreviewRef}
+            playsInline
+            muted
+            autoPlay
+            className="h-24 w-32 rounded-md bg-black object-cover"
+          />
+          <span className="text-sm text-[#FF8A5B] tabular-nums">● Recording video — {recorder.elapsed}s</span>
+        </div>
+      )}
 
       {/* Video call - Show when call is accepted */}
       {currentCall && currentCall.status === 'accepted' && (

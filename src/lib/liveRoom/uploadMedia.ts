@@ -5,7 +5,12 @@ const BUCKET = 'chat-media';
 const MAX_BYTES = 50 * 1024 * 1024; // 50MB
 const ALLOWED_MIME = new Set([
   'audio/webm',
+  'audio/mp4',
   'video/webm',
+  'video/webm;codecs=vp9',
+  // iOS Safari's MediaRecorder only produces video/mp4 -- see
+  // src/hooks/useMediaRecorder.ts's mimeType fallback chain.
+  'video/mp4',
   'audio/mpeg',
   'audio/wav',
 ]);
@@ -19,7 +24,7 @@ export async function uploadChatMedia(
     throw new Error(`File too large (${(blob.size / 1024 / 1024).toFixed(1)}MB). Max 50MB.`);
   }
   if (!ALLOWED_MIME.has(blob.type)) {
-    throw new Error(`Unsupported media type "${blob.type || 'unknown'}". Allowed: audio/webm, video/webm, audio/mpeg, audio/wav.`);
+    throw new Error(`Unsupported media type "${blob.type || 'unknown'}". Allowed: ${[...ALLOWED_MIME].join(', ')}.`);
   }
   const path = `${roomId}/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
@@ -28,7 +33,9 @@ export async function uploadChatMedia(
   });
   if (error) throw error;
 
-  const { verdict, reason } = await moderateStorageUpload(BUCKET, path, blob.type === 'video/webm' ? 'video' : 'image');
+  // Exact-string match on 'video/webm' would misclassify every other video
+  // mimeType (video/mp4 from iOS Safari, the vp9-codec variant) as 'image'.
+  const { verdict, reason } = await moderateStorageUpload(BUCKET, path, blob.type.startsWith('video/') ? 'video' : 'image');
   if (verdict !== 'allow') throw new Error(moderationRejectionMessage(reason));
 
   const { data, error: sErr } = await supabase.storage

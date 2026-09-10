@@ -2,10 +2,28 @@ import { useCallback, useRef, useState } from 'react';
 
 export type RecorderKind = 'audio' | 'video';
 
+// iOS Safari's MediaRecorder does not support video/webm at all -- pick the
+// first mimeType it (or any other browser) actually reports support for,
+// rather than hardcoding one and having the MediaRecorder constructor throw
+// on iOS. video/mp4 first since that's the one Safari supports; the webm
+// variants cover every other browser exactly as before.
+const VIDEO_MIME_CANDIDATES = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+const AUDIO_MIME_CANDIDATES = ['audio/webm', 'audio/mp4'];
+
+function pickSupportedMime(candidates: string[]): string | null {
+  for (const candidate of candidates) {
+    if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported?.(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 export function useMediaRecorder() {
   const [recording, setRecording] = useState(false);
   const [kind, setKind] = useState<RecorderKind | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
@@ -19,20 +37,43 @@ export function useMediaRecorder() {
     }
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
+    setStream(null);
   }, []);
 
   const start = useCallback(async (k: RecorderKind, maxSeconds: number): Promise<Blob | null> => {
     if (recording) return null;
     const constraints: MediaStreamConstraints =
       k === 'audio' ? { audio: true } : { audio: true, video: { width: 640, height: 480 } };
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    streamRef.current = stream;
+    const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+    streamRef.current = mediaStream;
+
+    // isTypeSupported returning false for every candidate (extremely old
+    // browser) is treated the same as a getUserMedia failure -- never enter
+    // the recording state, and release the camera/mic we just acquired.
+    const mime = pickSupportedMime(k === 'audio' ? AUDIO_MIME_CANDIDATES : VIDEO_MIME_CANDIDATES);
+    if (!mime) {
+      mediaStream.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+      throw new Error(`This browser can't record ${k === 'audio' ? 'audio' : 'video'} messages.`);
+    }
+
+    let rec: MediaRecorder;
+    try {
+      rec = new MediaRecorder(mediaStream, { mimeType: mime });
+    } catch (err) {
+      // Belt-and-braces: isTypeSupported said yes but construction still
+      // threw. Release the stream before rethrowing so the camera/mic
+      // indicator doesn't stay lit on a recording that never started.
+      mediaStream.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+      throw err;
+    }
+
     chunksRef.current = [];
-    const mime = k === 'audio' ? 'audio/webm' : 'video/webm';
-    const rec = new MediaRecorder(stream, { mimeType: mime });
     recorderRef.current = rec;
     setKind(k);
     setElapsed(0);
+    setStream(mediaStream);
     setRecording(true);
 
     return new Promise<Blob | null>(resolve => {
@@ -74,5 +115,5 @@ export function useMediaRecorder() {
     }
   }, []);
 
-  return { recording, kind, elapsed, start, stop, cancel };
+  return { recording, kind, elapsed, stream, start, stop, cancel };
 }
