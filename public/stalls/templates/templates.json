@@ -1,0 +1,17 @@
+{
+  "music": [],
+  "books_writing": [
+    {
+      "id": "farm-stall-1",
+      "label": "Farm Stall",
+      "front": "/stalls/templates/farm-stall-front.png",
+      "interior": "/stalls/templates/farm-stall-interior.png"
+    }
+  ],
+  "art_craft": [],
+  "faith_teaching": [],
+  "trades_services": [],
+  "food_home": [],
+  "whisperer": [],
+  "orchard": []
+}
