@@ -83,6 +83,7 @@ export const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 export const StallBuildPage = lazy(() => import('@/pages/StallBuildPage'));
 export const StallVisitPage = lazy(() => import('@/pages/StallVisitPage'));
 export const StallsFeedPage = lazy(() => import('@/pages/StallsFeedPage'));
+export const ReceiptPage = lazy(() => import('@/pages/ReceiptPage'));
 export const BulkUploadWizardPage = lazy(() => import('@/pages/BulkUploadWizardPage'));
 export const BulkSowerPage = lazy(() => import('@/pages/BulkSowerPage'));
 export const BulkSeedFeedPage = lazy(() => import('@/pages/BulkSeedFeedPage'));

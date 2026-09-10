@@ -18,8 +18,9 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
-import { ArrowLeft, LayoutDashboard, Loader2, Package, Truck } from 'lucide-react';
+import { ArrowLeft, LayoutDashboard, Loader2, Package, Truck, ReceiptText } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const money = (n: number | null | undefined) => `$${Number(n || 0).toFixed(2)}`;
 const when = (d?: string | null) => (d ? new Date(d).toLocaleDateString() : null);
@@ -92,6 +93,21 @@ export default function MyOrdersPage() {
       toast.error(err?.message ?? 'Action failed');
     } finally {
       setBusy(null);
+    }
+  };
+
+  const [findingReceiptFor, setFindingReceiptFor] = useState<string | null>(null);
+  const openReceipt = async (productBestowalId: string) => {
+    setFindingReceiptFor(productBestowalId);
+    try {
+      const { data: messageId, error } = await supabase.rpc('find_bestowal_receipt' as any, { _product_bestowal_id: productBestowalId });
+      if (error || !messageId) {
+        toast.error('No receipt found for this sale yet.');
+        return;
+      }
+      navigate(`/receipt/${messageId}`);
+    } finally {
+      setFindingReceiptFor(null);
     }
   };
 
@@ -212,6 +228,15 @@ export default function MyOrdersPage() {
                     Mark delivered
                   </Button>
                 )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={findingReceiptFor === row.id}
+                  onClick={() => openReceipt(row.id)}
+                >
+                  {findingReceiptFor === row.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ReceiptText className="mr-2 h-4 w-4" />}
+                  Sow2Grow Receipt
+                </Button>
                 <span className="self-center text-sm text-muted-foreground">
                   You: {money(row.sower_amount)}
                 </span>

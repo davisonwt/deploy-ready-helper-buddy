@@ -24,6 +24,7 @@ import {
   StallBuildPage,
   StallVisitPage,
   StallsFeedPage,
+  ReceiptPage,
   BulkUploadWizardPage,
   BulkSowerPage,
   BulkSeedFeedPage,
@@ -295,6 +296,12 @@ const AppRoutes = () => (
     } />
     <Route path="/orchard-alive" element={
       <ProtectedRoute><RequireVerification><Layout><TribalAliveFeedPage /></Layout></RequireVerification></ProtectedRoute>
+    } />
+    {/* Print-ready receipt -- deliberately no <Layout> (bare page, own
+        header/footer) so print/PDF output isn't cluttered with app chrome.
+        Still requires a session -- get_receipt() checks auth.uid() itself. */}
+    <Route path="/receipt/:orderId" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><ReceiptPage /></Suspense></ProtectedRoute>
     } />
     <Route path="/stalls-feed" element={
       <ProtectedRoute><RequireVerification><Layout><Suspense fallback={<LoadingFallback />}><StallsFeedPage /></Suspense></Layout></RequireVerification></ProtectedRoute>

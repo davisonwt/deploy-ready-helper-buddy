@@ -36,7 +36,7 @@ const ChatMessage = ({ message, isOwn = false, onDelete, isInstructor, instructo
     return (
       <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
         <div className="flex-1 max-w-[80%]">
-          <BestowalReceiptMessage metadata={message.system_metadata} />
+          <BestowalReceiptMessage metadata={message.system_metadata} messageId={message.id} />
         </div>
       </div>
     );

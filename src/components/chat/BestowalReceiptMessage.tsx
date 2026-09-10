@@ -35,7 +35,7 @@ interface BestowalReceiptMetadata {
 const usd = (n: number | null | undefined) =>
   typeof n === 'number' ? `$${n.toFixed(2)}` : '—';
 
-export function BestowalReceiptMessage({ metadata }: { metadata: BestowalReceiptMetadata }) {
+export function BestowalReceiptMessage({ metadata, messageId }: { metadata: BestowalReceiptMetadata; messageId?: string }) {
   const {
     order_ref, date, provider, seed_lines, sower_name,
     sower_amount, s2g_fee, whisperer_amount, whisperer_name,
@@ -58,10 +58,20 @@ export function BestowalReceiptMessage({ metadata }: { metadata: BestowalReceipt
   return (
     <Card className="p-4 bg-gradient-to-br from-amber-500/10 to-emerald-500/10 border-amber-500/20 max-w-md">
       <div className="flex items-center gap-2 mb-3 pb-3 border-b border-amber-500/20">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-600 text-white shadow-lg">
-          <ReceiptText className="h-4 w-4" />
-          <span className="text-xs font-semibold">Sow2Grow Receipt</span>
-        </div>
+        {messageId ? (
+          <Link
+            to={`/receipt/${messageId}`}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-600 text-white shadow-lg hover:bg-amber-700 transition-colors"
+          >
+            <ReceiptText className="h-4 w-4" />
+            <span className="text-xs font-semibold">Sow2Grow Receipt</span>
+          </Link>
+        ) : (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-600 text-white shadow-lg">
+            <ReceiptText className="h-4 w-4" />
+            <span className="text-xs font-semibold">Sow2Grow Receipt</span>
+          </div>
+        )}
       </div>
 
       <div className="space-y-1 text-xs text-muted-foreground mb-3">
