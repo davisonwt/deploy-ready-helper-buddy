@@ -17,6 +17,7 @@ import { priceBreakdown } from "../_shared/platformFee.ts";
 import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
 import { finalizeCompletedOrder } from "../_shared/paypal/capture.ts";
 import { isS2GBalanceEnabled } from "../_shared/featureFlags.ts";
+import { initializePaystackTransaction } from "../_shared/paystack/initialize.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -27,7 +28,7 @@ type ContentType =
   | "premium_item"
   | "premium_room_access";
 
-type Provider = "nowpayments" | "paypal" | "solana" | "balance";
+type Provider = "nowpayments" | "paypal" | "solana" | "balance" | "paystack";
 
 interface RequestPayload {
   contentType: ContentType;
@@ -65,6 +66,13 @@ Deno.serve(async (req) => {
     try { payload = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
     if (!payload?.contentType || !payload?.contentId || !payload?.provider) {
       return json({ error: "missing_fields", required: ["contentType","contentId","provider"] }, 400);
+    }
+    if (
+      payload.provider !== "nowpayments" && payload.provider !== "paypal" &&
+      payload.provider !== "solana" && payload.provider !== "balance" &&
+      payload.provider !== "paystack"
+    ) {
+      return json({ error: "invalid_provider" }, 400);
     }
     if (payload.provider === "nowpayments" && !payload.payCurrency) {
       return json({ error: "missing_pay_currency" }, 400);
@@ -244,6 +252,44 @@ Deno.serve(async (req) => {
         provider: "solana",
         solanaPayment,
         breakdown: { baseAmount, platformFee, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+      });
+    }
+
+    // --- Paystack (cards + EFT via Ozow, ZAR settlement) -----------------------
+    if (payload.provider === "paystack") {
+      if (!Deno.env.get("PAYSTACK_SECRET_KEY")) {
+        await failPurchase(service, purchase.id, "paystack_credentials_missing");
+        return json({ error: "paystack_credentials_missing" }, 500);
+      }
+      let init;
+      try {
+        init = await initializePaystackTransaction({
+          supabase: service,
+          kind: "content",
+          recordId: purchase.id,
+          amountUsd: buyerTotal,
+          email: userData.user.email ?? `buyer-${buyerId}@pay.sow2growapp.com`,
+          description,
+          redirectBaseUrl: payload.redirectBaseUrl,
+          metadataExtra: { purchaseId: purchase.id, contentType: payload.contentType, contentId: payload.contentId },
+        });
+      } catch (err) {
+        console.error("paystack content purchase init failed", err);
+        await failPurchase(service, purchase.id, "paystack_initialize_failed");
+        return json({ error: "paystack_initialize_failed", detail: err instanceof Error ? err.message : String(err) }, 502);
+      }
+      await service.from("content_purchases").update({ provider_order_id: init.reference }).eq("id", purchase.id);
+      return json({
+        purchaseId: purchase.id,
+        provider: "paystack",
+        reference: init.reference,
+        // Same field name the paypal branch below returns -- every client
+        // redirect handler for this function is already provider-generic.
+        approveUrl: init.authorizationUrl,
+        breakdown: {
+          baseAmount, platformFee, processorFee, processorFeePct: feePct, buyerTotal,
+          amountZar: init.amountZar, fxRate: init.fxRate, currency: "USD",
+        },
       });
     }
 
