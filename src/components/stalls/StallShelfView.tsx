@@ -91,7 +91,7 @@ export default function StallShelfView({ ownerId, ownerName, tile, onClose }: Pr
   const isEmpty = tile.kind === 'lyrics' || (tile.kind !== 'story' && !loading && cards.length === 0);
 
   return (
-    <div className={`fixed inset-0 z-[110] flex flex-col ${theme.bg}`}>
+    <div className={`fixed inset-0 z-[10000] flex flex-col ${theme.bg}`}>
       <div className="shrink-0 flex items-center justify-between p-4">
         <div>
           <h2 className="text-white font-bold text-lg">{tile.label}</h2>

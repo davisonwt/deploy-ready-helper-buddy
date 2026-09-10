@@ -27,6 +27,7 @@ import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
 import { useProductBasket } from '@/contexts/ProductBasketContext'
 import SettlementConsentBanner from '@/components/dashboard/SettlementConsentBanner'
 import { TileErrorBoundary } from '@/components/error/TileErrorBoundary';
+import { useAppContext } from '@/contexts/AppContext';
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
@@ -391,6 +392,7 @@ function WeekBeads({ sacred }) {
 
 export default function SeedFlowDashboard() {
   const { user, logout } = useAuth()
+  const { stallInteriorOpen } = useAppContext()
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [activeIdx, setActiveIdx] = useState(0)
@@ -1421,7 +1423,11 @@ export default function SeedFlowDashboard() {
           </div>
         </div>
 
-        {/* ── Full width bottom bar ── */}
+        {/* ── Full width bottom bar -- hidden while a stall interior is open
+            (StallInteriorView owns the full viewport then, same as the
+            FloatingBasketButton/WalletBalanceChip/GroundskeeperWidget hide
+            in App.tsx's GlobalChrome) ── */}
+        {!stallInteriorOpen && (
         <div style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           display: 'flex', gap: 8, padding: '10px 12px',
@@ -1466,6 +1472,7 @@ export default function SeedFlowDashboard() {
             </LivingButton>
           </Link>
         </div>
+        )}
         <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
         <VideoUploadModal isOpen={showVideoUpload} onClose={() => setShowVideoUpload(false)} />
       </div>
