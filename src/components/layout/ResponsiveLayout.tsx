@@ -6,7 +6,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 // Routes where sidebar should be hidden
-const ROUTES_WITHOUT_SIDEBAR = ['/dashboard'];
+const ROUTES_WITHOUT_SIDEBAR = ['/cockpit'];
 
 interface Props { 
   children: ReactNode;
@@ -14,7 +14,7 @@ interface Props {
 }
 
 const navigationItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home },
+  { name: 'Cockpit', href: '/cockpit', icon: Home },
   { name: 'Browse Orchards', href: '/browse-orchards', icon: Leaf },
   { name: 'My Orchards', href: '/my-orchards', icon: Leaf },
   { name: 'Platform Fee', href: '/admin-fee', icon: DollarSign },

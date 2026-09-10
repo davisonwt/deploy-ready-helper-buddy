@@ -19,6 +19,7 @@ import { toast } from 'sonner'
 import DashboardTribeStats from '../components/dashboard/DashboardTribeStats'
 import { useMyContent } from '@/api/sowerContent'
 import TribalTiersCard from '../components/dashboard/TribalTiersCard'
+import MyStallCard from '@/components/stalls/MyStallCard'
 import LiveNowStrip from '@/components/live/LiveNowStrip'
 import SacredDayBanner from '@/components/SacredDayBanner'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -1285,6 +1286,10 @@ export default function SeedFlowDashboard() {
 
             {/* ── Tribe size · Bestowals · Unread messages ── */}
             <TileErrorBoundary name="dashboard stats"><DashboardTribeStats /></TileErrorBoundary>
+
+            {/* ── Your stall — Farm-Stalls batch 1: shop-front tap-in, or a
+                build CTA if none yet. No public visitor feed here yet. ── */}
+            <TileErrorBoundary name="my stall"><MyStallCard /></TileErrorBoundary>
 
             {/* ── Tribal Tiers — jump to each SeedFlow by business scale ── */}
             <TribalTiersCard />
