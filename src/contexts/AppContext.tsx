@@ -9,6 +9,15 @@ interface AppContextType {
   setVoiceCommandsEnabled: (enabled: boolean) => void
   isFirstVisit: boolean
   setIsFirstVisit: (isFirst: boolean) => void
+  /**
+   * True while a stall interior (StallInteriorView) is open full-screen --
+   * App.tsx reads this to hide the global FloatingBasketButton,
+   * WalletBalanceChip and GroundskeeperWidget (the pine-tree FAB), none of
+   * which the interior's own fixed bottom tile strip has room to coexist
+   * with. Farm-Stalls batch 2, item 1.
+   */
+  stallInteriorOpen: boolean
+  setStallInteriorOpen: (open: boolean) => void
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -18,6 +27,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
   const [showGamificationHUD, setShowGamificationHUD] = useState(false)
   const [voiceCommandsEnabled, setVoiceCommandsEnabled] = useState(false)
   const [isFirstVisit, setIsFirstVisit] = useState(false)
+  const [stallInteriorOpen, setStallInteriorOpen] = useState(false)
 
   useEffect(() => {
     // Check if this is the user's first visit
@@ -46,7 +56,9 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     voiceCommandsEnabled,
     setVoiceCommandsEnabled: handleSetVoiceCommandsEnabled,
     isFirstVisit,
-    setIsFirstVisit
+    setIsFirstVisit,
+    stallInteriorOpen,
+    setStallInteriorOpen
   }
 
   return (

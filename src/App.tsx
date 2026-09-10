@@ -21,7 +21,7 @@ import WalletBalanceChip from "./components/payments/WalletBalanceChip";
 
 import { AlbumBuilderProvider } from "./contexts/AlbumBuilderContext";
 import { LiveSessionPlaylistProvider } from "./contexts/LiveSessionPlaylistContext";
-import { AppContextProvider } from "./contexts/AppContext";
+import { AppContextProvider, useAppContext } from "./contexts/AppContext";
 import { VisualEditorProvider } from "./contexts/VisualEditorContext";
 import "./utils/errorDetection";
 import "./utils/cookieConfig";
@@ -41,6 +41,24 @@ function ReferralCaptureMount() {
   useReferralCapture();
   useWhispererCapture();
   return null;
+}
+
+/**
+ * The three fixed-bottom-right global widgets (basket FAB, wallet chip,
+ * pine-tree GroundskeeperWidget) -- hidden while a stall interior is open
+ * (AppContext.stallInteriorOpen) since its own fixed bottom tile strip has
+ * no room to coexist with them. Farm-Stalls batch 2, item 1.
+ */
+function GlobalChrome() {
+  const { stallInteriorOpen } = useAppContext();
+  if (stallInteriorOpen) return null;
+  return (
+    <>
+      <FloatingBasketButton />
+      <TileErrorBoundary name="wallet balance" inline><WalletBalanceChip /></TileErrorBoundary>
+      <GroundskeeperWidget />
+    </>
+  );
 }
 
 const App = () => (
@@ -75,9 +93,7 @@ const App = () => (
                       <AccessibilityChecker />
                       <ResponsiveLayout>
                         <AppRoutes />
-                        <FloatingBasketButton />
-                        <TileErrorBoundary name="wallet balance" inline><WalletBalanceChip /></TileErrorBoundary>
-                        <GroundskeeperWidget />
+                        <GlobalChrome />
                       </ResponsiveLayout>
 
                     </Suspense>
