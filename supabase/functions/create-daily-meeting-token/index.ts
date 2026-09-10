@@ -142,17 +142,34 @@ async function getOrCreateDailyRoom(apiKey: string, roomName: string): Promise<s
   });
   if (getRes.ok) {
     const room = await getRes.json();
-    // Rooms created before enable_prejoin_ui was part of the create call
-    // below (e.g. the s2g-1v1-* rooms already in use) still show Daily's
-    // own "Are you ready to join?" screen. That's not a hang -- confirmed
-    // 2026-09-10 via a real device test, see SESSION-STATE.md -- but a
-    // client-side join watchdog can't tell a real person sitting on that
-    // screen apart from a genuine stuck join, and previously tore the
-    // frame down mid-tap. Patch existing rooms here instead of a one-off
-    // backfill script, so every room gets it the next time anyone joins.
-    if (room?.config?.enable_prejoin_ui !== false) {
-      await patchDailyRoomPrejoinOff(apiKey, roomName);
-    }
+
+    // Two things a REUSED room can drift out of sync on -- rooms are
+    // intentionally reused across calls between the same two people (see
+    // the s2g-1v1-* naming below), not recreated per call:
+    //
+    // 1. enable_prejoin_ui -- rooms created before this was part of the
+    //    create call below still show Daily's own "Are you ready to
+    //    join?" screen. Not a hang (confirmed 2026-09-10 via a real
+    //    device test, see SESSION-STATE.md), but a client-side join
+    //    watchdog can't tell a real person sitting on that screen apart
+    //    from a genuine stuck join.
+    //
+    // 2. exp -- set ONCE at create time and never refreshed on later
+    //    joins. A room reused past its original ROOM_TTL_SECONDS window
+    //    is already expired; eject_at_room_exp:true forcibly ends
+    //    whatever session was in it at that moment. A participant
+    //    joining well after that boundary can end up in what Daily
+    //    treats as a fresh call instance under the same name/URL as an
+    //    earlier participant who joined before expiry -- this is
+    //    consistent with the reported symptom (both sides show the same
+    //    room name, both say "1 in call", Daily's own UI says "Waiting
+    //    for others to join") on an old, reused 1-on-1 room. Refresh
+    //    both on every join, not just once for legacy rooms.
+    const patchProps: Record<string, unknown> = {
+      exp: Math.floor(Date.now() / 1000) + ROOM_TTL_SECONDS,
+    };
+    if (room?.config?.enable_prejoin_ui !== false) patchProps.enable_prejoin_ui = false;
+    await patchDailyRoomProperties(apiKey, roomName, patchProps);
     return room.url;
   }
   if (getRes.status !== 404) {
@@ -185,18 +202,18 @@ async function getOrCreateDailyRoom(apiKey: string, roomName: string): Promise<s
   return room.url;
 }
 
-async function patchDailyRoomPrejoinOff(apiKey: string, roomName: string): Promise<void> {
+async function patchDailyRoomProperties(apiKey: string, roomName: string, properties: Record<string, unknown>): Promise<void> {
   const res = await fetch(`${DAILY_API}/rooms/${encodeURIComponent(roomName)}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ properties: { enable_prejoin_ui: false } }),
+    body: JSON.stringify({ properties }),
   });
   if (!res.ok) {
-    // Non-fatal -- the room still works, it'll just show the prejoin
-    // screen again this one time. Logged so it's visible without
-    // blocking the join over a cosmetic setting.
+    // Non-fatal -- the room still works with whatever config/exp it
+    // already had, it just didn't get refreshed this time. Logged so
+    // it's visible without blocking the join over it.
     const detail = await res.text();
-    console.error("create-daily-meeting-token: prejoin patch failed", roomName, res.status, detail);
+    console.error("create-daily-meeting-token: room properties patch failed", roomName, res.status, detail);
   }
 }
 
