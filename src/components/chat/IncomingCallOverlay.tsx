@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { stopAllRingtones } from '@/lib/ringtone';
+import { stopAllRingtones, startRingbackTone } from '@/lib/ringtone';
 
 /* ----------  GLOBAL SINGLETON HELPERS  ---------- */
 interface WindowWithAudioRingtone extends Window {
@@ -114,6 +114,30 @@ export default function IncomingCallOverlay() {
     audioCtxRef.current = null;
     setNeedsUnlock(false);
   };
+
+  // Caller-side ring-back: audible feedback that the call is actually
+  // going out, not just a silent "Calling..." screen. Starts the moment
+  // there's an outgoing call with no accepted currentCall yet (ringing),
+  // and stops on all three ways that state can resolve -- answer
+  // (currentCall gets set), decline (handleCallDeclined clears
+  // outgoingCall), and timeout (the auto-cancel timeout in
+  // useCallManager's startCall calls endCall, which also clears
+  // outgoingCall) -- all of which this effect already reacts to via
+  // outgoingCall/currentCall themselves, no separate wiring needed.
+  const ringbackRef = useRef<{ stop: () => void } | null>(null);
+  useEffect(() => {
+    const ringing = !!outgoingCall && !currentCall;
+    if (ringing) {
+      if (!ringbackRef.current) ringbackRef.current = startRingbackTone();
+    } else {
+      ringbackRef.current?.stop();
+      ringbackRef.current = null;
+    }
+    return () => {
+      ringbackRef.current?.stop();
+      ringbackRef.current = null;
+    };
+  }, [outgoingCall, currentCall]);
 
   // Reset hasAnswered when a NEW incoming call arrives OR when currentCall ends
   useEffect(() => {
