@@ -4,9 +4,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Mic, Video as VideoIcon, Send, Phone, ChevronLeft, Square, X } from 'lucide-react';
+import { Mic, Video as VideoIcon, Send, Phone, ChevronLeft } from 'lucide-react';
 import { useLiveRoomMessages } from '@/hooks/useLiveRoomMessages';
 import { useMediaRecorder } from '@/hooks/useMediaRecorder';
+import { RecordingBanner } from '@/components/media/RecordingBanner';
 import { uploadLiveRoomMedia } from '@/lib/liveRoom/uploadMedia';
 import JitsiRoom from '@/components/jitsi/JitsiRoom';
 import { PresenceAura, classifyAura } from './PresenceAura';
@@ -19,7 +20,7 @@ type Participant = { user_id: string; display_name: string | null; role: string 
 export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: string; roomName: string; onLeave: () => void }) {
   const { user } = useAuth();
   const { messages, sendText, sendMedia } = useLiveRoomMessages(roomId);
-  const { recording, kind, elapsed, start, stop, cancel } = useMediaRecorder();
+  const { recording, kind, elapsed, stream, mimeType, error: recorderError, start, stop, cancel } = useMediaRecorder();
   const [text, setText] = useState('');
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [call, setCall] = useState<null | { audioOnly: boolean }>(null);
@@ -82,8 +83,14 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
     if (recording) { stop(); return; }
     try {
       const blob = await start(k === 'voice' ? 'audio' : 'video', k === 'voice' ? VOICE_MAX_SECONDS : VIDEO_MAX_SECONDS);
-      if (!blob) return;
-      const ext = k === 'voice' ? 'webm' : 'webm';
+      if (!blob || blob.size === 0) {
+        if (blob) toast.error('Nothing was captured — please try again.');
+        return;
+      }
+      // Derived from the blob's own type rather than hardcoded -- iOS
+      // Safari's MediaRecorder produces video/mp4, not video/webm (see
+      // src/hooks/useMediaRecorder.ts's mimeType fallback chain).
+      const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
       const { path, signedUrl } = await uploadLiveRoomMedia(roomId, blob, ext);
       await sendMedia(user.id, k, path, blob.type, elapsed || 0);
       void signedUrl;
@@ -186,13 +193,15 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
         </div>
 
         {recording && (
-          <div className="border-t border-[#FF8A5B]/30 bg-[#FF8A5B]/10 px-4 py-2 flex items-center justify-between">
-            <span className="text-sm text-[#FF8A5B] tabular-nums">● Recording {kind === 'audio' ? 'voice' : 'video'} — {elapsed}s</span>
-            <div className="flex gap-2">
-              <Button size="sm" variant="ghost" onClick={cancel} className="text-[#7E9498] hover:text-[#FF8A5B] hover:bg-transparent"><X className="h-4 w-4" /> Cancel</Button>
-              <Button size="sm" onClick={stop} className="bg-[#FF8A5B]/20 hover:bg-[#FF8A5B]/30 text-[#FF8A5B] border border-[#FF8A5B]/40"><Square className="h-4 w-4 mr-1" /> Stop & send</Button>
-            </div>
-          </div>
+          <RecordingBanner
+            kind={kind}
+            elapsed={elapsed}
+            stream={stream}
+            mimeType={mimeType}
+            error={recorderError}
+            onCancel={cancel}
+            onStop={stop}
+          />
         )}
 
         <footer className="flex items-center gap-2 border-t border-[#1FB6A8]/10 px-2 sm:px-4 py-4">

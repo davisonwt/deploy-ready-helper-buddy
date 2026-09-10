@@ -30,6 +30,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useMediaRecorder } from '@/hooks/useMediaRecorder';
+import { RecordingBanner } from '@/components/media/RecordingBanner';
 import { uploadChatMedia } from '@/lib/liveRoom/uploadMedia';
 import { getVoiceColor, classifyVoiceState, initialFrom } from './voiceColor';
 
@@ -58,23 +59,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
   
   // Voice + video clip recording (uses chat-media bucket via useMediaRecorder)
   const recorder = useMediaRecorder();
-  const videoPreviewRef = useRef<HTMLVideoElement | null>(null);
-
-  // Live camera preview while recording a video clip. playsInline + muted
-  // are required for iOS Safari to render the stream at all instead of
-  // trying to hand off to the native fullscreen player -- but Safari has
-  // also been observed to not reliably start playback of a MediaStream
-  // srcObject assigned after mount from the `autoplay` attribute alone;
-  // an explicit .play() call after assigning srcObject is the standard
-  // fix. play() can reject (AbortError) if the stream/element changes
-  // again before it resolves -- harmless, swallowed.
-  useEffect(() => {
-    const el = videoPreviewRef.current;
-    if (!el) return;
-    const stream = recorder.kind === 'video' ? recorder.stream : null;
-    el.srcObject = stream;
-    if (stream) el.play().catch(() => undefined);
-  }, [recorder.stream, recorder.kind]);
 
 
   // Donations
@@ -905,29 +889,16 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
         </div>
       </div>
 
-      {/* Video clip recording - live camera preview. playsInline + muted +
-          autoPlay are required for iOS Safari to actually render the
-          stream instead of showing nothing. */}
-      {recorder.recording && recorder.kind === 'video' && (
-        <div className="p-4 border-b border-[#4FA876]/15 bg-[#0E1B15]/95 flex items-center gap-3">
-          <video
-            ref={videoPreviewRef}
-            playsInline
-            muted
-            autoPlay
-            className="h-24 w-32 rounded-md bg-black object-cover"
-          />
-          <div className="flex flex-col gap-0.5 min-w-0">
-            <span className="text-sm text-[#FF8A5B] tabular-nums">● Recording video — {recorder.elapsed}s</span>
-            {/* On-device diagnostics -- there's no attached console on a
-                phone, so this is the only way to see why a recording came
-                back empty. Tiny and unobtrusive by design. */}
-            <span className="text-[10px] leading-tight text-[#8AA99A]/70 font-mono">
-              {recorder.mimeType ?? 'mimeType: n/a'} · video tracks: {recorder.stream?.getVideoTracks().length ?? 0}
-              {recorder.error ? ` · error: ${recorder.error}` : ''}
-            </span>
-          </div>
-        </div>
+      {recorder.recording && (
+        <RecordingBanner
+          kind={recorder.kind}
+          elapsed={recorder.elapsed}
+          stream={recorder.stream}
+          mimeType={recorder.mimeType}
+          error={recorder.error}
+          onCancel={recorder.cancel}
+          onStop={stopRecording}
+        />
       )}
 
       {/* Video call - Show when call is accepted */}
