@@ -129,43 +129,48 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-[#0B1420] text-[#EAF4F2]">
       <div className="mx-auto w-full max-w-[640px] flex-1 flex flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-[#1FB6A8]/10 px-2 sm:px-4 py-5">
-          <div className="flex items-center gap-4 min-w-0">
-            <PresenceAura state={auraState} size={56}>
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold border border-[#1FB6A8]/30"
-                style={{ background: 'linear-gradient(135deg, #123330 0%, #0B1420 100%)', color: '#EAF4F2' }}
-                aria-label={otherName}
-              >
-                {otherInitial}
-              </div>
-            </PresenceAura>
-            <div className="flex flex-col min-w-0">
-              <span
-                className="text-[26px] leading-tight tracking-tight truncate"
-                style={{ fontFamily: '"Fraunces", "Playfair Display", serif', fontWeight: 500 }}
-              >
-                {otherName}
-              </span>
-              <span className="text-xs text-[#7E9498] truncate">
-                {auraState === 'active' ? 'here now' : auraState === 'recent' ? 'recently here' : 'away'}
-                {roomName ? ` · ${roomName}` : ''}
-              </span>
+        <header className="flex items-center gap-2 sm:gap-3 border-b border-[#1FB6A8]/10 px-2 sm:px-4 py-3">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={onLeave}
+            aria-label="Back"
+            className="shrink-0 text-[#7E9498] hover:text-[#EAF4F2] hover:bg-[#1FB6A8]/10"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+
+          <PresenceAura state={auraState} size={44}>
+            <div
+              className="w-11 h-11 rounded-full flex items-center justify-center text-base font-semibold border border-[#1FB6A8]/30 shrink-0"
+              style={{ background: 'linear-gradient(135deg, #123330 0%, #0B1420 100%)', color: '#EAF4F2' }}
+              aria-label={otherName}
+            >
+              {otherInitial}
             </div>
+          </PresenceAura>
+
+          <div className="flex flex-col min-w-0 flex-1">
+            <span
+              className="text-lg leading-tight tracking-tight truncate"
+              style={{ fontFamily: '"Fraunces", "Playfair Display", serif', fontWeight: 500 }}
+            >
+              {otherName}
+            </span>
+            <span className="text-xs text-[#7E9498] truncate">
+              {auraState === 'active' ? 'here now' : auraState === 'recent' ? 'recently here' : 'away'}
+              {roomName ? ` · ${roomName}` : ''}
+            </span>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Button size="sm" onClick={() => setCall({ audioOnly: true })}
-              className="gap-2 bg-transparent border border-[#1FB6A8]/40 text-[#EAF4F2] hover:bg-[#1FB6A8]/10 hover:text-[#EAF4F2]">
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Button size="icon" onClick={() => setCall({ audioOnly: true })} aria-label="Voice call"
+              className="bg-transparent border border-[#1FB6A8]/40 text-[#EAF4F2] hover:bg-[#1FB6A8]/10 hover:text-[#EAF4F2]">
               <Phone className="h-4 w-4" />
             </Button>
-            <Button size="sm" onClick={() => setCall({ audioOnly: false })}
-              className="gap-2 bg-transparent border border-[#1FB6A8]/40 text-[#EAF4F2] hover:bg-[#1FB6A8]/10 hover:text-[#EAF4F2]">
+            <Button size="icon" onClick={() => setCall({ audioOnly: false })} aria-label="Video call"
+              className="bg-transparent border border-[#1FB6A8]/40 text-[#EAF4F2] hover:bg-[#1FB6A8]/10 hover:text-[#EAF4F2]">
               <VideoIcon className="h-4 w-4" />
-            </Button>
-            <Button size="sm" variant="ghost" onClick={onLeave}
-              className="gap-2 text-[#7E9498] hover:text-[#EAF4F2] hover:bg-[#1FB6A8]/10">
-              <ChevronLeft className="h-5 w-5" />
-              <span className="hidden sm:inline text-sm">Back</span>
             </Button>
           </div>
         </header>
@@ -208,9 +213,11 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
             disabled={recording}
           />
           <Button
+            size="icon"
             onClick={handleSendText}
             disabled={!text.trim() || recording}
-            className="gap-2 bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90 disabled:opacity-40"
+            aria-label="Send"
+            className="shrink-0 bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90 disabled:opacity-40"
           >
             <Send className="h-4 w-4" />
           </Button>
