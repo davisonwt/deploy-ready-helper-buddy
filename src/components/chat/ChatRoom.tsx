@@ -559,9 +559,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
       
       if (uploadError) throw uploadError;
 
-      const mod = await moderateStorageUpload('chat-files', filePath, file.type.startsWith('video/') ? 'video' : 'image');
+      const isVideo = file.type.startsWith('video/');
+      const mod = await moderateStorageUpload('chat-files', filePath, isVideo ? 'video' : 'image');
       if (mod.verdict !== 'allow') {
-        toast({ title: 'File not sent', description: moderationRejectionMessage(mod.reason), variant: 'destructive' });
+        const kind = isVideo ? 'video' : file.type.startsWith('image/') ? 'image' : 'file';
+        toast({ title: 'File not sent', description: moderationRejectionMessage(mod.reason, kind), variant: 'destructive' });
         return;
       }
 

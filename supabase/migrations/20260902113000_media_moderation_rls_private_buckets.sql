@@ -11,6 +11,18 @@
 -- No row (never scanned) means media_is_allowed() returns false -- an
 -- unscanned file is unreadable by construction.
 --
+-- POLICY UPDATE (founder decision, Davison, 2026-09-10): the above is
+-- fail-closed for IMAGES only. Sightengine's plan has no Video Analysis
+-- (confirmed via moderate-media's own logs: sightengine_http_400, error
+-- 3701 "usage_limit") and paying for it was declined. moderate-media now
+-- writes verdict='allow' (reason 'unscanned_video_policy' /
+-- 'unscanned_audio_policy') for every video/* and audio/* upload without
+-- ever calling Sightengine -- an audited, deliberate exception, not a
+-- fail-open. This RLS gate needed no SQL change for that: a row with
+-- verdict='allow' already satisfies media_is_allowed() same as a real
+-- clean-scan result. Compensating control (not built yet, see
+-- SESSION-STATE.md open board): "Report message" -> GoSat review queue.
+--
 -- IMPORTANT CAVEAT (see SESSION-STATE.md): tribal-hearts-photos and
 -- tribal-hearts-media do NOT primarily rely on this RLS gate. Both
 -- persist a pre-signed URL (createSignedUrl, days-long expiry) directly

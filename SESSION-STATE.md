@@ -2968,6 +2968,21 @@ itself. All 8 checks live, hourly via `invoke_money_job` (cron
 
 ## Open — priority order
 
+**Added 2026-09-10 (on top of everything below, which is otherwise unchanged):**
+
+0j. **"Report message" → GoSat review queue.** Compensating control for
+   the 2026-09-10 founder policy decision that video/audio chat messages
+   are no longer pre-scanned by moderate-media (Sightengine's plan has no
+   Video Analysis and paying for it was declined -- images stay
+   fail-closed, unchanged). Every unscanned video/audio upload already
+   gets a `media_moderation` row (reason `unscanned_video_policy` /
+   `unscanned_audio_policy`) for audit, but nothing routes a bad one to a
+   human yet. Needs: a "Report" action on chat/live-room video and voice
+   messages, a GoSat-facing review queue (reuse the existing
+   `media_moderation`/gosat-alert pattern from moderate-media's
+   minor-detection path as a model), and a way to pull the reported
+   message out of view pending review. Not built yet.
+
 **Added 2026-09-05 (on top of the older list below, which is otherwise unchanged):**
 
 0. ~~Devnet pocket test for P0-5 Phase A~~ — **PASSED 2026-09-06**, see

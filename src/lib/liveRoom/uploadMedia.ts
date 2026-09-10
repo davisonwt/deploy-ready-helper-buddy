@@ -35,8 +35,15 @@ export async function uploadChatMedia(
 
   // Exact-string match on 'video/webm' would misclassify every other video
   // mimeType (video/mp4 from iOS Safari, the vp9-codec variant) as 'image'.
-  const { verdict, reason } = await moderateStorageUpload(BUCKET, path, blob.type.startsWith('video/') ? 'video' : 'image');
-  if (verdict !== 'allow') throw new Error(moderationRejectionMessage(reason));
+  // Under the 2026-09-10 founder policy this call returns 'allow' straight
+  // away for both video and audio (unscanned by design -- see
+  // moderate-media/index.ts) -- moderateStorageUpload is still called so
+  // the audit row gets written either way.
+  const isVideo = blob.type.startsWith('video/');
+  const { verdict, reason } = await moderateStorageUpload(BUCKET, path, isVideo ? 'video' : 'image');
+  if (verdict !== 'allow') {
+    throw new Error(moderationRejectionMessage(reason, isVideo ? 'video' : blob.type.startsWith('audio/') ? 'file' : 'image'));
+  }
 
   const { data, error: sErr } = await supabase.storage
     .from(BUCKET)

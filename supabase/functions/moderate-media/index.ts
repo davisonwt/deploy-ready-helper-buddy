@@ -14,10 +14,23 @@
 // function's job is only to produce that row correctly -- it never grants
 // access itself.
 //
-// FAIL CLOSED: any error (missing secrets, network failure, non-200,
-// unparseable response) returns verdict:'block', reason:'scanner_error'.
-// An unscanned file must never become visible -- see spec in
-// wh-moderation.txt point 1.
+// FAIL CLOSED (images only): any error scanning an image (missing
+// secrets, network failure, non-200, unparseable response) returns
+// verdict:'block', reason:'scanner_error'. An unscanned image must never
+// become visible -- see spec in wh-moderation.txt point 1. Minor-detection
+// logic is untouched and only ever runs on images.
+//
+// VIDEO/AUDIO POLICY (founder decision, Davison, 2026-09-10): S2G does
+// not pre-scan recorded video or audio -- Sightengine's plan has no Video
+// Analysis (confirmed via this function's own logs: sightengine_http_400,
+// error 3701 "usage_limit") and paying for it was explicitly declined.
+// video/* and audio/* are let through with verdict:'allow' WITHOUT ever
+// calling Sightengine -- this is a deliberate, permanent exception, not a
+// fail-open: every such upload still gets its own media_moderation row
+// (reason 'unscanned_video_policy' / 'unscanned_audio_policy') so GoSat
+// has a full audit trail. Compensating control (not built yet, tracked in
+// SESSION-STATE.md open board): a "Report message" action that puts the
+// item in a GoSat review queue for human review after the fact.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { logFunctionFailure } from "../_shared/logFunctionFailure.ts";
@@ -224,17 +237,42 @@ Deno.serve(async (req) => {
       filename = objectPath.split("/").pop() || "upload";
     }
 
-    // Nudity/minor detection only has anything to look at in an image or
-    // video frame. Storage RLS (media_is_allowed) requires a verdict row
-    // to exist at all for a post-cutover object regardless of type, so a
-    // non-visual file (audio, PDF, doc) that never gets scanned would
-    // otherwise be permanently unreadable by anyone but its uploader --
-    // that's a moderation-unrelated regression, not the intended
-    // enforcement. Auto-allow those here, in one place, rather than
-    // asking every one of the ~20 upload call sites to duplicate a
-    // "should I even call this" content-type check.
-    const isVisual = blob.type.startsWith("image/") || blob.type.startsWith("video/") || kind === "video";
     let verdict: Verdict;
+
+    // Founder policy (2026-09-10, see header comment): video and audio are
+    // never sent to Sightengine -- allowed straight through, but still
+    // logged with their own reason so this is an audited exception, not a
+    // silent skip. Checked on the real downloaded blob.type, not the
+    // client-supplied `kind`, so it can't be bypassed by a caller
+    // mislabeling content. Images are completely unaffected -- they fall
+    // through to the scan below exactly as before.
+    if (blob.type.startsWith("video/") || blob.type.startsWith("audio/")) {
+      const policyReason = blob.type.startsWith("video/") ? "unscanned_video_policy" : "unscanned_audio_policy";
+      verdict = {
+        verdict: "allow",
+        reason: policyReason,
+        minorSuspected: false,
+        scores: null,
+        modelVersion: "sightengine:nudity-2.1,face-attributes",
+      };
+      await logVerdict(service, {
+        bucket_id: bucketId, object_path: objectPath, subject_type: subjectType, subject_ref: subjectRef,
+        uploader_user_id: uploaderId, verdict: verdict.verdict, minor_suspected: false,
+        reason: verdict.reason, scores: null, model_version: verdict.modelVersion,
+      });
+      return json({ verdict: verdict.verdict, reason: verdict.reason });
+    }
+
+    // Nudity/minor detection only has anything to look at in an image (video
+    // is handled by the policy branch above). Storage RLS (media_is_allowed)
+    // requires a verdict row to exist at all for a post-cutover object
+    // regardless of type, so a non-visual file (PDF, doc) that never gets
+    // scanned would otherwise be permanently unreadable by anyone but its
+    // uploader -- that's a moderation-unrelated regression, not the
+    // intended enforcement. Auto-allow those here, in one place, rather
+    // than asking every one of the ~20 upload call sites to duplicate a
+    // "should I even call this" content-type check.
+    const isVisual = blob.type.startsWith("image/") || kind === "video";
     if (!isVisual) {
       verdict = {
         verdict: "allow",

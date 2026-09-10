@@ -10,13 +10,23 @@ export interface ModerationResult {
 // Only the scanner-error case gets the literal "try again in a minute"
 // copy the spec asked for -- a real content-policy block needs its own,
 // unambiguous message, not one that implies a transient glitch.
-export const SCANNER_ERROR_MESSAGE =
-  "We couldn't verify this image right now — please try again in a minute.";
+//
+// video/* and audio/* no longer reach 'scanner_error' at all under normal
+// operation (moderate-media allows them straight through per the
+// 2026-09-10 founder policy -- see moderate-media/index.ts) -- this stays
+// kind-aware for the rare mismatched-type edge case and so it says the
+// right noun for whichever caller does still hit it (image scans remain
+// fail-closed).
+export function scannerErrorMessage(kind: 'image' | 'video' | 'file' = 'file'): string {
+  const noun = kind === 'image' ? 'image' : kind === 'video' ? 'video' : 'file';
+  return `We couldn't verify this ${noun} right now — please try again in a minute.`;
+}
+export const SCANNER_ERROR_MESSAGE = scannerErrorMessage('image');
 export const CONTENT_BLOCKED_MESSAGE =
   'This file was not accepted: no nudity or sexual content is allowed on Sow2Grow.';
 
-export function moderationRejectionMessage(reason?: string): string {
-  return reason === 'scanner_error' ? SCANNER_ERROR_MESSAGE : CONTENT_BLOCKED_MESSAGE;
+export function moderationRejectionMessage(reason?: string, kind: 'image' | 'video' | 'file' = 'file'): string {
+  return reason === 'scanner_error' ? scannerErrorMessage(kind) : CONTENT_BLOCKED_MESSAGE;
 }
 
 /**
