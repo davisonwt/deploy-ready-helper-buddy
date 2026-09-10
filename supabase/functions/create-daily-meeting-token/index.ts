@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
     });
     if (!tokenRes.ok) {
       const detail = await tokenRes.text();
-      console.error("create-daily-meeting-token: meeting-tokens failed", detail);
+      console.error("create-daily-meeting-token: meeting-tokens failed", tokenRes.status, detail);
       return json({ error: "daily_token_failed" }, 502);
     }
     const { token } = await tokenRes.json();
@@ -146,7 +146,8 @@ async function getOrCreateDailyRoom(apiKey: string, roomName: string): Promise<s
   }
   if (getRes.status !== 404) {
     const detail = await getRes.text();
-    throw new Error(`daily_room_lookup_failed: ${detail}`);
+    console.error("create-daily-meeting-token: room lookup failed", getRes.status, detail);
+    throw new Error(`daily_room_lookup_failed: ${getRes.status}: ${detail}`);
   }
 
   const createRes = await fetch(`${DAILY_API}/rooms`, {
@@ -165,7 +166,8 @@ async function getOrCreateDailyRoom(apiKey: string, roomName: string): Promise<s
   });
   if (!createRes.ok) {
     const detail = await createRes.text();
-    throw new Error(`daily_room_create_failed: ${detail}`);
+    console.error("create-daily-meeting-token: room create failed", createRes.status, detail);
+    throw new Error(`daily_room_create_failed: ${createRes.status}: ${detail}`);
   }
   const room = await createRes.json();
   return room.url;

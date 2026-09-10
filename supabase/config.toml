@@ -472,4 +472,13 @@ verify_jwt = false
 [functions.refresh-exchange-rates]
 verify_jwt = false
 
+# Does its own auth check (a real user's Authorization header, validated via
+# userClient.auth.getUser()) rather than the platform-level JWT gate -- see
+# supabase/functions/create-daily-meeting-token/index.ts. Pinned explicitly
+# so a future plain `functions deploy` can't silently flip this to true
+# (see supabase/config.toml's other entries / SESSION-STATE.md's "Known
+# gotchas" for the prior incident this caused).
+[functions.create-daily-meeting-token]
+verify_jwt = false
+
 
