@@ -54,7 +54,7 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
   }, [selectedTracks]);
 
-  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(albumPrice);
+  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(albumPrice, ['solana', 'paypal', 'paystack']);
   const effectiveProvider = provider;
   const feeQuote = quoteFee(effectiveProvider, albumPrice);
 

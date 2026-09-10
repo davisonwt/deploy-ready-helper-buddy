@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+type BookingProvider = 'paypal' | 'paystack';
+
 interface BookingResponseMetadata {
   booking_id: string;
   decision: 'accepted' | 'declined';
@@ -30,6 +32,7 @@ export function BookingResponseMessage({ metadata }: { metadata: BookingResponse
   const [growerId, setGrowerId] = useState<string | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(accepted);
   const [payingNow, setPayingNow] = useState(false);
+  const [provider, setProvider] = useState<BookingProvider>('paypal');
 
   useEffect(() => {
     if (!accepted) return;
@@ -54,6 +57,7 @@ export function BookingResponseMessage({ metadata }: { metadata: BookingResponse
     try {
       const data = await invokePaymentFunction<{ approveUrl?: string }>('create-booking-paypal-order', {
         bookingId: metadata.booking_id,
+        provider,
         redirectBaseUrl: window.location.origin,
       });
       if (!data?.approveUrl) throw new Error('No approval link returned.');
@@ -93,10 +97,34 @@ export function BookingResponseMessage({ metadata }: { metadata: BookingResponse
       )}
 
       {accepted && !loadingStatus && !isPaid && isGrower && (
-        <Button className="w-full" disabled={payingNow} onClick={handlePay}>
-          {payingNow ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-          Pay ${Number(metadata.total || 0).toFixed(2)}
-        </Button>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={provider === 'paypal' ? 'default' : 'outline'}
+              disabled={payingNow}
+              onClick={() => setProvider('paypal')}
+              className="flex-1"
+            >
+              PayPal
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={provider === 'paystack' ? 'default' : 'outline'}
+              disabled={payingNow}
+              onClick={() => setProvider('paystack')}
+              className="flex-1"
+            >
+              Card / EFT
+            </Button>
+          </div>
+          <Button className="w-full" disabled={payingNow} onClick={handlePay}>
+            {payingNow ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+            Pay ${Number(metadata.total || 0).toFixed(2)}
+          </Button>
+        </div>
       )}
 
       {accepted && !loadingStatus && !isPaid && !isGrower && (

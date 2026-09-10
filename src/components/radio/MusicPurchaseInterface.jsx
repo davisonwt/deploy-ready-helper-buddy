@@ -65,6 +65,7 @@ export function MusicPurchaseInterface({
           amount={Number(confirmTrack.price) || 1.38}
           confirming={purchasing}
           onConfirm={confirmPurchaseWithProvider}
+          enablePaystack
         />
       )}
 

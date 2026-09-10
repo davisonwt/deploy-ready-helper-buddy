@@ -80,7 +80,7 @@ export default function MusicTrackDetailPage() {
   // unconditionally on every render per the Rules of Hooks.
   const hasPrice = track?.price != null;
   const { total } = hasPrice ? priceBreakdown(track!.price as number) : { base: 0, s2gFee: 0, total: 0 };
-  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(total);
+  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(total, ['solana', 'paypal', 'paystack']);
 
   // Seed settings (spec-books.md §4) — owner-only (the uploader, not a
   // buyer; `owned` above means "this viewer bestowed", a different thing).

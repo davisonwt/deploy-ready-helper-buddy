@@ -355,6 +355,7 @@ export default function PublicMusicLibrary() {
           amount={Number(confirmTrack.price) || 0}
           confirming={purchasing}
           onConfirm={confirmPurchaseWithProvider}
+          enablePaystack
         />
       )}
 

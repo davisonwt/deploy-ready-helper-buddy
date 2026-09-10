@@ -186,6 +186,7 @@ export function LiveRadioPlaylistManager({ sessionId, isHost = false }) {
           amount={Number(confirmTrack.price) || 0}
           confirming={purchasing}
           onConfirm={confirmPurchaseWithProvider}
+          enablePaystack
         />
       )}
 

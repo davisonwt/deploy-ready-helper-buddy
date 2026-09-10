@@ -470,10 +470,10 @@ export function MusicLibraryTable({
           confirming={localProcessing}
           actionLabel={confirmAction.kind === 'gift' ? 'Gift' : 'Bestow'}
           onConfirm={confirmActionWithProvider}
-          // Only the 'gift' branch routes through create-gift-bestowal-order
-          // (the only function with a paystack branch) -- 'bestow' calls
-          // purchaseTrack, which doesn't accept "paystack" yet.
-          enablePaystack={confirmAction.kind === 'gift'}
+          // Both branches now accept "paystack": 'bestow' calls purchaseTrack
+          // (create-content-purchase-order), 'gift' calls
+          // create-gift-bestowal-order -- both have a paystack branch.
+          enablePaystack
         />
       )}
 

@@ -15,10 +15,10 @@ import { presentSolanaPayment } from '@/lib/payments/solanaPaymentGate';
  *   purchaseTrack(track, price, { provider })
  *   purchaseTrack(trackId, price, { provider })
  *
- * `opts.provider` is REQUIRED — 'solana', 'paypal', or 'balance', whichever
- * the bestower actually picked. There is no default; a missing/invalid
- * provider is a caller bug, not something to silently paper over by
- * picking one for them.
+ * `opts.provider` is REQUIRED — 'solana', 'paypal', 'balance', or
+ * 'paystack', whichever the bestower actually picked. There is no default;
+ * a missing/invalid provider is a caller bug, not something to silently
+ * paper over by picking one for them.
  */
 export function useMusicPurchase() {
   const [loading, setLoading] = useState(false);
@@ -41,7 +41,7 @@ export function useMusicPurchase() {
       return { success: false };
     }
 
-    if (opts.provider !== 'paypal' && opts.provider !== 'solana' && opts.provider !== 'balance') {
+    if (opts.provider !== 'paypal' && opts.provider !== 'solana' && opts.provider !== 'balance' && opts.provider !== 'paystack') {
       toast({ title: 'Purchase failed', description: 'Choose a payment method first', variant: 'destructive' });
       return { success: false };
     }
