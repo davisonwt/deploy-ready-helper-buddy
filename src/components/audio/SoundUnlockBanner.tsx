@@ -25,7 +25,14 @@ const SoundUnlockBanner: React.FC = () => {
 
   const shouldShow = useMemo(() => {
     try {
-      return sessionStorage.getItem(UNLOCKED_KEY) !== '1' && sessionStorage.getItem(DISMISSED_KEY) !== '1';
+      // Same stale-flag issue AudioUnlocker.tsx had: 'audioUnlocked' in
+      // sessionStorage survives a reload, but window.__unlockedAudioCtx
+      // does not -- trusting the flag alone hid this manual fallback
+      // exactly when it was needed (after a reload where the automatic
+      // unlock silently no-opped for the same reason).
+      const w = window as WindowWithAudioUnlock;
+      const reallyUnlocked = !!w.__unlockedAudioCtx && w.__unlockedAudioCtx.state === 'running';
+      return !reallyUnlocked && sessionStorage.getItem(DISMISSED_KEY) !== '1';
     } catch {
       return false;
     }

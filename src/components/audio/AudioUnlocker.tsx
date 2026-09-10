@@ -14,13 +14,22 @@ const AudioUnlocker: React.FC = () => {
   const unlockedRef = useRef(false);
 
   useEffect(() => {
-    try {
-      const already = sessionStorage.getItem('audioUnlocked');
-      if (already === '1') {
-        unlockedRef.current = true;
-        return;
-      }
-    } catch { /* sessionStorage may be unavailable */ }
+    // window.__unlockedAudioCtx is the true source of truth -- it does
+    // NOT survive a page reload (it's a plain object on `window`, reset
+    // every load), but the 'audioUnlocked' sessionStorage flag DOES
+    // survive reloads within the same tab. That mismatch was a real bug:
+    // after any reload following a successful unlock earlier in the
+    // session, this effect saw the stale flag, believed audio was
+    // already unlocked, and returned immediately -- never creating a
+    // fresh AudioContext and never attaching gesture listeners to do so
+    // later, leaving window.__unlockedAudioCtx undefined (and the
+    // incoming-call ringtone silent) for the rest of that page load.
+    // Only trust an AudioContext that's actually there and running.
+    const w = window as WindowWithAudioUnlock;
+    if (w.__unlockedAudioCtx && w.__unlockedAudioCtx.state === 'running') {
+      unlockedRef.current = true;
+      return;
+    }
 
     const onFirstGesture = async () => {
       if (unlockedRef.current) return;
