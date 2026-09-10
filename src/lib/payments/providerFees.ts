@@ -84,7 +84,7 @@ export const PAYOUT_PROVIDERS: PayoutProviderInfo[] = [
   },
   {
     id: 'paypal',
-    label: 'PayPal — debit / credit card or PayPal balance',
+    label: 'PayPal — PayPal balance or card via PayPal',
     feePct: [3.49, 3.49],
     feeFixed: 0.49,
     note: 'PayPal fee (3.49% + $0.49) is added to your total. The sower receives the full amount.',
@@ -93,7 +93,7 @@ export const PAYOUT_PROVIDERS: PayoutProviderInfo[] = [
   },
   {
     id: 'paystack',
-    label: 'Card / EFT — Visa, Mastercard, Amex, or Ozow',
+    label: 'Card / EFT — Visa, Mastercard, Amex or instant EFT (Paystack)',
     feePct: [2.9, 2.9],
     feeFixed: 0.055,
     note: 'Paystack fee (~2.9% + a small flat fee) is added to your total. The sower receives the full amount.',
