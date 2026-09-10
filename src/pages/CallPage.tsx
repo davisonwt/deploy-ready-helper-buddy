@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { JitsiCall } from '@/components/JitsiCall';
+import { CallErrorBoundary } from '@/components/media/CallErrorBoundary';
 import type { DailyRoomKind } from '@/lib/daily-config';
 
 const VALID_KINDS: DailyRoomKind[] = ['call_session', 'chat_room', 'custom'];
@@ -46,12 +47,14 @@ export default function CallPage() {
         </Button>
       </div>
       <div className="flex-1">
-        <JitsiCall
-          roomName={roomId}
-          roomKind={kind}
-          userInfo={{ displayName, email: '' }}
-          onLeave={leaveCall}
-        />
+        <CallErrorBoundary onBack={leaveCall}>
+          <JitsiCall
+            roomName={roomId}
+            roomKind={kind}
+            userInfo={{ displayName, email: '' }}
+            onLeave={leaveCall}
+          />
+        </CallErrorBoundary>
       </div>
     </div>
   );

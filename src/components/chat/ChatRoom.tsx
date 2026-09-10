@@ -26,6 +26,7 @@ import { DonateModal } from './DonateModal';
 import { useCallManager } from '@/hooks/useCallManager';
 import { subscribeRoomRealtime } from '@/lib/chat/roomRealtime';
 import { JitsiCall } from '@/components/JitsiCall';
+import { CallErrorBoundary } from '@/components/media/CallErrorBoundary';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -909,15 +910,23 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
           <p className="mb-2 text-sm font-medium">
             {currentCall.caller_id === user?.id ? currentCall.receiver_name : currentCall.caller_name}
           </p>
-          <JitsiCall
-            roomName={currentCall.id}
-            roomKind="call_session"
-            onLeave={() => {
+          <CallErrorBoundary
+            onBack={() => {
               if (currentCall?.id) {
                 endCall(currentCall.id, 'ended');
               }
             }}
-          />
+          >
+            <JitsiCall
+              roomName={currentCall.id}
+              roomKind="call_session"
+              onLeave={() => {
+                if (currentCall?.id) {
+                  endCall(currentCall.id, 'ended');
+                }
+              }}
+            />
+          </CallErrorBoundary>
         </div>
       )}
 

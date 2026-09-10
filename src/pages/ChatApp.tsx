@@ -55,6 +55,7 @@ import { useToast } from '@/hooks/use-toast';
 // import JitsiAudioCall from '@/components/jitsi/JitsiAudioCall';
 // import JitsiVideoCall from '@/components/jitsi/JitsiVideoCall';
 import { JitsiCall } from '@/components/JitsiCall';
+import { CallErrorBoundary } from '@/components/media/CallErrorBoundary';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -537,10 +538,12 @@ const ChatApp = () => {
       {/* Jitsi Call */}
       {showJitsi && (
         <div className="mb-4 p-4 border rounded-lg">
-          <JitsiCall
-            roomName={crypto.randomUUID().slice(0, 12)}
-            onLeave={() => setShowJitsi(false)}
-          />
+          <CallErrorBoundary onBack={() => setShowJitsi(false)}>
+            <JitsiCall
+              roomName={crypto.randomUUID().slice(0, 12)}
+              onLeave={() => setShowJitsi(false)}
+            />
+          </CallErrorBoundary>
         </div>
       )}
 

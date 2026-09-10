@@ -8,6 +8,7 @@ import { Mic, Video as VideoIcon, Send, Phone, ChevronLeft } from 'lucide-react'
 import { useLiveRoomMessages } from '@/hooks/useLiveRoomMessages';
 import { useMediaRecorder } from '@/hooks/useMediaRecorder';
 import { RecordingBanner } from '@/components/media/RecordingBanner';
+import { CallErrorBoundary } from '@/components/media/CallErrorBoundary';
 import { uploadLiveRoomMedia } from '@/lib/liveRoom/uploadMedia';
 import JitsiRoom from '@/components/jitsi/JitsiRoom';
 import { PresenceAura, classifyAura } from './PresenceAura';
@@ -130,12 +131,14 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
 
   if (call) {
     return (
-      <JitsiRoom
-        roomName={`s2g-1v1-${roomId}`}
-        displayName={myName}
-        audioOnly={call.audioOnly}
-        onLeave={() => setCall(null)}
-      />
+      <CallErrorBoundary onBack={() => setCall(null)}>
+        <JitsiRoom
+          roomName={`s2g-1v1-${roomId}`}
+          displayName={myName}
+          audioOnly={call.audioOnly}
+          onLeave={() => setCall(null)}
+        />
+      </CallErrorBoundary>
     );
   }
 
