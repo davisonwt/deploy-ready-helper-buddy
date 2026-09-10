@@ -91,6 +91,24 @@ Cryptomus is the preferred payment gateway for cryptocurrency payments with supp
 - Automatic payment confirmation via webhooks
 - Low transaction fees (especially TRC20)
 
+### Paystack Payment Gateway (cards + EFT, pay-in only)
+
+Paystack is the third pay-in rail alongside PayPal and direct USDC (Solana), for members who want to pay by card (Visa/Mastercard/Amex) or instant EFT (via Ozow) rather than a wallet or PayPal account. **Pay-in only** — sower/member payouts stay on PayPal and USDC exclusively; nothing in this rail sends money out.
+
+- **Edge functions**:
+  - `paystack-initialize` — starts a Paystack payment attempt against a public invoice (guest, `public_token`, no session — same shape as `create-invoice-payment`'s solana/paypal branches). Converts the invoice's USD `amount_due` to ZAR at the stored `exchange_rates` rate, calls Paystack's `/transaction/initialize` with `channels: ['card', 'eft']`, and returns `authorization_url`.
+  - `paystack-webhook` — verifies `x-paystack-signature` locally (HMAC-SHA512 keyed with `PAYSTACK_SECRET_KEY`, no round trip to Paystack needed), handles `charge.success` idempotently via `processed_webhooks`, and runs the same provider-agnostic `finalizeCompletedOrder()` every PayPal-funded order kind uses — identical 15% platform-fee split, identical `revenue_ledger` writes. Also records `charge.dispute.create` events to `paystack_disputes` for GoSat to review chargebacks.
+  - `paystack-verify` — optional recovery call for the `/pay/paystack/return` page: calls `GET /transaction/verify/:reference` and finalizes if Paystack confirms success but the webhook hasn't landed yet (mirrors `capture-paypal-order`'s role for PayPal).
+  - Orchard and gift bestowals (`create-orchard-bestowal-order`, `create-gift-bestowal-order`) each gained a `provider: "paystack"` branch inline, calling the same shared `_shared/paystack/initialize.ts` module `paystack-initialize` uses — every surface talks to Paystack through identical code.
+- **Environment variables** (set in Supabase Edge Function config):
+  - `PAYSTACK_SECRET_KEY` — required. `sk_test_...` selects sandbox mode, `sk_live_...` selects live mode; Paystack has no separate sandbox host, unlike PayPal.
+  - `PAYSTACK_PUBLIC_KEY` — not currently required. Every checkout path uses Paystack's hosted redirect (`authorization_url`), the same pattern as PayPal's `approveUrl` — the client never talks to Paystack directly, so there's no inline-popup flow needing a public key on the frontend. Add `VITE_PAYSTACK_PUBLIC_KEY` only if a future change adds Paystack's inline JS checkout instead.
+  - Optional fee-tuning overrides: `PAYSTACK_FEE_PCT` (default `0.029`), `PAYSTACK_FEE_FIXED` (default `0.055`, a USD-equivalent approximation of Paystack's ~R1 flat card fee — the buyer-facing estimate shown before conversion, not Paystack's own after-the-fact ZAR fee).
+- **Webhook URL**: `https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/paystack-webhook` (`verify_jwt = false` in `supabase/config.toml` — Paystack calls it unauthenticated; the HMAC signature is the auth).
+- **Checkout return URL**: `/pay/paystack/return` (registered as the callback URL in the Paystack dashboard, and passed per-transaction too). Shows a confirmation state and calls `paystack-verify` as a recovery step; the webhook is still the authoritative finalizer.
+- **Database**: `paystack_transactions` (one row per `/transaction/initialize` call: `reference`, `status`, `amount_usd`/`amount_zar`/`fx_rate`, `raw_payload`) and `paystack_disputes` (chargebacks, for GoSat). Migration: `supabase/migrations/20260910190000_paystack_rail.sql`.
+- **Fee model**: identical to every other rail — the buyer pays Paystack's processor fee on top of the S2G 15% platform fee; the sower/member always receives 100% of the base amount they set.
+
 ### Binance Pay Integration (Legacy)
 
 This project includes a full Binance Pay payment flow with automatic bestowal distribution.
