@@ -33,6 +33,7 @@ import { DeadLinkDetector } from "@/components/monitoring/DeadLinkDetector";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { PayoutSetupBanner } from "@/components/PayoutSetupBanner";
 import GroundskeeperWidget from "@/components/grove/GroundskeeperWidget";
+import { BuildUpdateBanner } from "@/components/BuildUpdateBanner";
 import AppRoutes, { LoadingFallback } from "./routes/AppRoutes";
 import SolanaPaymentHost from "@/components/payments/SolanaPaymentHost";
 
@@ -63,6 +64,7 @@ const App = () => (
                 <SolanaPaymentHost />
                 <AudioUnlocker />
                 <SoundUnlockBanner />
+                <BuildUpdateBanner />
                 <NotificationBanner />
                 <PayoutSetupBanner />
                 <SacredDayBanner />
