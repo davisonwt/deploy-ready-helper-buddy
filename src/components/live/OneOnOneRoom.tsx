@@ -15,6 +15,7 @@ import { uploadLiveRoomMedia } from '@/lib/liveRoom/uploadMedia';
 import JitsiRoom from '@/components/jitsi/JitsiRoom';
 import { PresenceAura, classifyAura } from './PresenceAura';
 import { startSimpleRingtone } from '@/lib/ringtone';
+import { logCallEvent } from '@/lib/daily-config';
 
 const VOICE_MAX_SECONDS = 60;
 const VIDEO_MAX_SECONDS = 30;
@@ -37,6 +38,10 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
   // sides subscribe to while the room is open, and the callee gets a real
   // ring + Answer/Decline instead of needing to notice and click on their own.
   const [incomingCallInvite, setIncomingCallInvite] = useState<null | { from: string; audioOnly: boolean }>(null);
+  // Same three-state signal (see useCallManager.jsx) -- exposed so the
+  // call-invite UI can show whether the broadcast channel is actually up
+  // or we're relying on the poll fallback below.
+  const [signalStatus, setSignalStatus] = useState<'connecting' | 'ws' | 'polling'>('connecting');
   const callChannelRef = useRef<RealtimeChannel | null>(null);
   const ringRef = useRef<{ stop: () => void } | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -79,37 +84,122 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
   // instead of needing to separately notice and click their own call
   // button (which is what silently put them in different Daily rooms --
   // there was never anything guaranteeing they'd do it together).
+  //
+  // Instrumented the same way as useCallManager.jsx's call_sessions flow:
+  // subscribe-status tracking + reconnect-with-fresh-token on
+  // CHANNEL_ERROR/TIMED_OUT/CLOSED, and every hop logged to call_events
+  // (room_name = this live room's id, so invite_sent with no matching
+  // invite_seen from the other user is visible in a CSV export the same
+  // way it is for the call_sessions flow).
   useEffect(() => {
     if (!roomId || !user?.id) return;
-    const channel = supabase
-      .channel(`live-room-call-${roomId}`)
-      .on('broadcast', { event: 'call-invite' }, (payload) => {
-        const from = payload.payload?.from;
-        const audioOnly = !!payload.payload?.audioOnly;
-        if (!from || from === user.id) return;
-        setIncomingCallInvite({ from, audioOnly });
-        ringRef.current?.stop();
-        ringRef.current = startSimpleRingtone();
-      })
-      .on('broadcast', { event: 'call-cancel' }, (payload) => {
-        const from = payload.payload?.from;
-        if (!from || from === user.id) return;
-        setIncomingCallInvite(null);
-        ringRef.current?.stop();
-        ringRef.current = null;
-      })
-      .subscribe();
-    callChannelRef.current = channel;
+    let cancelled = false;
+    let reconnectTimer: number | null = null;
+
+    const setupChannel = () => {
+      const channel = supabase
+        .channel(`live-room-call-${roomId}`)
+        .on('broadcast', { event: 'call-invite' }, (payload) => {
+          const from = payload.payload?.from;
+          const audioOnly = !!payload.payload?.audioOnly;
+          if (!from || from === user.id) return;
+          setIncomingCallInvite({ from, audioOnly });
+          void logCallEvent(roomId, 'invite_seen');
+          ringRef.current?.stop();
+          ringRef.current = startSimpleRingtone();
+        })
+        .on('broadcast', { event: 'call-cancel' }, (payload) => {
+          const from = payload.payload?.from;
+          if (!from || from === user.id) return;
+          setIncomingCallInvite(null);
+          ringRef.current?.stop();
+          ringRef.current = null;
+        })
+        .subscribe((status) => {
+          console.log('📡 [ONEONONE][SIGNAL] call-invite channel status:', status, 'roomId:', roomId);
+          if (status === 'SUBSCRIBED') {
+            setSignalStatus('ws');
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            console.error('📡 [ONEONONE][SIGNAL] ❌ call-invite channel unhealthy:', status, '-- falling back to polling and attempting reconnect');
+            setSignalStatus('polling');
+            supabase.auth.refreshSession().catch((e) => {
+              console.warn('📡 [ONEONONE][SIGNAL] Session refresh before reconnect failed (continuing anyway):', e);
+            }).finally(() => {
+              reconnectTimer = window.setTimeout(() => {
+                if (cancelled) return;
+                try { supabase.removeChannel(channel); } catch { /* already gone */ }
+                if (callChannelRef.current === channel) callChannelRef.current = null;
+                setupChannel();
+              }, 2000);
+            });
+          }
+        });
+      callChannelRef.current = channel;
+      return channel;
+    };
+
+    const channel = setupChannel();
+
     return () => {
+      cancelled = true;
+      if (reconnectTimer != null) clearTimeout(reconnectTimer);
       ringRef.current?.stop();
       ringRef.current = null;
       supabase.removeChannel(channel);
-      callChannelRef.current = null;
+      if (callChannelRef.current === channel) callChannelRef.current = null;
     };
   }, [roomId, user?.id]);
 
+  // Poll fallback for a missed 'call-invite' broadcast -- this channel has
+  // no call_sessions-style DB row of its own to poll, so it polls
+  // call_events instead (see 20260910180000_call_events_room_participant_select.sql
+  // for the RLS letting the other participant see it). Every 3s
+  // regardless of signalStatus, plus an immediate check on
+  // visibilitychange -- iOS Safari suspends both timers and the socket
+  // while backgrounded/locked, same rationale as useCallManager.jsx.
+  useEffect(() => {
+    if (!roomId || !user?.id) return;
+    if (call || incomingCallInvite) return;
+
+    const checkForMissedInvite = async () => {
+      try {
+        const sinceIso = new Date(Date.now() - 30000).toISOString();
+        const { data, error } = await supabase
+          .from('call_events' as any)
+          .select('user_id, created_at')
+          .eq('room_name', roomId)
+          .eq('event_type', 'invite_sent')
+          .neq('user_id', user.id)
+          .gt('created_at', sinceIso)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (error || !data?.length) return;
+        // call_events doesn't carry audioOnly -- default to video, the
+        // more common case; if the broadcast does still arrive it
+        // overwrites this with the real value.
+        setIncomingCallInvite((prev) => prev ?? { from: (data[0] as any).user_id, audioOnly: false });
+        ringRef.current?.stop();
+        ringRef.current = startSimpleRingtone();
+      } catch (e) {
+        console.error('⚠️ [ONEONONE][POLL] call-invite poll error:', e);
+      }
+    };
+
+    const poll = setInterval(checkForMissedInvite, 3000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') checkForMissedInvite();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(poll);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [roomId, user?.id, call, incomingCallInvite]);
+
   const sendCallInvite = (audioOnly: boolean) => {
     callChannelRef.current?.send({ type: 'broadcast', event: 'call-invite', payload: { from: user?.id, audioOnly } });
+    void logCallEvent(roomId, 'invite_sent');
     setCall({ audioOnly });
   };
 
@@ -117,6 +207,7 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
     if (!incomingCallInvite) return;
     ringRef.current?.stop();
     ringRef.current = null;
+    void logCallEvent(roomId, 'answered_sent');
     setCall({ audioOnly: incomingCallInvite.audioOnly });
     setIncomingCallInvite(null);
   };
@@ -238,6 +329,11 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* signal: whether the call-invite channel is actually up, or
+                we're relying on the 3s poll fallback. */}
+            <span className="hidden sm:flex items-center gap-1 text-[10px] text-[#7E9498]" title={`signal: ${signalStatus === 'ws' ? 'ws ok' : signalStatus === 'polling' ? 'polling' : 'connecting'}`}>
+              <span className={`inline-block h-1.5 w-1.5 rounded-full ${signalStatus === 'ws' ? 'bg-green-500' : signalStatus === 'polling' ? 'bg-amber-500' : 'bg-gray-500'}`} />
+            </span>
             <Button size="icon" disabled={!!call} onClick={() => sendCallInvite(true)} aria-label="Voice call"
               className="bg-transparent border border-[#1FB6A8]/40 text-[#EAF4F2] hover:bg-[#1FB6A8]/10 hover:text-[#EAF4F2]">
               <Phone className="h-4 w-4" />
