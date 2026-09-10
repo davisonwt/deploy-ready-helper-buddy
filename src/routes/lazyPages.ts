@@ -80,6 +80,7 @@ export const CommunicationsHub = lazy(() =>
   })
 );
 export const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+export const StallBuildPage = lazy(() => import('@/pages/StallBuildPage'));
 export const BulkUploadWizardPage = lazy(() => import('@/pages/BulkUploadWizardPage'));
 export const BulkSowerPage = lazy(() => import('@/pages/BulkSowerPage'));
 export const BulkSeedFeedPage = lazy(() => import('@/pages/BulkSeedFeedPage'));

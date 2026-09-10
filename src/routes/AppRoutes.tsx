@@ -21,6 +21,7 @@ import {
   GroveFeedPage,
   CommunicationsHub,
   DashboardPage,
+  StallBuildPage,
   BulkUploadWizardPage,
   BulkSowerPage,
   BulkSeedFeedPage,
@@ -229,10 +230,19 @@ const AppRoutes = () => (
     <Route path="/auth-debug" element={
       <Suspense fallback={<div>Loading...</div>}><AuthDebugPage /></Suspense>
     } />
-    <Route path="/dashboard" element={
+    <Route path="/cockpit" element={
       <ProtectedRoute>
         <RequireVerification>
           <DashboardPage />
+        </RequireVerification>
+      </ProtectedRoute>
+    } />
+    {/* Renamed to /cockpit -- kept as a redirect so existing bookmarks/links still land somewhere. */}
+    <Route path="/dashboard" element={<Navigate to="/cockpit" replace />} />
+    <Route path="/stall/build" element={
+      <ProtectedRoute>
+        <RequireVerification>
+          <Suspense fallback={<LoadingFallback />}><StallBuildPage /></Suspense>
         </RequireVerification>
       </ProtectedRoute>
     } />
