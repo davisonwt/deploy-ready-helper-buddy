@@ -64,12 +64,17 @@ export default function MyStallCard() {
     <>
       <button type="button" onClick={() => setOpen(true)} className="block w-full text-left">
         <Card className="overflow-hidden hover:opacity-95 transition-opacity">
-          <div className="relative aspect-[16/9] sm:aspect-[21/9]">
-            <img src={stall.front_image_path} alt={stall.name} className="absolute inset-0 w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            <div className="absolute bottom-0 inset-x-0 p-3 flex items-end justify-between">
+          <div className="relative w-full aspect-square">
+            {/* Blurred cover copy fills the square behind the real image --
+                the real image itself is object-contain so it's never
+                cropped, whatever its own aspect ratio. */}
+            <img src={stall.front_image_path} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70" />
+            <div className="absolute inset-0 bg-black/20" />
+            <img src={stall.front_image_path} alt={stall.name} className="absolute inset-0 w-full h-full object-contain" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+            <div className="absolute bottom-0 left-0 p-3 flex items-center gap-2">
               <h3 className="text-white font-bold drop-shadow">{stall.name}</h3>
-              <span className="text-[11px] font-medium text-white/90 bg-black/40 rounded-full px-2 py-0.5">
+              <span className="text-[11px] font-medium text-white/90 bg-black/40 rounded-full px-2 py-0.5 shrink-0">
                 {STALL_TIER_LABEL[stall.tier]}
               </span>
             </div>

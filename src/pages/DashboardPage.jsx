@@ -1105,9 +1105,8 @@ export default function SeedFlowDashboard() {
                   : '🧑'}
               </div>
                <div style={{ minWidth: 0 }}>
-                 <div style={styles.greeting}>Welcome back, {displayName} — your seeds are in motion</div>
-                 <div style={styles.greetingSub}>
-                   Shalom · Year {sacredDate.year} · Month {sacredDate.month} · Day {sacredDate.day}
+                 <div style={{ ...styles.greeting, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                   Welcome back, {displayName}
                  </div>
                </div>
              </div>
@@ -1286,11 +1285,12 @@ export default function SeedFlowDashboard() {
             <LiveNowStrip className="mb-3" />
 
             {/* ── Tribe size · Bestowals · Unread messages ── */}
-            <TileErrorBoundary name="dashboard stats"><DashboardTribeStats /></TileErrorBoundary>
-
-            {/* ── Your stall — Farm-Stalls batch 1: shop-front tap-in, or a
-                build CTA if none yet. No public visitor feed here yet. ── */}
+            {/* ── Your stall — hero of the middle column (Farm-Stalls batch 2,
+                item 0): shop-front tap-in, or a build CTA if none yet. ── */}
             <TileErrorBoundary name="my stall"><MyStallCard /></TileErrorBoundary>
+
+            {/* ── Tribe size · Bestowals · Unread messages · Wallet ── */}
+            <TileErrorBoundary name="dashboard stats"><DashboardTribeStats /></TileErrorBoundary>
 
             {/* ── Tribal Tiers — jump to each SeedFlow by business scale ── */}
             <TribalTiersCard />

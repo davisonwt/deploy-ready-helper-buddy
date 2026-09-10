@@ -151,9 +151,12 @@ export default function DashboardTribeStats() {
   );
 
   return (
-    <div style={{
-      display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14,
-    }}>
+    <div
+      className="[scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      style={{
+        display: "flex", gap: 10, flexWrap: "nowrap", overflowX: "auto", marginBottom: 14,
+      }}
+    >
       {tile("/my-tribe", <Users size={20} />, "My Tribe", tribeCount, <div style={subLine}>members in your tribe</div>, "#22c55e")}
       {tile("/wallet-settings", <Coins size={20} />, "Bestowals", `${bestowals.total.toFixed(2)}`, (
         <>
