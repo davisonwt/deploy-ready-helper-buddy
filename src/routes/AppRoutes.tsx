@@ -22,6 +22,7 @@ import {
   CommunicationsHub,
   DashboardPage,
   StallBuildPage,
+  StallVisitPage,
   BulkUploadWizardPage,
   BulkSowerPage,
   BulkSeedFeedPage,
@@ -245,6 +246,13 @@ const AppRoutes = () => (
           <Suspense fallback={<LoadingFallback />}><StallBuildPage /></Suspense>
         </RequireVerification>
       </ProtectedRoute>
+    } />
+    {/* Public visitor route -- registered ahead of no other /stall/:x route
+        exists, but kept explicit and above any future one, same pattern as
+        /pay/paystack/return vs /pay/:publicToken. No ProtectedRoute -- a
+        guest can browse a published stall. */}
+    <Route path="/stall/:username" element={
+      <Layout><Suspense fallback={<LoadingFallback />}><StallVisitPage /></Suspense></Layout>
     } />
     <Route path="/dashboard/sower/upload" element={
       <ProtectedRoute>

@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, UserX } from 'lucide-react';
+import { ArrowLeft, Loader2, Store, UserX } from 'lucide-react';
 import SignedImg from '@/components/media/SignedImg';
 import ReportButton from '@/components/moderation/ReportButton';
 
@@ -104,11 +104,18 @@ export default function MemberProfilePage() {
                 </div>
                 <ReportButton targetType="profile" targetId={profile.user_id} variant="outline" size="icon" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 <p className="text-sm text-white/60">
                   This is the public view of a fellow tribe member. Their bestowals, seeds, and orchards
                   live throughout the app -- this page just confirms who they are.
                 </p>
+                {profile.username && (
+                  <Button asChild variant="outline" className="bg-white/5 border-white/20 text-white hover:bg-white/10 gap-2">
+                    <Link to={`/stall/${profile.username}`}>
+                      <Store className="h-4 w-4" /> Visit their stall
+                    </Link>
+                  </Button>
+                )}
               </CardContent>
             </>
           )}

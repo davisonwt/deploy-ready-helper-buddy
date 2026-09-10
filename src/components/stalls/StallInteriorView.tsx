@@ -13,6 +13,13 @@ interface Props {
   stallName: string;
   tiles: StallTile[];
   onClose: () => void;
+  /**
+   * Visitor route (batch 2, item 3): a Bestow button for a visitor, or an
+   * Edit button for the owner previewing their own public stall. Omitted
+   * entirely on the Cockpit owner view (MyStallCard) -- editing there
+   * happens from the front card outside the interior, same as batch 1.
+   */
+  footerAction?: { label: string; onClick: () => void };
 }
 
 /**
@@ -26,7 +33,7 @@ interface Props {
  * none of them have room to coexist with the fixed bottom tile strip
  * (Farm-Stalls batch 2, item 1).
  */
-export default function StallInteriorView({ ownerId, interiorImageUrl, stallName, tiles, onClose }: Props) {
+export default function StallInteriorView({ ownerId, interiorImageUrl, stallName, tiles, onClose, footerAction }: Props) {
   const navigate = useNavigate();
   const { setStallInteriorOpen } = useAppContext();
   const [openShelfTile, setOpenShelfTile] = useState<StallTile | null>(null);
@@ -68,8 +75,13 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
 
         {/* Bottom-left caption, not a top overlay -- keeps the top of the
             interior image clear (batch 2, item 1). */}
-        <div className="absolute bottom-4 left-4 right-20">
+        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3">
           <h2 className="text-white font-bold text-lg drop-shadow-lg">{stallName}</h2>
+          {footerAction && (
+            <Button type="button" onClick={footerAction.onClick} className="shrink-0 gap-1.5">
+              {footerAction.label}
+            </Button>
+          )}
         </div>
       </div>
 
