@@ -456,6 +456,7 @@ export default function SeedFlowDashboard() {
     }
   }, [tribalFeedsOpen])
   const TRIBAL_FEED_TIERS = [
+    { tier: 'stalls', label: 'Stalls', emoji: '🏪', to: '/stalls-feed' },
     { tier: 'homestead', label: 'Homestead', emoji: '🏡' },
     { tier: 'grove', label: 'Grove', emoji: '🌳' },
     { tier: 'orchard', label: 'Orchard', emoji: '🍎' },

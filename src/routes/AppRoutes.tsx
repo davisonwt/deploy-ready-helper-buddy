@@ -23,6 +23,7 @@ import {
   DashboardPage,
   StallBuildPage,
   StallVisitPage,
+  StallsFeedPage,
   BulkUploadWizardPage,
   BulkSowerPage,
   BulkSeedFeedPage,
@@ -294,6 +295,9 @@ const AppRoutes = () => (
     } />
     <Route path="/orchard-alive" element={
       <ProtectedRoute><RequireVerification><Layout><TribalAliveFeedPage /></Layout></RequireVerification></ProtectedRoute>
+    } />
+    <Route path="/stalls-feed" element={
+      <ProtectedRoute><RequireVerification><Layout><Suspense fallback={<LoadingFallback />}><StallsFeedPage /></Suspense></Layout></RequireVerification></ProtectedRoute>
     } />
     <Route path="/factories" element={<Layout><FactoriesDirectoryPage /></Layout>} />
     <Route path="/factories/:slug" element={<Layout><FactoryDetailPage /></Layout>} />

@@ -1,0 +1,186 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Loader2, Radio } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useGiftBestowal } from '@/hooks/useGiftBestowal';
+import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
+import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
+import { toast } from 'sonner';
+import { STALL_CATEGORIES, STALL_TIER_LABEL, type StallCategory, type StallTier } from '@/lib/stalls/stallTypes';
+import type { PayoutProviderId } from '@/lib/payments/providerFees';
+
+type Chip = 'for_you' | 'new' | StallCategory;
+
+const CHIPS: { id: Chip; label: string }[] = [
+  { id: 'for_you', label: 'For You' },
+  { id: 'new', label: 'New' },
+  ...STALL_CATEGORIES.map((c) => ({
+    id: c.id,
+    label: c.id === 'whisperer' ? 'Whisperers' : c.id === 'orchard' ? 'Orchards' : c.label,
+  })),
+];
+
+interface StallCard {
+  id: string;
+  user_id: string;
+  username: string | null;
+  name: string;
+  tagline: string | null;
+  tier: StallTier;
+  category: StallCategory;
+  front_image_path: string;
+}
+
+/**
+ * Default "Stalls" feed (Farm-Stalls batch 2, item 4): category chips over
+ * full-width, vertically snap-scrolling shop-front cards. Gated the same
+ * way /orchard-alive already is (signed-in members) -- unlike
+ * StallVisitPage, this page resolves usernames via public_profiles
+ * (authenticated-only grant), which is fine here since the page itself
+ * requires a session.
+ */
+export default function StallsFeedPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { liveSeeds } = useTribalLiveOrchard();
+  const { send: sendGift, loading: bestowing } = useGiftBestowal();
+
+  const [chip, setChip] = useState<Chip>('for_you');
+  const [cards, setCards] = useState<StallCard[] | null>(null);
+  const [bestowTarget, setBestowTarget] = useState<StallCard | null>(null);
+
+  const liveOwnerIds = useMemo(() => new Set((liveSeeds ?? []).map((p) => p.user_id)), [liveSeeds]);
+
+  useEffect(() => {
+    let alive = true;
+    setCards(null);
+    (async () => {
+      let q = supabase
+        .from('stalls')
+        .select('id, user_id, name, tagline, tier, category, front_image_path')
+        .eq('published', true)
+        .not('front_image_path', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (chip !== 'for_you' && chip !== 'new') {
+        q = q.eq('category', chip);
+      }
+      const { data: stallRows } = await q;
+      const rows = (stallRows ?? []) as Omit<StallCard, 'username'>[];
+      if (rows.length === 0) { if (alive) setCards([]); return; }
+
+      const ownerIds = Array.from(new Set(rows.map((r) => r.user_id)));
+      const { data: profileRows } = await supabase
+        .from('public_profiles' as any)
+        .select('user_id, username')
+        .in('user_id', ownerIds);
+      const usernameByOwner = new Map<string, string | null>(
+        ((profileRows ?? []) as { user_id: string; username: string | null }[]).map((p) => [p.user_id, p.username]),
+      );
+
+      if (alive) {
+        setCards(rows.map((r) => ({ ...r, username: usernameByOwner.get(r.user_id) ?? null })));
+      }
+    })();
+    return () => { alive = false; };
+  }, [chip]);
+
+  const handleBestowConfirm = async (provider: PayoutProviderId) => {
+    if (!bestowTarget) return;
+    const result = await sendGift({
+      recipientId: bestowTarget.user_id,
+      amount: 5,
+      contextKind: 'chat_tip',
+      contextId: bestowTarget.id,
+      provider,
+      message: `Bestowal for ${bestowTarget.name}'s stall`,
+    });
+    if (result.success) {
+      toast.success(`${bestowTarget.name} will receive your bestowal!`);
+      setBestowTarget(null);
+    }
+  };
+
+  const openStall = (card: StallCard) => {
+    if (card.username) navigate(`/stall/${card.username}`);
+  };
+
+  return (
+    <div className="flex flex-col h-[calc(100dvh-4rem)]">
+      <div className="shrink-0 flex gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {CHIPS.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setChip(c.id)}
+            className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors ${
+              chip === c.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+            }`}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+
+      {cards === null ? (
+        <div className="flex-1 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+      ) : cards.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm px-6 text-center">
+          No stalls here yet — check back soon, or{' '}
+          {user && <Link to="/stall/build" className="underline ml-1">build your own</Link>}
+        </div>
+      ) : (
+        <div className="flex-1 min-h-0 overflow-y-auto snap-y snap-mandatory">
+          {cards.map((card) => (
+            <article key={card.id} className="snap-start h-[calc(100dvh-8rem)] relative flex items-end">
+              <button type="button" onClick={() => openStall(card)} className="absolute inset-0" aria-label={`Open ${card.name}'s stall`}>
+                <img
+                  src={card.front_image_path}
+                  alt={card.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+              </button>
+
+              {liveOwnerIds.has(card.user_id) && (
+                <span className="absolute top-4 left-4 flex items-center gap-1 rounded-full bg-rose-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
+                  <Radio className="h-3 w-3" /> LIVE
+                </span>
+              )}
+              <span className="absolute top-4 right-4 rounded-full bg-black/50 px-2.5 py-1 text-xs font-medium text-white">
+                {STALL_TIER_LABEL[card.tier]}
+              </span>
+
+              <div className="relative z-10 w-full p-5 pointer-events-none">
+                <h2 className="text-white font-bold text-2xl drop-shadow">{card.name}</h2>
+                {card.tagline && <p className="text-white/85 mt-1 drop-shadow">{card.tagline}</p>}
+                <Button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setBestowTarget(card); }}
+                  className="mt-3 pointer-events-auto"
+                >
+                  Bestow
+                </Button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      <ConfirmBestowModal
+        isOpen={!!bestowTarget}
+        onClose={() => setBestowTarget(null)}
+        title={bestowTarget?.name ?? ''}
+        amount={5}
+        onConfirm={handleBestowConfirm}
+        confirming={bestowing}
+        actionLabel="Bestow"
+        enablePaystack
+      />
+    </div>
+  );
+}
