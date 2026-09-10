@@ -1,38 +1,35 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
+import StallShelfView from './StallShelfView';
 import type { StallTile } from '@/lib/stalls/stallTypes';
 
 interface Props {
+  /** Stall owner's user id -- shelves pull THEIR published items, never the viewer's. */
+  ownerId: string;
   interiorImageUrl: string;
   stallName: string;
   tiles: StallTile[];
   onClose: () => void;
-  /**
-   * Tapping a non-custom tile opens its shelf instead of navigating away --
-   * Farm-Stalls batch 2, item 2. Optional so this component keeps working
-   * unchanged for any caller not yet passing one (every tile just
-   * navigates directly, the batch 1 behavior).
-   */
-  onTileTap?: (tile: StallTile) => void;
 }
 
 /**
  * Full-screen "you're inside the stall" view -- interior image behind a
  * fixed bottom strip of tile buttons (2x2 on phones, one row on desktop).
  * Tapping a tile opens that tile's shelf (StallShelfView) except 'custom'
- * tiles, which still navigate straight to their own link_target.
+ * tiles, which navigate straight to their own link_target.
  *
  * While mounted, sets AppContext.stallInteriorOpen so App.tsx hides the
  * global FloatingBasketButton/WalletBalanceChip/GroundskeeperWidget --
  * none of them have room to coexist with the fixed bottom tile strip
  * (Farm-Stalls batch 2, item 1).
  */
-export default function StallInteriorView({ interiorImageUrl, stallName, tiles, onClose, onTileTap }: Props) {
+export default function StallInteriorView({ ownerId, interiorImageUrl, stallName, tiles, onClose }: Props) {
   const navigate = useNavigate();
   const { setStallInteriorOpen } = useAppContext();
+  const [openShelfTile, setOpenShelfTile] = useState<StallTile | null>(null);
 
   useEffect(() => {
     setStallInteriorOpen(true);
@@ -40,8 +37,8 @@ export default function StallInteriorView({ interiorImageUrl, stallName, tiles, 
   }, [setStallInteriorOpen]);
 
   const goToTile = (tile: StallTile) => {
-    if (tile.kind !== 'custom' && onTileTap) {
-      onTileTap(tile);
+    if (tile.kind !== 'custom') {
+      setOpenShelfTile(tile);
       return;
     }
     onClose();
@@ -97,6 +94,15 @@ export default function StallInteriorView({ interiorImageUrl, stallName, tiles, 
           ))}
         </div>
       </div>
+
+      {openShelfTile && (
+        <StallShelfView
+          ownerId={ownerId}
+          ownerName={stallName}
+          tile={openShelfTile}
+          onClose={() => setOpenShelfTile(null)}
+        />
+      )}
     </div>
   );
 }

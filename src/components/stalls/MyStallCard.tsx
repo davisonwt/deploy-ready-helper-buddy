@@ -77,8 +77,9 @@ export default function MyStallCard() {
         </Card>
       </button>
 
-      {open && stall.interior_image_path && (
+      {open && stall.interior_image_path && user && (
         <StallInteriorView
+          ownerId={user.id}
           interiorImageUrl={stall.interior_image_path}
           stallName={stall.name}
           tiles={stall.tiles ?? []}
