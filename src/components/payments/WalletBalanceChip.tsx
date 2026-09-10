@@ -11,6 +11,19 @@ import { cn } from '@/lib/utils';
 
 const LOW_BALANCE_THRESHOLD = 5;
 
+// Same list GroundskeeperWidget uses (fixed bottom-right, this chip's
+// immediate neighbor at bottom-24) -- both sat on top of the chat Send
+// button, mic/camera toggles, and Daily call controls on narrow widths.
+// Every route confirmed (via grep) to render ChatRoom or a Daily call.
+const CHAT_OR_CALL_ROUTES = [
+  '/chatapp',
+  '/call/',
+  '/live-rooms',
+  '/classroom',
+  '/skilldrop',
+  '/premium-room',
+];
+
 export default function WalletBalanceChip() {
   const { user } = useAuth();
   const location = useLocation();
@@ -20,7 +33,8 @@ export default function WalletBalanceChip() {
   // Same page the dashboard tile and the "Connect wallet" flow both use --
   // this is the only place wallet-address connect/change UI lives (see
   // CryptoPayoutSettings), never duplicated here.
-  if (!user || location.pathname === '/settings/payouts') return null;
+  const hideForChatOrCall = CHAT_OR_CALL_ROUTES.some((p) => location.pathname.startsWith(p));
+  if (!user || location.pathname === '/settings/payouts' || hideForChatOrCall) return null;
 
   const low = !!address && balance !== null && balance < LOW_BALANCE_THRESHOLD;
 
