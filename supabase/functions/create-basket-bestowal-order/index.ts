@@ -19,6 +19,7 @@ import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
 import { finalizeCompletedOrder } from "../_shared/paypal/capture.ts";
 import { isS2GBalanceEnabled } from "../_shared/featureFlags.ts";
 import { hasAcceptedSettlementConsent } from "../_shared/settlementConsent.ts";
+import { initializePaystackTransaction } from "../_shared/paystack/initialize.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -40,7 +41,7 @@ interface RequestItem {
 
 interface RequestPayload {
   items: RequestItem[];
-  provider: "nowpayments" | "paypal" | "solana" | "balance";
+  provider: "nowpayments" | "paypal" | "solana" | "balance" | "paystack";
   payCurrency?: string;
   redirectBaseUrl?: string;
 }
@@ -93,7 +94,8 @@ Deno.serve(async (req) => {
     }
     if (
       payload.provider !== "nowpayments" && payload.provider !== "paypal" &&
-      payload.provider !== "solana" && payload.provider !== "balance"
+      payload.provider !== "solana" && payload.provider !== "balance" &&
+      payload.provider !== "paystack"
     ) {
       return json({ error: "invalid_provider" }, 400);
     }
@@ -396,6 +398,45 @@ Deno.serve(async (req) => {
         provider: "solana",
         solanaPayment,
         breakdown: { subtotal, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+      });
+    }
+
+    // --- Paystack (cards + EFT via Ozow, ZAR settlement) -----------------------
+    if (payload.provider === "paystack") {
+      if (!Deno.env.get("PAYSTACK_SECRET_KEY")) {
+        await markFailed(service, order.id, "paystack_credentials_missing");
+        return json({ error: "paystack_credentials_missing" }, 500);
+      }
+      let init;
+      try {
+        init = await initializePaystackTransaction({
+          supabase: service,
+          kind: "basket",
+          recordId: order.id,
+          amountUsd: buyerTotal,
+          email: userData.user.email ?? `buyer-${userId}@pay.sow2growapp.com`,
+          description: `Sow2Grow basket (${itemSnapshot.length} item${itemSnapshot.length === 1 ? "" : "s"})`,
+          redirectBaseUrl: payload.redirectBaseUrl,
+          metadataExtra: { basketOrderId: order.id },
+        });
+      } catch (err) {
+        console.error("paystack basket order init failed", err);
+        await markFailed(service, order.id, "paystack_initialize_failed");
+        return json({ error: "paystack_initialize_failed", detail: err instanceof Error ? err.message : String(err) }, 502);
+      }
+      await service
+        .from("basket_orders")
+        .update({ provider_order_id: init.reference, approve_url: init.authorizationUrl })
+        .eq("id", order.id);
+      return json({
+        basketOrderId: order.id,
+        provider: "paystack",
+        reference: init.reference,
+        approveUrl: init.authorizationUrl,
+        breakdown: {
+          subtotal, processorFee, processorFeePct: feePct, buyerTotal,
+          amountZar: init.amountZar, fxRate: init.fxRate, currency: "USD",
+        },
       });
     }
 
