@@ -48,6 +48,25 @@ verify_jwt = false
 [functions.reconcile-paypal-orders]
 verify_jwt = false
 
+# Paystack pay-in rail (cards + EFT via Ozow), pay-in only. paystack-initialize
+# does its own auth: JWT-free like create-invoice-payment/create-basket-bestowal-order
+# because its only deployed HTTP entry point is the guest invoice flow
+# (public_token, no session) -- orchard/gift bestowals call the same shared
+# _shared/paystack/initialize.ts in-process from their own JWT-checked
+# functions instead of round-tripping through this one.
+[functions.paystack-initialize]
+verify_jwt = false
+
+# Paystack calls this unauthenticated; the x-paystack-signature HMAC is the
+# auth, verified locally in the function itself (see _shared/paystack/client.ts).
+[functions.paystack-webhook]
+verify_jwt = false
+
+# Public return-page recovery call (no session) -- same trust model as the
+# PayPal return flow's capture-paypal-order.
+[functions.paystack-verify]
+verify_jwt = false
+
 [functions.expire-stale-orders]
 verify_jwt = false
 

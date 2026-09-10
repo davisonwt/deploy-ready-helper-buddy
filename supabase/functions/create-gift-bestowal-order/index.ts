@@ -14,11 +14,12 @@ import { priceBreakdown, s2gFeeOn, S2G_FEE_RATE } from "../_shared/platformFee.t
 import { createSolanaIntent } from "../_shared/solanaPayIn.ts";
 import { finalizeCompletedOrder } from "../_shared/paypal/capture.ts";
 import { isS2GBalanceEnabled } from "../_shared/featureFlags.ts";
+import { initializePaystackTransaction } from "../_shared/paystack/initialize.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
 type GiftContext = "live_session" | "radio_session" | "chat_tip";
-type Provider = "nowpayments" | "paypal" | "solana" | "balance";
+type Provider = "nowpayments" | "paypal" | "solana" | "balance" | "paystack";
 
 interface RequestPayload {
   recipientId: string;
@@ -82,7 +83,8 @@ Deno.serve(async (req) => {
     }
     if (
       payload.provider !== "nowpayments" && payload.provider !== "paypal" &&
-      payload.provider !== "solana" && payload.provider !== "balance"
+      payload.provider !== "solana" && payload.provider !== "balance" &&
+      payload.provider !== "paystack"
     ) {
       return json({ error: "invalid_provider" }, 400);
     }
@@ -282,6 +284,44 @@ Deno.serve(async (req) => {
         provider: "solana",
         solanaPayment,
         breakdown: { baseAmount, s2gFee: pricing.s2gFee, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+      });
+    }
+
+    // --- Paystack (cards + EFT via Ozow, ZAR settlement) -----------------------
+    if (payload.provider === "paystack") {
+      if (!Deno.env.get("PAYSTACK_SECRET_KEY")) {
+        await failBestowal(service, bestowal.id, "paystack_credentials_missing");
+        return json({ error: "paystack_credentials_missing" }, 500);
+      }
+      let init;
+      try {
+        init = await initializePaystackTransaction({
+          supabase: service,
+          kind: "gift",
+          recordId: bestowal.id,
+          amountUsd: buyerTotal,
+          email: userData.user.email ?? `bestower-${bestowerId}@pay.sow2growapp.com`,
+          description: `Sow2Grow gift bestowal (${payload.contextKind})`,
+          redirectBaseUrl: payload.redirectBaseUrl,
+          metadataExtra: { bestowalId: bestowal.id, contextKind: payload.contextKind, contextId: payload.contextId },
+        });
+      } catch (err) {
+        console.error("paystack gift bestowal init failed", err);
+        await failBestowal(service, bestowal.id, "paystack_initialize_failed");
+        return json({ error: "paystack_initialize_failed", detail: err instanceof Error ? err.message : String(err) }, 502);
+      }
+      await service.from("bestowals").update({ provider_order_id: init.reference }).eq("id", bestowal.id);
+      return json({
+        bestowalId: bestowal.id,
+        provider: "paystack",
+        reference: init.reference,
+        // Same field name the paypal branch below returns -- useGiftBestowal's
+        // redirect handling is already provider-generic, no client change needed.
+        approveUrl: init.authorizationUrl,
+        breakdown: {
+          baseAmount, s2gFee: pricing.s2gFee, processorFee, processorFeePct: feePct, buyerTotal,
+          amountZar: init.amountZar, fxRate: init.fxRate, currency: "USD",
+        },
       });
     }
 

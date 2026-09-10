@@ -22,11 +22,12 @@ import { finalizeCompletedOrder } from "../_shared/paypal/capture.ts";
 import { isS2GBalanceEnabled } from "../_shared/featureFlags.ts";
 import { hasAcceptedSettlementConsent } from "../_shared/settlementConsent.ts";
 import { normalizeDeliveryAddress, validatePocketRequest, type DeliveryAddress, type PocketType } from "../_shared/orchardHolding.ts";
+import { initializePaystackTransaction } from "../_shared/paystack/initialize.ts";
 
 interface RequestPayload {
   orchardId: string;
   pocketsCount: number;
-  provider: "balance" | "solana" | "paypal";
+  provider: "balance" | "solana" | "paypal" | "paystack";
   message?: string;
   /**
    * P0-5 Phase A. 'bestowal' (default) claims a unit and, on a physical
@@ -84,7 +85,10 @@ Deno.serve(async (req) => {
     ) {
       return json({ error: "missing_fields", required: ["orchardId", "pocketsCount"] }, 400);
     }
-    if (payload.provider !== "balance" && payload.provider !== "solana" && payload.provider !== "paypal") {
+    if (
+      payload.provider !== "balance" && payload.provider !== "solana" &&
+      payload.provider !== "paypal" && payload.provider !== "paystack"
+    ) {
       return json({ error: "invalid_provider" }, 400);
     }
 
@@ -274,6 +278,46 @@ Deno.serve(async (req) => {
         provider: "solana",
         solanaPayment,
         breakdown: { baseAmount, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+      });
+    }
+
+    // --- Paystack (cards + EFT via Ozow, ZAR settlement) -----------------------
+    if (payload.provider === "paystack") {
+      if (!Deno.env.get("PAYSTACK_SECRET_KEY")) {
+        await failBestowal(service, bestowal.id, "paystack_credentials_missing");
+        return json({ error: "paystack_credentials_missing" }, 500);
+      }
+      let init;
+      try {
+        init = await initializePaystackTransaction({
+          supabase: service,
+          kind: "orchard",
+          recordId: bestowal.id,
+          amountUsd: buyerTotal,
+          email: userData.user.email ?? `bestower-${userId}@pay.sow2growapp.com`,
+          description: `Sow2Grow bestowal for ${orchard.title}`,
+          redirectBaseUrl: payload.redirectBaseUrl,
+          metadataExtra: { bestowalId: bestowal.id, orchardId: orchard.id },
+        });
+      } catch (err) {
+        console.error("paystack orchard bestowal init failed", err);
+        await failBestowal(service, bestowal.id, "paystack_initialize_failed");
+        return json({ error: "paystack_initialize_failed", detail: err instanceof Error ? err.message : String(err) }, 502);
+      }
+      await service.from("bestowals").update({ provider_order_id: init.reference }).eq("id", bestowal.id);
+      return json({
+        bestowalId: bestowal.id,
+        provider: "paystack",
+        reference: init.reference,
+        // Same field name the paypal branch below returns (approveUrl) --
+        // QuickBestowModal/useGiftBestowal's redirect handling is already
+        // provider-generic ("any non-balance/non-solana response redirects
+        // via approveUrl"), so this needs no client-side branch of its own.
+        approveUrl: init.authorizationUrl,
+        breakdown: {
+          baseAmount, processorFee, processorFeePct: feePct, buyerTotal,
+          amountZar: init.amountZar, fxRate: init.fxRate, currency: "USD",
+        },
       });
     }
 

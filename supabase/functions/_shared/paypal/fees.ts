@@ -21,10 +21,21 @@
 // recovery mechanism; it exists so "network fee ~$0.01" shown at checkout
 // is never technically an understatement.
 //
+// Paystack (cards + EFT via Ozow, ZAR settlement): Paystack's published
+// South African rate is ~2.9% + R1 for local cards (EFT is priced
+// similarly). The transaction itself settles in ZAR after conversion
+// (_shared/paystack/client.ts's getZarRate), but every amount stored on an
+// order row is USD like every other rail -- so this fee is expressed as a
+// USD-equivalent approximation (R1 ~= $0.055 at a ~18.2 ZAR/USD rate) for
+// the pre-conversion buyer-total shown at checkout, not Paystack's own
+// after-the-fact ZAR fee line. Overridable via env vars for exactly this
+// reason -- tune PAYSTACK_FEE_PCT/PAYSTACK_FEE_FIXED if the real settled
+// fee drifts from this estimate.
+//
 // Both rates are overridable via env vars for future tuning without a code
 // change, but the defaults reflect real-world rails.
 
-export type BuyerFeeProvider = "paypal" | "nowpayments" | "solana" | "balance";
+export type BuyerFeeProvider = "paypal" | "nowpayments" | "solana" | "balance" | "paystack";
 
 export interface BuyerFeeQuote {
   /** Base amount before processor fee. */
@@ -51,6 +62,19 @@ export function computeBuyerFee(
   if (provider === "paypal") {
     const pct = numEnv("PAYPAL_FEE_PCT", 0.0349);
     const fixed = numEnv("PAYPAL_FEE_FIXED", 0.49);
+    const fee = ceil2(safeBase * pct + fixed);
+    return {
+      base: safeBase,
+      fee,
+      total: round2(safeBase + fee),
+      feePct: pct,
+      feeFixed: fixed,
+    };
+  }
+
+  if (provider === "paystack") {
+    const pct = numEnv("PAYSTACK_FEE_PCT", 0.029);
+    const fixed = numEnv("PAYSTACK_FEE_FIXED", 0.055);
     const fee = ceil2(safeBase * pct + fixed);
     return {
       base: safeBase,

@@ -20,7 +20,7 @@ export type RevenueKind =
 
 export type RevenueDirection = "income" | "cost";
 export type RevenueEnvironment = "live" | "devnet" | "sandbox";
-export type RevenueRail = "solana" | "paypal" | "balance" | "nowpayments" | "none";
+export type RevenueRail = "solana" | "paypal" | "balance" | "nowpayments" | "paystack" | "none";
 
 export const INCOME_KINDS: readonly RevenueKind[] = [
   "sale_fee", "gift_fee", "content_fee", "booking_fee", "orchard_fee", "invoice_fee", "processor_fee_income",
@@ -75,14 +75,21 @@ export function environmentFromPaypalEnv(env: string | null | undefined): Revenu
   return env === "sandbox" ? "sandbox" : "live";
 }
 
+/** Paystack: determined by which secret key is configured (sk_test_ vs sk_live_), not a separate env var like PAYPAL_ENV -- see _shared/paystack/client.ts's paystackEnvironmentFromKey(). */
+export function environmentFromPaystackKeyMode(mode: "live" | "sandbox" | null | undefined): RevenueEnvironment {
+  return mode === "sandbox" ? "sandbox" : "live";
+}
+
 /** Balance spends, NOWPayments-era rows and legacy rows with no provider are live. */
 export function environmentFor(params: {
   provider: string | null | undefined;
   solanaCluster?: string | null;
   paypalEnv?: string | null;
+  paystackKeyMode?: string | null;
 }): RevenueEnvironment {
   if (params.provider === "solana") return environmentFromSolanaCluster(params.solanaCluster);
   if (params.provider === "paypal") return environmentFromPaypalEnv(params.paypalEnv);
+  if (params.provider === "paystack") return environmentFromPaystackKeyMode(params.paystackKeyMode as "live" | "sandbox" | null);
   return "live";
 }
 
@@ -92,6 +99,7 @@ export function railFor(provider: string | null | undefined): RevenueRail {
     case "paypal": return "paypal";
     case "balance": return "balance";
     case "nowpayments": return "nowpayments";
+    case "paystack": return "paystack";
     default: return "none";
   }
 }

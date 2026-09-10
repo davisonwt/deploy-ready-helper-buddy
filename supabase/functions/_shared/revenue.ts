@@ -24,10 +24,17 @@ export function paypalEnvironment(): RevenueEnvironment {
   return environmentFor({ provider: "paypal", paypalEnv: (Deno.env.get("PAYPAL_ENV") ?? "").trim().toLowerCase() });
 }
 
+/** Paystack has no separate env var like PAYPAL_ENV -- mode comes from which secret key is configured (see _shared/paystack/client.ts's paystackEnvironmentFromKey()). */
+export function paystackEnvironment(): RevenueEnvironment {
+  const key = Deno.env.get("PAYSTACK_SECRET_KEY") ?? "";
+  return environmentFor({ provider: "paystack", paystackKeyMode: key.startsWith("sk_test_") ? "sandbox" : "live" });
+}
+
 /**
  * Which environment did this order's money move on? Solana orders answer
- * from their payment intent's cluster; PayPal from PAYPAL_ENV; balance and
- * legacy rows are live. Unknown Solana orders are devnet, never live.
+ * from their payment intent's cluster; PayPal from PAYPAL_ENV; Paystack from
+ * which secret key is configured; balance and legacy rows are live. Unknown
+ * Solana orders are devnet, never live.
  */
 export async function resolveOrderEnvironment(
   supabase: SupabaseLike,
@@ -52,6 +59,7 @@ export async function resolveOrderEnvironment(
     return environmentFor({ provider: "solana", solanaCluster: cluster });
   }
   if (params.provider === "paypal") return paypalEnvironment();
+  if (params.provider === "paystack") return paystackEnvironment();
   return "live";
 }
 
