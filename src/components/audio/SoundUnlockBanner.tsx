@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Volume2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { primeCallAudio } from '@/lib/callAudio';
 
 // A small, dismissible pill prompting users to enable sound once per
 // session. This helps iOS users receive ringtones without tapping at call
@@ -75,6 +76,10 @@ const SoundUnlockBanner: React.FC = () => {
       } else {
         try { await ctx.resume(); } catch (e) { /* ignore resume errors */ }
       }
+
+      // Same real gesture (this button click) -- prime the ringtone/
+      // ring-back <audio> elements too (see AudioUnlocker.tsx).
+      try { await primeCallAudio(); } catch { /* primeCallAudio never throws, but stay defensive */ }
 
       try { sessionStorage.setItem(UNLOCKED_KEY, '1'); } catch { /* storage might be disabled */ }
       setVisible(false);

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { primeCallAudio } from '@/lib/callAudio';
 
 // Globally unlocks audio autoplay on mobile by performing a short, user-gesture-bound
 // AudioContext resume and a tiny beep. Invisible and safe to run once per session.
@@ -67,6 +68,13 @@ const AudioUnlocker: React.FC = () => {
           try { el.pause(); } catch { /* pause may fail */ }
         }
       } catch { /* querying audio elements may fail in rare cases */ }
+
+      // The ringtone/ring-back <audio> elements (callAudio.ts) aren't in
+      // the DOM at all (created detached, only on first use) so the
+      // querySelectorAll('audio') sweep above never reaches them -- prime
+      // them explicitly, in the same real gesture, so a later play() call
+      // triggered by a realtime event (not a gesture) is already allowed.
+      try { await primeCallAudio(); } catch { /* primeCallAudio never throws, but stay defensive */ }
 
       try { sessionStorage.setItem('audioUnlocked', '1'); } catch { /* storage might be disabled */ }
       // Remove listeners after first gesture

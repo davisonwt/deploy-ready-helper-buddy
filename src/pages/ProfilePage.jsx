@@ -6,6 +6,7 @@ import { useToast } from "../hooks/use-toast"
 import { moderateBase64Upload, moderationRejectionMessage } from "@/lib/moderation/moderateUpload"
 import { validateSolanaAddress } from "@/lib/payments/cryptoAddress"
 import SignedImg from "@/components/media/SignedImg"
+import { primeCallAudio, playRingtone, stopRingtone, playRingback, stopRingback } from "@/lib/callAudio"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
@@ -59,6 +60,7 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [editing, setEditing] = useState(false)
+  const [testingSound, setTestingSound] = useState(null) // null | 'ringtone' | 'ringback'
   const [loading, setLoading] = useState(false)
   const [uploadingPicture, setUploadingPicture] = useState(false)
   const [pictureError, setPictureError] = useState("")
@@ -493,6 +495,24 @@ export default function ProfilePage() {
   }, [user?.id])
 
 
+  // Lets a member verify the ringtone/ring-back <audio> files actually
+  // play on THIS device without needing a second person to place a real
+  // call -- primes on the same tap (required on iOS Safari even here,
+  // same autoplay policy as an incoming call) then plays for 4s.
+  const testCallSound = async (kind) => {
+    await primeCallAudio()
+    stopRingtone()
+    stopRingback()
+    setTestingSound(kind)
+    if (kind === 'ringtone') await playRingtone()
+    else await playRingback()
+    setTimeout(() => {
+      stopRingtone()
+      stopRingback()
+      setTestingSound(null)
+    }, 4000)
+  }
+
   // Show Quick Setup if requested
   if (showQuickSetup) {
     return (
@@ -573,6 +593,34 @@ export default function ProfilePage() {
               </Button>
               <Button variant="outline" onClick={() => navigate('/settings/payouts')}>
                 Payout preferences
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Notifications & Sound -- lets a member verify the incoming-call
+              ringtone/ring-back files actually play on THIS device without
+              needing a second person on the line to place a real call. */}
+          <Card className="bg-card/95 backdrop-blur-md border-border/30 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-foreground text-xl">🔊 Notifications &amp; Sound</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Test that call sounds actually play on this device -- useful after enabling sound, or if a call was ever silent.
+              </p>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                disabled={testingSound !== null}
+                onClick={() => testCallSound('ringtone')}
+              >
+                {testingSound === 'ringtone' ? 'Playing ringtone…' : 'Test ringtone'}
+              </Button>
+              <Button
+                variant="outline"
+                disabled={testingSound !== null}
+                onClick={() => testCallSound('ringback')}
+              >
+                {testingSound === 'ringback' ? 'Playing ring-back…' : 'Test ring-back tone'}
               </Button>
             </CardContent>
           </Card>

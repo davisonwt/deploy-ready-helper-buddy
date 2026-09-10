@@ -14,7 +14,7 @@ import { DockedCallPane } from '@/components/media/DockedCallPane';
 import { uploadLiveRoomMedia } from '@/lib/liveRoom/uploadMedia';
 import JitsiRoom from '@/components/jitsi/JitsiRoom';
 import { PresenceAura, classifyAura } from './PresenceAura';
-import { startSimpleRingtone } from '@/lib/ringtone';
+import { playRingtone, stopRingtone } from '@/lib/callAudio';
 import { logCallEvent } from '@/lib/daily-config';
 
 const VOICE_MAX_SECONDS = 60;
@@ -43,7 +43,6 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
   // or we're relying on the poll fallback below.
   const [signalStatus, setSignalStatus] = useState<'connecting' | 'ws' | 'polling'>('connecting');
   const callChannelRef = useRef<RealtimeChannel | null>(null);
-  const ringRef = useRef<{ stop: () => void } | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   // handleRecord is one continuous async closure spanning the whole
   // recording, so its own `elapsed` param is frozen at 0 (its value when
@@ -105,15 +104,14 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
           if (!from || from === user.id) return;
           setIncomingCallInvite({ from, audioOnly });
           void logCallEvent(roomId, 'invite_seen');
-          ringRef.current?.stop();
-          ringRef.current = startSimpleRingtone();
+          stopRingtone();
+          void playRingtone();
         })
         .on('broadcast', { event: 'call-cancel' }, (payload) => {
           const from = payload.payload?.from;
           if (!from || from === user.id) return;
           setIncomingCallInvite(null);
-          ringRef.current?.stop();
-          ringRef.current = null;
+          stopRingtone();
         })
         .subscribe((status) => {
           console.log('📡 [ONEONONE][SIGNAL] call-invite channel status:', status, 'roomId:', roomId);
@@ -143,8 +141,7 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
     return () => {
       cancelled = true;
       if (reconnectTimer != null) clearTimeout(reconnectTimer);
-      ringRef.current?.stop();
-      ringRef.current = null;
+      stopRingtone();
       supabase.removeChannel(channel);
       if (callChannelRef.current === channel) callChannelRef.current = null;
     };
@@ -178,8 +175,8 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
         // more common case; if the broadcast does still arrive it
         // overwrites this with the real value.
         setIncomingCallInvite((prev) => prev ?? { from: (data[0] as any).user_id, audioOnly: false });
-        ringRef.current?.stop();
-        ringRef.current = startSimpleRingtone();
+        stopRingtone();
+        void playRingtone();
       } catch (e) {
         console.error('⚠️ [ONEONONE][POLL] call-invite poll error:', e);
       }
@@ -205,8 +202,7 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
 
   const answerCallInvite = () => {
     if (!incomingCallInvite) return;
-    ringRef.current?.stop();
-    ringRef.current = null;
+    stopRingtone();
     void logCallEvent(roomId, 'answered_sent');
     setCall({ audioOnly: incomingCallInvite.audioOnly });
     setIncomingCallInvite(null);
@@ -214,8 +210,7 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
 
   const declineCallInvite = () => {
     if (!incomingCallInvite) return;
-    ringRef.current?.stop();
-    ringRef.current = null;
+    stopRingtone();
     callChannelRef.current?.send({ type: 'broadcast', event: 'call-cancel', payload: { from: user?.id } });
     setIncomingCallInvite(null);
   };
