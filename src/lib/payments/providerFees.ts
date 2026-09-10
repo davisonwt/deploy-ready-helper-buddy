@@ -11,7 +11,7 @@
  * `bestowals` row (processor_fee_amount / payout_fee_amount).
  */
 
-export type PayoutProviderId = 'solana' | 'paypal' | 'balance';
+export type PayoutProviderId = 'solana' | 'paypal' | 'balance' | 'paystack';
 
 /**
  * Direct Solana pay-in has no fee-economics floor (spec-payments.md
@@ -91,6 +91,15 @@ export const PAYOUT_PROVIDERS: PayoutProviderInfo[] = [
     explainer:
       'Pay with any Visa, Mastercard, Amex, or Discover card — no PayPal account required — or with your PayPal balance. PayPal charges 3.49% + $0.49 per transaction, and Sow2Grow adds it to your total so the sower always receives 100% of the base amount they set.',
   },
+  {
+    id: 'paystack',
+    label: 'Card / EFT — Visa, Mastercard, Amex, or Ozow',
+    feePct: [2.9, 2.9],
+    feeFixed: 0.055,
+    note: 'Paystack fee (~2.9% + a small flat fee) is added to your total. The sower receives the full amount.',
+    explainer:
+      'Pay by Visa, Mastercard, or Amex, or by instant EFT via Ozow — charged in ZAR at the live exchange rate. Paystack charges roughly 2.9% + a small flat fee per transaction, and Sow2Grow adds it to your total so the sower always receives 100% of the base amount they set.',
+  },
 ];
 
 export interface FeeQuote {
@@ -141,6 +150,10 @@ export function computeBuyerFeeExact(
   const safeBase = round2(Number.isFinite(base) && base > 0 ? base : 0);
   if (provider === 'paypal') {
     const fee = ceil2(safeBase * 0.0349 + 0.49);
+    return { base: safeBase, fee, total: round2(safeBase + fee) };
+  }
+  if (provider === 'paystack') {
+    const fee = ceil2(safeBase * 0.029 + 0.055);
     return { base: safeBase, fee, total: round2(safeBase + fee) };
   }
   if (provider === 'solana') {

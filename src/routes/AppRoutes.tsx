@@ -89,6 +89,7 @@ import {
   BooksCatalogItemPage,
   InvoiceViewPage,
   PublicPayPage,
+  PaystackReturnPage,
   JobInvoicingDashboardPage,
   JobNoteFormPage,
   JobDetailPage,
@@ -580,6 +581,11 @@ const AppRoutes = () => (
         have no S2G account at all -- no ProtectedRoute, no Layout (nothing
         here assumes a signed-in member's chrome). Keyed by the invoice's/
         estimate's own unguessable token. */}
+    {/* Paystack's checkout callback_url -- registered before /pay/:publicToken
+        so "paystack" is never swallowed as a publicToken value. */}
+    <Route path="/pay/paystack/return" element={
+      <Suspense fallback={<LoadingFallback />}><PaystackReturnPage /></Suspense>
+    } />
     <Route path="/pay/:publicToken" element={
       <Suspense fallback={<LoadingFallback />}><PublicPayPage /></Suspense>
     } />

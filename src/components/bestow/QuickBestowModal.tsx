@@ -111,7 +111,7 @@ export default function QuickBestowModal({
     ? { base: defaultAmount, s2gFee: 0, total: round2(defaultAmount) }
     : priceBreakdown(amount);
   const belowCryptoMin = pricing.total < MIN_CRYPTO_BESTOWAL_USD;
-  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(pricing.total);
+  const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(pricing.total, ['solana', 'paypal', 'paystack']);
   const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
   const effectiveProviders = belowCryptoMin ? ['paypal'] : providers;
   const feePreview = quoteFee(effectiveProvider, pricing.total);

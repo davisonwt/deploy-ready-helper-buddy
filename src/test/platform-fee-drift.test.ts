@@ -44,7 +44,7 @@ describe('client computeBuyerFeeExact matches server computeBuyerFee', () => {
     const { computeBuyerFeeExact } = await import('@/lib/payments/providerFees');
 
     for (const base of PRICE_TABLE.map((p) => client.priceBreakdown(p).total)) {
-      for (const provider of ['solana', 'paypal', 'balance'] as const) {
+      for (const provider of ['solana', 'paypal', 'balance', 'paystack'] as const) {
         const c = computeBuyerFeeExact(provider, base);
         const srv = serverFees.computeBuyerFee(provider, base);
         expect(c.fee, `${provider} fee on ${base}`).toBe(srv.fee);

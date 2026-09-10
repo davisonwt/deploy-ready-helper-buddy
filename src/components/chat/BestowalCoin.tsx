@@ -212,6 +212,15 @@ export function BestowalCoin({
                 >
                   PayPal
                 </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={effectiveProvider === 'paystack' ? 'default' : 'outline'}
+                  onClick={() => setProvider('paystack')}
+                  className="flex-1"
+                >
+                  Card / EFT
+                </Button>
               </div>
               {effectiveProvider === 'solana' && (
                 <p className="text-xs text-muted-foreground mb-3">{CRYPTO_ROUNDING_NOTICE}</p>

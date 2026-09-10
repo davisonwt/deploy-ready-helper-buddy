@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 
 export type GiftContextKind = 'live_session' | 'radio_session' | 'chat_tip';
-export type GiftProvider = 'solana' | 'paypal' | 'balance';
+export type GiftProvider = 'solana' | 'paypal' | 'balance' | 'paystack';
 
 export interface GiftBestowalInput {
   recipientId: string;

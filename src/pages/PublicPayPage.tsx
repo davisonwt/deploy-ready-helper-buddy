@@ -50,14 +50,20 @@ interface PaypalPayment {
   approveUrl: string | null;
 }
 
+interface PaystackPayment {
+  reference: string;
+  authorization_url: string | null;
+}
+
 const S2G_FEE_RATE = 0.15;
 
 export default function PublicPayPage() {
   const { publicToken } = useParams<{ publicToken: string }>();
   const [invoice, setInvoice] = useState<PublicInvoice | null | undefined>(undefined); // undefined = loading
-  const [starting, setStarting] = useState<'solana' | 'paypal' | null>(null);
+  const [starting, setStarting] = useState<'solana' | 'paypal' | 'paystack' | null>(null);
   const [payment, setPayment] = useState<SolanaPayment | null>(null);
   const [paypalPayment, setPaypalPayment] = useState<PaypalPayment | null>(null);
+  const [paystackPayment, setPaystackPayment] = useState<PaystackPayment | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -90,28 +96,45 @@ export default function PublicPayPage() {
     QRCode.toDataURL(payment.solanaPayUrl, { width: 240, margin: 1 }).then(setQrDataUrl).catch(() => setQrDataUrl(null));
   }, [payment]);
 
-  const startPayment = async (rail: 'solana' | 'paypal') => {
+  const startPayment = async (rail: 'solana' | 'paypal' | 'paystack') => {
     if (!invoice || !publicToken) return;
     setStarting(rail);
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/create-invoice-payment`, {
+      // Paystack has its own dedicated edge function (different settlement
+      // currency + local HMAC webhook verification vs PayPal's verify-API
+      // round trip) -- solana/paypal stay on create-invoice-payment's
+      // existing rail switch.
+      const functionName = rail === 'paystack' ? 'paystack-initialize' : 'create-invoice-payment';
+      const body = rail === 'paystack'
+        ? { invoiceId: invoice.id, publicToken, redirectBaseUrl: window.location.origin }
+        : { invoiceId: invoice.id, publicToken, rail, redirectBaseUrl: window.location.origin };
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
-        body: JSON.stringify({ invoiceId: invoice.id, publicToken, rail, redirectBaseUrl: window.location.origin }),
+        body: JSON.stringify(body),
       });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.message || body?.error || 'Could not start the payment');
+      const resBody = await res.json();
+      if (!res.ok) throw new Error(resBody?.message || resBody?.error || 'Could not start the payment');
       if (rail === 'solana') {
-        setPayment(body.solanaPayment);
+        setPayment(resBody.solanaPayment);
+      } else if (rail === 'paystack') {
+        // Paystack's hosted checkout does the rest -- the buyer comes back
+        // to /pay/paystack/return, which verifies and then this page's
+        // polling picks up the webhook's finalize.
+        if (resBody.paystackPayment?.authorization_url) {
+          window.location.href = resBody.paystackPayment.authorization_url;
+        } else {
+          setPaystackPayment(resBody.paystackPayment);
+        }
       } else {
         // PayPal's own hosted checkout does the rest -- the buyer comes
         // straight back to this same page (return_url = /pay/:publicToken)
         // once approved, and this page's polling picks up the webhook's
         // finalize.
-        if (body.paypalPayment?.approveUrl) {
-          window.location.href = body.paypalPayment.approveUrl;
+        if (resBody.paypalPayment?.approveUrl) {
+          window.location.href = resBody.paypalPayment.approveUrl;
         } else {
-          setPaypalPayment(body.paypalPayment);
+          setPaypalPayment(resBody.paypalPayment);
         }
       }
     } catch (e: any) {
@@ -177,7 +200,7 @@ export default function PublicPayPage() {
             <p className="text-sm text-muted-foreground">This invoice hasn't been sent yet.</p>
           )}
 
-          {invoice.status === 'sent' && !payment && !paypalPayment && (
+          {invoice.status === 'sent' && !payment && !paypalPayment && !paystackPayment && (
             <div className="space-y-2">
               <Button onClick={() => startPayment('solana')} disabled={starting !== null} className="w-full">
                 {starting === 'solana' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wallet className="mr-2 h-4 w-4" />}
@@ -187,6 +210,13 @@ export default function PublicPayPage() {
                 {starting === 'paypal' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Pay with PayPal
               </Button>
+              <Button onClick={() => startPayment('paystack')} disabled={starting !== null} variant="outline" className="w-full">
+                {starting === 'paystack' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Pay by Card / EFT
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Card and EFT payments are charged in ZAR at the live exchange rate; the processor's fee is added to your total.
+              </p>
             </div>
           )}
 
@@ -201,6 +231,12 @@ export default function PublicPayPage() {
           {invoice.status === 'sent' && paypalPayment && !paypalPayment.approveUrl && (
             <p className="text-sm text-muted-foreground text-center">
               Could not open PayPal's checkout. Please try again.
+            </p>
+          )}
+
+          {invoice.status === 'sent' && paystackPayment && !paystackPayment.authorization_url && (
+            <p className="text-sm text-muted-foreground text-center">
+              Could not open the card/EFT checkout. Please try again.
             </p>
           )}
         </CardContent>

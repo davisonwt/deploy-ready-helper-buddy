@@ -153,6 +153,7 @@ export const BooksPage = lazy(() => import('@/pages/BooksPage'));
 export const BooksCatalogItemPage = lazy(() => import('@/pages/BooksCatalogItemPage'));
 export const InvoiceViewPage = lazy(() => import('@/pages/InvoiceViewPage'));
 export const PublicPayPage = lazy(() => import('@/pages/PublicPayPage'));
+export const PaystackReturnPage = lazy(() => import('@/pages/PaystackReturnPage'));
 export const JobInvoicingDashboardPage = lazy(() => import('@/pages/JobInvoicingDashboardPage'));
 export const JobNoteFormPage = lazy(() => import('@/pages/JobNoteFormPage'));
 export const JobDetailPage = lazy(() => import('@/pages/JobDetailPage'));
