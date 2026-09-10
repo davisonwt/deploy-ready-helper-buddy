@@ -52,15 +52,25 @@ export function useLiveRoomMessages(roomId: string | null) {
     };
   }, [roomId]);
 
+  // Both send functions append the inserted row locally rather than
+  // relying solely on the realtime postgres_changes round-trip to reflect
+  // the sender's own message. That channel can silently miss or delay the
+  // sender's own insert (a briefly dropped/reconnecting WebSocket -- common
+  // right after a getUserMedia prompt on iOS Safari), which showed up as
+  // "Stop & send" completing with no error but the message never
+  // appearing. The INSERT handler above already dedupes by id, so this is
+  // safe regardless of which one arrives first.
   const sendText = useCallback(async (senderId: string, content: string) => {
     if (!roomId || !content.trim()) return;
-    const { error } = await supabase.from('live_room_messages' as any).insert({
+    const { data, error } = await supabase.from('live_room_messages' as any).insert({
       room_id: roomId,
       sender_id: senderId,
       message_type: 'text',
       content: content.trim(),
-    });
+    }).select().single();
     if (error) throw error;
+    const row = data as unknown as LiveRoomMessage;
+    setMessages(prev => (prev.some(m => m.id === row.id) ? prev : [...prev, row]));
   }, [roomId]);
 
   const sendMedia = useCallback(
@@ -72,15 +82,17 @@ export function useLiveRoomMessages(roomId: string | null) {
       duration: number,
     ) => {
       if (!roomId) return;
-      const { error } = await supabase.from('live_room_messages' as any).insert({
+      const { data, error } = await supabase.from('live_room_messages' as any).insert({
         room_id: roomId,
         sender_id: senderId,
         message_type: kind,
         media_url: mediaUrl,
         mime_type: mimeType,
         media_duration_seconds: Math.round(duration),
-      });
+      }).select().single();
       if (error) throw error;
+      const row = data as unknown as LiveRoomMessage;
+      setMessages(prev => (prev.some(m => m.id === row.id) ? prev : [...prev, row]));
     },
     [roomId],
   );

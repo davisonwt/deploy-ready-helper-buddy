@@ -25,6 +25,12 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [call, setCall] = useState<null | { audioOnly: boolean }>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
+  // handleRecord is one continuous async closure spanning the whole
+  // recording, so its own `elapsed` param is frozen at 0 (its value when
+  // the recording started) -- a ref tracks the live value so the final
+  // send has the real duration instead of always storing 0.
+  const elapsedRef = useRef(0);
+  useEffect(() => { elapsedRef.current = elapsed; }, [elapsed]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -92,7 +98,7 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
       // src/hooks/useMediaRecorder.ts's mimeType fallback chain).
       const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
       const { path, signedUrl } = await uploadLiveRoomMedia(roomId, blob, ext);
-      await sendMedia(user.id, k, path, blob.type, elapsed || 0);
+      await sendMedia(user.id, k, path, blob.type, elapsedRef.current);
       void signedUrl;
     } catch (e: any) {
       toast.error(e?.message || `Could not send ${k} clip`);
