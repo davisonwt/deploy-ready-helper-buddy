@@ -42,42 +42,50 @@ export interface DeviceAvailability {
  * join() SDK shape (JitsiCall.tsx, JitsiRoom.tsx) should call this first
  * and pass the result as startVideoOff/startAudioOff instead.
  *
- * Two-step check: enumerateDevices() alone can't be trusted -- it lists a
- * device's kind even when permission to actually use it is denied. A
- * short-lived getUserMedia probe (immediately stopped, Daily's own join
- * acquires the real stream) confirms access actually works. Any of the
- * errors a real join would hit (NotAllowedError, NotFoundError,
- * NotReadableError, OverconstrainedError) or anything unexpected fails
- * safe toward "no devices" -- viewer mode is always recoverable, a hung
- * join is not.
+ * Real production bug this fixes: the previous version enumerated
+ * devices, then made ONE COMBINED getUserMedia({video, audio}) probe and
+ * treated ANY failure of that combined request -- whatever the error --
+ * as "neither device exists." On iOS Safari a caller's mic worked fine
+ * on its own, but the combined video+audio request failed for an
+ * unrelated reason; the combined-failure branch silently reported
+ * hasMic:false too, so the caller joined with startAudioOff:true --
+ * visible, but never audible, to the callee.
+ *
+ * Fixed by probing each device SEPARATELY (never a combined constraints
+ * object), and only ever concluding "unavailable" on the two errors that
+ * actually mean that: NotFoundError (no such device) and NotAllowedError
+ * (permission denied). enumerateDevices() is no longer part of the
+ * decision at all -- on iOS Safari it reports devices with an empty
+ * deviceId/label before permission is granted, which is fine (this
+ * never read either field), but it's simpler and more robust to let a
+ * direct getUserMedia call be the single source of truth than to gate
+ * on a pre-check whose only signal (device .kind) getUserMedia's own
+ * result already implies. Any other error (OverconstrainedError,
+ * NotReadableError, a transient failure) is logged and treated as
+ * "probably fine" -- Daily's own join gets to try for real -- rather
+ * than silently muting a working device over it.
  */
-export async function checkDeviceAvailability(): Promise<DeviceAvailability> {
+async function probeDevice(constraints: MediaStreamConstraints): Promise<boolean> {
+  if (typeof navigator === 'undefined' || !navigator.mediaDevices) return false;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    stream.getTracks().forEach((t) => t.stop());
+    return true;
+  } catch (err: unknown) {
+    const name = (err as { name?: string } | undefined)?.name;
+    if (name === 'NotFoundError' || name === 'NotAllowedError') return false;
+    console.warn(`checkDeviceAvailability: unexpected getUserMedia(${JSON.stringify(constraints)}) error, assuming the device is usable`, err);
+    return true;
+  }
+}
+
+export async function checkDeviceAvailability(wantVideo = true): Promise<DeviceAvailability> {
   if (typeof navigator === 'undefined' || !navigator.mediaDevices) {
     return { hasCamera: false, hasMic: false };
   }
-
-  let hasCamera = false;
-  let hasMic = false;
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    hasCamera = devices.some((d) => d.kind === 'videoinput');
-    hasMic = devices.some((d) => d.kind === 'audioinput');
-  } catch {
-    return { hasCamera: false, hasMic: false };
-  }
-  if (!hasCamera && !hasMic) return { hasCamera: false, hasMic: false };
-
-  try {
-    const probe = await navigator.mediaDevices.getUserMedia({ video: hasCamera, audio: hasMic });
-    probe.getTracks().forEach((t) => t.stop());
-    return { hasCamera, hasMic };
-  } catch (err: unknown) {
-    const name = (err as { name?: string } | undefined)?.name;
-    if (name === 'NotAllowedError' || name === 'NotFoundError' || name === 'NotReadableError' || name === 'OverconstrainedError') {
-      return { hasCamera: false, hasMic: false };
-    }
-    return { hasCamera: false, hasMic: false };
-  }
+  const hasMic = await probeDevice({ audio: true });
+  const hasCamera = wantVideo ? await probeDevice({ video: true }) : false;
+  return { hasCamera, hasMic };
 }
 
 export const DAILY_JOIN_TIMEOUT_MS = 10_000;

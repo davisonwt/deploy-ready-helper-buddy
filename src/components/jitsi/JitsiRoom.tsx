@@ -43,6 +43,7 @@ export default function JitsiRoom({
   // but landing in different Daily rooms) is visible on screen instantly
   // instead of needing devtools on both phones.
   const [dailyRoomName, setDailyRoomName] = useState<string | null>(null);
+  const [deviceDecision, setDeviceDecision] = useState<{ mic: boolean; cam: boolean } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -60,9 +61,10 @@ export default function JitsiRoom({
         // camera/mic left Daily's own internal getUserMedia call to hang
         // mid-join with no way back. Knowing up front means we never ask
         // Daily to acquire a device that isn't there.
-        const { hasCamera, hasMic } = await checkDeviceAvailability();
+        const { hasCamera, hasMic } = await checkDeviceAvailability(!audioOnly);
         if (cancelled) return;
         if (!hasCamera && !hasMic) setViewerMode(true);
+        setDeviceDecision({ mic: hasMic, cam: hasCamera });
         // Keep the mute-toggle buttons honest: a viewer with no mic/camera
         // shows muted/off from the start rather than a toggle that would
         // silently do nothing when pressed.
@@ -220,6 +222,7 @@ export default function JitsiRoom({
       {!isLoading && dailyRoomName && (
         <div className="absolute bottom-24 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-[10px] font-mono text-white/80 backdrop-blur">
           Room: {dailyRoomName} · {participantCount} in call
+          {deviceDecision && ` · mic: ${deviceDecision.mic ? 'yes' : 'no'} · cam: ${deviceDecision.cam ? 'yes' : 'no'}`}
         </div>
       )}
 

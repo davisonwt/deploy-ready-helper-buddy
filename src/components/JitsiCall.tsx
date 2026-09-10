@@ -34,6 +34,7 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
   // instead of needing devtools on both phones.
   const [dailyRoomName, setDailyRoomName] = useState<string | null>(null);
   const [participantCount, setParticipantCount] = useState(1);
+  const [deviceDecision, setDeviceDecision] = useState<{ mic: boolean; cam: boolean } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,9 +48,10 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
         // camera/mic left Daily's own internal getUserMedia call to hang
         // mid-join with no way back. Knowing up front means we never ask
         // Daily to acquire a device that isn't there.
-        const { hasCamera, hasMic } = await checkDeviceAvailability();
+        const { hasCamera, hasMic } = await checkDeviceAvailability(!isAudioOnly);
         if (cancelled) return;
         if (!hasCamera && !hasMic) setViewerMode(true);
+        setDeviceDecision({ mic: hasMic, cam: hasCamera });
 
         const { room_url, token, room_name } = await fetchDailyMeetingToken({
           roomKind,
@@ -161,6 +163,7 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
       {!isLoading && dailyRoomName && (
         <div className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-[10px] font-mono text-white/80 backdrop-blur">
           Room: {dailyRoomName} · {participantCount} in call
+          {deviceDecision && ` · mic: ${deviceDecision.mic ? 'yes' : 'no'} · cam: ${deviceDecision.cam ? 'yes' : 'no'}`}
         </div>
       )}
       <div ref={containerRef} className="w-full h-full" />
