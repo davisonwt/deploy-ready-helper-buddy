@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand } from 'lucide-react';
-import { fetchDailyMeetingToken } from '@/lib/daily-config';
+import { checkDeviceAvailability, fetchDailyMeetingToken, withDailyJoinTimeout } from '@/lib/daily-config';
+import { NoDeviceBanner } from '@/components/media/NoDeviceBanner';
 
 // P1-6: was a JitsiMeetExternalAPI room against a public/self-hosted domain
 // with no JWT at all -- now a Daily.co call with a real per-user meeting
@@ -35,6 +36,7 @@ export default function JitsiRoom({
   const [isVideoMuted, setIsVideoMuted] = useState(audioOnly);
   const [participantCount, setParticipantCount] = useState(1);
   const [isHandRaised, setIsHandRaised] = useState(false);
+  const [viewerMode, setViewerMode] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,6 +49,19 @@ export default function JitsiRoom({
     const start = async () => {
       if (!callContainer.current) return;
       try {
+        // Checked before join, not reacted to after -- a PC with no
+        // camera/mic left Daily's own internal getUserMedia call to hang
+        // mid-join with no way back. Knowing up front means we never ask
+        // Daily to acquire a device that isn't there.
+        const { hasCamera, hasMic } = await checkDeviceAvailability();
+        if (cancelled) return;
+        if (!hasCamera && !hasMic) setViewerMode(true);
+        // Keep the mute-toggle buttons honest: a viewer with no mic/camera
+        // shows muted/off from the start rather than a toggle that would
+        // silently do nothing when pressed.
+        setIsAudioMuted(!hasMic);
+        setIsVideoMuted(audioOnly || !hasCamera);
+
         const { room_url, token } = await fetchDailyMeetingToken({ roomKind: 'custom', roomId: roomName, displayName });
         if (cancelled || !callContainer.current) return;
 
@@ -57,6 +72,12 @@ export default function JitsiRoom({
         });
         callRef.current = call;
 
+        // Remote participant video/audio (and any autoplay-blocked "tap
+        // to enable sound" prompt) is rendered and handled entirely
+        // inside this iframe by Daily's own prebuilt UI -- it's Daily's
+        // origin, not ours, so there's no element inside it our code can
+        // reach to call .play() on directly. Nothing extra to wire up
+        // here on the device-less side; Daily Prebuilt already does this.
         call.on('joined-meeting', () => {
           setIsLoading(false);
           toast({ title: 'Connected', description: 'You joined the live room' });
@@ -72,16 +93,25 @@ export default function JitsiRoom({
             toast({ title: `${ev.data.name || 'Someone'} raised a hand` });
           }
         });
+        call.on('camera-error', () => {
+          toast({ title: 'Camera/mic error', description: 'Could not access your camera or microphone.', variant: 'destructive' });
+        });
         call.on('error', (e: any) => {
           console.error('Error initializing Daily call:', e);
           toast({ title: 'Error', description: 'Failed to initialize video room', variant: 'destructive' });
           setIsLoading(false);
         });
 
-        await call.join({ url: room_url, token, userName: displayName, startVideoOff: audioOnly, startAudioOff: false });
-      } catch (error) {
+        await withDailyJoinTimeout(call.join({
+          url: room_url,
+          token,
+          userName: displayName,
+          startVideoOff: audioOnly || !hasCamera,
+          startAudioOff: !hasMic,
+        }));
+      } catch (error: any) {
         console.error('Error loading Daily call:', error);
-        toast({ title: 'Error', description: 'Failed to load the video room. Please check your connection.', variant: 'destructive' });
+        toast({ title: 'Error', description: error?.message || 'Failed to load the video room. Please check your connection.', variant: 'destructive' });
         setIsLoading(false);
       }
     };
@@ -137,6 +167,7 @@ export default function JitsiRoom({
 
   return (
     <div className="relative w-full h-screen bg-background">
+      {!isLoading && viewerMode && <NoDeviceBanner />}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
           <Card className="p-8 text-center">

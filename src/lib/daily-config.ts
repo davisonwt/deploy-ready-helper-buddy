@@ -28,6 +28,79 @@ export async function fetchDailyMeetingToken(input: {
   });
 }
 
+export interface DeviceAvailability {
+  hasCamera: boolean;
+  hasMic: boolean;
+}
+
+/**
+ * Checks for a usable camera/mic BEFORE calling Daily's `.join()`. A
+ * device-less machine (or one where permission is denied) left Daily's
+ * own internal getUserMedia call to hang or throw mid-join with no way
+ * back for the caller -- every join path that uses the createFrame()+
+ * join() SDK shape (JitsiCall.tsx, JitsiRoom.tsx) should call this first
+ * and pass the result as startVideoOff/startAudioOff instead.
+ *
+ * Two-step check: enumerateDevices() alone can't be trusted -- it lists a
+ * device's kind even when permission to actually use it is denied. A
+ * short-lived getUserMedia probe (immediately stopped, Daily's own join
+ * acquires the real stream) confirms access actually works. Any of the
+ * errors a real join would hit (NotAllowedError, NotFoundError,
+ * NotReadableError, OverconstrainedError) or anything unexpected fails
+ * safe toward "no devices" -- viewer mode is always recoverable, a hung
+ * join is not.
+ */
+export async function checkDeviceAvailability(): Promise<DeviceAvailability> {
+  if (typeof navigator === 'undefined' || !navigator.mediaDevices) {
+    return { hasCamera: false, hasMic: false };
+  }
+
+  let hasCamera = false;
+  let hasMic = false;
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    hasCamera = devices.some((d) => d.kind === 'videoinput');
+    hasMic = devices.some((d) => d.kind === 'audioinput');
+  } catch {
+    return { hasCamera: false, hasMic: false };
+  }
+  if (!hasCamera && !hasMic) return { hasCamera: false, hasMic: false };
+
+  try {
+    const probe = await navigator.mediaDevices.getUserMedia({ video: hasCamera, audio: hasMic });
+    probe.getTracks().forEach((t) => t.stop());
+    return { hasCamera, hasMic };
+  } catch (err: unknown) {
+    const name = (err as { name?: string } | undefined)?.name;
+    if (name === 'NotAllowedError' || name === 'NotFoundError' || name === 'NotReadableError' || name === 'OverconstrainedError') {
+      return { hasCamera: false, hasMic: false };
+    }
+    return { hasCamera: false, hasMic: false };
+  }
+}
+
+export const DAILY_JOIN_TIMEOUT_MS = 10_000;
+
+/**
+ * Races a Daily `.join()` call against a hard timeout so a join can never
+ * hang silently -- rejects with a plain, user-facing message if
+ * `joined-meeting` (or the join promise itself) hasn't resolved in time.
+ * The underlying join isn't cancelled (daily-js has no abort for it), but
+ * the caller can react to the rejection immediately -- tear the frame
+ * down and show a toast -- instead of leaving a spinner up forever.
+ */
+export function withDailyJoinTimeout<T>(promise: Promise<T>, ms: number = DAILY_JOIN_TIMEOUT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error("Call didn't connect in time. Please check your connection and try again."));
+    }, ms);
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (err) => { clearTimeout(timer); reject(err); },
+    );
+  });
+}
+
 /**
  * For the handful of call embeds that use a bare `<iframe src=...>` instead
  * of the daily-js SDK (no custom mute/leave controls of our own to wire up
