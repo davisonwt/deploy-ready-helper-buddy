@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCallManager } from '@/hooks/useCallManager';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -60,6 +63,8 @@ const stopGlobalRingtone = (): void => {
 
 export default function IncomingCallOverlay() {
   const { incomingCall, currentCall, outgoingCall, answerCall, declineCall, endCall } = useCallManager();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [hasAnswered, setHasAnswered] = useState(false);
   const [needsUnlock, setNeedsUnlock] = useState(false);
   
@@ -237,6 +242,33 @@ export default function IncomingCallOverlay() {
         setTimeout(() => {
           setHasAnswered(true);
         }, 200);
+
+        // The only thing that actually renders <JitsiCall> is
+        // ChatRoom.tsx's own inline block -- this overlay is global (any
+        // page), so answering while that specific chat room isn't the
+        // page currently open left currentCall.status flip to 'accepted'
+        // with nothing on screen to show it, and the callee had to find
+        // and open the right chat room manually to see the call at all.
+        // room_id rides along on the primary broadcast payload (see
+        // startCall in useCallManager.jsx); the DB-insert/poll fallback
+        // paths don't carry it (call_sessions has no room_id column), so
+        // fall back to resolving the caller's direct room the same way
+        // every other "message this person" entry point in the app does.
+        let targetRoomId = incomingCall.room_id || null;
+        if (!targetRoomId && user?.id && incomingCall.caller_id) {
+          try {
+            const { data, error } = await supabase.rpc('get_or_create_direct_room', {
+              user1_id: user.id,
+              user2_id: incomingCall.caller_id,
+            });
+            if (!error && data) targetRoomId = data;
+          } catch (e) {
+            console.warn('📞 [OVERLAY] Could not resolve direct room to navigate to:', e);
+          }
+        }
+        if (targetRoomId) {
+          navigate(`/chatapp?room=${targetRoomId}`);
+        }
       } catch (error) {
         console.error('📞 [OVERLAY] Error answering call:', error);
         // If answer fails, don't set hasAnswered so user can try again

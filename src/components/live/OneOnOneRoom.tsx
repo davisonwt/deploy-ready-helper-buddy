@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Mic, Video as VideoIcon, Send, Phone, ChevronLeft } from 'lucide-react';
+import { Mic, Video as VideoIcon, Send, Phone, ChevronLeft, PhoneOff } from 'lucide-react';
 import { useLiveRoomMessages } from '@/hooks/useLiveRoomMessages';
 import { useMediaRecorder } from '@/hooks/useMediaRecorder';
 import { RecordingBanner } from '@/components/media/RecordingBanner';
@@ -12,6 +13,7 @@ import { CallErrorBoundary } from '@/components/media/CallErrorBoundary';
 import { uploadLiveRoomMedia } from '@/lib/liveRoom/uploadMedia';
 import JitsiRoom from '@/components/jitsi/JitsiRoom';
 import { PresenceAura, classifyAura } from './PresenceAura';
+import { startSimpleRingtone } from '@/lib/ringtone';
 
 const VOICE_MAX_SECONDS = 60;
 const VIDEO_MAX_SECONDS = 30;
@@ -25,6 +27,17 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
   const [text, setText] = useState('');
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [call, setCall] = useState<null | { audioOnly: boolean }>(null);
+  // Neither the Voice/Video call buttons nor the Daily room itself ever
+  // signalled the other participant before -- clicking either just set
+  // local `call` state, so the other side only ever joined the SAME
+  // deterministic s2g-1v1-<roomId> Daily room if they happened to also
+  // click their own call button, with no ring and no guarantee they'd do
+  // it around the same time. This broadcasts the invite on a channel both
+  // sides subscribe to while the room is open, and the callee gets a real
+  // ring + Answer/Decline instead of needing to notice and click on their own.
+  const [incomingCallInvite, setIncomingCallInvite] = useState<null | { from: string; audioOnly: boolean }>(null);
+  const callChannelRef = useRef<RealtimeChannel | null>(null);
+  const ringRef = useRef<{ stop: () => void } | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   // handleRecord is one continuous async closure spanning the whole
   // recording, so its own `elapsed` param is frozen at 0 (its value when
@@ -59,6 +72,61 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
     return () => { cancelled = true; };
   }, [roomId, user?.id, user?.email, user?.user_metadata]);
 
+  // Call-invite signaling: both participants subscribe to the same
+  // broadcast channel while the room is open. Whoever clicks Voice/Video
+  // call sends 'call-invite'; the other side rings and can Answer/Decline
+  // instead of needing to separately notice and click their own call
+  // button (which is what silently put them in different Daily rooms --
+  // there was never anything guaranteeing they'd do it together).
+  useEffect(() => {
+    if (!roomId || !user?.id) return;
+    const channel = supabase
+      .channel(`live-room-call-${roomId}`)
+      .on('broadcast', { event: 'call-invite' }, (payload) => {
+        const from = payload.payload?.from;
+        const audioOnly = !!payload.payload?.audioOnly;
+        if (!from || from === user.id) return;
+        setIncomingCallInvite({ from, audioOnly });
+        ringRef.current?.stop();
+        ringRef.current = startSimpleRingtone();
+      })
+      .on('broadcast', { event: 'call-cancel' }, (payload) => {
+        const from = payload.payload?.from;
+        if (!from || from === user.id) return;
+        setIncomingCallInvite(null);
+        ringRef.current?.stop();
+        ringRef.current = null;
+      })
+      .subscribe();
+    callChannelRef.current = channel;
+    return () => {
+      ringRef.current?.stop();
+      ringRef.current = null;
+      supabase.removeChannel(channel);
+      callChannelRef.current = null;
+    };
+  }, [roomId, user?.id]);
+
+  const sendCallInvite = (audioOnly: boolean) => {
+    callChannelRef.current?.send({ type: 'broadcast', event: 'call-invite', payload: { from: user?.id, audioOnly } });
+    setCall({ audioOnly });
+  };
+
+  const answerCallInvite = () => {
+    if (!incomingCallInvite) return;
+    ringRef.current?.stop();
+    ringRef.current = null;
+    setCall({ audioOnly: incomingCallInvite.audioOnly });
+    setIncomingCallInvite(null);
+  };
+
+  const declineCallInvite = () => {
+    if (!incomingCallInvite) return;
+    ringRef.current?.stop();
+    ringRef.current = null;
+    callChannelRef.current?.send({ type: 'broadcast', event: 'call-cancel', payload: { from: user?.id } });
+    setIncomingCallInvite(null);
+  };
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
 
@@ -180,16 +248,32 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <Button size="icon" onClick={() => setCall({ audioOnly: true })} aria-label="Voice call"
+            <Button size="icon" onClick={() => sendCallInvite(true)} aria-label="Voice call"
               className="bg-transparent border border-[#1FB6A8]/40 text-[#EAF4F2] hover:bg-[#1FB6A8]/10 hover:text-[#EAF4F2]">
               <Phone className="h-4 w-4" />
             </Button>
-            <Button size="icon" onClick={() => setCall({ audioOnly: false })} aria-label="Video call"
+            <Button size="icon" onClick={() => sendCallInvite(false)} aria-label="Video call"
               className="bg-transparent border border-[#1FB6A8]/40 text-[#EAF4F2] hover:bg-[#1FB6A8]/10 hover:text-[#EAF4F2]">
               <VideoIcon className="h-4 w-4" />
             </Button>
           </div>
         </header>
+
+        {incomingCallInvite && (
+          <div className="border-b border-[#1FB6A8]/30 bg-[#1FB6A8]/10 px-4 py-2.5 flex items-center justify-between gap-3">
+            <span className="text-sm text-[#1FB6A8]">
+              {otherName} is calling — {incomingCallInvite.audioOnly ? 'Voice' : 'Video'}
+            </span>
+            <div className="flex gap-2 shrink-0">
+              <Button size="sm" variant="ghost" onClick={declineCallInvite} className="text-[#7E9498] hover:text-[#FF8A5B] hover:bg-transparent">
+                <PhoneOff className="h-4 w-4" /> Decline
+              </Button>
+              <Button size="sm" onClick={answerCallInvite} className="bg-[#1FB6A8]/20 hover:bg-[#1FB6A8]/30 text-[#1FB6A8] border border-[#1FB6A8]/40">
+                <Phone className="h-4 w-4 mr-1" /> Answer
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto px-2 sm:px-4 py-6 space-y-3">
           {messages.length === 0 && (
