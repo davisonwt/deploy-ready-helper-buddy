@@ -27,6 +27,7 @@ import { useCallManager } from '@/hooks/useCallManager';
 import { subscribeRoomRealtime } from '@/lib/chat/roomRealtime';
 import { JitsiCall } from '@/components/JitsiCall';
 import { CallErrorBoundary } from '@/components/media/CallErrorBoundary';
+import { DockedCallPane } from '@/components/media/DockedCallPane';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -666,8 +667,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
             {rail}
           </div>
         )}
-      {/* Header */}
-      <div className="border-b border-[#4FA876]/15 bg-[#0E1B15]/95 backdrop-blur px-6 py-4">
+      {/* Header -- sticky so Voice/Video call buttons stay reachable while
+          the message list scrolls underneath it. */}
+      <div className="sticky top-0 z-20 border-b border-[#4FA876]/15 bg-[#0E1B15]/95 backdrop-blur px-6 py-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <Button
@@ -771,7 +773,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
             
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
+              aria-label="Start video call"
               onClick={async () => {
                 console.log('📞 [ChatRoom] Phone button clicked');
                 console.log('📞 [ChatRoom] Current user:', user?.id);
@@ -904,12 +907,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
         />
       )}
 
-      {/* Video call - Show when call is accepted */}
+      {/* Video call - docked pane, doesn't take over the screen -- messages
+          and the input footer below stay usable for the whole call. */}
       {currentCall && currentCall.status === 'accepted' && (
-        <div className="p-4 border-b">
-          <p className="mb-2 text-sm font-medium">
-            {currentCall.caller_id === user?.id ? currentCall.receiver_name : currentCall.caller_name}
-          </p>
+        <DockedCallPane>
           <CallErrorBoundary
             onBack={() => {
               if (currentCall?.id) {
@@ -920,6 +921,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
             <JitsiCall
               roomName={currentCall.id}
               roomKind="call_session"
+              fullHeight
               onLeave={() => {
                 if (currentCall?.id) {
                   endCall(currentCall.id, 'ended');
@@ -927,7 +929,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
               }}
             />
           </CallErrorBoundary>
-        </div>
+        </DockedCallPane>
       )}
 
       {/* Messages Area */}

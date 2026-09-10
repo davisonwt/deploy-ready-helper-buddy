@@ -10,6 +10,7 @@ import { useLiveRoomMessages } from '@/hooks/useLiveRoomMessages';
 import { useMediaRecorder } from '@/hooks/useMediaRecorder';
 import { RecordingBanner } from '@/components/media/RecordingBanner';
 import { CallErrorBoundary } from '@/components/media/CallErrorBoundary';
+import { DockedCallPane } from '@/components/media/DockedCallPane';
 import { uploadLiveRoomMedia } from '@/lib/liveRoom/uploadMedia';
 import JitsiRoom from '@/components/jitsi/JitsiRoom';
 import { PresenceAura, classifyAura } from './PresenceAura';
@@ -197,23 +198,12 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
     );
   };
 
-  if (call) {
-    return (
-      <CallErrorBoundary onBack={() => setCall(null)}>
-        <JitsiRoom
-          roomName={`s2g-1v1-${roomId}`}
-          displayName={myName}
-          audioOnly={call.audioOnly}
-          onLeave={() => setCall(null)}
-        />
-      </CallErrorBoundary>
-    );
-  }
-
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-[#0B1420] text-[#EAF4F2]">
-      <div className="mx-auto w-full max-w-[640px] flex-1 flex flex-col">
-        <header className="flex items-center gap-2 sm:gap-3 border-b border-[#1FB6A8]/10 px-2 sm:px-4 py-3">
+      <div className="mx-auto w-full max-w-[640px] flex-1 flex flex-col min-h-0">
+        {/* Sticky so Voice/Video call buttons stay reachable while the
+            message list scrolls underneath. */}
+        <header className="sticky top-0 z-20 flex items-center gap-2 sm:gap-3 border-b border-[#1FB6A8]/10 bg-[#0B1420] px-2 sm:px-4 py-3">
           <Button
             size="icon"
             variant="ghost"
@@ -248,16 +238,34 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <Button size="icon" onClick={() => sendCallInvite(true)} aria-label="Voice call"
+            <Button size="icon" disabled={!!call} onClick={() => sendCallInvite(true)} aria-label="Voice call"
               className="bg-transparent border border-[#1FB6A8]/40 text-[#EAF4F2] hover:bg-[#1FB6A8]/10 hover:text-[#EAF4F2]">
               <Phone className="h-4 w-4" />
             </Button>
-            <Button size="icon" onClick={() => sendCallInvite(false)} aria-label="Video call"
+            <Button size="icon" disabled={!!call} onClick={() => sendCallInvite(false)} aria-label="Video call"
               className="bg-transparent border border-[#1FB6A8]/40 text-[#EAF4F2] hover:bg-[#1FB6A8]/10 hover:text-[#EAF4F2]">
               <VideoIcon className="h-4 w-4" />
             </Button>
           </div>
         </header>
+
+        {/* Docked call pane -- doesn't take over the screen. Messages,
+            the text input, and voice/video note buttons below stay
+            usable for the whole call; tap the corner button to expand
+            to fullscreen and back. */}
+        {call && (
+          <DockedCallPane>
+            <CallErrorBoundary onBack={() => setCall(null)}>
+              <JitsiRoom
+                roomName={`s2g-1v1-${roomId}`}
+                displayName={myName}
+                audioOnly={call.audioOnly}
+                fullscreen={false}
+                onLeave={() => setCall(null)}
+              />
+            </CallErrorBoundary>
+          </DockedCallPane>
+        )}
 
         {incomingCallInvite && (
           <div className="border-b border-[#1FB6A8]/30 bg-[#1FB6A8]/10 px-4 py-2.5 flex items-center justify-between gap-3">
