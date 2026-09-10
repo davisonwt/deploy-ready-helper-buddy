@@ -11,6 +11,13 @@ import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
  */
 export type DailyRoomKind = 'call_session' | 'chat_room' | 'custom';
 
+/** "custom-s2g-1v1-65790ecf-1234-..." -> "custom-…a2cf" for the on-screen
+ * room status line -- enough to eyeball a match between two screens
+ * without the full id eating the line. */
+export function shortenDailyRoomName(name: string): string {
+  return name.length > 12 ? `${name.slice(0, 7)}…${name.slice(-4)}` : name;
+}
+
 export interface DailyMeetingToken {
   room_url: string;
   token: string;

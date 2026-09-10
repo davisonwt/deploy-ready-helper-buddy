@@ -3,8 +3,8 @@ import DailyIframe, { type DailyCall } from '@daily-co/daily-js';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand } from 'lucide-react';
-import { checkDeviceAvailability, fetchDailyMeetingToken, startDailyJoinWatchdog, teardownDailyCall } from '@/lib/daily-config';
+import { Mic, MicOff, Video, VideoOff, Phone, Hand } from 'lucide-react';
+import { checkDeviceAvailability, fetchDailyMeetingToken, shortenDailyRoomName, startDailyJoinWatchdog, teardownDailyCall } from '@/lib/daily-config';
 import { NoDeviceBanner } from '@/components/media/NoDeviceBanner';
 
 // P1-6: was a JitsiMeetExternalAPI room against a public/self-hosted domain
@@ -212,53 +212,49 @@ export default function JitsiRoom({
   };
 
   return (
-    <div className={`relative w-full bg-background ${fullscreen ? 'h-screen' : 'h-full'}`}>
-      {!isLoading && viewerMode && <NoDeviceBanner />}
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
-          <Card className="p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-lg">Connecting to {roomName}...</p>
-          </Card>
-        </div>
-      )}
+    <div className={`flex flex-col w-full bg-background ${fullscreen ? 'h-screen' : 'h-full'}`}>
+      <div className="relative flex-1 min-h-0">
+        {!isLoading && viewerMode && <NoDeviceBanner />}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
+            <Card className="p-8 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-lg">Connecting to {roomName}...</p>
+            </Card>
+          </div>
+        )}
+        <div ref={callContainer} className="w-full h-full" />
+      </div>
 
-      <div ref={callContainer} className="w-full h-full" />
-
-      {!isLoading && dailyRoomName && (
-        <div className="absolute bottom-24 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-[10px] font-mono text-white/80 backdrop-blur">
-          Room: {dailyRoomName} · {participantCount} in call
-          {deviceDecision && ` · mic: ${deviceDecision.mic ? 'yes' : 'no'} · cam: ${deviceDecision.cam ? 'yes' : 'no'}`}
-        </div>
-      )}
-
-      {/* Custom Control Bar */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-        <Card className="p-4 shadow-lg">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 bg-background/50 rounded-md">
-              <Users className="h-4 w-4" />
-              <span className="text-sm font-medium">{participantCount}</span>
+      {/* Below the video, never overlaid on it -- an overlaid control bar
+          and room line previously covered the remote participant's face. */}
+      {!isLoading && (
+        <div className="shrink-0 border-t border-border bg-background px-3 py-2 flex flex-col items-center gap-2">
+          {dailyRoomName && (
+            <div className="text-[10px] font-mono text-muted-foreground">
+              {shortenDailyRoomName(dailyRoomName)} · {participantCount} in call
+              {deviceDecision && ` · mic ${deviceDecision.mic ? 'yes' : 'no'} · cam ${deviceDecision.cam ? 'yes' : 'no'}`}
             </div>
-
-            <Button variant={isAudioMuted ? 'destructive' : 'secondary'} size="icon" onClick={toggleAudio} className="rounded-full h-12 w-12">
-              {isAudioMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+          )}
+          <div className="flex items-center gap-3">
+            <Button variant={isAudioMuted ? 'destructive' : 'secondary'} size="icon" onClick={toggleAudio} className="rounded-full h-10 w-10">
+              {isAudioMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             </Button>
 
-            <Button variant={isVideoMuted ? 'destructive' : 'secondary'} size="icon" onClick={toggleVideo} className="rounded-full h-12 w-12">
-              {isVideoMuted ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
+            <Button variant={isVideoMuted ? 'destructive' : 'secondary'} size="icon" onClick={toggleVideo} className="rounded-full h-10 w-10">
+              {isVideoMuted ? <VideoOff className="h-4 w-4" /> : <Video className="h-4 w-4" />}
             </Button>
 
-            <Button variant={isHandRaised ? 'default' : 'outline'} size="icon" onClick={toggleRaiseHand} className="rounded-full h-12 w-12">
-              <Hand className="h-5 w-5" />
+            <Button variant={isHandRaised ? 'default' : 'outline'} size="icon" onClick={toggleRaiseHand} className="rounded-full h-10 w-10">
+              <Hand className="h-4 w-4" />
             </Button>
 
-            <Button variant="destructive" size="icon" onClick={handleLeave} className="rounded-full h-12 w-12 ml-2">
-              <Phone className="h-5 w-5 rotate-135" />
+            <Button variant="destructive" size="icon" onClick={handleLeave} className="rounded-full h-10 w-10">
+              <Phone className="h-4 w-4 rotate-135" />
             </Button>
           </div>
-        </Card>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

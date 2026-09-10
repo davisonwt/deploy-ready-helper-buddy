@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import DailyIframe, { type DailyCall } from '@daily-co/daily-js';
-import { checkDeviceAvailability, fetchDailyMeetingToken, startDailyJoinWatchdog, teardownDailyCall, type DailyRoomKind } from '@/lib/daily-config';
+import { checkDeviceAvailability, fetchDailyMeetingToken, shortenDailyRoomName, startDailyJoinWatchdog, teardownDailyCall, type DailyRoomKind } from '@/lib/daily-config';
 import { NoDeviceBanner } from '@/components/media/NoDeviceBanner';
 import { useToast } from '@/hooks/use-toast';
 
@@ -159,20 +159,25 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
   }, []);
 
   return (
-    <div className={`w-full rounded-lg overflow-hidden border border-border relative ${fullHeight ? 'h-full' : 'h-[600px]'}`}>
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
-      )}
-      {!isLoading && viewerMode && <NoDeviceBanner />}
+    <div className={`flex flex-col w-full rounded-lg overflow-hidden border border-border ${fullHeight ? 'h-full' : 'h-[600px]'}`}>
+      <div className="relative flex-1 min-h-0">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          </div>
+        )}
+        {!isLoading && viewerMode && <NoDeviceBanner />}
+        <div ref={containerRef} className="w-full h-full" />
+      </div>
+
+      {/* Below the video, never overlaid on it -- an overlaid room line
+          previously covered the remote participant's face. */}
       {!isLoading && dailyRoomName && (
-        <div className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-[10px] font-mono text-white/80 backdrop-blur">
-          Room: {dailyRoomName} · {participantCount} in call
-          {deviceDecision && ` · mic: ${deviceDecision.mic ? 'yes' : 'no'} · cam: ${deviceDecision.cam ? 'yes' : 'no'}`}
+        <div className="shrink-0 border-t border-border bg-background px-3 py-1.5 text-center text-[10px] font-mono text-muted-foreground">
+          {shortenDailyRoomName(dailyRoomName)} · {participantCount} in call
+          {deviceDecision && ` · mic ${deviceDecision.mic ? 'yes' : 'no'} · cam ${deviceDecision.cam ? 'yes' : 'no'}`}
         </div>
       )}
-      <div ref={containerRef} className="w-full h-full" />
     </div>
   );
 }
