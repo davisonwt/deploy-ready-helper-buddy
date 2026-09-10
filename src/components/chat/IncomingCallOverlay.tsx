@@ -442,11 +442,22 @@ export default function IncomingCallOverlay() {
         </div>
 
         {needsUnlock && (
-          <div className="text-center space-y-2">
-            <div className="text-xs text-gray-500">Tap to enable ringtone</div>
+          // Silent audio previously showed only a small gray "Tap to
+          // enable ringtone" line easy to miss on a glanced-at phone --
+          // this is the case where the overlay is the ONLY signal the
+          // member has that a call exists at all, so it has to be
+          // unmissable: full-width, bright, animated.
+          <div
+            className="w-full animate-pulse rounded-xl border-2 border-amber-400 bg-amber-400/20 px-3 py-2.5 text-center space-y-2"
+            role="alert"
+          >
+            <div className="text-sm font-bold text-amber-700 dark:text-amber-300">
+              🔇 Sound is blocked — tap below to hear the ringtone
+            </div>
             <Button
               variant="secondary"
               size="sm"
+              className="w-full bg-amber-500 text-black hover:bg-amber-400 font-bold"
               onClick={(e) => {
                 e.stopPropagation();
                 audioCtxRef.current?.resume?.()
