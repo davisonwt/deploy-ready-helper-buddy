@@ -917,7 +917,16 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
             autoPlay
             className="h-24 w-32 rounded-md bg-black object-cover"
           />
-          <span className="text-sm text-[#FF8A5B] tabular-nums">● Recording video — {recorder.elapsed}s</span>
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="text-sm text-[#FF8A5B] tabular-nums">● Recording video — {recorder.elapsed}s</span>
+            {/* On-device diagnostics -- there's no attached console on a
+                phone, so this is the only way to see why a recording came
+                back empty. Tiny and unobtrusive by design. */}
+            <span className="text-[10px] leading-tight text-[#8AA99A]/70 font-mono">
+              {recorder.mimeType ?? 'mimeType: n/a'} · video tracks: {recorder.stream?.getVideoTracks().length ?? 0}
+              {recorder.error ? ` · error: ${recorder.error}` : ''}
+            </span>
+          </div>
         </div>
       )}
 

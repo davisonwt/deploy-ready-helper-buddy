@@ -24,6 +24,11 @@ export function useMediaRecorder() {
   const [kind, setKind] = useState<RecorderKind | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  // The actual mimeType MediaRecorder was constructed with, and any
+  // recorder-level error it reports -- exposed so a caller can show
+  // on-screen diagnostics (there's no devtools console on a phone).
+  const [mimeType, setMimeType] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
@@ -74,12 +79,24 @@ export function useMediaRecorder() {
     setKind(k);
     setElapsed(0);
     setStream(mediaStream);
+    setMimeType(mime);
+    setError(null);
     setRecording(true);
 
     return new Promise<Blob | null>(resolve => {
       resolveRef.current = resolve;
       rec.ondataavailable = e => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      rec.onerror = (ev) => {
+        // Surface it (for on-screen diagnostics) and stop cleanly -- without
+        // this, an internal encoding error leaves the recorder never firing
+        // onstop, so the caller's awaited Promise would hang forever.
+        const message = (ev as unknown as { error?: DOMException })?.error?.message
+          || (ev as unknown as { error?: DOMException })?.error?.name
+          || 'Unknown recorder error';
+        setError(message);
+        if (rec.state === 'recording') rec.stop();
       };
       rec.onstop = () => {
         const blob = chunksRef.current.length
@@ -115,5 +132,5 @@ export function useMediaRecorder() {
     }
   }, []);
 
-  return { recording, kind, elapsed, stream, start, stop, cancel };
+  return { recording, kind, elapsed, stream, mimeType, error, start, stop, cancel };
 }
