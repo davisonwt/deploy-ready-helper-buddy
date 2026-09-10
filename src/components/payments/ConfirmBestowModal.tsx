@@ -3,6 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Heart } from 'lucide-react';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { CRYPTO_ROUNDING_NOTICE, computeBuyerFeeExact, type PayoutProviderId } from '@/lib/payments/providerFees';
+
+/** Short "via X" name for the confirm button -- distinct from PAYOUT_PROVIDERS' longer picker labels. */
+const PROVIDER_SHORT_NAME: Record<PayoutProviderId, string> = {
+  solana: 'USDC',
+  paypal: 'PayPal',
+  paystack: 'Card / EFT',
+  balance: 'S2G Balance',
+};
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { useBalanceProvider } from '@/hooks/useBalanceProvider';
 
@@ -105,7 +113,7 @@ export function ConfirmBestowModal({
             ) : (
               <Heart className="w-4 h-4 mr-2" />
             )}
-            {confirming ? 'Processing...' : `${actionLabel} $${charge.total.toFixed(2)}`}
+            {confirming ? 'Processing...' : `${actionLabel} $${charge.total.toFixed(2)} via ${PROVIDER_SHORT_NAME[effectiveProvider]}`}
           </Button>
         </div>
       </DialogContent>
