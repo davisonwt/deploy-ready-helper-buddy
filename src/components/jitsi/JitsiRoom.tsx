@@ -38,6 +38,11 @@ export default function JitsiRoom({
   const [participantCount, setParticipantCount] = useState(1);
   const [isHandRaised, setIsHandRaised] = useState(false);
   const [viewerMode, setViewerMode] = useState(false);
+  // Debug/verification aid: "Room: <daily room name> · <n> in call" so a
+  // room-mismatch bug (two people joining what should be the same call
+  // but landing in different Daily rooms) is visible on screen instantly
+  // instead of needing devtools on both phones.
+  const [dailyRoomName, setDailyRoomName] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,8 +69,9 @@ export default function JitsiRoom({
         setIsAudioMuted(!hasMic);
         setIsVideoMuted(audioOnly || !hasCamera);
 
-        const { room_url, token } = await fetchDailyMeetingToken({ roomKind: 'custom', roomId: roomName, displayName });
+        const { room_url, token, room_name } = await fetchDailyMeetingToken({ roomKind: 'custom', roomId: roomName, displayName });
         if (cancelled || !callContainer.current) return;
+        setDailyRoomName(room_name);
 
         const call = DailyIframe.createFrame(callContainer.current, {
           iframeStyle: { width: '100%', height: '100%', border: '0' },
@@ -210,6 +216,12 @@ export default function JitsiRoom({
       )}
 
       <div ref={callContainer} className="w-full h-full" />
+
+      {!isLoading && dailyRoomName && (
+        <div className="absolute bottom-24 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-[10px] font-mono text-white/80 backdrop-blur">
+          Room: {dailyRoomName} · {participantCount} in call
+        </div>
+      )}
 
       {/* Custom Control Bar */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">

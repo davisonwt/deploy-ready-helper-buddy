@@ -28,6 +28,12 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
   const joinedRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [viewerMode, setViewerMode] = useState(false);
+  // Debug/verification aid: "Room: <daily room name> · <n> in call" so a
+  // room-mismatch bug (two people joining what should be the same call
+  // but landing in different Daily rooms) is visible on screen instantly
+  // instead of needing devtools on both phones.
+  const [dailyRoomName, setDailyRoomName] = useState<string | null>(null);
+  const [participantCount, setParticipantCount] = useState(1);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -45,12 +51,13 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
         if (cancelled) return;
         if (!hasCamera && !hasMic) setViewerMode(true);
 
-        const { room_url, token } = await fetchDailyMeetingToken({
+        const { room_url, token, room_name } = await fetchDailyMeetingToken({
           roomKind,
           roomId: roomName,
           displayName: userInfo?.displayName,
         });
         if (cancelled || !containerRef.current) return;
+        setDailyRoomName(room_name);
 
         const call = DailyIframe.createFrame(containerRef.current, {
           iframeStyle: { width: '100%', height: '100%', minHeight: '600px', border: 'none' },
@@ -58,6 +65,8 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
           showFullscreenButton: false,
         });
         callRef.current = call;
+
+        const updateParticipantCount = () => setParticipantCount(Object.keys(call.participants()).length);
 
         // Watchdog is independent of call.join()'s own promise -- with
         // the room's prejoin UI on, that promise doesn't resolve until a
@@ -85,7 +94,10 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
           joinedRef.current = true;
           watchdog?.clear();
           setIsLoading(false);
+          updateParticipantCount();
         });
+        call.on('participant-joined', updateParticipantCount);
+        call.on('participant-left', updateParticipantCount);
         call.on('left-meeting', () => onLeave());
         call.on('camera-error', () => {
           toast({ title: 'Camera/mic error', description: 'Could not access your camera or microphone.', variant: 'destructive' });
@@ -146,6 +158,11 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
         </div>
       )}
       {!isLoading && viewerMode && <NoDeviceBanner />}
+      {!isLoading && dailyRoomName && (
+        <div className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-[10px] font-mono text-white/80 backdrop-blur">
+          Room: {dailyRoomName} · {participantCount} in call
+        </div>
+      )}
       <div ref={containerRef} className="w-full h-full" />
     </div>
   );
