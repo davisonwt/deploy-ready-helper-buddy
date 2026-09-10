@@ -8,6 +8,25 @@ import { Loader2, Send, X, TreePine } from "lucide-react";
 // the bottom-left there so it never hides a rail button (Share, Go Live, etc.)
 const LEFT_SIDE_ROUTES = ["/dashboard", "/orchard-alive", "/tribal-hearts", "/products/basket"];
 
+// Routes that render a bottom message-input footer (ChatRoom, via ChatApp/
+// SessionPage/PremiumRoomViewPage) or a Daily call (OneOnOneRoom via
+// LiveRoomsPage, CallPage) -- the bubble's fixed bottom-right position and
+// z-[60] previously sat directly on top of the Send button, mic/camera
+// toggles, and Daily's own call controls on narrow (iPhone) widths, since
+// those controls are ALSO bottom-anchored and some (RecordingBanner's
+// full-screen capture UI) use the same z-[60]. Hiding outright here is more
+// reliable than computing a per-screen bottom offset that would need to
+// track several different footer heights (ChatRoom's, OneOnOneRoom's,
+// Daily's own iframe-internal control bar we don't control the layout of).
+const CHAT_OR_CALL_ROUTES = [
+  "/chatapp",
+  "/call/",
+  "/live-rooms",
+  "/classroom",
+  "/skilldrop",
+  "/premium-room",
+];
+
 interface Msg {
   role: "user" | "assistant";
   content: string;
@@ -24,12 +43,13 @@ export default function GroundskeeperWidget() {
   const sideClass = LEFT_SIDE_ROUTES.some((p) => location.pathname.startsWith(p))
     ? "left-5 right-auto"
     : "right-5 left-auto";
+  const hideForChatOrCall = CHAT_OR_CALL_ROUTES.some((p) => location.pathname.startsWith(p));
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages, open]);
 
-  if (!user) return null;
+  if (!user || hideForChatOrCall) return null;
 
   const send = async () => {
     const text = input.trim();
