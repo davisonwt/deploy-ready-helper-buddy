@@ -20,9 +20,15 @@ interface JitsiCallProps {
   onLeave: () => void;
   userInfo?: { displayName: string; email: string };
   isAudioOnly?: boolean;
+  /** When true, fills its parent's height (h-full) instead of the
+   * default fixed h-[600px] box -- for docking inside a resizable pane
+   * whose own wrapper controls the actual size. Defaults to false so
+   * every existing caller (ChatApp's demo button, CallPage.tsx) is
+   * unaffected. */
+  fullHeight?: boolean;
 }
 
-export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, isAudioOnly }: JitsiCallProps) {
+export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, isAudioOnly, fullHeight = false }: JitsiCallProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const callRef = useRef<DailyCall | null>(null);
   const joinedRef = useRef(false);
@@ -153,7 +159,7 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
   }, []);
 
   return (
-    <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border relative">
+    <div className={`w-full rounded-lg overflow-hidden border border-border relative ${fullHeight ? 'h-full' : 'h-[600px]'}`}>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />

@@ -21,6 +21,11 @@ interface JitsiRoomProps {
   onLeave?: () => void;
   isModerator?: boolean;
   audioOnly?: boolean;
+  /** When false, fills its parent's height (h-full) instead of the
+   * viewport (h-screen) -- for docking inside a resizable pane rather
+   * than taking over the whole screen. Defaults to true so every
+   * existing caller (radio's LiveVideoCallInterface) is unaffected. */
+  fullscreen?: boolean;
 }
 
 export default function JitsiRoom({
@@ -28,6 +33,7 @@ export default function JitsiRoom({
   displayName = 'Guest',
   onLeave,
   audioOnly = false,
+  fullscreen = true,
 }: JitsiRoomProps) {
   const callContainer = useRef<HTMLDivElement>(null);
   const callRef = useRef<DailyCall | null>(null);
@@ -206,7 +212,7 @@ export default function JitsiRoom({
   };
 
   return (
-    <div className="relative w-full h-screen bg-background">
+    <div className={`relative w-full bg-background ${fullscreen ? 'h-screen' : 'h-full'}`}>
       {!isLoading && viewerMode && <NoDeviceBanner />}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
