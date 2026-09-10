@@ -142,6 +142,17 @@ async function getOrCreateDailyRoom(apiKey: string, roomName: string): Promise<s
   });
   if (getRes.ok) {
     const room = await getRes.json();
+    // Rooms created before enable_prejoin_ui was part of the create call
+    // below (e.g. the s2g-1v1-* rooms already in use) still show Daily's
+    // own "Are you ready to join?" screen. That's not a hang -- confirmed
+    // 2026-09-10 via a real device test, see SESSION-STATE.md -- but a
+    // client-side join watchdog can't tell a real person sitting on that
+    // screen apart from a genuine stuck join, and previously tore the
+    // frame down mid-tap. Patch existing rooms here instead of a one-off
+    // backfill script, so every room gets it the next time anyone joins.
+    if (room?.config?.enable_prejoin_ui !== false) {
+      await patchDailyRoomPrejoinOff(apiKey, roomName);
+    }
     return room.url;
   }
   if (getRes.status !== 404) {
@@ -159,6 +170,7 @@ async function getOrCreateDailyRoom(apiKey: string, roomName: string): Promise<s
       properties: {
         enable_chat: false,
         enable_screenshare: true,
+        enable_prejoin_ui: false, // skip Daily's own "Are you ready to join?" tap -- see comment above
         exp: Math.floor(Date.now() / 1000) + ROOM_TTL_SECONDS,
         eject_at_room_exp: true,
       },
@@ -171,6 +183,21 @@ async function getOrCreateDailyRoom(apiKey: string, roomName: string): Promise<s
   }
   const room = await createRes.json();
   return room.url;
+}
+
+async function patchDailyRoomPrejoinOff(apiKey: string, roomName: string): Promise<void> {
+  const res = await fetch(`${DAILY_API}/rooms/${encodeURIComponent(roomName)}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ properties: { enable_prejoin_ui: false } }),
+  });
+  if (!res.ok) {
+    // Non-fatal -- the room still works, it'll just show the prejoin
+    // screen again this one time. Logged so it's visible without
+    // blocking the join over a cosmetic setting.
+    const detail = await res.text();
+    console.error("create-daily-meeting-token: prejoin patch failed", roomName, res.status, detail);
+  }
 }
 
 function json(b: unknown, status = 200) {

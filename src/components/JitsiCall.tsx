@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import DailyIframe, { type DailyCall } from '@daily-co/daily-js';
-import { checkDeviceAvailability, fetchDailyMeetingToken, withDailyJoinTimeout, type DailyRoomKind } from '@/lib/daily-config';
+import { checkDeviceAvailability, fetchDailyMeetingToken, startDailyJoinWatchdog, teardownDailyCall, type DailyRoomKind } from '@/lib/daily-config';
 import { NoDeviceBanner } from '@/components/media/NoDeviceBanner';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,12 +25,14 @@ interface JitsiCallProps {
 export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, isAudioOnly }: JitsiCallProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const callRef = useRef<DailyCall | null>(null);
+  const joinedRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [viewerMode, setViewerMode] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     let cancelled = false;
+    let watchdog: ReturnType<typeof startDailyJoinWatchdog> | null = null;
 
     const start = async () => {
       if (!containerRef.current) return;
@@ -57,6 +59,22 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
         });
         callRef.current = call;
 
+        // Watchdog is independent of call.join()'s own promise -- with
+        // the room's prejoin UI on, that promise doesn't resolve until a
+        // human taps Daily's own "Join" button, which can be minutes
+        // later; racing it made a real, slow-but-legitimate join
+        // indistinguishable from a genuine hang and tore the frame down
+        // out from under a call that had just gone live. The watchdog
+        // only acts if 'joined-meeting' hasn't fired first.
+        watchdog = startDailyJoinWatchdog(() => {
+          if (joinedRef.current || cancelled) return;
+          toast({ title: 'Call failed', description: "Call didn't connect in time. Please check your connection and try again.", variant: 'destructive' });
+          setIsLoading(false);
+          const stale = callRef.current;
+          callRef.current = null;
+          teardownDailyCall(stale);
+        });
+
         // Remote participant video/audio (and any autoplay-blocked "tap
         // to enable sound" prompt) is rendered and handled entirely
         // inside this iframe by Daily's own prebuilt UI -- it's Daily's
@@ -64,6 +82,8 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
         // reach to call .play() on directly. Nothing extra to wire up
         // here on the device-less side; Daily Prebuilt already does this.
         call.on('joined-meeting', () => {
+          joinedRef.current = true;
+          watchdog?.clear();
           setIsLoading(false);
         });
         call.on('left-meeting', () => onLeave());
@@ -76,14 +96,17 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
           setIsLoading(false);
         });
 
-        await withDailyJoinTimeout(call.join({
+        await call.join({
           url: room_url,
           token,
           userName: userInfo?.displayName,
           startVideoOff: isAudioOnly || !hasCamera,
           startAudioOff: !hasMic,
-        }));
+        });
+        watchdog?.clear();
       } catch (error: any) {
+        watchdog?.clear();
+        if (joinedRef.current) return; // joined for real despite the rejection -- nothing to tear down or report
         console.error('Failed to start Daily call', error);
         toast({ title: 'Call failed', description: error?.message || 'Could not start the call.', variant: 'destructive' });
         setIsLoading(false);
@@ -94,12 +117,10 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
 
     return () => {
       cancelled = true;
-      if (callRef.current) {
-        const call = callRef.current;
-        callRef.current = null;
-        call.leave().catch(() => {});
-        call.destroy().catch(() => {});
-      }
+      watchdog?.clear();
+      const call = callRef.current;
+      callRef.current = null;
+      teardownDailyCall(call);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomName, roomKind, isAudioOnly]);

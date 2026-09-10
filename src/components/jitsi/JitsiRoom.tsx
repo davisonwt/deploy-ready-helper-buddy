@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand } from 'lucide-react';
-import { checkDeviceAvailability, fetchDailyMeetingToken, withDailyJoinTimeout } from '@/lib/daily-config';
+import { checkDeviceAvailability, fetchDailyMeetingToken, startDailyJoinWatchdog, teardownDailyCall } from '@/lib/daily-config';
 import { NoDeviceBanner } from '@/components/media/NoDeviceBanner';
 
 // P1-6: was a JitsiMeetExternalAPI room against a public/self-hosted domain
@@ -31,6 +31,7 @@ export default function JitsiRoom({
 }: JitsiRoomProps) {
   const callContainer = useRef<HTMLDivElement>(null);
   const callRef = useRef<DailyCall | null>(null);
+  const joinedRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(audioOnly);
@@ -41,6 +42,7 @@ export default function JitsiRoom({
 
   useEffect(() => {
     let cancelled = false;
+    let watchdog: ReturnType<typeof startDailyJoinWatchdog> | null = null;
 
     const updateParticipantCount = (call: DailyCall) => {
       setParticipantCount(Object.keys(call.participants()).length);
@@ -72,6 +74,22 @@ export default function JitsiRoom({
         });
         callRef.current = call;
 
+        // Watchdog is independent of call.join()'s own promise -- with
+        // the room's prejoin UI on, that promise doesn't resolve until a
+        // human taps Daily's own "Join" button, which can be minutes
+        // later; racing it made a real, slow-but-legitimate join
+        // indistinguishable from a genuine hang and tore the frame down
+        // out from under a call that had just gone live. The watchdog
+        // only acts if 'joined-meeting' hasn't fired first.
+        watchdog = startDailyJoinWatchdog(() => {
+          if (joinedRef.current || cancelled) return;
+          toast({ title: 'Error', description: "Call didn't connect in time. Please check your connection and try again.", variant: 'destructive' });
+          setIsLoading(false);
+          const stale = callRef.current;
+          callRef.current = null;
+          teardownDailyCall(stale);
+        });
+
         // Remote participant video/audio (and any autoplay-blocked "tap
         // to enable sound" prompt) is rendered and handled entirely
         // inside this iframe by Daily's own prebuilt UI -- it's Daily's
@@ -79,6 +97,8 @@ export default function JitsiRoom({
         // reach to call .play() on directly. Nothing extra to wire up
         // here on the device-less side; Daily Prebuilt already does this.
         call.on('joined-meeting', () => {
+          joinedRef.current = true;
+          watchdog?.clear();
           setIsLoading(false);
           toast({ title: 'Connected', description: 'You joined the live room' });
         });
@@ -102,14 +122,17 @@ export default function JitsiRoom({
           setIsLoading(false);
         });
 
-        await withDailyJoinTimeout(call.join({
+        await call.join({
           url: room_url,
           token,
           userName: displayName,
           startVideoOff: audioOnly || !hasCamera,
           startAudioOff: !hasMic,
-        }));
+        });
+        watchdog?.clear();
       } catch (error: any) {
+        watchdog?.clear();
+        if (joinedRef.current) return; // joined for real despite the rejection -- nothing to tear down or report
         console.error('Error loading Daily call:', error);
         toast({ title: 'Error', description: error?.message || 'Failed to load the video room. Please check your connection.', variant: 'destructive' });
         setIsLoading(false);
@@ -120,22 +143,17 @@ export default function JitsiRoom({
 
     return () => {
       cancelled = true;
-      if (callRef.current) {
-        const call = callRef.current;
-        callRef.current = null;
-        call.leave().catch(() => {});
-        call.destroy().catch(() => {});
-      }
+      watchdog?.clear();
+      const call = callRef.current;
+      callRef.current = null;
+      teardownDailyCall(call);
     };
   }, [roomName, displayName, audioOnly, toast]);
 
   const handleLeave = () => {
-    if (callRef.current) {
-      const call = callRef.current;
-      callRef.current = null;
-      call.leave().catch(() => {});
-      call.destroy().catch(() => {});
-    }
+    const call = callRef.current;
+    callRef.current = null;
+    teardownDailyCall(call);
     onLeave?.();
   };
 

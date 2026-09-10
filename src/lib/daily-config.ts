@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { DailyCall } from '@daily-co/daily-js';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 
 /**
@@ -81,24 +82,39 @@ export async function checkDeviceAvailability(): Promise<DeviceAvailability> {
 
 export const DAILY_JOIN_TIMEOUT_MS = 10_000;
 
+export interface DailyJoinWatchdog {
+  clear: () => void;
+}
+
 /**
- * Races a Daily `.join()` call against a hard timeout so a join can never
- * hang silently -- rejects with a plain, user-facing message if
- * `joined-meeting` (or the join promise itself) hasn't resolved in time.
- * The underlying join isn't cancelled (daily-js has no abort for it), but
- * the caller can react to the rejection immediately -- tear the frame
- * down and show a toast -- instead of leaving a spinner up forever.
+ * Starts a join watchdog: fires `onTimeout` once after `ms` unless
+ * `clear()` is called first -- call `clear()` from the 'joined-meeting'
+ * handler the instant it fires. Deliberately NOT a Promise.race against
+ * call.join() (an earlier version did this): with a room's prejoin UI on
+ * ("Are you ready to join?"), join()'s own promise doesn't resolve until
+ * a human taps its button, which can be minutes after our 10s budget --
+ * racing the promise made a real, slow-but-legitimate join look
+ * indistinguishable from a genuine hang. An independent, explicitly
+ * cleared timer can tell them apart.
  */
-export function withDailyJoinTimeout<T>(promise: Promise<T>, ms: number = DAILY_JOIN_TIMEOUT_MS): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error("Call didn't connect in time. Please check your connection and try again."));
-    }, ms);
-    promise.then(
-      (value) => { clearTimeout(timer); resolve(value); },
-      (err) => { clearTimeout(timer); reject(err); },
-    );
-  });
+export function startDailyJoinWatchdog(onTimeout: () => void, ms: number = DAILY_JOIN_TIMEOUT_MS): DailyJoinWatchdog {
+  const timer = setTimeout(onTimeout, ms);
+  return { clear: () => clearTimeout(timer) };
+}
+
+/**
+ * Idempotent, crash-proof teardown for a Daily call object -- safe to
+ * call more than once (a `null` call is a no-op) and safe to call after
+ * Daily has already torn its own iframe down internally. That last case
+ * is a real crash seen in production: destroy() ends up calling
+ * postMessage on a contentWindow that's already gone, and that throws
+ * SYNCHRONOUSLY, not as a rejected promise -- `.catch()` chained onto the
+ * call alone does not protect against it, hence the try/catch here too.
+ */
+export function teardownDailyCall(call: DailyCall | null): void {
+  if (!call) return;
+  try { call.leave()?.catch?.(() => {}); } catch { /* frame already torn down */ }
+  try { call.destroy()?.catch?.(() => {}); } catch { /* frame already torn down */ }
 }
 
 /**
