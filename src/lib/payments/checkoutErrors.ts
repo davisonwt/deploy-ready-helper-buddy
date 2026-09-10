@@ -4,6 +4,7 @@
 // nothing, and every other existing code path already does this).
 export const CHECKOUT_ERROR_COPY: Record<string, string> = {
   sower_settlement_consent_pending: "This sower hasn't finished setting up payouts yet — try again soon.",
+  cannot_gift_self: "You can't bestow to your own account.",
 };
 
 export function checkoutErrorMessage(err: unknown): string {

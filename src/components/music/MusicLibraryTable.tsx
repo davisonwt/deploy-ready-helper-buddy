@@ -357,7 +357,7 @@ export function MusicLibraryTable({
     setConfirmAction({ track, kind: 'gift' });
   };
 
-  const confirmActionWithProvider = async (provider: 'solana' | 'paypal') => {
+  const confirmActionWithProvider = async (provider: 'solana' | 'paypal' | 'paystack') => {
     if (!confirmAction) return;
     const { track, kind } = confirmAction;
     setLocalProcessing(true);
@@ -470,6 +470,10 @@ export function MusicLibraryTable({
           confirming={localProcessing}
           actionLabel={confirmAction.kind === 'gift' ? 'Gift' : 'Bestow'}
           onConfirm={confirmActionWithProvider}
+          // Only the 'gift' branch routes through create-gift-bestowal-order
+          // (the only function with a paystack branch) -- 'bestow' calls
+          // purchaseTrack, which doesn't accept "paystack" yet.
+          enablePaystack={confirmAction.kind === 'gift'}
         />
       )}
 

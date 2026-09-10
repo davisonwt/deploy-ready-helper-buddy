@@ -1353,6 +1353,11 @@ export default function TribalAliveFeedPage() {
           confirming={bestowing}
           onConfirm={confirmBestowWithProvider}
           blockedMessage={sellerBlockedMessage}
+          // Only the radio_recorded branch of confirmBestowWithProvider routes
+          // through create-gift-bestowal-order (the only function with a
+          // paystack branch) -- the music branches call purchaseTrack /
+          // create-basket-bestowal-order, which don't accept "paystack" yet.
+          enablePaystack={confirmBestow.kind === 'radio_recorded'}
         />
       )}
 

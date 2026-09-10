@@ -27,6 +27,14 @@ interface ConfirmBestowModalProps {
   actionLabel?: string;
   /** Set after a create-*-order call returns sower_settlement_consent_pending -- disables the pay button and shows why, until the caller resets it (e.g. on retry or closing the modal). */
   blockedMessage?: string | null;
+  /**
+   * Offer Card/EFT (Paystack) alongside Solana/PayPal. Off by default --
+   * only create-gift-bestowal-order has a paystack branch today, so a
+   * caller must opt in per-confirmation (e.g. only when the pending action
+   * is actually a gift, not a product/content purchase whose backend
+   * function doesn't accept "paystack" as a provider yet).
+   */
+  enablePaystack?: boolean;
 }
 
 /**
@@ -44,11 +52,15 @@ export function ConfirmBestowModal({
   confirming = false,
   actionLabel = 'Bestow',
   blockedMessage = null,
+  enablePaystack = false,
 }: ConfirmBestowModalProps) {
   // Base -> +15% S2G (shared rule) -> + the selected provider's exact
   // processor fee (client mirror of the server's computeBuyerFee).
   const pricing = priceBreakdown(amount);
-  const { provider, setProvider, providers, balanceShortBy } = useBalanceProvider(pricing.total);
+  const { provider, setProvider, providers, balanceShortBy } = useBalanceProvider(
+    pricing.total,
+    enablePaystack ? ['solana', 'paypal', 'paystack'] : ['solana', 'paypal'],
+  );
   const effectiveProvider = provider;
   const charge = computeBuyerFeeExact(effectiveProvider, pricing.total);
 

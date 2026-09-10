@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
+import { checkoutErrorMessage } from '@/lib/payments/checkoutErrors';
 
 export type GiftContextKind = 'live_session' | 'radio_session' | 'chat_tip';
 export type GiftProvider = 'solana' | 'paypal' | 'balance' | 'paystack';
@@ -64,9 +65,14 @@ export function useGiftBestowal() {
       }
 
       if ((data as { error?: string }).error) {
-        const msg = (data as { error: string; message?: string }).message
-          ?? (data as { error: string }).error;
-        if ((data as { error: string }).error === 'insufficient_balance') {
+        const code = (data as { error: string }).error;
+        const serverMessage = (data as { message?: string }).message;
+        // A server-supplied `message` is already human-friendly (e.g.
+        // no_payout_method's explanation) -- keep it verbatim. A bare code
+        // like "cannot_gift_self" gets humanized via the shared
+        // CHECKOUT_ERROR_COPY map (falls back to the raw code if unmapped).
+        const msg = serverMessage ?? checkoutErrorMessage(new Error(code));
+        if (code === 'insufficient_balance') {
           toast({ title: 'S2G Balance is short', description: 'Top up to pay this way.', variant: 'destructive' });
         } else {
           toast({ title: 'Bestowal failed', description: msg, variant: 'destructive' });
