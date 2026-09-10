@@ -133,14 +133,27 @@ export function teardownDailyCall(call: DailyCall | null): void {
   try { call.destroy()?.catch?.(() => {}); } catch { /* frame already torn down */ }
 }
 
+export type CallEventType =
+  | 'invite_sent'    // caller broadcasts/DB-inserts the call invite
+  | 'invite_seen'    // callee's client actually processes it (handleIncomingCall)
+  | 'answered_sent'  // callee's answer DB update + broadcast back to the caller
+  | 'answered_seen'  // caller's client actually processes it (handleCallAnswered)
+  | 'daily_joined'   // this client's own 'joined-meeting' fired for the Daily room
+  | 'leave';         // this client's own 'left-meeting' fired
+
 /**
- * One row per join/leave in public.call_events -- "who was in which room
- * when," queryable/exportable-as-CSV from Supabase directly (Daily's own
- * Meetings API has the same data per-room, see
- * scripts/studio/daily-sessions.md, but only reachable via a manual curl).
+ * One row per call-signaling hop in public.call_events -- "who was in
+ * which room when, and which hops actually happened," queryable/
+ * exportable-as-CSV from Supabase directly (Daily's own Meetings API has
+ * join/leave for a room, see scripts/studio/daily-sessions.md, but
+ * nothing for the invite/answer signaling that happens before a room is
+ * even joined, and it's only reachable via a manual curl). `roomName` is
+ * the Daily room name for 'daily_joined'/'leave'; for the earlier
+ * signaling hops (before a Daily room is resolved) it's the
+ * call_sessions id, which still keys all of one call's hops together.
  * Fire-and-forget: a logging failure must never block or fail a call.
  */
-export async function logCallEvent(roomName: string, eventType: 'join' | 'leave'): Promise<void> {
+export async function logCallEvent(roomName: string, eventType: CallEventType): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;

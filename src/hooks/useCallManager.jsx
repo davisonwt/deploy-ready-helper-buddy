@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { stopAllRingtones } from '@/lib/ringtone';
+import { logCallEvent } from '@/lib/daily-config';
 import { CALL_CONSTANTS, isCallStale, isDuplicateCall } from './callUtils';
 import { CallManagerContext } from '@/contexts/CallManagerContext';
 
@@ -20,6 +21,12 @@ export const useCallManagerInternal = () => {
   const [outgoingCall, setOutgoingCall] = useState(null);
   const [callHistory, setCallHistory] = useState([]);
   const [callQueue, setCallQueue] = useState([]);
+  // 'connecting' until the first subscribe callback fires, then 'ws' while
+  // the realtime channel is healthy or 'polling' once it's errored/timed
+  // out/closed -- exposed so the call UI can show a live "signal: ws ok /
+  // polling" indicator instead of silently depending on whichever path
+  // happens to be working.
+  const [signalStatus, setSignalStatus] = useState('connecting');
   
   // Refs
   const channelRef = useRef(null);
@@ -101,6 +108,7 @@ export const useCallManagerInternal = () => {
       timestamp: Date.now()
     };
 
+    void logCallEvent(incomingCallData.id, 'invite_seen');
     console.log('📞 [CALL] 🚨🚨🚨 SETTING INCOMING CALL STATE:', incomingCallData);
     console.log('📞 [CALL] Call data details:', {
       id: incomingCallData.id,
@@ -142,6 +150,7 @@ export const useCallManagerInternal = () => {
     console.log('📞 [CALL] 🚨🚨🚨 CALL ANSWERED - Updating caller state:', callData);
     console.log('📞 [CALL] Previous outgoingCall:', outgoingCallRef.current?.id);
     console.log('📞 [CALL] Previous currentCall:', currentCallRef.current?.id);
+    if (callData?.id) void logCallEvent(callData.id, 'answered_seen');
     
     // CRITICAL: Clear timeout so it doesn't fire after call is answered
     if (timeoutIdRef.current) {
@@ -486,32 +495,48 @@ export const useCallManagerInternal = () => {
         }
       })
       .subscribe((status) => {
-        console.log('📞 [CALL] 🔌 Channel subscription status:', status, 'userId:', userId);
+        // Explicit, greppable tag -- this is the one line that tells us
+        // whether iOS Safari's realtime WebSocket ever actually came up.
+        console.log('📡 [CALL][SIGNAL] Channel subscription status:', status, 'userId:', userId);
         if (status === 'SUBSCRIBED') {
           console.log('📞 [CALL] ✅ Successfully subscribed to call channel for user:', userId);
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('📞 [CALL] ❌ Channel subscription error for user:', userId);
-          // Retry channel setup after a delay (only if channel still exists and user still exists)
-          setTimeout(() => {
-            if (channelRef.current && hasUser && userId) {
-              console.log('📞 [CALL] Retrying channel subscription after error');
-              try {
-                // removeChannel fully purges the channel from Supabase's registry;
-                // plain .unsubscribe() leaves the name registered, causing
-                // "cannot add postgres_changes callbacks after subscribe()" on retry.
-                supabase.removeChannel(channelRef.current);
-              } catch (e) {
-                console.warn('📞 [CALL] Error removing failed channel:', e);
-              }
-              channelRef.current = null;
-              // Small delay before retry to avoid rapid retries
-              setTimeout(() => {
-                if (!channelRef.current && hasUser && userId) {
-                  setupCallChannel();
+          setSignalStatus('ws');
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          // TIMED_OUT/CLOSED were previously not handled at all -- only
+          // CHANNEL_ERROR triggered a retry, so a channel that timed out
+          // or was closed (e.g. iOS Safari suspending the socket in the
+          // background) just sat dead with no reconnect attempt. The
+          // polling fallbacks below cover delivery either way now, but
+          // still worth actually reconnecting the socket.
+          console.error('📡 [CALL][SIGNAL] ❌ Channel unhealthy:', status, 'userId:', userId, '-- falling back to polling and attempting reconnect');
+          setSignalStatus('polling');
+          // Stale JWT is a real cause of CHANNEL_ERROR (realtime auth uses
+          // the client's current access token) -- refresh it before
+          // reconnecting rather than retrying with the same token.
+          supabase.auth.refreshSession().catch((e) => {
+            console.warn('📡 [CALL][SIGNAL] Session refresh before reconnect failed (continuing anyway):', e);
+          }).finally(() => {
+            setTimeout(() => {
+              if (channelRef.current && hasUser && userId) {
+                console.log('📞 [CALL] Retrying channel subscription after', status);
+                try {
+                  // removeChannel fully purges the channel from Supabase's registry;
+                  // plain .unsubscribe() leaves the name registered, causing
+                  // "cannot add postgres_changes callbacks after subscribe()" on retry.
+                  supabase.removeChannel(channelRef.current);
+                } catch (e) {
+                  console.warn('📞 [CALL] Error removing failed channel:', e);
                 }
-              }, 1000);
-            }
-          }, 5000); // Wait 5 seconds before retry
+                channelRef.current = null;
+                // Small delay before retry to avoid rapid retries
+                setTimeout(() => {
+                  if (!channelRef.current && hasUser && userId) {
+                    setupCallChannel();
+                  }
+                }, 1000);
+              }
+            }, 2000); // shorter than the old 5s -- polling is now covering delivery, this is just trying to restore the socket sooner
+          });
         }
       });
 
@@ -689,6 +714,7 @@ export const useCallManagerInternal = () => {
       };
 
       await sendOnce('initial');
+      void logCallEvent(callData.id, 'invite_sent');
       // Fire two quick retries to mitigate race conditions
       setTimeout(() => sendOnce('retry1'), 1500);
       setTimeout(() => {
@@ -813,6 +839,7 @@ export const useCallManagerInternal = () => {
         payload: callData
       });
       console.log('📞 [CALL] Answer notification sent to caller, ack:', sendAck, 'callData:', callData);
+      void logCallEvent(callId, 'answered_sent');
       if (sendAck !== 'ok') {
         console.warn('⚠️ [CALL] Caller notification not acknowledged:', sendAck);
       }
@@ -1089,7 +1116,15 @@ export const useCallManagerInternal = () => {
     return () => clearInterval(cleanupInterval);
   }, [hasUser, userId]);
 
-  // CRITICAL FIX: Poll aggressively for incoming calls - ALWAYS poll when no incoming call
+  // CRITICAL FIX: Poll aggressively for incoming calls - ALWAYS poll when no incoming call,
+  // regardless of realtime channel health (this runs independently of
+  // signalStatus by design -- it's the fallback for when the socket isn't
+  // delivering). Also fires immediately on visibilitychange: iOS Safari
+  // suspends both timers and the realtime WebSocket while the tab is
+  // backgrounded/the screen is locked, so a call that came in during that
+  // window would otherwise sit undetected until the next scheduled tick
+  // (itself delayed by the same suspension) instead of the instant the
+  // user actually looks at the phone again.
   useEffect(() => {
     if (!hasUser || !userId) {
       return;
@@ -1100,9 +1135,9 @@ export const useCallManagerInternal = () => {
     }
 
     console.log('📞 [CALL][POLL] Starting poll for incoming calls, userId:', userId);
-    
+
     let pollCount = 0;
-    const poll = setInterval(async () => {
+    const checkIncoming = async () => {
       try {
         pollCount++;
         // Poll for calls from last 60 seconds (increased window)
@@ -1124,7 +1159,7 @@ export const useCallManagerInternal = () => {
         if (data && data.length > 0) {
           const call = data[0];
           const currentIncomingId = incomingCallRef.current?.id;
-          
+
           if (!currentIncomingId || currentIncomingId !== call.id) {
             // Fetch caller name for the call
             const { data: callerProfile } = await supabase
@@ -1132,16 +1167,16 @@ export const useCallManagerInternal = () => {
               .select('user_id, display_name, first_name, last_name')
               .eq('user_id', call.caller_id)
               .single();
-            
-            const callerName = callerProfile?.display_name || 
+
+            const callerName = callerProfile?.display_name ||
                              `${callerProfile?.first_name || ''} ${callerProfile?.last_name || ''}`.trim() ||
                              'Unknown';
-            
+
             console.log('📞 [CALL] Incoming call detected:', {
               call_id: call.id,
               caller_name: callerName
             });
-            
+
             handleIncomingCall({
               id: call.id,
               caller_id: call.caller_id,
@@ -1153,13 +1188,13 @@ export const useCallManagerInternal = () => {
               timestamp: new Date(call.created_at).getTime()
             });
           } else {
-            // Only log occasionally when call is already in state (every 5th poll = 10 seconds)
+            // Only log occasionally when call is already in state (every 5th poll = 15 seconds)
             if (pollCount % 5 === 0 && process.env.NODE_ENV === 'development') {
               console.log('📞 [CALL][POLL] Call already in incomingCall state, skipping');
             }
           }
         } else {
-          // Only log every 10 seconds (every 5th poll since we poll every 2 seconds) to reduce console spam
+          // Only log occasionally to reduce console spam
           if (pollCount % 5 === 0 && process.env.NODE_ENV === 'development') {
             console.log('📞 [CALL][POLL] Polling active, no ringing calls found for user:', userId);
           }
@@ -1168,13 +1203,23 @@ export const useCallManagerInternal = () => {
       } catch (e) {
         console.error('⚠️ [CALL] Poll error:', e);
       }
-    }, 2000); // Poll every 2 seconds (reduced frequency)
+    };
+
+    const poll = setInterval(checkIncoming, 3000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('📞 [CALL][POLL] Tab visible again -- checking for a missed incoming call immediately');
+        checkIncoming();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
 
     return () => {
       if (process.env.NODE_ENV === 'development') {
         console.log('📞 [CALL] Stopping poll');
       }
       clearInterval(poll);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [hasUser, userId, incomingCall, currentCall, handleIncomingCall]);
 
@@ -1195,7 +1240,7 @@ export const useCallManagerInternal = () => {
     if (!outgoingCall || currentCall) return;
 
     const outgoingId = outgoingCall.id;
-    const poll = setInterval(async () => {
+    const checkOutgoing = async () => {
       try {
         const { data, error } = await supabase
           .from('call_sessions')
@@ -1231,9 +1276,21 @@ export const useCallManagerInternal = () => {
       } catch (e) {
         console.error('⚠️ [CALL] Outgoing-call poll error:', e);
       }
-    }, 2000);
+    };
 
-    return () => clearInterval(poll);
+    const poll = setInterval(checkOutgoing, 3000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('📞 [CALL][POLL] Tab visible again -- checking outgoing call status immediately');
+        checkOutgoing();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(poll);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [hasUser, userId, outgoingCall, currentCall, handleCallAnswered, handleCallDeclined, handleCallEnded]);
 
   // ============================================
@@ -1248,6 +1305,7 @@ export const useCallManagerInternal = () => {
       outgoingCall: null,
       callHistory: [],
       callQueue: [],
+      signalStatus: 'connecting',
       startCall: () => Promise.resolve(null),
       answerCall: () => Promise.resolve(),
       declineCall: () => Promise.resolve(),
@@ -1263,13 +1321,14 @@ export const useCallManagerInternal = () => {
     outgoingCall,
     callHistory,
     callQueue,
-    
+    signalStatus,
+
     // Call actions
     startCall,
     answerCall,
     declineCall,
     endCall,
-    
+
     // Utility
     loadCallHistory
   };
@@ -1281,6 +1340,7 @@ const CALL_MANAGER_FALLBACK = {
   outgoingCall: null,
   callHistory: [],
   callQueue: [],
+  signalStatus: 'connecting',
   startCall: () => Promise.resolve(null),
   answerCall: () => Promise.resolve(),
   declineCall: () => Promise.resolve(),

@@ -115,7 +115,7 @@ export default function JitsiRoom({
           watchdog?.clear();
           setIsLoading(false);
           toast({ title: 'Connected', description: 'You joined the live room' });
-          void logCallEvent(room_name, 'join');
+          void logCallEvent(room_name, 'daily_joined');
         });
         call.on('left-meeting', () => {
           if (joinedRef.current) void logCallEvent(room_name, 'leave');

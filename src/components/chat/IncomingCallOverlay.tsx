@@ -62,7 +62,7 @@ const stopGlobalRingtone = (): void => {
 /* ------------------------------------------------ */
 
 export default function IncomingCallOverlay() {
-  const { incomingCall, currentCall, outgoingCall, answerCall, declineCall, endCall } = useCallManager();
+  const { incomingCall, currentCall, outgoingCall, answerCall, declineCall, endCall, signalStatus } = useCallManager();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [hasAnswered, setHasAnswered] = useState(false);
@@ -426,8 +426,19 @@ export default function IncomingCallOverlay() {
         </div>
         
         {/* DEBUG: Show call ID for troubleshooting */}
-        <div className="text-xs text-gray-400 mb-2">
+        <div className="text-xs text-gray-400 mb-1">
           Call ID: {callToShow.id?.substring(0, 8)}...
+        </div>
+        {/* signal: whether the realtime channel is actually up, or we're
+            relying on the 3s poll fallback -- exactly what this overlay
+            can't otherwise show when "nothing happens" on one side. */}
+        <div className="text-xs mb-2 flex items-center justify-center gap-1">
+          <span
+            className={cn('inline-block h-1.5 w-1.5 rounded-full', signalStatus === 'ws' ? 'bg-green-500' : signalStatus === 'polling' ? 'bg-amber-500' : 'bg-gray-400')}
+          />
+          <span className="text-gray-400">
+            signal: {signalStatus === 'ws' ? 'ws ok' : signalStatus === 'polling' ? 'polling' : 'connecting'}
+          </span>
         </div>
 
         {needsUnlock && (

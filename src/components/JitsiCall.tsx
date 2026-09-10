@@ -103,7 +103,7 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
           watchdog?.clear();
           setIsLoading(false);
           updateParticipantCount();
-          void logCallEvent(room_name, 'join');
+          void logCallEvent(room_name, 'daily_joined');
         });
         call.on('participant-joined', updateParticipantCount);
         call.on('participant-left', updateParticipantCount);
