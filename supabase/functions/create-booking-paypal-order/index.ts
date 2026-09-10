@@ -16,10 +16,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
+import { initializePaystackTransaction } from "../_shared/paystack/initialize.ts";
 
 interface RequestPayload {
   bookingId: string;
   redirectBaseUrl?: string;
+  /** Defaults to "paypal" -- every caller before this field existed sent none at all. */
+  provider?: "paypal" | "paystack";
 }
 
 interface PaypalOrderResponse {
@@ -54,6 +57,10 @@ Deno.serve(async (req) => {
       return json({ error: "invalid_json" }, 400);
     }
     if (!payload?.bookingId) return json({ error: "missing_booking_id" }, 400);
+    const provider = payload.provider ?? "paypal";
+    if (provider !== "paypal" && provider !== "paystack") {
+      return json({ error: "invalid_provider" }, 400);
+    }
 
     const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
@@ -83,18 +90,59 @@ Deno.serve(async (req) => {
     // Golden rule: the buyer pays the processor fee, not the sower.
     // `total` (S2G-fee-inclusive already) is the "subtotal" computeBuyerFee
     // expects — mirrors create-basket-bestowal-order's own call exactly.
-    const quote = computeBuyerFee("paypal", total);
+    const quote = computeBuyerFee(provider, total);
     const processorFee = quote.fee;
     const buyerCharge = quote.total;
+
+    const redirectBase = payload.redirectBaseUrl ?? "https://sow2growapp.com";
+    const productTitle = (booking as any).products?.title ?? "Hand booking";
+
+    // --- Paystack (cards + EFT via Ozow, ZAR settlement) -----------------------
+    if (provider === "paystack") {
+      if (!Deno.env.get("PAYSTACK_SECRET_KEY")) {
+        return json({ error: "paystack_credentials_missing" }, 500);
+      }
+      let init;
+      try {
+        init = await initializePaystackTransaction({
+          supabase: service,
+          kind: "booking",
+          recordId: booking.id,
+          amountUsd: buyerCharge,
+          email: userData.user.email ?? `booker-${userId}@pay.sow2growapp.com`,
+          description: `Sow2Grow booking — ${productTitle}`,
+          redirectBaseUrl: payload.redirectBaseUrl,
+          metadataExtra: { bookingId: booking.id },
+        });
+      } catch (err) {
+        console.error("paystack booking order init failed", err);
+        return json({ error: "paystack_initialize_failed", detail: err instanceof Error ? err.message : String(err) }, 502);
+      }
+      const { error: updateErr } = await service
+        .from("bookings")
+        .update({ provider: "paystack", provider_order_id: init.reference, processor_fee: processorFee })
+        .eq("id", booking.id);
+      if (updateErr) {
+        console.error("booking provider_order_id write failed", updateErr);
+        return json({ error: "booking_update_failed" }, 500);
+      }
+      return json({
+        bookingId: booking.id,
+        provider: "paystack",
+        reference: init.reference,
+        approveUrl: init.authorizationUrl,
+        breakdown: {
+          subtotal: total, processorFee, buyerCharge,
+          amountZar: init.amountZar, fxRate: init.fxRate, currency: "USD",
+        },
+      });
+    }
 
     const paypalClientId = Deno.env.get("PAYPAL_CLIENT_ID");
     const paypalSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
     if (!paypalClientId || !paypalSecret) {
       return json({ error: "paypal_credentials_missing" }, 500);
     }
-
-    const redirectBase = payload.redirectBaseUrl ?? "https://sow2growapp.com";
-    const productTitle = (booking as any).products?.title ?? "Hand booking";
 
     const orderBody = {
       intent: "CAPTURE",

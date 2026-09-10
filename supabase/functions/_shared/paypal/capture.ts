@@ -20,7 +20,7 @@
 import { deliverFinalizeMessages } from "../postFinalize/messaging.ts";
 import { syncBooksEntries } from "../postFinalize/books.ts";
 import { paypalFetch } from "./client.ts";
-import { paypalEnvironment, recordRevenue, resolveOrderEnvironment } from "../revenue.ts";
+import { recordRevenue, resolveOrderEnvironment } from "../revenue.ts";
 import { railFor } from "../revenueRules.ts";
 
 export type PaypalOrderKind = "basket" | "content" | "gift" | "orchard" | "topup" | "booking" | "invoice";
@@ -306,7 +306,7 @@ async function finalizeBooking(
 ): Promise<void> {
   const { data: booking, error: lookupError } = await supabase
     .from("bookings")
-    .select("id, status, product_id, grower_user_id, sower_user_id, amount, s2g_fee, total")
+    .select("id, status, product_id, grower_user_id, sower_user_id, amount, s2g_fee, total, provider")
     .eq("id", bookingId)
     .maybeSingle();
   if (lookupError) {
@@ -362,7 +362,10 @@ async function finalizeBooking(
       whisperer_amount: whispererAmount,
       ref_link_id: assignment?.ref_link_id ?? null,
       status: "completed",
-      payment_method: "paypal",
+      // 'paypal' is the fallback only for rows created before bookings.provider
+      // existed -- every booking created since accepts a provider explicitly
+      // (see create-booking-paypal-order).
+      payment_method: booking.provider ?? "paypal",
       payment_reference: paymentReference,
       delivery_type: null, // a service has nothing to physically deliver — releases immediately, never held
       release_status: "released",
@@ -382,16 +385,17 @@ async function finalizeBooking(
 
   // Bookkeeping Phase 1: the booking fee is earned once the booking is
   // paid. Source = the product_bestowals row just written (status
-  // completed), rail PayPal (the only booking rail today).
+  // completed), rail from the booking's own provider -- paypal was the
+  // only booking rail until paystack was added alongside it.
   const bookingFee = Number(booking.s2g_fee ?? 0);
   if (bookingFee > 0) {
     await recordRevenue(supabase, {
       kind: "booking_fee",
       amount: bookingFee,
-      environment: paypalEnvironment(),
+      environment: await resolveOrderEnvironment(supabase, { provider: booking.provider ?? "paypal", orderKind: "booking", orderId: bookingId }),
       sourceTable: "product_bestowals",
       sourceId: bestowal.id,
-      rail: "paypal",
+      rail: railFor(booking.provider ?? "paypal"),
       releaseRef: paymentReference,
       notes: `booking ${bookingId}`,
     });
