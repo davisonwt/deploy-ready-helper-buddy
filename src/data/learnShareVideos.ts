@@ -5,39 +5,48 @@
 import becomeASowerVideo from '../assets/explainers/become-a-sower.mp4';
 import becomeAWanderingHeartVideo from '../assets/explainers/become-a-wandering-heart.mp4';
 
-// Banner videos (correct mapping per user instructions)
-import communityOrchardVideo from '../assets/banners/banner-01-community-orchard.mp4';
-import productionOrchardVideo from '../assets/banners/banner-02-production-orchard.mp4';
-import singleSeedVideo from '../assets/banners/banner-03-single-seed.mp4';
+// Banner videos -- moved out of the bundle to a public Supabase Storage
+// bucket (scripts/studio/upload-onboarding-videos.mjs uploads/re-uploads
+// them; run it after replacing any of the 24 source files still kept in
+// src/assets/banners/ for reference/editing, they're just no longer
+// imported here). These 24 files were ~446MB combined, the single largest
+// contributor to dist size -- static marketing/explainer clips have no
+// reason to be part of the JS build.
+const ONBOARDING_VIDEOS_BASE =
+  `${import.meta.env.VITE_SUPABASE_URL || 'https://zuwkgasbkpjlxzsjzumu.supabase.co'}/storage/v1/object/public/onboarding`;
 
-import becomeAWanderingWheelVideo from '../assets/banners/banner-04-wandering-wheel.mp4';
-import bookAWanderingWheelVideo from '../assets/banners/banner-04-wandering-wheel-book.mp4';
+const communityOrchardVideo = `${ONBOARDING_VIDEOS_BASE}/banner-01-community-orchard.mp4`;
+const productionOrchardVideo = `${ONBOARDING_VIDEOS_BASE}/banner-02-production-orchard.mp4`;
+const singleSeedVideo = `${ONBOARDING_VIDEOS_BASE}/banner-03-single-seed.mp4`;
 
-import connectWithAHandVideo from '../assets/banners/banner-05-wandering-hand.mp4';
-import becomeAWanderingHandVideo from '../assets/banners/banner-05b-wandering-hand-become.mp4';
-import bestowingVideo from '../assets/banners/banner-17-bestowing.mp4';
+const becomeAWanderingWheelVideo = `${ONBOARDING_VIDEOS_BASE}/banner-04-wandering-wheel.mp4`;
+const bookAWanderingWheelVideo = `${ONBOARDING_VIDEOS_BASE}/banner-04-wandering-wheel-book.mp4`;
 
-import becomeAWhispererVideo from '../assets/banners/banner-06-wandering-whisperer.mp4';
-import bookAWhispererVideo from '../assets/banners/banner-06-wandering-whisperer-book.mp4';
+const connectWithAHandVideo = `${ONBOARDING_VIDEOS_BASE}/banner-05-wandering-hand.mp4`;
+const becomeAWanderingHandVideo = `${ONBOARDING_VIDEOS_BASE}/banner-05b-wandering-hand-become.mp4`;
+const bestowingVideo = `${ONBOARDING_VIDEOS_BASE}/banner-17-bestowing.mp4`;
 
-import becomeAWanderingPillowVideo from '../assets/banners/banner-07-wandering-pillow.mp4';
-import reserveAStayVideo from '../assets/banners/banner-07-wandering-pillow-book.mp4';
+const becomeAWhispererVideo = `${ONBOARDING_VIDEOS_BASE}/banner-06-wandering-whisperer.mp4`;
+const bookAWhispererVideo = `${ONBOARDING_VIDEOS_BASE}/banner-06-wandering-whisperer-book.mp4`;
 
-import becomeAWanderingFieldVideo from '../assets/banners/banner-08-wandering-field.mp4';
-import orderFromTheFieldVideo from '../assets/banners/banner-08-wandering-field-book.mp4';
+const becomeAWanderingPillowVideo = `${ONBOARDING_VIDEOS_BASE}/banner-07-wandering-pillow.mp4`;
+const reserveAStayVideo = `${ONBOARDING_VIDEOS_BASE}/banner-07-wandering-pillow-book.mp4`;
 
-import becomeAHearthCreatorVideo from '../assets/banners/banner-09-wandering-hearth.mp4';
-import bestowAHearthSeedVideo from '../assets/banners/banner-09-wandering-hearth-book.mp4';
+const becomeAWanderingFieldVideo = `${ONBOARDING_VIDEOS_BASE}/banner-08-wandering-field.mp4`;
+const orderFromTheFieldVideo = `${ONBOARDING_VIDEOS_BASE}/banner-08-wandering-field-book.mp4`;
 
-import becomeAWanderingForgeVideo from '../assets/banners/banner-10-wandering-forge.mp4';
-import commissionAForgeVideo from '../assets/banners/banner-10-wandering-forge-book.mp4';
+const becomeAHearthCreatorVideo = `${ONBOARDING_VIDEOS_BASE}/banner-09-wandering-hearth.mp4`;
+const bestowAHearthSeedVideo = `${ONBOARDING_VIDEOS_BASE}/banner-09-wandering-hearth-book.mp4`;
 
-import classroomVideo from '../assets/banners/banner-11-classroom.mp4';
-import skilldropVideo from '../assets/banners/banner-12-skilldrop.mp4';
-import trainingVideo from '../assets/banners/banner-13-training.mp4';
-import radioVideo from '../assets/banners/banner-14-radio.mp4';
-import oneOnOneVideo from '../assets/banners/banner-15-one-on-one.mp4';
-import groupChatVideo from '../assets/banners/banner-16-group-chat.mp4';
+const becomeAWanderingForgeVideo = `${ONBOARDING_VIDEOS_BASE}/banner-10-wandering-forge.mp4`;
+const commissionAForgeVideo = `${ONBOARDING_VIDEOS_BASE}/banner-10-wandering-forge-book.mp4`;
+
+const classroomVideo = `${ONBOARDING_VIDEOS_BASE}/banner-11-classroom.mp4`;
+const skilldropVideo = `${ONBOARDING_VIDEOS_BASE}/banner-12-skilldrop.mp4`;
+const trainingVideo = `${ONBOARDING_VIDEOS_BASE}/banner-13-training.mp4`;
+const radioVideo = `${ONBOARDING_VIDEOS_BASE}/banner-14-radio.mp4`;
+const oneOnOneVideo = `${ONBOARDING_VIDEOS_BASE}/banner-15-one-on-one.mp4`;
+const groupChatVideo = `${ONBOARDING_VIDEOS_BASE}/banner-16-group-chat.mp4`;
 
 // Learn & Share batch (13 new explainers, 5-image slideshow + alloy VO)
 import findAHeartVideo from '../assets/explainers/learn-share/find-a-wandering-heart.mp4';
