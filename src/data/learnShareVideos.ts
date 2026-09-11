@@ -2,18 +2,18 @@
 // public single-video route (LearnShareVideoPage) can look up a video by id
 // without duplicating this list. Keep in sync in one place only.
 
-import becomeASowerVideo from '../assets/explainers/become-a-sower.mp4';
-import becomeAWanderingHeartVideo from '../assets/explainers/become-a-wandering-heart.mp4';
-
-// Banner videos -- moved out of the bundle to a public Supabase Storage
-// bucket (scripts/studio/upload-onboarding-videos.mjs uploads/re-uploads
-// them; run it after replacing any of the 24 source files still kept in
-// src/assets/banners/ for reference/editing, they're just no longer
-// imported here). These 24 files were ~446MB combined, the single largest
-// contributor to dist size -- static marketing/explainer clips have no
-// reason to be part of the JS build.
+// All banner + explainer videos below -- moved out of the bundle to a
+// public Supabase Storage bucket (scripts/studio/upload-onboarding-videos.mjs
+// uploads/re-uploads them; the 39 source files are no longer in this repo
+// at all, see the script's own header for the re-upload workflow). This
+// was ~530MB combined, the single largest contributor to dist size --
+// static marketing/explainer clips have no reason to be part of the JS
+// build.
 const ONBOARDING_VIDEOS_BASE =
   `${import.meta.env.VITE_SUPABASE_URL || 'https://zuwkgasbkpjlxzsjzumu.supabase.co'}/storage/v1/object/public/onboarding`;
+
+const becomeASowerVideo = `${ONBOARDING_VIDEOS_BASE}/become-a-sower.mp4`;
+const becomeAWanderingHeartVideo = `${ONBOARDING_VIDEOS_BASE}/become-a-wandering-heart.mp4`;
 
 const communityOrchardVideo = `${ONBOARDING_VIDEOS_BASE}/banner-01-community-orchard.mp4`;
 const productionOrchardVideo = `${ONBOARDING_VIDEOS_BASE}/banner-02-production-orchard.mp4`;
@@ -49,20 +49,20 @@ const oneOnOneVideo = `${ONBOARDING_VIDEOS_BASE}/banner-15-one-on-one.mp4`;
 const groupChatVideo = `${ONBOARDING_VIDEOS_BASE}/banner-16-group-chat.mp4`;
 
 // Learn & Share batch (13 new explainers, 5-image slideshow + alloy VO)
-import findAHeartVideo from '../assets/explainers/learn-share/find-a-wandering-heart.mp4';
-import becomeAWhispererExplainerVideo from '../assets/explainers/learn-share/become-a-whisperer.mp4';
-import findAWhispererVideo from '../assets/explainers/learn-share/find-a-whisperer.mp4';
 // what-is-sow2grow local explainer replaced by cinematic marketing edit (see marketing imports below)
-import theReferralSystemVideo from '../assets/explainers/learn-share/the-referral-system.mp4';
-import browseCommunityOrchardsVideo from '../assets/explainers/learn-share/browse-community-orchards.mp4';
-import theGroveStationVideo from '../assets/explainers/learn-share/the-grove-station.mp4';
-import myGardenGuideVideo from '../assets/explainers/learn-share/my-garden-guide.mp4';
-import goLiveOnASeedVideo from '../assets/explainers/learn-share/go-live-on-a-seed.mp4';
-import theWanderingDirectoryVideo from '../assets/explainers/learn-share/the-wandering-directory.mp4';
-import calendar364yhvhVideo from '../assets/explainers/learn-share/calendar-364yhvh.mp4';
-import letItRainVideo from '../assets/explainers/learn-share/let-it-rain.mp4';
-import theMusicLibraryVideo from '../assets/explainers/learn-share/the-music-library.mp4';
-import s2gWalletSetupVideo from '../assets/explainers/learn-share/s2g-wallet-setup.mp4';
+const findAHeartVideo = `${ONBOARDING_VIDEOS_BASE}/find-a-wandering-heart.mp4`;
+const becomeAWhispererExplainerVideo = `${ONBOARDING_VIDEOS_BASE}/become-a-whisperer.mp4`;
+const findAWhispererVideo = `${ONBOARDING_VIDEOS_BASE}/find-a-whisperer.mp4`;
+const theReferralSystemVideo = `${ONBOARDING_VIDEOS_BASE}/the-referral-system.mp4`;
+const browseCommunityOrchardsVideo = `${ONBOARDING_VIDEOS_BASE}/browse-community-orchards.mp4`;
+const theGroveStationVideo = `${ONBOARDING_VIDEOS_BASE}/the-grove-station.mp4`;
+const myGardenGuideVideo = `${ONBOARDING_VIDEOS_BASE}/my-garden-guide.mp4`;
+const goLiveOnASeedVideo = `${ONBOARDING_VIDEOS_BASE}/go-live-on-a-seed.mp4`;
+const theWanderingDirectoryVideo = `${ONBOARDING_VIDEOS_BASE}/the-wandering-directory.mp4`;
+const calendar364yhvhVideo = `${ONBOARDING_VIDEOS_BASE}/calendar-364yhvh.mp4`;
+const letItRainVideo = `${ONBOARDING_VIDEOS_BASE}/let-it-rain.mp4`;
+const theMusicLibraryVideo = `${ONBOARDING_VIDEOS_BASE}/the-music-library.mp4`;
+const s2gWalletSetupVideo = `${ONBOARDING_VIDEOS_BASE}/s2g-wallet-setup.mp4`;
 
 // Marketing hero videos (Remotion-rendered, CDN-hosted)
 import whatIsSow2GrowMarketingAsset from '../assets/marketing/s2g-what-is-sow2grow.mp4.asset.json';
