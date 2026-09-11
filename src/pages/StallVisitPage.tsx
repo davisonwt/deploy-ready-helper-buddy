@@ -100,7 +100,13 @@ export default function StallVisitPage() {
       <button type="button" onClick={() => setOpen(true)} className="block w-full text-left">
         <Card className="overflow-hidden hover:opacity-95 transition-opacity">
           <div className="relative aspect-[16/9] sm:aspect-[21/9]">
-            <img src={stall.front_image_path} alt={stall.name} className="absolute inset-0 w-full h-full object-cover" />
+            {/* Blurred cover copy fills the frame behind the real image --
+                the real image itself is object-contain so it's never
+                cropped or stretched, whatever its own aspect ratio (same
+                treatment as MyStallCard / the Cockpit hero). */}
+            <img src={stall.front_image_path} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70" />
+            <div className="absolute inset-0 bg-black/20" />
+            <img src={stall.front_image_path} alt={stall.name} className="absolute inset-0 w-full h-full object-contain" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             <div className="absolute bottom-0 inset-x-0 p-4 flex items-end justify-between">
               <div>

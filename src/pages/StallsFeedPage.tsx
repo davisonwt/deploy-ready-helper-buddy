@@ -1,15 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2, Radio } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useGiftBestowal } from '@/hooks/useGiftBestowal';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
-import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
-import { toast } from 'sonner';
 import { STALL_CATEGORIES, STALL_TIER_LABEL, type StallCategory, type StallTier } from '@/lib/stalls/stallTypes';
-import type { PayoutProviderId } from '@/lib/payments/providerFees';
 
 type Chip = 'for_you' | 'new' | StallCategory;
 
@@ -45,11 +40,9 @@ export default function StallsFeedPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { liveSeeds } = useTribalLiveOrchard();
-  const { send: sendGift, loading: bestowing } = useGiftBestowal();
 
   const [chip, setChip] = useState<Chip>('for_you');
   const [cards, setCards] = useState<StallCard[] | null>(null);
-  const [bestowTarget, setBestowTarget] = useState<StallCard | null>(null);
 
   const liveOwnerIds = useMemo(() => new Set((liveSeeds ?? []).map((p) => p.user_id)), [liveSeeds]);
 
@@ -87,22 +80,6 @@ export default function StallsFeedPage() {
     return () => { alive = false; };
   }, [chip]);
 
-  const handleBestowConfirm = async (provider: PayoutProviderId) => {
-    if (!bestowTarget) return;
-    const result = await sendGift({
-      recipientId: bestowTarget.user_id,
-      amount: 5,
-      contextKind: 'chat_tip',
-      contextId: bestowTarget.id,
-      provider,
-      message: `Bestowal for ${bestowTarget.name}'s stall`,
-    });
-    if (result.success) {
-      toast.success(`${bestowTarget.name} will receive your bestowal!`);
-      setBestowTarget(null);
-    }
-  };
-
   const openStall = (card: StallCard) => {
     if (card.username) navigate(`/stall/${card.username}`);
   };
@@ -134,14 +111,27 @@ export default function StallsFeedPage() {
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto snap-y snap-mandatory">
           {cards.map((card) => (
-            <article key={card.id} className="snap-start h-[calc(100dvh-8rem)] relative flex items-end">
+            <article key={card.id} className="snap-start h-[calc(100dvh-8rem)] relative flex items-end overflow-hidden">
               <button type="button" onClick={() => openStall(card)} className="absolute inset-0" aria-label={`Open ${card.name}'s stall`}>
+                {/* Blurred cover copy fills the frame behind the real image --
+                    the real image itself is object-contain so it's never
+                    cropped or stretched, whatever its own aspect ratio (same
+                    treatment as MyStallCard / the Cockpit hero). */}
+                <img
+                  src={card.front_image_path}
+                  alt=""
+                  aria-hidden
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70"
+                />
+                <div className="absolute inset-0 bg-black/20" />
                 <img
                   src={card.front_image_path}
                   alt={card.name}
                   loading="lazy"
                   decoding="async"
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-contain"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
               </button>
@@ -158,29 +148,11 @@ export default function StallsFeedPage() {
               <div className="relative z-10 w-full p-5 pointer-events-none">
                 <h2 className="text-white font-bold text-2xl drop-shadow">{card.name}</h2>
                 {card.tagline && <p className="text-white/85 mt-1 drop-shadow">{card.tagline}</p>}
-                <Button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setBestowTarget(card); }}
-                  className="mt-3 pointer-events-auto"
-                >
-                  Bestow
-                </Button>
               </div>
             </article>
           ))}
         </div>
       )}
-
-      <ConfirmBestowModal
-        isOpen={!!bestowTarget}
-        onClose={() => setBestowTarget(null)}
-        title={bestowTarget?.name ?? ''}
-        amount={5}
-        onConfirm={handleBestowConfirm}
-        confirming={bestowing}
-        actionLabel="Bestow"
-        enablePaystack
-      />
     </div>
   );
 }
