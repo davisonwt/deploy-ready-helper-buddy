@@ -5,8 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchStoreBySlug, fetchStoreProducts } from '@/api/products';
-import ProductCard from '@/components/products/ProductCard';
+import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
 import { getPreset } from '@/lib/store/presets';
+
+const KIND_FROM_PRODUCT_TYPE: Record<string, SeedCardKind> = {
+  music: 'music',
+  book: 'book',
+  ebook: 'book',
+  video: 'video',
+};
 
 const PAGE_SIZE = 24;
 
@@ -269,7 +276,27 @@ export default function StorePage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} hideSowerInfo />
+                <SeedCard
+                  key={product.id}
+                  id={product.id}
+                  kind={KIND_FROM_PRODUCT_TYPE[product.type] ?? 'seed'}
+                  title={product.title}
+                  subtitle={product.description}
+                  cover={product.cover_image_url}
+                  ownerId={store.owner_user_id}
+                  ownerName={product.sowers?.display_name ?? store.name}
+                  ownerAvatar={product.sowers?.logo_url ?? store.logo_url}
+                  price={product.price}
+                  // No standalone public product-detail route exists in this
+                  // app -- ProductCard.tsx itself already pointed its
+                  // "already own this" link at /bulk/products/:slug as the
+                  // closest real destination; reused here for the same reason.
+                  openPath={`/bulk/products/${product.slug || product.id}`}
+                  previewUrl={product.type === 'music' ? product.preview_url ?? null : undefined}
+                  productId={product.type === 'music' ? product.id : undefined}
+                  pdfUrl={(product.type === 'book' || product.type === 'ebook') && /\.pdf(\?|$)/i.test(product.file_url ?? '') ? product.file_url : undefined}
+                  hideSowerLine
+                />
               ))}
             </div>
             {hasMore && (

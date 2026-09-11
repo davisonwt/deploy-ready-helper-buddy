@@ -1,25 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import React, { useState, useEffect } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { 
-  Music, 
-  Search, 
-  Play, 
-  Pause, 
-  Clock,
-  Tag,
-  Disc,
-  Volume2,
-  ShoppingCart,
-  DollarSign
-} from 'lucide-react'
+import { Music, Search, DollarSign, ShoppingCart } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client'
 import { useMusicPurchase } from '@/hooks/useMusicPurchase'
 import { useAuth } from '@/hooks/useAuth'
 import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal'
+import { Button } from '@/components/ui/button'
+import SeedCard from '@/components/seeds/SeedCard'
 
 export default function PublicMusicLibrary() {
   const { user } = useAuth()
@@ -31,31 +20,6 @@ export default function PublicMusicLibrary() {
   const [selectedGenre, setSelectedGenre] = useState('')
   const [selectedType, setSelectedType] = useState('')
   const [sortBy, setSortBy] = useState('upload_date')
-  const [currentTrackId, setCurrentTrackId] = useState(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const audioRef = useRef(null)
-
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.src = ''
-      }
-    }
-  }, [])
-
-  const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const formatFileSize = (bytes) => {
-    if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} KB`
-    }
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
 
   const fetchTracks = async () => {
     try {
@@ -65,7 +29,8 @@ export default function PublicMusicLibrary() {
           *,
           radio_djs!inner (
             dj_name,
-            avatar_url
+            avatar_url,
+            user_id
           )
         `)
         .eq('radio_eligible', true)
@@ -114,194 +79,14 @@ export default function PublicMusicLibrary() {
   const uniqueGenres = [...new Set(tracks.map(t => t.genre).filter(Boolean))]
   const uniqueTypes = [...new Set(tracks.map(t => t.track_type).filter(Boolean))]
 
-  const checkFileExists = async (url) => {
-    try {
-      const res = await fetch(url, { method: 'HEAD' })
-      return res.ok
-    } catch {
-      return false
+  const getTrackTypeLabel = (type) => {
+    const labels = {
+      music: 'Music',
+      jingle: 'Jingle',
+      voiceover: 'Voiceover',
+      full_session: 'Full Session'
     }
-  }
-
-  const handlePlay = async (track) => {
-    let el = audioRef.current
-    if (!el) {
-      el = new Audio()
-      audioRef.current = el
-    }
-    el.crossOrigin = 'anonymous'
-    el.volume = 0.7
-
-    // If switching to a new track: Stop current completely
-    if (currentTrackId !== track.id) {
-      console.log('[Radio] Switching to new track', { trackId: track.id })
-      try {
-        el.pause()
-        el.src = ''
-        el.load()
-        setIsPlaying(false)
-      } catch (e) {
-        console.warn('Error stopping audio:', e)
-      }
-
-      let playableUrl = track.file_url
-      let derivedPath = ''
-
-      const lastSegment = (p) => {
-        const parts = (p || '').split('/').filter(Boolean)
-        return decodeURIComponent(parts[parts.length - 1] || '')
-      }
-
-      const inferCandidates = (input) => {
-        const candidates = []
-        try {
-          const u = new URL(input)
-          const marker = '/storage/v1/object/'
-          const idx = u.pathname.indexOf(marker)
-          if (idx !== -1) {
-            const after = u.pathname.substring(idx + marker.length)
-            const parts = after.split('/')
-            const bucketIndex = parts[0] === 'public' ? 1 : 0
-            if (parts[bucketIndex] === 'music-tracks') {
-              const key = decodeURIComponent(parts.slice(bucketIndex + 1).join('/'))
-              if (key) candidates.push(key)
-            }
-          }
-          const fname = lastSegment(u.pathname)
-          if (fname) {
-            candidates.push(`music/${fname}`)
-          }
-        } catch {
-          const stripped = (input || '').replace(/^\/*/, '').replace(/^public\//, '')
-          candidates.push(stripped)
-          const fname = lastSegment(stripped)
-          if (fname) {
-            candidates.push(`music/${fname}`)
-            candidates.push(stripped)
-          }
-        }
-        return Array.from(new Set(candidates.filter(Boolean)))
-      }
-
-      const candidates = inferCandidates(track.file_url)
-      console.log('[Radio] URL candidates', { fileUrl: track.file_url, candidates })
-
-      try {
-        for (const cand of candidates) {
-          const { data, error } = await supabase.storage.from('music-tracks').createSignedUrl(cand, 3600)
-          if (!error && data?.signedUrl) {
-            console.log('[Radio] Checking if signed URL file exists...')
-            const exists = await checkFileExists(data.signedUrl)
-            if (!exists) {
-              console.warn('[Radio] File does not exist at signed URL:', data.signedUrl)
-              continue
-            }
-            derivedPath = cand
-            playableUrl = data.signedUrl
-            break
-          }
-        }
-        if (!derivedPath && candidates[0]) {
-          const { data } = supabase.storage.from('music-tracks').getPublicUrl(candidates[0])
-          if (data?.publicUrl) {
-            console.log('[Radio] Checking if public URL file exists...')
-            const exists = await checkFileExists(data.publicUrl)
-            if (!exists) {
-              console.warn('[Radio] File does not exist at public URL:', data.publicUrl)
-            } else {
-              derivedPath = candidates[0]
-              playableUrl = data.publicUrl
-            }
-          }
-        }
-      } catch {}
-
-      const encodedFallbackUrl = (() => {
-        try {
-          const u = new URL(playableUrl.startsWith('http') ? playableUrl : track.file_url)
-          u.pathname = u.pathname.split('/').map(seg => encodeURIComponent(decodeURIComponent(seg))).join('/')
-          return u.toString()
-        } catch {
-          return playableUrl.startsWith('http') ? playableUrl : track.file_url
-        }
-      })()
-
-      try { el.pause(); el.src = ''; el.load(); } catch {}
-
-      let fallbackStage = 0
-      el.onerror = () => {
-        console.warn('Primary URL failed, trying fallback', { playableUrl, encodedFallbackUrl, stage: fallbackStage })
-        try {
-          if (fallbackStage === 0 && el.src !== encodedFallbackUrl) {
-            fallbackStage = 1
-            el.src = encodedFallbackUrl
-            el.load()
-            el.play().catch((error) => { console.error('Encoded fallback failed:', error) })
-            return
-          }
-          if (fallbackStage === 1 && el.src !== track.file_url) {
-            fallbackStage = 2
-            el.src = track.file_url
-            el.load()
-            el.play().catch((error) => { console.error('Original URL fallback failed:', error) })
-            return
-          }
-        } catch (e) {
-          console.error('Fallback handling error:', e)
-        }
-        setCurrentTrackId(null)
-        setIsPlaying(false)
-      }
-
-      el.onended = () => {
-        console.log('[Radio] Track ended')
-        setIsPlaying(false)
-      }
-
-      // Final check: Verify the playable URL actually exists before playing
-      console.log('[Radio] Final check: Verifying file exists at playable URL...')
-      const fileExists = await checkFileExists(playableUrl)
-      if (!fileExists) {
-        console.error('[Radio] File does not exist at any URL - track unavailable')
-        toast.error('This track is unavailable. The file is missing from storage.')
-        setCurrentTrackId(null)
-        setIsPlaying(false)
-        return
-      }
-
-      try {
-        el.src = playableUrl
-        el.load()
-        await el.play()
-        setCurrentTrackId(track.id)
-        setIsPlaying(true)
-      } catch (error) {
-        console.error('Audio play error:', error, { fileUrl: track.file_url, derivedPath, playableUrl })
-        toast.error('Failed to play track. The file may be missing or corrupted.')
-        setCurrentTrackId(null)
-        setIsPlaying(false)
-      }
-      return
-    }
-
-    // Same track: Toggle play/pause (resume without restart)
-    console.log('[Radio] Toggling same track', { trackId: track.id, isPlaying })
-    if (isPlaying) {
-      try {
-        el.pause()
-        setIsPlaying(false)
-      } catch (e) {
-        console.warn('Pause error:', e)
-      }
-    } else {
-      try {
-        await el.play()
-        setIsPlaying(true)
-      } catch (e) {
-        console.error('Resume error:', e)
-        setIsPlaying(false)
-      }
-    }
+    return labels[type] || type
   }
 
   const handlePurchase = (track) => {
@@ -314,25 +99,6 @@ export default function PublicMusicLibrary() {
     setConfirmTrack(null)
   }
 
-  const getTrackTypeLabel = (type) => {
-    const labels = {
-      music: 'Music',
-      jingle: 'Jingle',
-      voiceover: 'Voiceover',
-      full_session: 'Full Session'
-    }
-    return labels[type] || type
-  }
-
-  const getTrackTypeColor = (type) => {
-    const colors = {
-      music: 'default',
-      jingle: 'secondary',
-      voiceover: 'outline',
-      full_session: 'destructive'
-    }
-    return colors[type] || 'default'
-  }
 
   if (loading) {
     return (
@@ -438,7 +204,13 @@ export default function PublicMusicLibrary() {
         </CardContent>
       </Card>
 
-      {/* Track List */}
+      {/* Track List -- SeedCard carries cover/title/sower/45s-sample/Bestow/
+          Message/Voice/Video/Share/Report now (Flow v2 step 3); Heart and
+          the Whisperer badge stay off since a dj_music_tracks row isn't a
+          products row (product_likes/product_whisperer_assignments are
+          FK'd to products, not this table). Purchase (a fixed-price full
+          download, a different transaction than Bestow's free-will gift)
+          stays this page's own action, layered below each card. */}
       {filteredTracks.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
@@ -450,150 +222,42 @@ export default function PublicMusicLibrary() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTracks.map((track) => (
-            <Card key={track.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="flex-shrink-0"
-                        onClick={() => handlePlay(track)}
-                      >
-                        {currentTrackId === track.id && isPlaying ? (
-                          <Pause className="h-4 w-4" />
-                        ) : (
-                          <Play className="h-4 w-4" />
-                        )}
-                      </Button>
-                      
-                      <div className="flex-1 min-w-0">
-                        <button
-                          onClick={() => user ? handlePurchase(track) : null}
-                          className={`text-left ${user ? 'hover:text-primary cursor-pointer' : 'cursor-default'}`}
-                          disabled={!user || purchasing}
-                        >
-                          <h4 className="font-medium truncate">{track.track_title}</h4>
-                        </button>
-                        {track.artist_name && (
-                          <p className="text-sm text-muted-foreground truncate">{track.artist_name}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          by {track.radio_djs?.dj_name}
-                        </p>
-                      </div>
-                      
-                      <Badge variant={getTrackTypeColor(track.track_type)}>
-                        {getTrackTypeLabel(track.track_type)}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatDuration(track.duration_seconds || 0)}
-                      </span>
-                      
-                      {track.genre && (
-                        <span className="flex items-center gap-1">
-                          <Disc className="h-3 w-3" />
-                          {track.genre}
-                        </span>
-                      )}
-                      
-                      {track.bpm && (
-                        <span className="flex items-center gap-1">
-                          <Volume2 className="h-3 w-3" />
-                          {track.bpm} BPM
-                        </span>
-                      )}
-                      
-                      <span>{formatFileSize(track.file_size || 0)}</span>
-                      
-                      <span>
-                        {new Date(track.upload_date).toLocaleDateString()}
-                      </span>
-                    </div>
-                    
-                    {track.tags && track.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {track.tags.map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            <Tag className="h-2 w-2 mr-1" />
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center gap-2 ml-4">
-                    {user ? (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => handlePurchase(track)}
-                        disabled={purchasing}
-                        className="flex items-center gap-2"
-                      >
-                        <ShoppingCart className="h-4 w-4" />
-                        $1.38 USDC
-                      </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" disabled>
-                        Login to Purchase
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div key={track.id} className="space-y-2">
+              <SeedCard
+                id={track.id}
+                kind="music"
+                title={track.track_title}
+                subtitle={[track.artist_name, track.genre, getTrackTypeLabel(track.track_type)].filter(Boolean).join(' · ')}
+                cover={track.cover_image_url}
+                ownerId={track.radio_djs?.user_id}
+                ownerName={track.radio_djs?.dj_name}
+                ownerAvatar={track.radio_djs?.avatar_url}
+                openPath="/music-library"
+                previewUrl={track.preview_url ?? null}
+                isProductRow={false}
+              />
+              {user ? (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => handlePurchase(track)}
+                  disabled={purchasing}
+                  className="w-full flex items-center gap-2"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Purchase $1.38 USDC
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" disabled className="w-full">
+                  Login to Purchase
+                </Button>
+              )}
+            </div>
           ))}
         </div>
       )}
-
-      {/* Now Playing Info */}
-      {currentTrackId && isPlaying && (() => {
-        const nowPlayingTrack = tracks.find(t => t.id === currentTrackId);
-        if (!nowPlayingTrack) return null;
-        return (
-          <div className="fixed bottom-4 right-4 z-50">
-            <Card className="w-80">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm truncate">{nowPlayingTrack.track_title}</h4>
-                    {nowPlayingTrack.artist_name && (
-                      <p className="text-xs text-muted-foreground truncate">{nowPlayingTrack.artist_name}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      by {nowPlayingTrack.radio_djs?.dj_name}
-                    </p>
-                    <p className="text-xs text-primary">Now Playing</p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      if (audioRef.current) {
-                        audioRef.current.pause()
-                        audioRef.current.src = ''
-                      }
-                      setCurrentTrackId(null)
-                      setIsPlaying(false)
-                    }}
-                  >
-                    <Pause className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-      })()}
     </div>
   )
 }

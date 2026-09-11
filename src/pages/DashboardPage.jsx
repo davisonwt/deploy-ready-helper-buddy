@@ -525,7 +525,7 @@ export default function SeedFlowDashboard() {
 
     // Seeds I've bestowed into — orchards the user has supported
     supabase.from('bestowals')
-      .select('orchard_id, created_at, orchards:orchard_id (id, title, description, category, images, orchard_type, created_at)')
+      .select('orchard_id, created_at, orchards:orchard_id (id, user_id, title, description, category, images, orchard_type, created_at)')
       .eq('bestower_id', user.id)
       .order('created_at', { ascending: false })
       .limit(12)

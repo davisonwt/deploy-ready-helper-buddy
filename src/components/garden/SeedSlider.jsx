@@ -1,20 +1,33 @@
 // src/components/garden/SeedSlider.jsx
 // Reusable auto-rotating slider for ONE category (Seeds, Orchards, Music, Books, Videos).
-// Each card carries Play (inline preview), Open (full page), Go Live (every card),
-// and a ⋯ owner menu (Edit · Delete · Repost · Park) when the seed is the user's own.
+// Renders the shared SeedCard (Flow v2 step 3) for the active card, plus a small
+// owner toolbar (Edit · Delete · Repost · Park) overlay -- SeedCard's own decided
+// action set has no owner-CRUD concept, so this page layers it on top, same
+// capability this slider always had via LivingSeedCard's "mine" owner menu.
+// Bloom reactions are gone (Heart, on SeedCard, covers the same need); Go Live
+// only shows on an orchard card that's actually live, not unconditionally, both
+// per the Seed Card consolidation decisions in docs/FLOW-V2-MAP.md.
 
 import { useEffect, useState } from 'react'
-import LivingSeedCard from './LivingSeedCard'
+import { ChevronLeft, ChevronRight, Pencil, RotateCcw, Pause as ParkIcon, Trash2 } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import SeedCard from '@/components/seeds/SeedCard'
+
+const MEDIA_KIND_TO_SEED_KIND = {
+  audio: 'music',
+  video: 'video',
+  book: 'book',
+  orchard: 'orchard',
+  seed: 'seed',
+}
 
 /**
- * card shape:
+ * card shape (built by seedCardBuilders.js):
  * {
- *   id, title, subtitle, image, badge: { emoji, label, color },
- *   playPath, openPath, liveKey,
- *   mine: boolean,
+ *   id, rawId, title, subtitle, image, badge: { emoji, label, color },
+ *   openPath, liveKey, mediaKind, mediaUrl?, previewUrl?, productId?,
+ *   mine: boolean, whispererSharePct,
  *   onEdit?, onDelete?, onRepost?, onPark?,
- *   mediaUrl?: string,        // if music/video — used for inline preview
- *   mediaKind?: 'audio'|'video'|'book'|'orchard'|'seed'
  * }
  */
 export default function SeedSlider({
@@ -25,6 +38,7 @@ export default function SeedSlider({
   emptyHint,
   intervalMs = 6000,
 }) {
+  const { user } = useAuth()
   const [idx, setIdx] = useState(0)
   const [paused, setPaused] = useState(false)
 
@@ -56,6 +70,8 @@ export default function SeedSlider({
     )
   }
 
+  const hasOwnerMenu = active.mine && (active.onEdit || active.onDelete || active.onRepost || active.onPark)
+
   return (
     <section
       style={styles.wrap(accent)}
@@ -71,28 +87,58 @@ export default function SeedSlider({
       </header>
 
       <div style={{ position: 'relative' }}>
-        <LivingSeedCard
-          seedId={active.liveKey || active.rawId || active.id}
+        <SeedCard
+          id={active.rawId || active.id}
+          kind={MEDIA_KIND_TO_SEED_KIND[active.mediaKind] || 'seed'}
           title={active.title}
           subtitle={active.subtitle}
-          image={active.image}
-          images={active.images}
+          cover={active.image}
+          // "mine" cards are always the signed-in viewer's own content; a
+          // not-mine card (e.g. "Tending in the Tribe"'s bestowed orchards)
+          // carries its real owner on the raw row instead.
+          ownerId={active.mine ? user?.id : active.seedRow?.user_id}
+          ownerName={active.mine ? (user?.display_name || user?.first_name) : undefined}
           openPath={active.openPath}
-          mediaUrl={active.mediaUrl}
-          mediaKind={active.mediaKind}
           previewUrl={active.previewUrl}
           productId={active.productId}
-          badge={active.badge}
-          mine={active.mine}
-          whispererSharePct={active.whispererSharePct}
-          showCardNavigation={total > 1}
-          onPreviousCard={goPrevious}
-          onNextCard={goNext}
-          onEdit={active.onEdit ? () => active.onEdit(active) : undefined}
-          onDelete={active.onDelete ? () => active.onDelete(active) : undefined}
-          onRepost={active.onRepost ? () => active.onRepost(active) : undefined}
-          onPark={active.onPark ? () => active.onPark(active) : undefined}
+          hideSowerLine
         />
+
+        {total > 1 && (
+          <>
+            <button type="button" aria-label="Previous" onClick={goPrevious} style={styles.navBtn('left')}>
+              <ChevronLeft size={16} />
+            </button>
+            <button type="button" aria-label="Next" onClick={goNext} style={styles.navBtn('right')}>
+              <ChevronRight size={16} />
+            </button>
+          </>
+        )}
+
+        {hasOwnerMenu && (
+          <div style={styles.ownerToolbar}>
+            {active.onEdit && (
+              <button type="button" aria-label="Edit" onClick={() => active.onEdit(active)} style={styles.ownerBtn}>
+                <Pencil size={14} />
+              </button>
+            )}
+            {active.onRepost && (
+              <button type="button" aria-label="Repost" onClick={() => active.onRepost(active)} style={styles.ownerBtn}>
+                <RotateCcw size={14} />
+              </button>
+            )}
+            {active.onPark && (
+              <button type="button" aria-label="Park" onClick={() => active.onPark(active)} style={styles.ownerBtn}>
+                <ParkIcon size={14} />
+              </button>
+            )}
+            {active.onDelete && (
+              <button type="button" aria-label="Delete" onClick={() => active.onDelete(active)} style={{ ...styles.ownerBtn, color: '#f87171' }}>
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </section>
   )
@@ -117,63 +163,23 @@ const styles = {
   count: { fontSize: 11, color: '#94a3b8', fontWeight: 700 },
   empty: { padding: 18, fontSize: 12, color: '#94a3b8', fontStyle: 'italic', textAlign: 'center' },
 
-  card: (accent) => ({
-    position: 'relative',
-    height: 280,
-    borderRadius: 14,
-    overflow: 'hidden',
-    background: '#111827',
-    border: `1px solid ${accent}44`,
-    transition: 'border-color 0.4s ease',
-  }),
-  img: { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 },
-  overlay: (accent) => ({
-    position: 'absolute', inset: 0,
-    background: `linear-gradient(to top, #060a12 0%, ${accent}22 60%, transparent 100%)`,
-  }),
-  previewVideo: {
-    position: 'absolute', inset: 0, width: '100%', height: '100%',
-    objectFit: 'contain', background: '#000', zIndex: 3,
-  },
-  audioBar: {
-    position: 'absolute', left: 14, right: 14, top: 14, zIndex: 3,
-    background: 'rgba(6,10,18,0.85)', backdropFilter: 'blur(6px)',
-    borderRadius: 10, padding: 8,
-  },
-
-  badge: (color) => ({
-    position: 'absolute', top: 12, left: 12, zIndex: 2,
-    display: 'inline-flex', alignItems: 'center', gap: 4,
-    background: `${color}22`, border: `1px solid ${color}66`,
-    color, fontSize: 10, fontWeight: 800, letterSpacing: '0.5px',
-    padding: '4px 8px', borderRadius: 999, textTransform: 'uppercase',
-    backdropFilter: 'blur(6px)',
-  }),
-
-  menuWrap: { position: 'absolute', top: 10, right: 10, zIndex: 4 },
-  menuBtn: {
+  navBtn: (side) => ({
+    position: 'absolute', top: '35%', [side]: 8, zIndex: 5,
     width: 32, height: 32, borderRadius: '50%',
-    background: 'rgba(6,10,18,0.7)', border: '1px solid rgba(255,255,255,0.15)',
-    color: '#e2e8f0', fontSize: 18, fontWeight: 800, cursor: 'pointer',
+    background: 'rgba(6,10,18,0.75)', border: '1px solid rgba(255,255,255,0.15)',
+    color: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', backdropFilter: 'blur(6px)',
+  }),
+
+  ownerToolbar: {
+    position: 'absolute', top: 10, right: 10, zIndex: 5,
+    display: 'flex', gap: 6,
+  },
+  ownerBtn: {
+    width: 30, height: 30, borderRadius: '50%',
+    background: 'rgba(6,10,18,0.75)', border: '1px solid rgba(255,255,255,0.15)',
+    color: '#e2e8f0', cursor: 'pointer',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     backdropFilter: 'blur(6px)',
   },
-  menu: {
-    position: 'absolute', top: 38, right: 0, minWidth: 140,
-    background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 10, padding: '4px 0', boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
-  },
-
-  body: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px 14px 14px', zIndex: 2 },
-  cardTitle: { fontSize: 17, fontWeight: 800, color: '#f1f5f9', marginBottom: 2 },
-  cardSubtitle: { fontSize: 12, color: 'rgba(226,232,240,0.7)', marginBottom: 10 },
-  btnRow: { display: 'flex', gap: 6 },
-
-  dots: { display: 'flex', justifyContent: 'center', gap: 5, marginTop: 10, flexWrap: 'wrap' },
-  dot: (isActive, accent) => ({
-    width: isActive ? 18 : 6, height: 6, borderRadius: 3,
-    background: isActive ? accent : '#1e293b',
-    transition: 'all 0.3s ease', cursor: 'pointer',
-    border: 'none', padding: 0,
-  }),
 }

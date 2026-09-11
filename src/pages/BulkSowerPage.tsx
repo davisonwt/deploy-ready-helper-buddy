@@ -10,12 +10,20 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import ProductCard from '@/components/products/ProductCard';
+import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
 import { Sprout, Users, Package, Star, Share2, PlayCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+const KIND_FROM_PRODUCT_TYPE: Record<string, SeedCardKind> = {
+  music: 'music',
+  book: 'book',
+  ebook: 'book',
+  video: 'video',
+};
+
 type Sower = {
   id: string;
+  user_id: string;
   slug: string | null;
   display_name: string | null;
   logo_url: string | null;
@@ -48,7 +56,7 @@ export default function BulkSowerPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('sowers')
-        .select('id, slug, display_name, logo_url, banner_url, bio, tagline, is_verified, seller_template')
+        .select('id, user_id, slug, display_name, logo_url, banner_url, bio, tagline, is_verified, seller_template')
         .eq('slug', slug!)
         .maybeSingle();
       if (cancelled) return;
@@ -190,7 +198,25 @@ export default function BulkSowerPage() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {products.map((p) => <ProductCard key={p.id} product={p} />)}
+                {products.map((p) => (
+                  <SeedCard
+                    key={p.id}
+                    id={p.id}
+                    kind={KIND_FROM_PRODUCT_TYPE[p.type] ?? 'seed'}
+                    title={p.title}
+                    subtitle={p.description}
+                    cover={p.cover_image_url}
+                    ownerId={sower!.user_id}
+                    ownerName={sower!.display_name}
+                    ownerAvatar={sower!.logo_url}
+                    price={p.price}
+                    openPath={`/bulk/products/${p.slug || p.id}`}
+                    previewUrl={p.type === 'music' ? p.preview_url ?? null : undefined}
+                    productId={p.type === 'music' ? p.id : undefined}
+                    pdfUrl={(p.type === 'book' || p.type === 'ebook') && /\.pdf(\?|$)/i.test(p.file_url ?? '') ? p.file_url : undefined}
+                    hideSowerLine
+                  />
+                ))}
               </div>
               {hasMore && (
                 <div className="flex justify-center mt-6">

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { SOWER_PUBLIC_COLS } from '@/api/products';
+import { SOWER_PUBLIC_COLS, deleteProduct } from '@/api/products';
 import { useAuth } from '@/hooks/useAuth';
-import ProductCard from '@/components/products/ProductCard';
+import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
 import CategoryFilter from '@/components/products/CategoryFilter';
-import { Loader2, Package, Upload, Plus, Store, ArrowLeft } from 'lucide-react';
+import { Loader2, Package, Upload, Plus, Store, ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,14 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { isAlbum } from '@/lib/products/isAlbum';
+import { toast } from 'sonner';
+
+const KIND_FROM_PRODUCT_TYPE: Record<string, SeedCardKind> = {
+  music: 'music',
+  book: 'book',
+  ebook: 'book',
+  video: 'video',
+};
 
 export default function MyProductsPage() {
   const navigate = useNavigate();
@@ -25,6 +33,7 @@ export default function MyProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedFormat, setSelectedFormat] = useState<string>('all'); // 'all', 'single', 'album'
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: products, isLoading, refetch } = useQuery({
     queryKey: ['my-products', user?.id],
@@ -64,6 +73,21 @@ export default function MyProductsPage() {
     const matchesFormat = selectedFormat === 'all' || (selectedFormat === 'single' && !isAlbum(product)) || (selectedFormat === 'album' && isAlbum(product));
     return matchesCategory && matchesType && matchesFormat;
   }) || [];
+
+  const handleDelete = async (productId: string) => {
+    if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) return;
+    setDeletingId(productId);
+    try {
+      await deleteProduct(productId);
+      toast.success('Product deleted successfully');
+      refetch();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error('Failed to delete product');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -195,10 +219,48 @@ export default function MyProductsPage() {
                       <CarouselContent className='-ml-2 md:-ml-4'>
                         {filteredProducts.map((product) => (
                           <CarouselItem key={product.id} className='pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4'>
-                            <ProductCard 
-                              product={product} 
-                              showActions={true} 
-                            />
+                            <div className="relative">
+                              <SeedCard
+                                id={product.id}
+                                kind={KIND_FROM_PRODUCT_TYPE[product.type] ?? 'seed'}
+                                title={product.title}
+                                subtitle={product.description}
+                                cover={product.cover_image_url}
+                                ownerId={product.sowers?.user_id}
+                                ownerName={product.sowers?.display_name}
+                                ownerAvatar={product.sowers?.logo_url}
+                                price={product.price}
+                                openPath={`/products/edit/${product.id}`}
+                                previewUrl={product.type === 'music' ? product.preview_url ?? null : undefined}
+                                productId={product.type === 'music' ? product.id : undefined}
+                                pdfUrl={(product.type === 'book' || product.type === 'ebook') && /\.pdf(\?|$)/i.test(product.file_url ?? '') ? product.file_url : undefined}
+                              />
+                              {/* Owner-only management -- SeedCard's own action row has no
+                                  Edit/Delete concept (out of its decided action set), so this
+                                  page layers its own on top, same capability MyProductsPage
+                                  always had via ProductCard's showActions. */}
+                              <div className="absolute top-2 right-2 z-10 flex gap-1.5">
+                                <Button
+                                  size="icon"
+                                  variant="secondary"
+                                  className="h-8 w-8 bg-background/80 backdrop-blur-sm"
+                                  onClick={() => navigate(`/products/edit/${product.id}`)}
+                                  aria-label="Edit product"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="secondary"
+                                  className="h-8 w-8 bg-background/80 backdrop-blur-sm text-destructive hover:text-destructive"
+                                  onClick={() => handleDelete(product.id)}
+                                  disabled={deletingId === product.id}
+                                  aria-label="Delete product"
+                                >
+                                  {deletingId === product.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                </Button>
+                              </div>
+                            </div>
                           </CarouselItem>
                         ))}
                       </CarouselContent>

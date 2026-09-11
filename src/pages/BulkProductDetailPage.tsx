@@ -11,12 +11,19 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
-import ProductCard from '@/components/products/ProductCard';
+import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
 import { isDigitalSeed, hasCompletedPurchase } from '@/lib/products/ownership';
 import {
   ArrowLeft, Share2, ShoppingCart, Megaphone, Loader2, ImageIcon,
   Package, Tag, ChevronRight, Download, CheckCircle2,
 } from 'lucide-react';
+
+const KIND_FROM_PRODUCT_TYPE: Record<string, SeedCardKind> = {
+  music: 'music',
+  book: 'book',
+  ebook: 'book',
+  video: 'video',
+};
 
 export default function BulkProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -351,7 +358,21 @@ export default function BulkProductDetailPage() {
             <div className="flex gap-4 overflow-x-auto pb-2 snap-x">
               {related.map((p) => (
                 <div key={p.id} className="w-60 shrink-0 snap-start">
-                  <ProductCard product={p} />
+                  <SeedCard
+                    id={p.id}
+                    kind={KIND_FROM_PRODUCT_TYPE[p.type] ?? 'seed'}
+                    title={p.title}
+                    subtitle={p.description}
+                    cover={p.cover_image_url}
+                    ownerId={p.sowers?.user_id}
+                    ownerName={p.sowers?.display_name}
+                    ownerAvatar={p.sowers?.logo_url}
+                    price={p.price}
+                    openPath={`/bulk/products/${p.slug || p.id}`}
+                    previewUrl={p.type === 'music' ? p.preview_url ?? null : undefined}
+                    productId={p.type === 'music' ? p.id : undefined}
+                    pdfUrl={(p.type === 'book' || p.type === 'ebook') && /\.pdf(\?|$)/i.test(p.file_url ?? '') ? p.file_url : undefined}
+                  />
                 </div>
               ))}
             </div>

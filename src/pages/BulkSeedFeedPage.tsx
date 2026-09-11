@@ -1,21 +1,23 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import useEmblaCarousel from 'embla-carousel-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { fetchProductsBySowerPaginated } from '@/api/products';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
-import { useAuth } from '@/hooks/useAuth';
+import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
 import {
-  ArrowLeft, Share2, ShoppingCart, Megaphone, ChevronLeft, ChevronRight,
-  Loader2, ImageIcon, Sprout,
+  ArrowLeft, ShoppingCart, Loader2, Sprout,
 } from 'lucide-react';
 
 const PAGE_SIZE = 12;
+
+const KIND_FROM_PRODUCT_TYPE: Record<string, SeedCardKind> = {
+  music: 'music',
+  book: 'book',
+  ebook: 'book',
+  video: 'video',
+};
 
 type FeedTab = 'all' | 'new' | 'commission' | 'trending';
 
@@ -24,9 +26,8 @@ export default function BulkSeedFeedPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addToBasket } = useProductBasket();
-  const { user } = useAuth();
 
-  const [sower, setSower] = useState<{ id: string; display_name: string | null; slug: string | null } | null>(null);
+  const [sower, setSower] = useState<{ id: string; user_id: string; display_name: string | null; slug: string | null } | null>(null);
   const [tab, setTab] = useState<FeedTab>('all');
   const [items, setItems] = useState<any[]>([]);
   const [page, setPage] = useState(0);
@@ -38,7 +39,7 @@ export default function BulkSeedFeedPage() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase
-        .from('sowers').select('id, display_name, slug').eq('slug', slug!).maybeSingle();
+        .from('sowers').select('id, user_id, display_name, slug').eq('slug', slug!).maybeSingle();
       setSower(data ?? null);
     })();
   }, [slug]);
@@ -91,21 +92,6 @@ export default function BulkSeedFeedPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, hasMore, loading]);
 
-  const share = async (p: any) => {
-    const url = `${window.location.origin}/bulk/products/${p.slug ?? p.id}`;
-    if (navigator.share) { try { await navigator.share({ title: p.title, url }); return; } catch {} }
-    try { await navigator.clipboard.writeText(url); toast({ title: 'Link copied' }); } catch {}
-  };
-
-  const becomeWhisperer = async (p: any) => {
-    if (!user) {
-      toast({ title: 'Sign in required', description: 'Sign in to start marketing this product.' });
-      navigate('/login');
-      return;
-    }
-    toast({ title: 'Marketing link coming soon', description: 'Whisperer dashboard arrives in Phase 4.' });
-  };
-
   const handleAddToBasket = async (p: any) => {
     try {
       await addToBasket({ ...p, quantity: 1 });
@@ -144,7 +130,7 @@ export default function BulkSeedFeedPage() {
         )}
 
         {items.map((p) => (
-          <FeedCard key={p.id} product={p} onShare={share} onMarket={becomeWhisperer} onAdd={handleAddToBasket} />
+          <FeedCard key={p.id} product={p} sower={sower} onAdd={handleAddToBasket} />
         ))}
 
         <div ref={sentinelRef} className="h-10" />
@@ -159,108 +145,42 @@ export default function BulkSeedFeedPage() {
   );
 }
 
-function FeedCard({ product, onShare, onMarket, onAdd }: {
+/**
+ * SeedCard carries cover/title/sower/sample-play/Bestow/Message/Voice/
+ * Video/Heart/Share/Report/Whisper now -- "Add to basket" stays a
+ * page-specific action layered alongside it, since bulk buying at listed
+ * price (not a Bestow-style gift) is this wholesale rail's own distinct
+ * transaction model, not part of SeedCard's decided action set.
+ */
+function FeedCard({ product, sower, onAdd }: {
   product: any;
-  onShare: (p: any) => void;
-  onMarket: (p: any) => void;
+  sower: { id: string; user_id: string; display_name: string | null; slug: string | null } | null;
   onAdd: (p: any) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const [emblaRef, embla] = useEmblaCarousel({ loop: false });
-  const [selected, setSelected] = useState(0);
-
-  const images: string[] = (product.image_urls && product.image_urls.length)
-    ? product.image_urls
-    : (product.cover_image_url ? [product.cover_image_url] : []);
-
-  useEffect(() => {
-    if (!embla) return;
-    const onSel = () => setSelected(embla.selectedScrollSnap());
-    embla.on('select', onSel);
-    return () => { embla.off('select', onSel); };
-  }, [embla]);
+  const cover = product.cover_image_url ?? (product.image_urls && product.image_urls[0]) ?? null;
 
   return (
     <article className="snap-start min-h-[100vh] flex items-center justify-center px-2 py-4">
-      <Card className="w-full max-w-md overflow-hidden">
-        {/* Carousel */}
-        <div className="relative bg-muted aspect-square">
-          {images.length === 0 ? (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-              <ImageIcon className="h-10 w-10" />
-            </div>
-          ) : (
-            <>
-              <div className="overflow-hidden h-full" ref={emblaRef}>
-                <div className="flex h-full">
-                  {images.map((url, i) => (
-                    <div key={i} className="flex-[0_0_100%] h-full">
-                      <img src={url} alt="" loading="lazy" className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {images.length > 1 && (
-                <>
-                  <button onClick={() => embla?.scrollPrev()} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 rounded-full p-1.5 hover:bg-background">
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button onClick={() => embla?.scrollNext()} className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 rounded-full p-1.5 hover:bg-background">
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                    {images.map((_, i) => (
-                      <span key={i} className={`h-1.5 w-1.5 rounded-full ${i === selected ? 'bg-primary' : 'bg-background/60'}`} />
-                    ))}
-                  </div>
-                </>
-              )}
-            </>
-          )}
-          {product.whisperer_commission_percent != null && (
-            <Badge className="absolute top-2 right-2 gap-1">
-              <Megaphone className="h-3 w-3" /> {product.whisperer_commission_percent}% commission
-            </Badge>
-          )}
-        </div>
-
-        {/* Body */}
-        <div className="p-4 space-y-3">
-          <Link to={`/bulk/products/${product.slug ?? product.id}`} className="block">
-            <h3 className="font-semibold text-lg leading-tight hover:underline">{product.title}</h3>
-          </Link>
-          {product.description && (
-            <div>
-              <p className={`text-sm text-muted-foreground ${expanded ? '' : 'line-clamp-3'}`}>
-                {product.description}
-              </p>
-              {product.description.length > 140 && (
-                <button onClick={() => setExpanded((v) => !v)} className="text-xs text-primary mt-1">
-                  {expanded ? 'Show less' : 'Read more'}
-                </button>
-              )}
-            </div>
-          )}
-          <div className="flex items-center justify-between">
-            <div className="text-xl font-bold">${priceBreakdown(Number(product.price ?? 0)).total.toFixed(2)}</div>
-            <Link to={`/bulk/sower/${product.sowers?.slug ?? ''}`} className="text-xs text-muted-foreground hover:text-foreground">
-              by {product.sowers?.display_name ?? 'Sower'}
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <Button size="sm" onClick={() => onAdd(product)}>
-              <ShoppingCart className="h-4 w-4 mr-1" /> Add
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => onShare(product)}>
-              <Share2 className="h-4 w-4 mr-1" /> Share
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => onMarket(product)}>
-              <Megaphone className="h-4 w-4 mr-1" /> Market
-            </Button>
-          </div>
-        </div>
-      </Card>
+      <div className="w-full max-w-md space-y-3">
+        <SeedCard
+          id={product.id}
+          kind={KIND_FROM_PRODUCT_TYPE[product.type] ?? 'seed'}
+          title={product.title}
+          subtitle={product.description}
+          cover={cover}
+          ownerId={sower?.user_id ?? product.sowers?.user_id}
+          ownerName={sower?.display_name ?? product.sowers?.display_name}
+          price={product.price}
+          openPath={`/bulk/products/${product.slug ?? product.id}`}
+          previewUrl={product.type === 'music' ? product.preview_url ?? null : undefined}
+          productId={product.type === 'music' ? product.id : undefined}
+          pdfUrl={(product.type === 'book' || product.type === 'ebook') && /\.pdf(\?|$)/i.test(product.file_url ?? '') ? product.file_url : undefined}
+          hideSowerLine
+        />
+        <Button className="w-full" onClick={() => onAdd(product)}>
+          <ShoppingCart className="h-4 w-4 mr-1.5" /> Add to basket
+        </Button>
+      </div>
     </article>
   );
 }
