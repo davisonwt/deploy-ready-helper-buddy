@@ -81,7 +81,7 @@ export default function StallsFeedPage() {
   }, [chip]);
 
   const openStall = (card: StallCard) => {
-    if (card.username) navigate(`/stall/${card.username}`);
+    if (card.username) navigate(`/stall/${card.username}#open`);
   };
 
   return (

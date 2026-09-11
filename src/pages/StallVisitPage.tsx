@@ -21,11 +21,14 @@ interface StallRow {
 }
 
 /**
- * Public visitor route: front -> interior -> hotspot sheets, same
+ * Public visitor route: opens straight into the interior -- no
+ * intermediate "tap to step inside" front page. The shop-front card only
+ * renders as a fallback if the interior image itself fails to load (a
+ * broken/expired storage URL), and tapping it retries the load. Same
  * StallInteriorView the Cockpit owner view uses. Owner view is identical
  * to the visitor view except an "Edit stall" pill top-right (Farm-Stalls
- * batch 2b, task 4) -- Bestow now happens per-item inside
- * StallHotspotSheet, not as a stall-level button here.
+ * batch 2b, task 4) -- Bestow happens per-item inside StallHotspotSheet,
+ * not as a stall-level button here.
  *
  * RLS (stalls_owner_all / stalls_read_published) already restricts a
  * non-owner to a published row only -- the query here doesn't filter on
@@ -38,10 +41,8 @@ export default function StallVisitPage() {
   const templates = useStallTemplates();
 
   const [stall, setStall] = useState<StallRow | null | undefined>(undefined); // undefined = loading
-  // Re-opens the interior automatically if we're arriving back from an
-  // item-detail page's Back button (StallInteriorView hash-syncs
-  // #stall-kind=<kind> onto this same URL while a sheet is open).
-  const [open, setOpen] = useState(() => window.location.hash.startsWith('#stall-kind='));
+  const [interiorFailed, setInteriorFailed] = useState(false);
+  const [retryNonce, setRetryNonce] = useState(0);
 
   useEffect(() => {
     if (!username) { setStall(null); return; }
@@ -64,7 +65,28 @@ export default function StallVisitPage() {
     return () => { alive = false; };
   }, [username]);
 
+  // The interior is the default view -- this just confirms the interior
+  // image itself actually loads; the shop-front card is the fallback if
+  // it doesn't.
+  useEffect(() => {
+    if (!stall?.interior_image_path) return;
+    let alive = true;
+    setInteriorFailed(false);
+    const img = new Image();
+    img.onerror = () => { if (alive) setInteriorFailed(true); };
+    img.src = stall.interior_image_path;
+    return () => { alive = false; };
+  }, [stall?.interior_image_path, retryNonce]);
+
   const isOwner = !!user && !!stall && user.id === stall.user_id;
+
+  // Same "no history to go back to" fallback used elsewhere in the app
+  // (e.g. ProductsPage) -- a direct/shared link into a stall has nothing
+  // to pop back to, so land on the dashboard instead of a blank tab.
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate('/dashboard');
+  };
 
   if (stall === undefined) {
     return <div className="flex min-h-[50vh] items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
@@ -89,6 +111,22 @@ export default function StallVisitPage() {
     );
   }
 
+  if (!interiorFailed) {
+    return (
+      <StallInteriorView
+        ownerId={stall.user_id}
+        interiorImageUrl={stall.interior_image_path}
+        stallName={stall.name}
+        hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
+        isOwner={isOwner}
+        onEdit={() => navigate('/stall/build')}
+        onClose={handleClose}
+      />
+    );
+  }
+
+  // Interior image failed to load -- fall back to the shop front so the
+  // visitor isn't stuck on a blank screen. Tapping retries the load.
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       {!stall.published && isOwner && (
@@ -97,7 +135,7 @@ export default function StallVisitPage() {
         </div>
       )}
 
-      <button type="button" onClick={() => setOpen(true)} className="block w-full text-left">
+      <button type="button" onClick={() => setRetryNonce((n) => n + 1)} className="block w-full text-left">
         <Card className="overflow-hidden hover:opacity-95 transition-opacity">
           <div className="relative aspect-[16/9] sm:aspect-[21/9]">
             {/* Blurred cover copy fills the frame behind the real image --
@@ -118,21 +156,9 @@ export default function StallVisitPage() {
               </span>
             </div>
           </div>
-          <CardContent className="py-3 text-sm text-muted-foreground">Tap to step inside</CardContent>
+          <CardContent className="py-3 text-sm text-muted-foreground">Couldn't load the interior -- tap to try again</CardContent>
         </Card>
       </button>
-
-      {open && (
-        <StallInteriorView
-          ownerId={stall.user_id}
-          interiorImageUrl={stall.interior_image_path}
-          stallName={stall.name}
-          hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
-          isOwner={isOwner}
-          onEdit={() => navigate('/stall/build')}
-          onClose={() => setOpen(false)}
-        />
-      )}
     </div>
   );
 }
