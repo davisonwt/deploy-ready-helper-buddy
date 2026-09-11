@@ -37,6 +37,29 @@ UPDATE public.stalls s
      SELECT 1 FROM jsonb_array_elements(s.hotspots) h WHERE h->>'kind' = 'mugs'
    );
 
+-- Recategorizes his actual mug product so it shows up under the new Mugs
+-- hotspot -- StallHotspotSheet's mugs branch filters strictly on
+-- products.category = 'mugs' (src/components/stalls/StallHotspotSheet.tsx),
+-- and the batch 2d audit found this row still on its old category
+-- ('kitchenware'). Owner resolved the same way as every other script in
+-- this directory (products.sower_id -> sowers.id OR products.company_id
+-- -> companies.id, since an owner can have either or both) -- there is no
+-- literal `products.owner` column. Matched by title rather than the id
+-- captured during the audit (f5ba15aa-97ac-4f7d-af15-db24c37a0bc4) so this
+-- still works if that changes; ILIKE 'coffee mugs%' is specific enough
+-- that it won't catch anything else of his. Guarded on category already
+-- being 'mugs' -- safe to re-run.
+UPDATE public.products p
+   SET category = 'mugs'
+  FROM auth.users u
+ WHERE u.email = 'davison.taljaard@icloud.com'
+   AND p.title ILIKE 'coffee mugs%'
+   AND (
+     p.sower_id IN (SELECT id FROM public.sowers WHERE user_id = u.id)
+     OR p.company_id IN (SELECT id FROM public.companies WHERE owner_user_id = u.id)
+   )
+   AND p.category IS DISTINCT FROM 'mugs';
+
 -- --- Proof --------------------------------------------------------------------
 SELECT
   s.user_id,
@@ -45,3 +68,16 @@ SELECT
 FROM public.stalls s
 JOIN auth.users u ON u.id = s.user_id
 WHERE u.email = 'davison.taljaard@icloud.com';
+
+SELECT
+  p.id,
+  p.title,
+  p.category
+FROM public.products p
+JOIN auth.users u ON true
+WHERE u.email = 'davison.taljaard@icloud.com'
+  AND p.title ILIKE 'coffee mugs%'
+  AND (
+    p.sower_id IN (SELECT id FROM public.sowers WHERE user_id = u.id)
+    OR p.company_id IN (SELECT id FROM public.companies WHERE owner_user_id = u.id)
+  );
