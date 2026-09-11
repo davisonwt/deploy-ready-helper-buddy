@@ -16,23 +16,20 @@
  *
  * Top: Following / For You / Local tabs + Wandering badge filter bar.
  */
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, Pause, Heart, MessageCircle, Mic, Video, Share2,
-  Search, Bell, Radio, ArrowLeft, Gift, Sparkles, Loader2, X, Send, Square,
-  ChevronLeft, ChevronRight, ChevronDown,
+  Heart, Mic,
+  Search, Bell, ArrowLeft, Loader2, X, Send, Square,
+  ChevronDown,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSignedImage } from '@/lib/storage/signedImage';
 import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
-import ReportButton from '@/components/moderation/ReportButton';
 import { fetchActiveProductsForFeed } from '@/api/products';
 import { useAuth } from '@/hooks/useAuth';
 import { useReferralCode } from '@/hooks/useReferralCode';
 import { useToast } from '@/hooks/use-toast';
-import { toast } from 'sonner';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { useGiftBestowal, type GiftContextKind } from '@/hooks/useGiftBestowal';
@@ -42,10 +39,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/WanderingBadgeBar';
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
-import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
 import { checkoutErrorMessage, isBlockingCheckoutError } from '@/lib/payments/checkoutErrors';
-import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
@@ -53,6 +48,7 @@ import { LiveNowStrip } from '@/components/live/LiveNowStrip';
 import LiveStage from '@/components/live/LiveStage';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
 import { BirthdayCelebration } from '@/components/celebrations/BirthdayCelebration';
+import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
 
 type FeedTab = 'following' | 'foryou' | 'local';
 
@@ -1476,6 +1472,22 @@ async function resolvePlayableUrl(rawUrl: string | null | undefined, fallbackUrl
 
 /* ───────── card with 45s preview + action rail ───────── */
 
+/** FeedItem.kind -> SeedCardKind, for whichever SeedCard visual/action this item's kind maps closest to. A non-music kind still carrying its own audio_url (e.g. a 'seed'/'product' voice-note style item) is treated as music too, so it gets the sample-play row. */
+function feedKindToSeedCardKind(item: FeedItem): SeedCardKind {
+  if (item.kind === 'music' || item.kind === 'book' || item.kind === 'video' || item.kind === 'orchard') return item.kind;
+  if (item.audio_url && !item.video_url) return 'music';
+  return 'seed';
+}
+
+/**
+ * Thin wrapper around the shared SeedCard's `variant="feed"` (Flow v2 "Seed
+ * Card v2"). All the actual state/logic (follow, heart, whisperer badge/
+ * apply, sample play, gallery/video autoplay) lives in SeedCard now; this
+ * page keeps its own richer existing systems (SeedActionPanel's in-feed
+ * messaging, DirectCallOverlay, kind-specific checkout in handleBestow) by
+ * passing them in as overrides rather than letting SeedCard's own simpler
+ * defaults replace them.
+ */
 function FeedCard({
   item, isActive, isFollowing,
   onBestow, onMessage, onVoice, onVideo, onGift, onGoLive, onShare, onFollow,
@@ -1492,323 +1504,42 @@ function FeedCard({
   onShare: () => void;
   onFollow: () => void;
 }) {
-  const { user } = useAuth();
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(false);
-  const [loadingMedia, setLoadingMedia] = useState(false);
-  const [time, setTime] = useState(0);
-  const [imgIdx, setImgIdx] = useState(0);
-  const [playAudioUrl, setPlayAudioUrl] = useState<string | null>(null);
-  const [playVideoUrl, setPlayVideoUrl] = useState<string | null>(null);
-  const PREVIEW = PREVIEW_SECONDS;
-
-  const gallery = (item.images && item.images.length > 0)
-    ? item.images
-    : (item.image ? [item.image] : []);
-  const hasGallery = gallery.length > 1;
-  const rawCurrentImg = gallery[imgIdx] || item.image || null;
-  const currentImg = useSignedImage(rawCurrentImg);
-  const sowerAvatar = useSignedImage(item.sower_avatar);
-
-  // Reset to first image when card changes
-  useEffect(() => { setImgIdx(0); }, [item.key]);
-
-  // Stop media when card leaves view
-  useEffect(() => {
-    if (!isActive) {
-      audioRef.current?.pause();
-      videoRef.current?.pause();
-      setPlaying(false);
-      setTime(0);
-    }
-  }, [isActive]);
-
-  // Reset resolved media when the card's item changes
-  useEffect(() => {
-    setPlayAudioUrl(null);
-    setPlayVideoUrl(null);
-    setPlaying(false);
-    setTime(0);
-  }, [item.key]);
-
-  const togglePlay = useCallback(async () => {
-    const media = videoRef.current || audioRef.current;
-    if (!media) return;
-
-    if (playing) {
-      media.pause();
-      setPlaying(false);
-      return;
-    }
-
-    // Lazily resolve a playable (signed) URL for private storage buckets.
-    // Audio gets a preview_url fallback for when signing is denied (not the
-    // owner/a buyer) — video has no preview concept, so none is passed.
-    const isVideo = media === videoRef.current;
-    const raw = isVideo ? item.video_url : item.audio_url;
-    const fallback = isVideo ? null : item.preview_url;
-    let src = isVideo ? playVideoUrl : playAudioUrl;
-
-    if (!src) {
-      setLoadingMedia(true);
-      try {
-        src = await resolvePlayableUrl(raw, fallback);
-      } catch {
-        src = null;
-      }
-      setLoadingMedia(false);
-      if (!src) {
-        toast.error('This media could not be loaded');
-        return;
-      }
-      if (isVideo) setPlayVideoUrl(src); else setPlayAudioUrl(src);
-      if (media.getAttribute('src') !== src) {
-        media.setAttribute('src', src);
-        media.load();
-      }
-    }
-
-    try {
-      media.currentTime = 0;
-      await media.play();
-      setPlaying(true);
-    } catch {
-      setPlaying(false);
-      toast.error('Playback failed — try again');
-    }
-  }, [playing, item.key, item.audio_url, item.video_url, item.preview_url, playAudioUrl, playVideoUrl]);
-
-  // 45s cap
-  useEffect(() => {
-    const media = videoRef.current || audioRef.current;
-    if (!media) return;
-    const onTime = () => {
-      setTime(media.currentTime);
-      if (media.currentTime >= PREVIEW) {
-        media.pause();
-        media.currentTime = 0;
-        setPlaying(false);
-        setTime(0);
-      }
-    };
-    const onEnd = () => { setPlaying(false); setTime(0); };
-    const onError = () => { setPlaying(false); };
-    media.addEventListener('timeupdate', onTime);
-    media.addEventListener('ended', onEnd);
-    media.addEventListener('error', onError);
-    return () => {
-      media.removeEventListener('timeupdate', onTime);
-      media.removeEventListener('ended', onEnd);
-      media.removeEventListener('error', onError);
-    };
-  }, [item.key]);
-
   const badge = WANDERING_BADGES.find((b) => b.key === item.wandering_role);
-  // All sower creations (seeds, products, music, books, videos, stories, orchards) are bestowable.
-  // Only pure live broadcasts (radio_live) keep a non-bestow CTA.
-  const showBestow = item.kind !== 'radio_live';
-  const previewable = !!(item.audio_url || item.video_url);
-  const reportTarget = item.sower_id && item.sower_id !== user?.id ? reportTargetForKind(item.kind, item.id) : null;
+  const isMusicLike = item.kind === 'music' || (!!item.audio_url && !item.video_url);
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950">
-      {/* Blurred ambient background (fills, but doesn't crop the real media) */}
-      {currentImg && (
-        <img
-          src={currentImg}
-          alt=""
-          aria-hidden
-          className="absolute inset-0 h-full w-full object-cover opacity-40 blur-2xl scale-110"
-        />
-      )}
-
-      {/* Foreground media — fully visible, never cropped on phone */}
-      {item.video_url ? (
-        <video
-          ref={videoRef}
-          src={playVideoUrl || undefined}
-          poster={currentImg || undefined}
-          className="absolute inset-0 h-full w-full object-cover"
-          playsInline
-          muted={false}
-          preload="none"
-        />
-      ) : currentImg ? (
-        <img
-          key={currentImg}
-          src={currentImg}
-          alt={item.title}
-          className="absolute inset-0 h-full w-full object-cover animate-fade-in"
-        />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-[20rem] opacity-10">
-          {badge?.emoji ?? '🌱'}
-        </div>
-      )}
-      {item.audio_url && (
-        <audio ref={audioRef} src={playAudioUrl || undefined} preload="none" />
-      )}
-
-      {/* Image carousel arrows + dots — only when there are multiple images */}
-      {hasGallery && !item.video_url && (
-        <>
-          <div className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex items-center gap-2 sm:left-3">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i - 1 + gallery.length) % gallery.length); }}
-              aria-label="Previous image"
-              className="grid h-10 w-10 place-items-center rounded-full bg-black/60 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-black/80 transition"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i + 1) % gallery.length); }}
-              aria-label="Next image"
-              className="grid h-10 w-10 place-items-center rounded-full bg-black/60 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-black/80 transition"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="absolute left-1/2 top-3 -translate-x-1/2 z-10 flex gap-1.5 rounded-full bg-black/50 px-2 py-1 backdrop-blur-sm">
-            {gallery.map((_, i) => (
-              <span
-                key={i}
-                className={cn(
-                  'h-1.5 rounded-full transition-all',
-                  i === imgIdx ? 'w-4 bg-white' : 'w-1.5 bg-white/40'
-                )}
-              />
-            ))}
-          </div>
-        </>
-      )}
-
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
-
-      {/* Right action rail — TikTok-style vertical column over the media */}
-      <div className="absolute right-2 bottom-4 top-[12rem] z-10 flex flex-col items-center justify-start gap-1 overflow-y-auto no-scrollbar sm:right-3 sm:bottom-6 sm:top-[13rem] sm:gap-1.5">
-        <RailButton icon={<MessageCircle className="h-4 w-4" />} label="Message" onClick={onMessage} />
-        <RailButton icon={<Mic className="h-4 w-4" />} label="Voice" onClick={onVoice} />
-        <RailButton icon={<Video className="h-4 w-4" />} label="Video" onClick={onVideo} />
-        <RailButton icon={<Heart className="h-4 w-4" />} label="Heart" onClick={onGift} />
-        <RailButton icon={<Radio className="h-4 w-4" />} label="Go Live" onClick={onGoLive} accent />
-        <RailButton icon={<Share2 className="h-4 w-4" />} label="Share" onClick={onShare} />
-        {reportTarget && (
-          <div className="flex flex-col items-center gap-0.5 text-white/95">
-            <ReportButton
-              targetType={reportTarget.type}
-              targetId={reportTarget.id}
-              size="icon"
-              variant="ghost"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 hover:bg-black/65 hover:text-white text-white/95 backdrop-blur transition active:scale-90 sm:h-9 sm:w-9"
-            />
-            <span className="text-[8px] font-semibold drop-shadow leading-none sm:text-[9px]">Report</span>
-          </div>
-        )}
-      </div>
-
-      {/* Left content stack — compact identity only, no oversized seed title overlay */}
-      <div className="absolute bottom-4 left-3 right-16 z-10 sm:left-5 sm:right-20">
-        <div className="mb-2 max-w-md rounded-lg bg-black/50 px-2.5 py-1.5 text-xs font-semibold leading-tight text-white/90 backdrop-blur-md ring-1 ring-white/10">
-          {item.title}
-        </div>
-        <div className="flex max-w-md items-center gap-2 rounded-xl bg-black/55 p-2.5 backdrop-blur-md ring-1 ring-white/15">
-          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/10">
-            {item.sower_avatar ? (
-              <img src={sowerAvatar ?? undefined} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm font-semibold">{item.sower_name[0]}</div>
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-base font-bold leading-tight">{item.sower_name}</div>
-            <div className="mt-1 flex min-w-0 items-center gap-1.5">
-              {badge && (
-                <span
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase leading-none"
-                  style={{
-                    background: `linear-gradient(135deg, ${badge.color}40, ${badge.color}15)`,
-                    border: `1px solid ${badge.color}66`,
-                    color: badge.color,
-                  }}
-                >
-                  <span>{badge.emoji}</span> {badge.label}{item.kind === 'product' && item.audio_url ? ' · Music' : ''}
-                </span>
-              )}
-              {showBestow && (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold leading-none text-amber-200 ring-1 ring-amber-400/50">
-                  <Gift className="h-3 w-3" /> R{priceBreakdown(Number(item.price ?? 2)).total.toFixed(0)}
-                </span>
-              )}
-            </div>
-          </div>
-          {item.sower_id && (
-            <button
-              onClick={onFollow}
-              className={cn(
-                'shrink-0 rounded-full px-3 py-1 text-xs font-bold transition',
-                isFollowing
-                  ? 'bg-white/20 text-white hover:bg-white/30'
-                  : 'bg-primary text-primary-foreground hover:scale-105'
-              )}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </button>
-          )}
-        </div>
-
-        {/* 45s preview row */}
-        {previewable && (
-          <div className="mt-3 flex items-center gap-3 rounded-2xl bg-black/40 p-2 pr-4 backdrop-blur">
-            <button
-              onClick={togglePlay}
-              disabled={loadingMedia}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg transition hover:scale-105 disabled:opacity-60"
-              aria-label={playing ? 'Pause preview' : 'Play 45s preview'}
-            >
-              {loadingMedia ? (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-              ) : playing ? (
-                <Pause className="h-5 w-5" />
-              ) : (
-                <Play className="h-5 w-5 translate-x-0.5" />
-              )}
-            </button>
-            <div className="flex-1">
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-                <div
-                  className="h-full bg-amber-400 transition-all"
-                  style={{ width: `${(time / PREVIEW) * 100}%` }}
-                />
-              </div>
-            </div>
-            <span className="shrink-0 text-xs tabular-nums text-white/70">
-              {Math.floor(time)}s / {PREVIEW}s
-            </span>
-          </div>
-        )}
-
-        {/* Bestow CTA */}
-        {showBestow && (
-          <button
-            onClick={onBestow}
-            className="mt-3 w-full max-w-md rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-orange-600 px-6 py-3.5 text-base font-bold text-white shadow-[0_8px_30px_-8px_rgba(249,115,22,0.7)] hover:scale-[1.02] active:scale-100"
-          >
-            🎁 Bestow & Get This Seed
-          </button>
-        )}
-        {!showBestow && (
-          <button
-            onClick={onBestow}
-            className="mt-3 w-full max-w-md rounded-full bg-gradient-to-r from-emerald-500 to-lime-500 px-6 py-3 text-base font-bold text-black hover:scale-[1.02]"
-          >
-            <Sparkles className="mr-2 inline h-4 w-4" /> Open this seed
-          </button>
-        )}
-      </div>
-    </div>
+    <SeedCard
+      variant="feed"
+      id={item.id}
+      kind={feedKindToSeedCardKind(item)}
+      title={item.title}
+      subtitle={item.description}
+      cover={item.image}
+      images={item.images ?? undefined}
+      videoUrl={item.video_url}
+      resolveVideoUrl={(raw) => resolvePlayableUrl(raw, null)}
+      ownerId={item.sower_id ?? ''}
+      ownerName={item.sower_name}
+      ownerAvatar={item.sower_avatar}
+      ownerUsername={item.sower_handle}
+      price={item.price ?? 2}
+      openPath={item.href}
+      isProductRow={item.kind !== 'radio_live' && item.kind !== 'radio_recorded' && item.kind !== 'classroom' && item.kind !== 'skilldrop' && item.kind !== 'premium_room' && item.kind !== 'story' && item.kind !== 'studies'}
+      previewUrl={isMusicLike ? item.preview_url ?? null : undefined}
+      productId={isMusicLike && item.kind === 'music' && item.contentSource === 'product' ? item.id : undefined}
+      isActive={isActive}
+      chip={badge ? { emoji: badge.emoji, label: badge.label, color: badge.color } : undefined}
+      isFollowingOverride={isFollowing}
+      onFollowOverride={onFollow}
+      onMessageOverride={onMessage}
+      onVoiceOverride={onVoice}
+      onVideoOverride={onVideo}
+      onShareOverride={onShare}
+      onBestowOverride={onBestow}
+      onGift={onGift}
+      onGoLiveExtra={onGoLive}
+      reportTarget={item.sower_id ? reportTargetForKind(item.kind, item.id) : null}
+    />
   );
 }
 
@@ -2042,26 +1773,6 @@ function SeedActionPanel({
         )}
       </motion.section>
     </motion.div>
-  );
-}
-
-function RailButton({
-  icon, label, onClick, accent,
-}: { icon: React.ReactNode; label: string; onClick: () => void; accent?: boolean }) {
-  return (
-    <button onClick={onClick} className="flex flex-col items-center gap-0.5 text-white/95 hover:text-white">
-      <span
-        className={cn(
-          'flex h-8 w-8 items-center justify-center rounded-full backdrop-blur transition active:scale-90 sm:h-9 sm:w-9',
-          accent
-            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_10px_rgba(244,63,94,0.55)]'
-            : 'bg-black/45 ring-1 ring-white/20 hover:bg-black/65'
-        )}
-      >
-        {icon}
-      </span>
-      <span className="text-[8px] font-semibold drop-shadow leading-none sm:text-[9px]">{label}</span>
-    </button>
   );
 }
 
