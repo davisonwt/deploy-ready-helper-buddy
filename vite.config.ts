@@ -54,9 +54,12 @@ export default defineConfig(({ mode, command }) => ({
       emitError: true,
       emitWarning: true,
     }),
-    // Slice 7a — bundle visualizer (production builds only).
-    // Writes dist/stats.html after `vite build`.
-    command === 'build' && visualizer({
+    // Slice 7a — bundle visualizer, opt-in only (`ANALYZE=true npm run
+    // build`). Previously ran on every `vite build` regardless of mode
+    // (command === 'build' alone, despite the "production builds only"
+    // label) and shipped dist/stats.html -- a 2.6MB diagnostic file with
+    // no reason to be part of a real deploy.
+    command === 'build' && process.env.ANALYZE === 'true' && visualizer({
       filename: 'dist/stats.html',
       template: 'treemap',
       gzipSize: true,
@@ -71,7 +74,13 @@ export default defineConfig(({ mode, command }) => ({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true, // For error tracking and debugging
+    // Was `true` ("for error tracking and debugging") -- disabled: this
+    // was ~31MB of dist size (bigger than the app's own JS) for a
+    // capability nothing in this codebase actually uses (no Sentry or
+    // other source-mapped error tracker wired up, checked). If one gets
+    // added later, re-enable and have it upload maps to that service
+    // rather than shipping them publicly alongside the bundle.
+    sourcemap: false,
     rollupOptions: {},
     minify: 'esbuild', // Use esbuild (built-in, faster than terser)
   },
