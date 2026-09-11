@@ -9,11 +9,9 @@ import { LetItRainPanel } from '../components/LetItRainPanel'
 import { useSacredNow } from '../hooks/useSacredNow'
 import { BeadPopup } from '../components/watch/BeadPopup'
 import SeedSlider from '../components/garden/SeedSlider'
-import LivingSeedCard from '../components/garden/LivingSeedCard'
 import SignedImg from '../components/media/SignedImg'
 import {
-  buildSeedCard, buildOrchardCard, buildMusicCard,
-  buildBookCard, buildVideoCard, deleteRow,
+  buildOrchardCard, deleteRow,
 } from '../components/garden/seedCardBuilders'
 import { toast } from 'sonner'
 import DashboardTribeStats from '../components/dashboard/DashboardTribeStats'
@@ -707,14 +705,10 @@ export default function SeedFlowDashboard() {
   const ownerHandlers = { onEdit: handleEdit, onRepost: handleRepost, onPark: handlePark, onDelete: handleDelete }
 
   // Build per-category card lists for the 5 stacked sliders.
-  const seedSliderCards    = mySeeds.map(s   => buildSeedCard(s, ownerHandlers))
   const orchardSliderCards = [
     ...myOrchards.map(o => buildOrchardCard(o, ownerHandlers)),
     ...bestowedOrchards.map(o => buildOrchardCard(o, {}, { bestowed: true })),
   ]
-  const musicSliderCards   = myMusic.map(m   => buildMusicCard(m, ownerHandlers))
-  const bookSliderCards    = myBooks.map(b   => buildBookCard(b, ownerHandlers))
-  const videoSliderCards   = myVideos.map(v  => buildVideoCard(v, ownerHandlers))
 
   useEffect(() => {
     const total = displaySeeds.length
@@ -1306,58 +1300,21 @@ export default function SeedFlowDashboard() {
             {/* Tribal Feeds button moved to header under SeedFlow active */}
 
 
-            <div style={styles.sectionLabel}>
-              <span>{userCards.length ? 'Your Living Garden' : 'Seeds in motion'}</span>
-              <span style={styles.liveTag}>{userCards.length ? `${mineCards.length} mine · ${bestowedCards.length}💚` : 'LIVE'}</span>
-            </div>
-
-            {/* ── Your own seeds — vertical scrollable feed, one per row ── */}
-            {(() => {
-              const ownCards = [
-                ...seedSliderCards,
-                ...myOrchards.map(o => buildOrchardCard(o, ownerHandlers)),
-                ...musicSliderCards,
-                ...bookSliderCards,
-                ...videoSliderCards,
-              ]
-              if (ownCards.length === 0) {
-                return (
-                  <div style={{
-                    padding: 24, textAlign: 'center',
-                    background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: 14, color: '#94a3b8', fontSize: 13, fontStyle: 'italic',
-                  }}>
-                    You haven't planted any seeds yet — tap "Plant Seed" below to start.
-                  </div>
-                )
-              }
-              return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  {ownCards.map((c) => (
-                    <LivingSeedCard
-                      key={c.id}
-                      seedId={c.liveKey || c.rawId || c.id}
-                      title={c.title}
-                      subtitle={c.subtitle}
-                      image={c.image}
-                      images={c.images}
-                      openPath={c.openPath}
-                      mediaUrl={c.mediaUrl}
-                      mediaKind={c.mediaKind}
-                      previewUrl={c.previewUrl}
-                      productId={c.productId}
-                      badge={c.badge}
-                      mine={c.mine}
-                      whispererSharePct={c.whispererSharePct}
-                      onEdit={c.onEdit ? () => c.onEdit(c) : undefined}
-                      onDelete={c.onDelete ? () => c.onDelete(c) : undefined}
-                      onRepost={c.onRepost ? () => c.onRepost(c) : undefined}
-                      onPark={c.onPark ? () => c.onPark(c) : undefined}
-                    />
-                  ))}
-                </div>
-              )
-            })()}
+            {/* ── Your products/seeds list moved out of the Cockpit (batch 2d,
+                task 3) -- the stall (MyStallCard, above) is the entry point
+                now. Still fully reachable at /my-products; this is just a
+                lightweight way back to it since nothing else on this page
+                linked there before. ── */}
+            <Link
+              to="/my-products"
+              style={{
+                ...styles.sectionLabel,
+                textDecoration: 'none', cursor: 'pointer',
+              }}
+            >
+              <span>{userCards.length ? 'Your products & seeds' : 'Seeds in motion'}</span>
+              <span style={styles.liveTag}>{userCards.length ? `${mineCards.length} mine · ${bestowedCards.length}💚 ›` : 'LIVE'}</span>
+            </Link>
 
             {/* Bestowed orchards — still shown as a rotating slider since they're not "yours" */}
             {bestowedOrchards.length > 0 && (
