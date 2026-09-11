@@ -49,6 +49,12 @@ const CATEGORY_OPTIONS_BY_KIND: Record<Exclude<Kind, 'product'>, OnePickerOption
   forge: toOptions(['Metalwork', 'Woodwork', 'Leather', 'Repairs', 'Custom']),
 };
 
+// The 'product' kind's Category field is free text (Shop stock spans
+// everything, see CATEGORY_OPTIONS_BY_KIND's comment) -- these are one-tap
+// suggestions layered on top of it, not a fixed list. 'mugs' specifically
+// is what StallHotspotSheet's Mugs hotspot filters products.category on.
+const PRODUCT_CATEGORY_SUGGESTIONS = toOptions(['Mugs']);
+
 const MAX_EXTRA_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
 
@@ -437,6 +443,27 @@ export default function SowProductPage() {
                 placeholder="e.g. Home & Kitchen"
                 className="mt-1.5"
               />
+              {/* Free-text field above has no fixed options list (Shop stock
+                  spans everything) -- these are just one-tap suggestions,
+                  not a constraint. 'mugs' lets a Farm-Stalls owner's item
+                  show under their stall's Mugs hotspot (StallHotspotSheet
+                  filters products on category = 'mugs'). */}
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {PRODUCT_CATEGORY_SUGGESTIONS.map((s) => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => setCategory(s.value)}
+                    className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                      category === s.value
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:border-primary/50'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <OnePicker

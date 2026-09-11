@@ -10,7 +10,8 @@
         { "kind": "books", "label": "Books", "x": 6.2, "y": 68.5, "w": 20.0, "h": 21.2 },
         { "kind": "music", "label": "Music", "x": 28.5, "y": 68.5, "w": 20.0, "h": 21.2 },
         { "kind": "lyrics", "label": "Lyrics", "x": 50.8, "y": 68.5, "w": 20.3, "h": 21.2 },
-        { "kind": "story", "label": "My Story", "x": 73.4, "y": 68.5, "w": 20.4, "h": 21.2 }
+        { "kind": "story", "label": "My Story", "x": 73.4, "y": 68.5, "w": 20.4, "h": 21.2 },
+        { "kind": "mugs", "label": "Mugs", "x": 11.5, "y": 51.0, "w": 6.5, "h": 8.0, "caption": "Every one needs a coffee to read a good book" }
       ]
     }
   ],

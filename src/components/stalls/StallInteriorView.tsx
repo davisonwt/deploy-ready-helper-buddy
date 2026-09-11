@@ -39,12 +39,38 @@ function readKindFromHash(): string | null {
   return m ? m[1] : null;
 }
 
+/** Tap-preview delay (mobile): how long a hotspot's caption shows before its sheet opens. */
+const CAPTION_PREVIEW_MS = 800;
+
 export default function StallInteriorView({ ownerId, interiorImageUrl, stallName, hotspots, onClose, isOwner, onEdit }: Props) {
   const { setStallInteriorOpen } = useAppContext();
   const [openKind, setOpenKind] = useState<StallHotspot['kind'] | null>(() => readKindFromHash() as StallHotspot['kind'] | null);
+  // Mobile-only: the hotspot whose caption is being shown for CAPTION_PREVIEW_MS before its sheet opens.
+  const [previewKind, setPreviewKind] = useState<StallHotspot['kind'] | null>(null);
+  const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const rect = useContainImageRect(containerRef, imgRef);
+
+  useEffect(() => () => { if (previewTimerRef.current) clearTimeout(previewTimerRef.current); }, []);
+
+  // A hotspot with a caption gets a hover tooltip on a mouse-primary device
+  // (CSS :hover handles that, see the `group` button below) and, on a
+  // touch-primary device, a brief tap-preview of the same caption before
+  // the sheet opens. `(hover: hover) and (pointer: fine)` is the standard
+  // way to tell those apart -- a real mouse, not just viewport width.
+  function handleHotspotTap(h: StallHotspot) {
+    const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (h.caption && !isFinePointer) {
+      setPreviewKind(h.kind);
+      previewTimerRef.current = setTimeout(() => {
+        setPreviewKind(null);
+        setOpenKind(h.kind);
+      }, CAPTION_PREVIEW_MS);
+      return;
+    }
+    setOpenKind(h.kind);
+  }
 
   useEffect(() => {
     setStallInteriorOpen(true);
@@ -84,15 +110,25 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
             key={h.kind}
             type="button"
             aria-label={h.label}
-            onClick={() => setOpenKind(h.kind)}
-            className="absolute outline-none"
+            onClick={() => handleHotspotTap(h)}
+            className="absolute outline-none group"
             style={{
               left: rect.offsetX + (h.x / 100) * rect.width,
               top: rect.offsetY + (h.y / 100) * rect.height,
               width: (h.w / 100) * rect.width,
               height: (h.h / 100) * rect.height,
             }}
-          />
+          >
+            {h.caption && (
+              <span
+                className={`pointer-events-none absolute bottom-full left-1/2 mb-1.5 w-max max-w-[180px] -translate-x-1/2 rounded-md bg-black/85 px-2 py-1 text-[11px] leading-tight text-white shadow-lg transition-opacity duration-150 ${
+                  previewKind === h.kind ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                }`}
+              >
+                {h.caption}
+              </span>
+            )}
+          </button>
         ))}
 
         <Button

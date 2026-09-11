@@ -41,7 +41,7 @@ export const STALL_TIER_LABEL: Record<StallTier, string> = {
   wayside_table: 'Wayside Table',
 };
 
-export type TileKind = 'books' | 'music' | 'lyrics' | 'story' | 'products' | 'services' | 'orchard' | 'custom';
+export type TileKind = 'books' | 'music' | 'lyrics' | 'story' | 'mugs' | 'products' | 'services' | 'orchard' | 'custom';
 
 export const TILE_KINDS: { id: TileKind; label: string }[] = [
   { id: 'books', label: 'Books' },
@@ -68,6 +68,7 @@ export const TILE_KIND_DEFAULT_TARGET: Record<Exclude<TileKind, 'custom'>, strin
   music: '/music-library',
   lyrics: '/music-library',
   story: '/profile',
+  mugs: '/my-products',
   products: '/my-products',
   services: '/my-products',
   orchard: '/my-orchards',
@@ -93,6 +94,8 @@ export interface StallHotspot {
   y: number;
   w: number;
   h: number;
+  /** Optional short line shown as a hover tooltip (desktop) or a brief tap-preview (mobile, ~800ms) before the sheet opens. Omit for the plain tap-only behavior every other hotspot has today. */
+  caption?: string;
 }
 
 export interface StallTemplate {

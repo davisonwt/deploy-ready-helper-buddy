@@ -29,6 +29,7 @@ const KIND_LABEL: Partial<Record<TileKind, string>> = {
   music: 'Music',
   lyrics: 'Lyrics',
   story: 'My Story',
+  mugs: 'Mugs',
 };
 
 const EMPTY_TEXT: Partial<Record<TileKind, string>> = {
@@ -36,6 +37,7 @@ const EMPTY_TEXT: Partial<Record<TileKind, string>> = {
   music: 'No music playing yet',
   lyrics: 'No lyrics written yet',
   story: 'Story still being written',
+  mugs: 'No mugs on the table yet',
 };
 
 /** Where "Add one" sends the owner, per kind -- the only real create flow each maps to. */
@@ -43,6 +45,7 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
   books: '/sow/book',
   music: '/sow/music',
   lyrics: '/sow/book', // lyrics are a category on the same book form (products.category = 'lyrics') -- no dedicated lyrics form exists
+  mugs: '/sow/product', // mugs are a category on the general Shop product form (products.type = 'product', category = 'mugs')
 };
 
 /**
@@ -69,6 +72,14 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
  *     one of their 25 dj_music_tracks rows).
  *   - story: profiles.bio for the owner -- no price/Bestow (not a
  *     purchasable item).
+ *   - mugs: products (type = 'product', category = 'mugs'). `type` has a
+ *     CHECK constraint with no 'merch' value (confirmed live against
+ *     products_type_check) so, like lyrics, this is a category filter on
+ *     an existing type rather than a new type needing a migration. Strict
+ *     category = 'mugs' -- an owner's existing product under a different
+ *     category (e.g. 'kitchenware') won't show here until recategorized
+ *     via the Mugs quick-pick on /sow/product (see the Farm-Stalls batch
+ *     2d audit for a real example of this).
  */
 export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, onClose }: Props) {
   const navigate = useNavigate();
@@ -113,7 +124,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
       const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
 
       if (sowerId || companyId) {
-        const typeFilter = kind === 'music' ? ['music'] : ['book', 'ebook'];
+        const typeFilter = kind === 'music' ? ['music'] : kind === 'mugs' ? ['product'] : ['book', 'ebook'];
         let q = supabase.from('products').select('id, title, description, cover_image_url, price, category').in('type', typeFilter);
         const orParts: string[] = [];
         if (sowerId) orParts.push(`sower_id.eq.${sowerId}`);
@@ -122,8 +133,10 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
         const { data } = await q.order('created_at', { ascending: false }).limit(100);
         for (const p of (data ?? []) as { id: string; title: string; description: string | null; cover_image_url: string | null; price: number | null; category: string | null }[]) {
           const isLyrics = (p.category ?? '').toLowerCase() === 'lyrics';
+          const isMugs = (p.category ?? '').toLowerCase() === 'mugs';
           if (kind === 'lyrics' && !isLyrics) continue;
           if (kind === 'books' && isLyrics) continue;
+          if (kind === 'mugs' && !isMugs) continue;
           byNormTitle.set(normalize(p.title), {
             id: p.id,
             title: p.title,
