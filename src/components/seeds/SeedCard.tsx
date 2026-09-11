@@ -39,11 +39,10 @@ export interface SeedCardProps {
   openPath: string;
   /**
    * True when `id` is a real `products.id` (or `orchards.id` for kind
-   * 'orchard') -- Heart (product_likes/orchard_likes) and the Whisperer
-   * badge/apply (product_whisperer_assignments) are both FK'd to those
-   * tables, so both are hidden rather than broken for a row sourced from
-   * somewhere else (e.g. dj_music_tracks, the legacy sower_books table).
-   * Default true.
+   * 'orchard') -- the Whisperer badge/apply (product_whisperer_assignments)
+   * is FK'd to those tables, so it's hidden rather than broken for a row
+   * sourced from somewhere else (e.g. dj_music_tracks, the legacy
+   * sower_books table). Default true.
    */
   isProductRow?: boolean;
   /** Music only -- the row's own 45s clip URL. */
@@ -94,8 +93,6 @@ export interface SeedCardProps {
   ownerUsername?: string | null;
   /** Feed only -- a role/category chip shown beside the gold Whisperer badge (e.g. a wandering-role badge). */
   chip?: { emoji: string; label: string; color: string } | null;
-  /** Feed only -- short "what you get" text appended to the Bestow button; defaults to a sensible per-kind phrase. */
-  bestowWhatYouGet?: string | null;
   /** Feed only -- true while this card is the one centered/visible in the feed; gates autoplay. Caller-driven (the feed page already tracks this via its own IntersectionObserver). */
   isActive?: boolean;
 
@@ -121,9 +118,9 @@ export interface SeedCardProps {
    * letting SeedCard run its own per-card follow-status query.
    */
   isFollowingOverride?: boolean;
-  /** Feed only -- an extra rail action distinct from Heart (a small gift, not a like). Rail button only renders when this is set. */
+  /** An extra rail action distinct from Heart (Heart is itself a small gift now -- see below). Rail button only renders when this is set. */
   onGift?: () => void;
-  /** Feed only -- an extra rail action, unconditional (unlike Step In, which only ever shows on an actually-live orchard card). Rail button only renders when this is set. */
+  /** An extra rail action, unconditional (unlike Step In/Go Live, which only ever shows on an actually-live orchard card). Rail button only renders when this is set. */
   onGoLiveExtra?: () => void;
   /**
    * Overrides SeedCard's own KIND_REPORT_TYPE[kind]-derived Report target
@@ -152,13 +149,8 @@ const KIND_PLACEHOLDER: Record<SeedCardKind, 'product' | 'music' | 'ebook' | 'or
   video: 'video',
 };
 
-const KIND_WHAT_YOU_GET: Record<SeedCardKind, string> = {
-  seed: 'this seed',
-  orchard: 'this planting',
-  music: 'the full track',
-  book: 'the full book',
-  video: 'this video',
-};
+/** 10c / 50c / $1 / $5 / $10 -- Heart's small-gift picker amounts. */
+const HEART_AMOUNTS = [0.1, 0.5, 1, 5, 10];
 
 /**
  * The one shared card for every seed/product/orchard/track/book (Flow v2
@@ -168,10 +160,18 @@ const KIND_WHAT_YOU_GET: Record<SeedCardKind, string> = {
  * usePreviewPlayer/PreviewPlayer every other seed card already shares) or
  * "Read a page" (book, a 2-page StoryPdfViewer preview), Bestow (Donate
  * merged in), Message/Voice/Video (get_or_create_direct_room, same RPC
- * ChatApp's own call buttons use), Heart, Follow (sower line), Share,
- * Report, Step In (orchard cards only, only while actually live), and a
- * gold Whisperer-% badge + "Whisper this" apply -- both read/write
- * product_whisperer_assignments for real, no hardcoded fallback percent.
+ * ChatApp's own call buttons use), Heart (a small gift, not a like -- see
+ * below), Follow (sower line), Share, Report, Step In/Go Live (orchard
+ * cards only, only while actually live), and a gold Whisperer-% badge +
+ * "Whisper this" apply -- both read/write product_whisperer_assignments for
+ * real, no hardcoded fallback percent.
+ *
+ * Heart is NOT product_likes/orchard_likes -- it opens a small-bestowal
+ * amount picker (10c/50c/$1/$5/$10 USDC) that feeds the exact same
+ * useGiftBestowal + ConfirmBestowModal path the main Bestow button uses
+ * (same fee breakdown, same provider picker), just with that picked amount
+ * instead of the card's own price. No product-purchase or like-table
+ * writes happen here at all.
  *
  * The badge itself reads get_active_whisperer_badge (supabase/migrations/
  * 20260911190000_whisperer_active_badge_rpc.sql), a narrow SECURITY DEFINER
@@ -183,27 +183,32 @@ const KIND_WHAT_YOU_GET: Record<SeedCardKind, string> = {
  * correctly scopes that to the applying whisperer, which is exactly who
  * should see it).
  *
- * Two variants share every bit of the state/logic above: 'compact' (the
- * original grid/stall-row card, default, unchanged) and 'feed' (full-bleed,
- * TikTok-style -- built for the Tribal Gardens live feed). Feed adds a
- * gallery/video with autoplay-muted-while-active + tap-to-unmute, a sower
- * link to /stall/:username, a real "Bestow $X — what you get" label, and
- * puts "Whisper this" (3-state: apply -> Application pending -> Whispering
- * ✓) under Follow next to the Whisperer badge and an optional role/tier
- * chip.
+ * Two variants share every bit of the state/logic above, including the
+ * exact same right-hand action rail (Message · Voice · Video · Heart · Go
+ * Live/Step In (live orchards only) · Share · Report), the 45s sample bar,
+ * and the full-width "🎁 Bestow & Get This Seed — $X" button -- 'compact'
+ * (the grid/stall-row card, default) is the same card at a smaller size,
+ * not a reduced one, and 'feed' (full-bleed, TikTok-style -- the Tribal
+ * Gardens live feed) additionally supports a gallery/video with
+ * autoplay-muted-while-active + tap-to-unmute, a sower link to
+ * /stall/:username, and an optional role/tier chip beside the Whisperer
+ * badge. The owner viewing their own card sees the whole rail greyed out
+ * (rendered, not hidden, so they can see what a visitor gets) rather than
+ * missing -- Owner Menu's "View as visitor" toggle (forceViewerIsOwner) is
+ * what actually makes it live for them.
  */
 export default function SeedCard({
   id, kind, title, subtitle, cover, ownerId, ownerName, ownerAvatar,
   price, openPath, isProductRow = true, previewUrl, productId, pdfUrl,
   hideSowerLine, className = '', fullDescription, tapBehavior = 'navigate', forceViewerIsOwner,
-  variant = 'compact', images, videoUrl, resolveVideoUrl, ownerUsername, chip, bestowWhatYouGet, isActive,
+  variant = 'compact', images, videoUrl, resolveVideoUrl, ownerUsername, chip, isActive,
   onMessageOverride, onVoiceOverride, onVideoOverride, onShareOverride, onBestowOverride,
   onFollowOverride, isFollowingOverride,
   onGift, onGoLiveExtra, reportTarget,
 }: SeedCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { followUser, unfollowUser, likeProduct, likeOrchard, shareContent } = useSocialActions();
+  const { followUser, unfollowUser, shareContent } = useSocialActions();
   const { send: sendGift, loading: bestowing } = useGiftBestowal();
   const { liveSeeds, goLive: _goLive, endLive } = useTribalLiveOrchard();
   void _goLive; // Step In only ever joins an already-live orchard here -- starting a new session is the Owner Menu's own Go Live, not this card's job.
@@ -211,12 +216,16 @@ export default function SeedCard({
   const isFeed = variant === 'feed';
   const isInline = tapBehavior === 'inline';
   const viewerIsOwner = forceViewerIsOwner !== undefined ? forceViewerIsOwner : (!!user && user.id === ownerId);
-  const heartEnabled = kind === 'orchard' || isProductRow;
+  // The owner sees their own rail rendered, not hidden -- just visually
+  // disabled, so they know what a visitor gets. "View as visitor"
+  // (forceViewerIsOwner=false) is what makes it live for them again.
+  const railDisabled = viewerIsOwner;
 
   const [isFollowing, setIsFollowing] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [bestowOpen, setBestowOpen] = useState(false);
+  const [bestowAmount, setBestowAmount] = useState<number | null>(null);
+  const [heartPickerOpen, setHeartPickerOpen] = useState(false);
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
   const [detailOverlayOpen, setDetailOverlayOpen] = useState(false);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
@@ -283,16 +292,6 @@ export default function SeedCard({
   const following = isFollowingOverride !== undefined ? isFollowingOverride : isFollowing;
 
   useEffect(() => {
-    if (!user || !heartEnabled) { setIsLiked(false); return; }
-    let alive = true;
-    const table = kind === 'orchard' ? 'orchard_likes' : 'product_likes';
-    const col = kind === 'orchard' ? 'orchard_id' : 'product_id';
-    supabase.from(table).select('id').eq(col, id).eq('user_id', user.id).maybeSingle()
-      .then(({ data }) => { if (alive) setIsLiked(!!data); });
-    return () => { alive = false; };
-  }, [user, id, kind, heartEnabled]);
-
-  useEffect(() => {
     if (!isProductRow) return;
     let alive = true;
     // Public-safe: get_active_whisperer_badge (supabase/migrations/
@@ -356,11 +355,16 @@ export default function SeedCard({
     }
   };
 
-  const handleHeart = async (e: React.MouseEvent) => {
+  const handleHeartClick = (e: React.MouseEvent) => {
     e.stopPropagation(); e.preventDefault();
-    if (!user) { toast.error('Please login to like'); return; }
-    const r = kind === 'orchard' ? await likeOrchard(id) : await likeProduct(id);
-    setIsLiked(r.success);
+    if (!user) { toast.error('Please login to send a gift'); return; }
+    setHeartPickerOpen(true);
+  };
+
+  const chooseHeartAmount = (amount: number) => {
+    setHeartPickerOpen(false);
+    setBestowAmount(amount);
+    setBestowOpen(true);
   };
 
   const handleShare = async (e: React.MouseEvent) => {
@@ -399,25 +403,28 @@ export default function SeedCard({
     if (roomId) window.open(`/call/chat_room/${roomId}`, '_blank', 'noopener,noreferrer');
   };
 
+  const effectiveBestowAmount = bestowAmount ?? (price && price > 0 ? price : 5);
+
   const handleBestowConfirm = async (provider: PayoutProviderId) => {
-    const amount = price && price > 0 ? price : 5;
     const result = await sendGift({
       recipientId: ownerId,
-      amount,
+      amount: effectiveBestowAmount,
       contextKind: 'chat_tip',
       contextId: id,
       provider,
-      message: `Bestowal for "${title}"`,
+      message: bestowAmount != null ? `A small gift for "${title}"` : `Bestowal for "${title}"`,
     });
     if (result.success) {
-      toast.success(`${ownerName ?? 'They'} will receive your bestowal!`);
+      toast.success(`${ownerName ?? 'They'} will receive your gift!`);
       setBestowOpen(false);
+      setBestowAmount(null);
     }
   };
 
   const handleBestowClick = (e: React.MouseEvent) => {
     e.stopPropagation(); e.preventDefault();
     if (onBestowOverride) { onBestowOverride(); return; }
+    setBestowAmount(null);
     setBestowOpen(true);
   };
 
@@ -452,9 +459,7 @@ export default function SeedCard({
     toast.success('Request sent — the sower must approve before you earn anything.');
   };
 
-  const bestowLabel = price && price > 0
-    ? `Bestow $${price.toFixed(2)} — ${bestowWhatYouGet ?? KIND_WHAT_YOU_GET[kind]}`
-    : `Bestow — ${bestowWhatYouGet ?? KIND_WHAT_YOU_GET[kind]}`;
+  const bestowLabel = `Bestow & Get This Seed${price && price > 0 ? ` — $${price.toFixed(2)}` : ''}`;
 
   const whisperBlock = isProductRow && !viewerIsOwner && user && (
     myAssignmentStatus ? (
@@ -532,7 +537,7 @@ export default function SeedCard({
               onClick={handleBestowClick}
               className="w-full rounded-md bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-amber-950 text-sm font-bold py-2 transition-colors"
             >
-              Bestow {price && price > 0 ? `$${price.toFixed(2)}` : ''}
+              🎁 {bestowLabel}
             </button>
           )}
         </div>
@@ -558,14 +563,39 @@ export default function SeedCard({
   const bestowModal = (
     <ConfirmBestowModal
       isOpen={bestowOpen}
-      onClose={() => setBestowOpen(false)}
+      onClose={() => { setBestowOpen(false); setBestowAmount(null); }}
       title={title}
-      amount={price && price > 0 ? price : 5}
+      amount={effectiveBestowAmount}
       onConfirm={handleBestowConfirm}
       confirming={bestowing}
       actionLabel="Bestow"
       enablePaystack
     />
+  );
+
+  const heartPicker = heartPickerOpen && (
+    <div className="fixed inset-0 z-[10060] bg-black/70 flex items-center justify-center p-4" onClick={() => setHeartPickerOpen(false)}>
+      <div className="w-full max-w-xs rounded-xl bg-[#180f08] border border-amber-500/20 p-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-serif text-amber-100">Heart — a small gift</p>
+          <button type="button" onClick={() => setHeartPickerOpen(false)} aria-label="Close">
+            <X className="h-4 w-4 text-amber-100/70" />
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {HEART_AMOUNTS.map((amount) => (
+            <button
+              key={amount}
+              type="button"
+              onClick={() => chooseHeartAmount(amount)}
+              className="flex-1 min-w-[3.5rem] rounded-md border border-amber-400/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 text-sm font-bold py-2 transition-colors"
+            >
+              {amount < 1 ? `${Math.round(amount * 100)}¢` : `$${amount}`}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 
   if (isFeed) {
@@ -601,26 +631,27 @@ export default function SeedCard({
 
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
 
-          {/* Right action rail */}
+          {/* Right action rail -- greyed (not hidden) for the owner viewing
+              their own card, so they can see what a visitor gets; Owner
+              Menu's "View as visitor" is what makes it live for them. */}
           <div className="absolute right-2 bottom-4 top-[12rem] z-10 flex flex-col items-center justify-start gap-1 overflow-y-auto no-scrollbar sm:right-3 sm:bottom-6 sm:top-[13rem] sm:gap-1.5">
-            <FeedRailButton icon={<MessageCircle className="h-4 w-4" />} label="Message" onClick={handleMessage} disabled={starting === 'message'} />
-            <FeedRailButton icon={<Phone className="h-4 w-4" />} label="Voice" onClick={handleCall} disabled={starting === 'voice'} dataCall="voice" />
-            <FeedRailButton icon={<VideoIcon className="h-4 w-4" />} label="Video" onClick={handleCall} disabled={starting === 'video'} dataCall="video" />
-            {heartEnabled && (
-              <FeedRailButton icon={<Heart className={`h-4 w-4 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />} label="Heart" onClick={handleHeart} />
-            )}
-            {onGift && <FeedRailButton icon={<Gift className="h-4 w-4" />} label="Gift" onClick={(e) => { e.stopPropagation(); e.preventDefault(); onGift(); }} />}
+            <FeedRailButton icon={<MessageCircle className="h-4 w-4" />} label="Message" onClick={handleMessage} disabled={railDisabled || starting === 'message'} />
+            <FeedRailButton icon={<Phone className="h-4 w-4" />} label="Voice" onClick={handleCall} disabled={railDisabled || starting === 'voice'} dataCall="voice" />
+            <FeedRailButton icon={<VideoIcon className="h-4 w-4" />} label="Video" onClick={handleCall} disabled={railDisabled || starting === 'video'} dataCall="video" />
+            <FeedRailButton icon={<Heart className="h-4 w-4" />} label="Heart" title="Heart — a small gift" onClick={handleHeartClick} disabled={railDisabled} />
+            {onGift && <FeedRailButton icon={<Gift className="h-4 w-4" />} label="Gift" onClick={(e) => { e.stopPropagation(); e.preventDefault(); onGift(); }} disabled={railDisabled} />}
             {(onGoLiveExtra || (kind === 'orchard' && isLiveHere)) && (
               <FeedRailButton
                 icon={<Radio className="h-4 w-4" />}
                 label={kind === 'orchard' && isLiveHere && !onGoLiveExtra ? 'Step In' : 'Go Live'}
                 onClick={(e) => { e.stopPropagation(); e.preventDefault(); onGoLiveExtra ? onGoLiveExtra() : handleStepIn(e); }}
+                disabled={railDisabled}
                 accent
               />
             )}
-            <FeedRailButton icon={<Share2 className="h-4 w-4" />} label="Share" onClick={handleShare} />
-            {!viewerIsOwner && effectiveReportTarget && (
-              <div className="flex flex-col items-center gap-0.5 text-white/95">
+            <FeedRailButton icon={<Share2 className="h-4 w-4" />} label="Share" onClick={handleShare} disabled={railDisabled} />
+            {effectiveReportTarget && (
+              <div className={`flex flex-col items-center gap-0.5 text-white/95 ${railDisabled ? 'opacity-40 pointer-events-none' : ''}`}>
                 <ReportButton
                   targetType={effectiveReportTarget.type}
                   targetId={effectiveReportTarget.id}
@@ -716,6 +747,7 @@ export default function SeedCard({
         {detailOverlay}
         {liveOverlay}
         {bestowModal}
+        {heartPicker}
       </>
     );
   }
@@ -745,11 +777,39 @@ export default function SeedCard({
                 🎤 Whisperer {badgePct}%
               </span>
             )}
-            {kind === 'orchard' && isLiveHere && (
-              <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">
-                <Radio className="h-3 w-3" /> LIVE
-              </span>
-            )}
+
+            {/* Same right-hand action rail as the feed variant -- one card,
+                two sizes, nothing dropped here. Greyed (not hidden) for the
+                owner viewing their own card. */}
+            <div className="absolute right-1 top-1 bottom-1 z-10 flex flex-col items-center justify-start gap-1 overflow-y-auto no-scrollbar">
+              <FeedRailButton icon={<MessageCircle className="h-3.5 w-3.5" />} label="Message" onClick={handleMessage} disabled={railDisabled || starting === 'message'} />
+              <FeedRailButton icon={<Phone className="h-3.5 w-3.5" />} label="Voice" onClick={handleCall} disabled={railDisabled || starting === 'voice'} dataCall="voice" />
+              <FeedRailButton icon={<VideoIcon className="h-3.5 w-3.5" />} label="Video" onClick={handleCall} disabled={railDisabled || starting === 'video'} dataCall="video" />
+              <FeedRailButton icon={<Heart className="h-3.5 w-3.5" />} label="Heart" title="Heart — a small gift" onClick={handleHeartClick} disabled={railDisabled} />
+              {onGift && <FeedRailButton icon={<Gift className="h-3.5 w-3.5" />} label="Gift" onClick={(e) => { e.stopPropagation(); e.preventDefault(); onGift(); }} disabled={railDisabled} />}
+              {(onGoLiveExtra || (kind === 'orchard' && isLiveHere)) && (
+                <FeedRailButton
+                  icon={<Radio className="h-3.5 w-3.5" />}
+                  label={kind === 'orchard' && isLiveHere && !onGoLiveExtra ? 'Step In' : 'Go Live'}
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); onGoLiveExtra ? onGoLiveExtra() : handleStepIn(e); }}
+                  disabled={railDisabled}
+                  accent
+                />
+              )}
+              <FeedRailButton icon={<Share2 className="h-3.5 w-3.5" />} label="Share" onClick={handleShare} disabled={railDisabled} />
+              {effectiveReportTarget && (
+                <div className={`flex flex-col items-center gap-0.5 text-white/95 ${railDisabled ? 'opacity-40 pointer-events-none' : ''}`}>
+                  <ReportButton
+                    targetType={effectiveReportTarget.type}
+                    targetId={effectiveReportTarget.id}
+                    size="icon"
+                    variant="ghost"
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 hover:bg-black/65 hover:text-white text-white/95 backdrop-blur transition active:scale-90"
+                  />
+                  <span className="text-[7px] font-semibold drop-shadow leading-none">Report</span>
+                </div>
+              )}
+            </div>
           </div>
         </button>
 
@@ -790,56 +850,17 @@ export default function SeedCard({
             </button>
           )}
 
-          {kind === 'orchard' && isLiveHere && (
-            <button
-              type="button"
-              onClick={handleStepIn}
-              className="w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold py-1.5 transition-colors"
-            >
-              <Radio className="h-3.5 w-3.5" /> Step In
-            </button>
-          )}
-
           {!viewerIsOwner && (
             <button
               type="button"
               onClick={handleBestowClick}
               className="w-full rounded-md bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-amber-950 text-xs font-bold py-1.5 transition-colors"
             >
-              Bestow {price && price > 0 ? `$${price.toFixed(2)}` : ''}
+              🎁 {bestowLabel}
             </button>
           )}
 
           {whisperBlock}
-
-          <div className="flex items-center justify-between pt-1">
-            {!viewerIsOwner ? (
-              <div className="flex items-center gap-1">
-                <button type="button" aria-label="Message" onClick={handleMessage} disabled={starting === 'message'} className="p-1.5 rounded-full hover:bg-amber-500/10 text-amber-100/60 disabled:opacity-50">
-                  <MessageCircle className="h-4 w-4" />
-                </button>
-                <button type="button" aria-label="Voice call" data-call="voice" onClick={handleCall} disabled={starting === 'voice'} className="p-1.5 rounded-full hover:bg-amber-500/10 text-amber-100/60 disabled:opacity-50">
-                  <Phone className="h-4 w-4" />
-                </button>
-                <button type="button" aria-label="Video call" data-call="video" onClick={handleCall} disabled={starting === 'video'} className="p-1.5 rounded-full hover:bg-amber-500/10 text-amber-100/60 disabled:opacity-50">
-                  <VideoIcon className="h-4 w-4" />
-                </button>
-              </div>
-            ) : <span />}
-            <div className="flex items-center gap-1">
-              {heartEnabled && (
-                <button type="button" aria-label="Heart" onClick={handleHeart} disabled={!user} className="p-1.5 rounded-full hover:bg-amber-500/10 disabled:opacity-50">
-                  <Heart className={`h-4 w-4 ${isLiked ? 'fill-rose-500 text-rose-500' : 'text-amber-100/60'}`} />
-                </button>
-              )}
-              <button type="button" aria-label="Share" onClick={handleShare} className="p-1.5 rounded-full hover:bg-amber-500/10 text-amber-100/60">
-                <Share2 className="h-4 w-4" />
-              </button>
-              {!viewerIsOwner && effectiveReportTarget && (
-                <ReportButton targetType={effectiveReportTarget.type} targetId={effectiveReportTarget.id} variant="ghost" size="icon" className="h-7 w-7 text-amber-100/60 hover:bg-amber-500/10" />
-              )}
-            </div>
-          </div>
         </div>
       </Card>
 
@@ -847,17 +868,19 @@ export default function SeedCard({
       {detailOverlay}
       {liveOverlay}
       {bestowModal}
+      {heartPicker}
     </>
   );
 }
 
-function FeedRailButton({ icon, label, onClick, disabled, accent, dataCall }: {
+function FeedRailButton({ icon, label, onClick, disabled, accent, dataCall, title }: {
   icon: React.ReactNode;
   label: string;
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   accent?: boolean;
   dataCall?: string;
+  title?: string;
 }) {
   return (
     <button
@@ -866,6 +889,7 @@ function FeedRailButton({ icon, label, onClick, disabled, accent, dataCall }: {
       disabled={disabled}
       data-call={dataCall}
       aria-label={label}
+      title={title ?? label}
       className="flex flex-col items-center gap-0.5 text-white/95 disabled:opacity-50"
     >
       <span className={`flex h-8 w-8 items-center justify-center rounded-full backdrop-blur ring-1 transition active:scale-90 sm:h-9 sm:w-9 ${accent ? 'bg-rose-500/80 ring-rose-300/40' : 'bg-black/45 ring-white/20 hover:bg-black/65'}`}>
