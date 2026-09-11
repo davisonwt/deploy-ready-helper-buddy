@@ -158,7 +158,7 @@ export default function DashboardTribeStats() {
       }}
     >
       {tile("/my-tribe", <Users size={20} />, "My Tribe", tribeCount, <div style={subLine}>members in your tribe</div>, "#22c55e")}
-      {tile("/wallet-settings", <Coins size={20} />, "Bestowals", `${bestowals.total.toFixed(2)}`, (
+      {tile("/settings/payouts", <Coins size={20} />, "Bestowals", `${bestowals.total.toFixed(2)}`, (
         <>
           <div style={subLine}>{bestowals.count} received (USD)</div>
           <div
@@ -173,7 +173,7 @@ export default function DashboardTribeStats() {
         </>
       ), "#f59e0b")}
       {tile("/chatapp?filter=unread", <MessageCircle size={20} />, "Unread", unread, <div style={subLine}>{unread ? "tap to read" : "all caught up"}</div>, "#22d3ee")}
-      {tile("/wallet-settings", <Wallet size={20} />, "My Wallet",
+      {tile("/settings/payouts", <Wallet size={20} />, "My Wallet",
         !walletAddress
           ? "Connect"
           : walletBalanceLoading && walletBalance === null && !walletBalanceError

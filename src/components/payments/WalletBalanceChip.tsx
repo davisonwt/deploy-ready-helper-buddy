@@ -40,7 +40,7 @@ export default function WalletBalanceChip() {
 
   return (
     <Link
-      to="/wallet-settings"
+      to="/settings/payouts"
       className={cn(
         'fixed bottom-6 right-24 z-50 flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-semibold shadow-lg backdrop-blur transition-colors',
         !address

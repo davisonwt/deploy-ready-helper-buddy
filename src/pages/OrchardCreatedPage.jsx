@@ -67,7 +67,7 @@ export default function OrchardCreatedPage() {
 
   const handleViewOrchard = () => {
     console.log("🔍 Navigating to view orchard");
-    navigate(`/orchards/${orchard.id}`);
+    navigate(`/orchard/${orchard.id}`);
   }
 
   const handleViewMyOrchards = () => {

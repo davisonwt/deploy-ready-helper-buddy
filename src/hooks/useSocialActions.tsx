@@ -158,7 +158,7 @@ export function useSocialActions() {
         type === 'product' ? `/products/${id}` :
         type === 'orchard' ? `/orchard/${id}` :
         type === 'video'   ? `/video/${id}` :
-        type === 'seed'    ? `/seed/${id}` :
+        type === 'seed'    ? `/live/${id}/room` :
         id.startsWith('/') ? id : `/${id}`;
       let url = `${window.location.origin}${path}`;
       // Burn the sharer's invitation code into every share so new sign-ups join their tribe

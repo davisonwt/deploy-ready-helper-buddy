@@ -106,7 +106,7 @@ export default function GosatSubscriptionsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/admin')}>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/admin/dashboard')}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Admin
         </Button>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

@@ -281,7 +281,7 @@ export default function LiveRoomDetailPage() {
           jitsiRoom={presence.jitsi_room}
           isHost={isHost}
           images={seedMedia.images}
-          openPath={`/seed/${seedId}`}
+          openPath={`/live/${seedId}/room`}
           onClose={() => setShowStage(false)}
         />
       )}

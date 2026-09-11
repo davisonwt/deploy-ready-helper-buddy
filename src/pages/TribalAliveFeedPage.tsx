@@ -380,7 +380,7 @@ export default function TribalAliveFeedPage() {
           sower_handle: handleOf(profileMap[s.gifter_id]),
           wandering_role: wanderingFor({ kind: 'seed' }),
           created_at: s.created_at,
-          href: `/seed/${s.id}`,
+          href: `/live/${s.id}/room`,
         }));
 
         const productItems: FeedItem[] = (productsRes.data || []).map((p: any) => {

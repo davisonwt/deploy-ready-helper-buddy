@@ -62,7 +62,7 @@ export default function OrchardErrorPage() {
       
       if (orchard && orchard.status === 'active') {
         console.log('✅ Retry successful, redirecting...');
-        window.location.href = `/orchards/${orchardId}?retry=${retryCount + 1}&success=true`;
+        window.location.href = `/orchard/${orchardId}?retry=${retryCount + 1}&success=true`;
       } else {
         console.warn('⚠️ Retry failed, orchard not available');
         setLoading(false);
@@ -83,7 +83,7 @@ export default function OrchardErrorPage() {
 
   const handleForceNavigation = () => {
     console.log('🚨 Force navigation activated');
-    window.location.href = `/orchards/${orchardId}?force=true&cache_cleared=true&timestamp=${Date.now()}`;
+    window.location.href = `/orchard/${orchardId}?force=true&cache_cleared=true&timestamp=${Date.now()}`;
   };
 
   const getErrorType = () => {

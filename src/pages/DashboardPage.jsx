@@ -577,7 +577,7 @@ export default function SeedFlowDashboard() {
       description: s.description || 'A seed you planted',
       image: (s.images && s.images[0]) || 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
       color: meta.color, glow: meta.glow, emoji: meta.emoji,
-      playPath: `/seed/${s.id}`, bookPath: `/seed/${s.id}`,
+      playPath: `/live/${s.id}/room`, bookPath: `/live/${s.id}/room`,
       mine: true, badge: { label: 'seed', emoji: '🌱', color: '#22c55e' },
     }
   })
@@ -620,7 +620,7 @@ export default function SeedFlowDashboard() {
     description: b.description || 'A book you have written',
     image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=800&q=80',
     color: '#7c2d12', glow: '#fb923c', emoji: '📚',
-    playPath: `/seed/${b.id}`, bookPath: `/seed/${b.id}`,
+    playPath: `/live/${b.id}/room`, bookPath: `/live/${b.id}/room`,
     mine: true, badge: { label: 'book', emoji: '📚', color: '#fb923c' },
   }))
 
@@ -664,7 +664,7 @@ export default function SeedFlowDashboard() {
   const handleEdit = (card) => {
     const rid = card.rawId ?? card.id?.replace(/^[a-z]+-/, '')
     if (card.id.startsWith('orchard-')) navigate(`/create-orchard?edit=${rid}`)
-    else if (card.id.startsWith('seed-')) navigate(`/seed/${rid}?edit=1`)
+    else if (card.id.startsWith('seed-')) navigate(`/live/${rid}/room?edit=1`)
     else if (card.id.startsWith('music-')) {
       // Music cards can be a sower-published product (single/album) or a
       // DJ track — only products have an edit page; music-library is the

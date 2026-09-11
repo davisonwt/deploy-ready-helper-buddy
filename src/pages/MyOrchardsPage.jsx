@@ -178,7 +178,7 @@ export default function MyOrchardsPage() {
   const handleEditCard = (card) => {
     const rid = card.rawId ?? card.id?.replace(/^[a-z]+-/, '')
     if (card.id.startsWith('orchard-')) navigate(`/edit-orchard/${rid}`)
-    else if (card.id.startsWith('seed-'))   navigate(`/seed/${rid}?edit=1`)
+    else if (card.id.startsWith('seed-'))   navigate(`/live/${rid}/room?edit=1`)
     else if (card.id.startsWith('music-')) {
       // Music cards can be a sower-published product (single/album) or a
       // DJ track — only products have an edit page; music-library is the
@@ -703,7 +703,7 @@ export default function MyOrchardsPage() {
 
                               {/* Action buttons */}
                               <div className="flex flex-wrap gap-2 pt-2 mt-auto">
-                                <Link to={`/orchards/${seed.id}`} className='flex-1 min-w-[80px]' style={{ textDecoration: 'none' }}>
+                                <Link to={`/orchard/${seed.id}`} className='flex-1 min-w-[80px]' style={{ textDecoration: 'none' }}>
                                   <Button variant='outline' size='sm' className='w-full backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 text-white hover:bg-[#0f172a]/90'>
                                     <Eye className='h-4 w-4 mr-1' />View
                                   </Button>

@@ -23,7 +23,7 @@ export default function SupportUsPage() {
               <Link to="/free-will-gifting">Free-Will Gift</Link>
             </Button>
             <Button asChild variant="secondary">
-              <Link to="/tithing">Platform Contribution</Link>
+              <Link to="/admin-fee">Platform Contribution</Link>
             </Button>
             {S2G_BALANCE_ENABLED && (
               <Button asChild variant="outline">

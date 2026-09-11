@@ -324,7 +324,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
                       {list.slice(0, 12).map((s) => (
                         <Link
                           key={s.id}
-                          to={`/seed/${s.id}`}
+                          to={`/live/${s.id}/room`}
                           className="snap-start shrink-0 w-40 rounded-lg overflow-hidden border border-border bg-background hover:border-primary/60 transition-colors"
                         >
                           <div
@@ -424,7 +424,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
                               {items.map((s) => (
                                 <Link
                                   key={s.id}
-                                  to={`/seed/${s.id}`}
+                                  to={`/live/${s.id}/room`}
                                   className="snap-start shrink-0 w-40 rounded-lg overflow-hidden border border-border bg-background hover:border-primary/60 transition-colors"
                                 >
                                   <div

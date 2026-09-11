@@ -97,7 +97,7 @@ function LiveNowStrip({ className = '' }: { className?: string }) {
           jitsiRoom={joining.jitsi_room}
           isHost={joining.user_id === user?.id}
           images={joining.seed_image ? [joining.seed_image] : []}
-          openPath={`/seed/${joining.seed_id}`}
+          openPath={`/live/${joining.seed_id}/room`}
           onClose={() => setJoining(null)}
         />
       )}

@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 const TrustPage = lazy(() => import('@/pages/TrustPage'));
 import { Card, CardContent } from '@/components/ui/card';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -178,6 +178,18 @@ export const LoadingFallback = () => (
 
 const OAuthConsent = lazy(() => import('@/pages/OAuthConsent'));
 
+/** Flow v2 step 1: redirects a duplicate parameterized route to its real
+ * one, carrying the param value across (`to` uses the same `:name`
+ * placeholder as the route it's mounted on). */
+function RedirectWithParams({ to }: { to: string }) {
+  const params = useParams();
+  const path = Object.entries(params).reduce(
+    (acc, [key, value]) => (value != null ? acc.replace(`:${key}`, value) : acc),
+    to,
+  );
+  return <Navigate to={path} replace />;
+}
+
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
@@ -316,18 +328,16 @@ const AppRoutes = () => (
     <Route path="/live/:seedId/room" element={
       <ProtectedRoute><RequireVerification><LiveRoomDetailPage /></RequireVerification></ProtectedRoute>
     } />
-    <Route path="/seed/:seedId" element={
-      <ProtectedRoute><RequireVerification><LiveRoomDetailPage /></RequireVerification></ProtectedRoute>
-    } />
+    {/* Flow v2 step 1: duplicate route, same component as /live/:seedId/room */}
+    <Route path="/seed/:seedId" element={<RedirectWithParams to="/live/:seedId/room" />} />
     <Route path="/live-lounge" element={
       <ProtectedRoute><Layout><LiveLoungePage /></Layout></ProtectedRoute>
     } />
     <Route path="/live-lounge" element={
       <ProtectedRoute><Layout><LiveLoungePage /></Layout></ProtectedRoute>
     } />
-    <Route path="/orchards/:orchardId" element={
-      <ProtectedRoute><RequireVerification><Layout><OrchardPage /></Layout></RequireVerification></ProtectedRoute>
-    } />
+    {/* Flow v2 step 1: duplicate route, same component as /orchard/:orchardId */}
+    <Route path="/orchards/:orchardId" element={<RedirectWithParams to="/orchard/:orchardId" />} />
     <Route path="/orchard/:orchardId" element={
       <ProtectedRoute><RequireVerification><Layout><OrchardPage /></Layout></RequireVerification></ProtectedRoute>
     } />
@@ -655,11 +665,8 @@ const AppRoutes = () => (
     {/* moderate-media's gosat alert links here (action_url) -- the queue
         itself lives in the "moderation" tab of the admin dashboard. */}
     <Route path="/admin/moderation" element={<Navigate to="/admin/dashboard" replace />} />
-    <Route path="/admin" element={
-      <ProtectedRoute allowedRoles={['admin', 'gosat']}>
-        <Suspense fallback={<div>Loading...</div>}><AdminDashboardPage /></Suspense>
-      </ProtectedRoute>
-    } />
+    {/* Flow v2 step 1: duplicate route, same component as /admin/dashboard */}
+    <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
     <Route path="/admin/radio" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}>
         <Layout><Suspense fallback={<LoadingFallback />}><AdminRadioPage /></Suspense></Layout>
