@@ -61,7 +61,12 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
  *     lyrics are a category on the same book product type, not a
  *     separate products.type (that column has a CHECK constraint; adding
  *     a new type would need a migration, category needs none).
- *   - music: products (type = 'music'), same sower/company resolution.
+ *   - music: products (type = 'music') UNION dj_music_tracks (via
+ *     radio_djs), deduped by normalized title -- a products row always
+ *     wins a title that exists in both (see scripts/studio/
+ *     music-duplicates.sql for the read-only audit this was checked
+ *     against: 4 of one owner's 32 music products shared a title with
+ *     one of their 25 dj_music_tracks rows).
  *   - story: profiles.bio for the owner -- no price/Bestow (not a
  *     purchasable item).
  */
@@ -99,7 +104,13 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
       const sowerId = (sowerRow as { id?: string } | null)?.id;
       const companyId = (companyRow as { id?: string } | null)?.id;
 
-      const results: Item[] = [];
+      // Deduped by normalized title (lowercased, whitespace collapsed) --
+      // a products row always wins a tie, so it's inserted into the map
+      // first and every later source just skips a title already present.
+      // See scripts/studio/music-duplicates.sql for the read-only audit
+      // this dedupe rule was verified against.
+      const byNormTitle = new Map<string, Item>();
+      const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
 
       if (sowerId || companyId) {
         const typeFilter = kind === 'music' ? ['music'] : ['book', 'ebook'];
@@ -113,7 +124,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
           const isLyrics = (p.category ?? '').toLowerCase() === 'lyrics';
           if (kind === 'lyrics' && !isLyrics) continue;
           if (kind === 'books' && isLyrics) continue;
-          results.push({
+          byNormTitle.set(normalize(p.title), {
             id: p.id,
             title: p.title,
             blurb: (p.description ?? '').slice(0, 90),
@@ -125,8 +136,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
 
       // sower_books -- a separate, older books table (keyed directly by
       // user_id, no sower_id indirection) that src/api/sowerContent.ts
-      // already unions into "books" elsewhere in the app. Not relevant to
-      // 'lyrics' or 'music'.
+      // already unions into "books" elsewhere in the app.
       if (kind === 'books') {
         const { data } = await supabase
           .from('sower_books')
@@ -135,7 +145,9 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
           .order('created_at', { ascending: false })
           .limit(100);
         for (const b of (data ?? []) as { id: string; title: string; description: string | null; cover_image_url: string | null; bestowal_value: number | null }[]) {
-          results.push({
+          const key = normalize(b.title);
+          if (byNormTitle.has(key)) continue; // a products row already claimed this title
+          byNormTitle.set(key, {
             id: b.id,
             title: b.title,
             blurb: (b.description ?? '').slice(0, 90),
@@ -145,7 +157,29 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
         }
       }
 
-      if (alive) setItems(results);
+      // dj_music_tracks -- radio uploads, not itself a `products` row.
+      // Real overlap exists here for at least one owner (4 of 32 products
+      // vs 25 dj tracks shared a title as of this check) -- a products row
+      // always wins the same title; only a dj-only track gets added.
+      if (kind === 'music') {
+        const { data: djRow } = await supabase.from('radio_djs').select('id').eq('user_id', ownerId).maybeSingle();
+        const djId = (djRow as { id?: string } | null)?.id;
+        if (djId) {
+          const { data } = await supabase
+            .from('dj_music_tracks')
+            .select('id, track_title, cover_image_url')
+            .eq('dj_id', djId)
+            .order('created_at', { ascending: false })
+            .limit(200);
+          for (const t of (data ?? []) as { id: string; track_title: string; cover_image_url: string | null }[]) {
+            const key = normalize(t.track_title);
+            if (byNormTitle.has(key)) continue; // a products row already claimed this title
+            byNormTitle.set(key, { id: t.id, title: t.track_title, blurb: '', cover: t.cover_image_url, price: 0 });
+          }
+        }
+      }
+
+      if (alive) setItems([...byNormTitle.values()]);
     })();
     return () => { alive = false; };
   }, [kind, ownerId]);
