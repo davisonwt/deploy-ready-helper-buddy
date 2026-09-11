@@ -29,7 +29,7 @@ import sowBookBanner from '@/assets/sow/book-banner.png';
 
 const CATEGORIES: OnePickerOption[] = [
   'Fiction', 'Non-fiction', 'Self-help', 'Business', 'Spiritual',
-  "Children's", 'Poetry', 'Biography', 'Education', 'Reference', 'Other',
+  "Children's", 'Poetry', 'Lyrics', 'Biography', 'Education', 'Reference', 'Other',
 ].map((c) => ({ value: c.toLowerCase().replace(/[^a-z0-9]+/g, '-'), label: c }));
 
 const DOCUMENT_ACCEPT = '.pdf,.epub';
