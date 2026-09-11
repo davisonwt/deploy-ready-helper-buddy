@@ -6,6 +6,7 @@ import { useContainImageRect } from '@/hooks/useContainImageRect';
 import StallHotspotSheet from './StallHotspotSheet';
 import StallSideNav from './StallSideNav';
 import StallTodayPanel from './StallTodayPanel';
+import StallBookshelfNav from './StallBookshelfNav';
 import OwnerMenuItems from '@/components/owner/OwnerMenuItems';
 import type { StallHotspot } from '@/lib/stalls/stallTypes';
 
@@ -118,6 +119,31 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
   const imgRef = useRef<HTMLImageElement>(null);
   const rect = useContainImageRect(containerRef, imgRef);
 
+  // Mobile-portrait-only (<1024px, portrait -- see the layout split in the
+  // render below): a second, independent image+hotspot measurement, since
+  // that layout renders its own differently-shaped image box (fixed
+  // height, natural width, horizontally pannable) rather than reusing the
+  // desktop/landscape one above -- both trees are mounted at once (CSS
+  // hides whichever doesn't apply), so each needs its own refs.
+  const mobileContainerRef = useRef<HTMLDivElement>(null);
+  const mobileImgRef = useRef<HTMLImageElement>(null);
+  const mobileRect = useContainImageRect(mobileContainerRef, mobileImgRef);
+  const panScrollRef = useRef<HTMLDivElement>(null);
+  const shelfRef = useRef<HTMLDivElement>(null);
+
+  // Starts the horizontal pan centered on the image rather than its left edge.
+  useEffect(() => {
+    const scrollEl = panScrollRef.current;
+    const img = mobileImgRef.current;
+    if (!scrollEl) return;
+    const center = () => { scrollEl.scrollLeft = (scrollEl.scrollWidth - scrollEl.clientWidth) / 2; };
+    if (img && !img.complete) {
+      img.addEventListener('load', center, { once: true });
+      return () => img.removeEventListener('load', center);
+    }
+    center();
+  }, [interiorImageUrl]);
+
   useEffect(() => () => { if (previewTimerRef.current) clearTimeout(previewTimerRef.current); }, []);
 
   // A hotspot with a caption gets a hover tooltip on a mouse-primary device
@@ -162,8 +188,119 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
   const activeHotspot = openKind ? hotspots.find((h) => h.kind === openKind) ?? null : null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black flex flex-col">
-      <div className="relative flex-1 min-h-0 flex">
+    <div className="fixed inset-0 z-[9999] bg-black flex flex-col overflow-hidden max-lg:portrait:overflow-y-auto">
+      {/* Mobile portrait (<1024px, portrait) -- bookshelf nav, a horizontally
+          pannable interior fixed to ~70vh tall, then StallTodayPanel's
+          sections as stacked wood cards. The page itself scrolls
+          vertically; the interior pans horizontally within its own strip.
+          Landscape phone and desktop keep the layout below unchanged. */}
+      <div className="hidden max-lg:portrait:flex flex-col w-full">
+        <div className="sticky top-0 z-20 flex items-center justify-between gap-2 px-4 py-3 bg-[#0d0805]/95 backdrop-blur-sm border-b border-amber-500/15">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={() => shelfRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              aria-label="Open menu"
+              className="shrink-0 flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
+            >
+              <Menu className="h-4 w-4" />
+            </button>
+            {viewingAsVisitor ? (
+              <button
+                type="button"
+                onClick={() => setViewingAsVisitor(false)}
+                className="flex items-center gap-1.5 rounded-full bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-400 transition-colors whitespace-nowrap"
+              >
+                <LogOut className="h-3.5 w-3.5" /> Viewing as visitor — exit
+              </button>
+            ) : isOwner && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setOwnerMenuOpen((v) => !v)}
+                  className="flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/70 transition-colors"
+                  aria-label="Owner menu"
+                  aria-expanded={ownerMenuOpen}
+                >
+                  <Pencil className="h-3.5 w-3.5" /> Edit stall
+                </button>
+                {ownerMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[9998]" onClick={() => setOwnerMenuOpen(false)} />
+                    <div className="absolute left-0 top-full mt-2 min-w-[190px] rounded-lg border border-amber-500/20 bg-[#140c06] py-1.5 shadow-2xl z-[9999]">
+                      <OwnerMenuItems
+                        onNavigate={() => setOwnerMenuOpen(false)}
+                        itemClassName="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
+                      />
+                      <div className="my-1 border-t border-amber-500/15" />
+                      <button
+                        type="button"
+                        onClick={() => { setViewingAsVisitor(true); setOwnerMenuOpen(false); }}
+                        className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
+                      >
+                        <Eye className="h-4 w-4 shrink-0" /> View as visitor
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+          <p className="min-w-0 flex-1 truncate text-center text-xs font-semibold uppercase tracking-wide text-white/70">
+            {stallName}
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="shrink-0 text-white hover:bg-white/20 rounded-full"
+            aria-label="Close"
+          >
+            <X className="h-6 w-6" />
+          </Button>
+        </div>
+
+        <div ref={shelfRef}>
+          <StallBookshelfNav onNavigate={onClose} />
+        </div>
+
+        <div ref={panScrollRef} className="relative w-full h-[70vh] overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div ref={mobileContainerRef} className="relative h-full w-max mx-auto snap-center">
+            <img
+              ref={mobileImgRef}
+              src={interiorImageUrl}
+              alt={stallName}
+              className={`block h-full w-auto max-w-none transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
+            />
+            {mobileRect && hotspots.map((h) => (
+              <button
+                key={h.kind}
+                type="button"
+                aria-label={h.label}
+                onClick={() => handleHotspotTap(h)}
+                className="absolute outline-none"
+                style={{
+                  left: mobileRect.offsetX + (h.x / 100) * mobileRect.width,
+                  top: mobileRect.offsetY + (h.y / 100) * mobileRect.height,
+                  width: (h.w / 100) * mobileRect.width,
+                  height: (h.h / 100) * mobileRect.height,
+                }}
+              >
+                {h.caption && previewKind === h.kind && (
+                  <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 w-max max-w-[180px] -translate-x-1/2 rounded-md bg-black/85 px-2 py-1 text-[11px] leading-tight text-white shadow-lg">
+                    {h.caption}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <StallTodayPanel stacked className="px-4 py-4" />
+      </div>
+
+      <div className="relative flex-1 min-h-0 max-lg:portrait:hidden flex">
         <StallSideNav
           onNavigate={onClose}
           className="hidden lg:flex lg:flex-col lg:w-[220px] lg:shrink-0 lg:border-r lg:border-amber-500/15"

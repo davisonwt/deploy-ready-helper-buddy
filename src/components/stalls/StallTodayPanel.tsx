@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Wallet, Cloud, Loader2 } from 'lucide-react';
 import { useSacredNow } from '@/hooks/useSacredNow';
@@ -7,6 +8,8 @@ import { useLiveWalletBalance } from '@/lib/payments/liveWalletBalance';
 
 interface Props {
   className?: string;
+  /** Each section (Wallet, Today, Omer, Growth) as its own bordered wood card with a gap between, instead of one continuous panel with hairline dividers -- the mobile-portrait stall interior page (StallInteriorView) stacks these below the pannable image. */
+  stacked?: boolean;
 }
 
 const LOW_BALANCE_THRESHOLD = 5;
@@ -31,7 +34,7 @@ const LOW_BALANCE_THRESHOLD = 5;
  * Cockpit and a visitor's /stall/:username without this panel needing to
  * render its own copy.
  */
-export default function StallTodayPanel({ className = '' }: Props) {
+export default function StallTodayPanel({ className = '', stacked = false }: Props) {
   const sacred = useSacredNow();
   const stats = useCommunityGrowthStats();
   const { user } = useAuth();
@@ -48,9 +51,16 @@ export default function StallTodayPanel({ className = '' }: Props) {
     { label: 'Harvest forming', val: stats.members },
   ];
 
+  const Section = stacked
+    ? ({ children }: { children: ReactNode }) => (
+        <section className="rounded-lg border border-amber-500/15 bg-black/25 p-3">{children}</section>
+      )
+    : ({ children }: { children: ReactNode }) => <section>{children}</section>;
+  const Divider = stacked ? () => null : () => <div className="border-t border-amber-500/10" />;
+
   return (
-    <div className={`gap-5 bg-[#140c06] px-4 py-4 overflow-y-auto ${className}`}>
-      <section>
+    <div className={`${stacked ? 'flex flex-col gap-3' : 'gap-5'} bg-[#140c06] px-4 py-4 ${stacked ? '' : 'overflow-y-auto'} ${className}`}>
+      <Section>
         <h3 className="font-serif text-xs tracking-[0.12em] uppercase text-amber-400/80 mb-2">💰 Wallet</h3>
         {/* Wallet balance needs a signed-in member; Let It Rain doesn't --
             StallSideNav's own nav item fires the same event ungated, reachable
@@ -77,32 +87,32 @@ export default function StallTodayPanel({ className = '' }: Props) {
         >
           <Cloud className="h-3.5 w-3.5" /> Let It Rain
         </button>
-      </section>
+      </Section>
 
-      <div className="border-t border-amber-500/10" />
+      <Divider />
 
-      <section>
+      <Section>
         <h3 className="font-serif text-xs tracking-[0.12em] uppercase text-amber-400/80 mb-2">📅 Today</h3>
         <p className="font-serif text-lg text-amber-100">Year {sacred.date.year}</p>
         <p className="text-xs text-amber-100/60 mt-1 leading-relaxed">
           Month {sacred.date.month} · Day {sacred.date.day}<br />
           Day {sacred.weekDay} · {dayType}
         </p>
-      </section>
+      </Section>
 
-      <div className="border-t border-amber-500/10" />
+      <Divider />
 
-      <section>
+      <Section>
         <h3 className="font-serif text-xs tracking-[0.12em] uppercase text-amber-400/80 mb-2">🌾 Omer</h3>
         <p className="text-sm text-amber-100/90">Omer {sacred.omer ?? 0}/{sacred.omerTotal}</p>
         {sacred.nextFeast && (
           <p className="text-xs text-amber-100/50 mt-1">Next: {sacred.nextFeast}</p>
         )}
-      </section>
+      </Section>
 
-      <div className="border-t border-amber-500/10" />
+      <Divider />
 
-      <section>
+      <Section>
         <h3 className="font-serif text-xs tracking-[0.12em] uppercase text-amber-400/80 mb-2">🌱 Your Growth</h3>
         <div className="space-y-1.5">
           {growthRows.map(({ label, val }) => (
@@ -112,7 +122,7 @@ export default function StallTodayPanel({ className = '' }: Props) {
             </div>
           ))}
         </div>
-      </section>
+      </Section>
     </div>
   );
 }
