@@ -33,9 +33,15 @@ interface Props {
  * (hides the global FABs and the Cockpit's own Plant-Seed/Go-Live/Chat
  * bar) and locks body scroll, restoring both on unmount.
  */
+/** Reads #stall-kind=<kind> off the current URL -- lets a fresh mount (e.g. after browser Back from an item-detail page) restore which sheet was open. */
+function readKindFromHash(): string | null {
+  const m = /(?:^|#)stall-kind=([a-z]+)/.exec(window.location.hash);
+  return m ? m[1] : null;
+}
+
 export default function StallInteriorView({ ownerId, interiorImageUrl, stallName, hotspots, onClose, isOwner, onEdit }: Props) {
   const { setStallInteriorOpen } = useAppContext();
-  const [openKind, setOpenKind] = useState<StallHotspot['kind'] | null>(null);
+  const [openKind, setOpenKind] = useState<StallHotspot['kind'] | null>(() => readKindFromHash() as StallHotspot['kind'] | null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const rect = useContainImageRect(containerRef, imgRef);
@@ -50,6 +56,17 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
     };
   }, [setStallInteriorOpen]);
 
+  // Keeps the URL hash in sync with which sheet is open, without adding a
+  // history entry of its own -- only an actual item-detail navigation
+  // (StallHotspotSheet's openItemDetail) pushes history. Browser Back from
+  // there lands on this same URL+hash, and this component's initial state
+  // (readKindFromHash) re-opens the same sheet on remount.
+  useEffect(() => {
+    const base = window.location.pathname + window.location.search;
+    const next = openKind ? `${base}#stall-kind=${openKind}` : base;
+    window.history.replaceState(null, '', next);
+  }, [openKind]);
+
   const activeHotspot = openKind ? hotspots.find((h) => h.kind === openKind) ?? null : null;
 
   return (
@@ -59,7 +76,7 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
           ref={imgRef}
           src={interiorImageUrl}
           alt={stallName}
-          className="absolute inset-0 w-full h-full object-contain"
+          className={`absolute inset-0 w-full h-full object-contain transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
         />
 
         {rect && hotspots.map((h) => (
@@ -109,6 +126,7 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
           ownerId={ownerId}
           ownerName={stallName}
           kind={activeHotspot.kind}
+          isOwner={isOwner}
           onClose={() => setOpenKind(null)}
         />
       )}

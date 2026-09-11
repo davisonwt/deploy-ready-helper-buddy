@@ -38,7 +38,10 @@ export default function StallVisitPage() {
   const templates = useStallTemplates();
 
   const [stall, setStall] = useState<StallRow | null | undefined>(undefined); // undefined = loading
-  const [open, setOpen] = useState(false);
+  // Re-opens the interior automatically if we're arriving back from an
+  // item-detail page's Back button (StallInteriorView hash-syncs
+  // #stall-kind=<kind> onto this same URL while a sheet is open).
+  const [open, setOpen] = useState(() => window.location.hash.startsWith('#stall-kind='));
 
   useEffect(() => {
     if (!username) { setStall(null); return; }
