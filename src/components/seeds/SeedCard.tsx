@@ -84,16 +84,15 @@ const KIND_PLACEHOLDER: Record<SeedCardKind, 'product' | 'music' | 'ebook' | 'or
  * gold Whisperer-% badge + "Whisper this" apply -- both read/write
  * product_whisperer_assignments for real, no hardcoded fallback percent.
  *
- * Known gap: product_whisperer_assignments' own RLS only lets the sower or
- * the specific whisperer on a row read it -- so the badge correctly shows
- * for the owner previewing their own card and for a whisperer checking
- * their own pending/active request, but a third-party browsing viewer
- * currently sees no badge even when one legitimately exists (RLS hides the
- * row from them entirely, not an empty-vs-populated distinction this
- * component can fix). Making the badge visible to every viewer needs a
- * narrow SECURITY DEFINER function exposing just the active commission_percent
- * -- not added here since it's a new public surface on a protected RLS
- * table, flagged rather than added unasked.
+ * The badge itself reads get_active_whisperer_badge (supabase/migrations/
+ * 20260911190000_whisperer_active_badge_rpc.sql), a narrow SECURITY DEFINER
+ * RPC that exposes only {seed_id, commission_percent} for an active row --
+ * readable by any viewer, unlike a direct product_whisperer_assignments
+ * select, whose RLS ("sower or the whisperer on that row" only) would
+ * otherwise hide a real active relationship from everyone else. "My own
+ * pending/active application" status still reads the table directly (RLS
+ * correctly scopes that to the applying whisperer, which is exactly who
+ * should see it).
  */
 export default function SeedCard({
   id, kind, title, subtitle, cover, ownerId, ownerName, ownerAvatar,
@@ -146,28 +145,38 @@ export default function SeedCard({
   useEffect(() => {
     if (!isProductRow) return;
     let alive = true;
+    // Public-safe: get_active_whisperer_badge (supabase/migrations/
+    // 20260911190000_whisperer_active_badge_rpc.sql) exposes only
+    // {seed_id, commission_percent} for an active row, readable by any
+    // viewer -- unlike a direct product_whisperer_assignments select,
+    // whose RLS only returns rows the caller is party to (sower or the
+    // whisperer on that row), which would hide the badge from everyone
+    // else even when a real active relationship exists.
+    supabase.rpc('get_active_whisperer_badge', { _seed_id: id }).then(({ data }) => {
+      if (!alive || !data || data.length === 0) return;
+      setBadgePct(Number(data[0].commission_percent));
+    });
+    return () => { alive = false; };
+  }, [isProductRow, id]);
+
+  useEffect(() => {
+    if (!isProductRow || !user) return;
+    let alive = true;
     (async () => {
-      let wid: string | null = null;
-      if (user) {
-        const { data: w } = await supabase.from('whisperers').select('id').eq('user_id', user.id).maybeSingle();
-        wid = (w as { id?: string } | null)?.id ?? null;
-        if (alive) setMyWhispererId(wid);
-      }
+      const { data: w } = await supabase.from('whisperers').select('id').eq('user_id', user.id).maybeSingle();
+      const wid = (w as { id?: string } | null)?.id ?? null;
+      if (alive) setMyWhispererId(wid);
+      if (!wid) return;
       // RLS (product_whisperer_assignments) only returns rows the caller is
-      // party to (sower or the whisperer on that row) -- see the doc
-      // comment above for what that means for the badge's visibility.
+      // party to -- fine here, this is specifically MY OWN request status.
       const { data: rows } = await supabase
         .from('product_whisperer_assignments')
-        .select('status, commission_percent, whisperer_id')
-        .eq(whispererFkColumn, id);
-      if (!alive || !rows) return;
-      const typed = rows as { status: string | null; commission_percent: number; whisperer_id: string }[];
-      const active = typed.find((r) => r.status === 'active');
-      if (active) setBadgePct(Number(active.commission_percent));
-      if (wid) {
-        const mine = typed.find((r) => r.whisperer_id === wid && (r.status === 'pending' || r.status === 'active'));
-        if (mine) setMyAssignmentStatus(mine.status as 'pending' | 'active');
-      }
+        .select('status')
+        .eq(whispererFkColumn, id)
+        .eq('whisperer_id', wid)
+        .in('status', ['pending', 'active']);
+      if (!alive || !rows || rows.length === 0) return;
+      setMyAssignmentStatus((rows[0] as { status: string }).status as 'pending' | 'active');
     })();
     return () => { alive = false; };
   }, [isProductRow, user, id, whispererFkColumn]);
