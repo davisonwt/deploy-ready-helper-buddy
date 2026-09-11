@@ -70,13 +70,17 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
  *     music-duplicates.sql for the read-only audit this was checked
  *     against: 4 of one owner's 32 music products shared a title with
  *     one of their 25 dj_music_tracks rows).
- *   - story: stalls.story for the owner, falling back to profiles.bio when
- *     null (a story written for the stall vs. the general profile bio) --
- *     no price/Bestow (not a purchasable item). Rendered by renderStory()
- *     below: blank-line-separated paragraphs, any line that is entirely
- *     upper-case becomes a gold serif heading. The text is lowercase by
- *     design in real use -- renderStory never changes case, only chooses
- *     paragraph vs. heading per line.
+ *   - story: stalls.story_pdf_path, if set, wins over stalls.story, which
+ *     wins over profiles.bio (a story written for the stall vs. the
+ *     general profile bio) -- no price/Bestow (not a purchasable item).
+ *     A PDF renders inline via StoryPdfViewer below (an <iframe> on
+ *     desktop; iOS's embedded PDF rendering is unreliable across browsers
+ *     there since they all share WebKit, so a large "Open my story"
+ *     button opens it in a new tab instead). Text renders through
+ *     renderStory(): blank-line-separated paragraphs, any line that is
+ *     entirely upper-case becomes a gold serif heading. The text is
+ *     lowercase by design in real use -- renderStory never changes case,
+ *     only chooses paragraph vs. heading per line.
  *   - mugs: products (type = 'product', category = 'mugs'). `type` has a
  *     CHECK constraint with no 'merch' value (confirmed live against
  *     products_type_check) so, like lyrics, this is a category filter on
@@ -89,7 +93,9 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
 export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, onClose }: Props) {
   const navigate = useNavigate();
   const [items, setItems] = useState<Item[] | null>(null);
-  const [bio, setBio] = useState<string | null>(null);
+  // undefined = still loading; null = loaded, nothing there; string = loaded, has content.
+  const [bio, setBio] = useState<string | null | undefined>(undefined);
+  const [storyPdfUrl, setStoryPdfUrl] = useState<string | null | undefined>(undefined);
   const [bestowTarget, setBestowTarget] = useState<Item | null>(null);
   const [visible, setVisible] = useState(false);
   const { send: sendGift, loading: bestowing } = useGiftBestowal();
@@ -108,8 +114,11 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
     let alive = true;
     (async () => {
       if (kind === 'story') {
-        const { data: stallRow } = await supabase.from('stalls').select('story').eq('user_id', ownerId).maybeSingle();
-        const story = (stallRow as { story?: string | null } | null)?.story;
+        const { data: stallRow } = await supabase.from('stalls').select('story, story_pdf_path').eq('user_id', ownerId).maybeSingle();
+        const row = stallRow as { story?: string | null; story_pdf_path?: string | null } | null;
+        if (alive) setStoryPdfUrl(row?.story_pdf_path ?? null);
+
+        const story = row?.story;
         if (story && story.trim()) {
           if (alive) setBio(story);
           return;
@@ -257,8 +266,10 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
 
         <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
           {kind === 'story' ? (
-            bio === null ? (
+            bio === undefined || storyPdfUrl === undefined ? (
               <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-amber-100/40" /></div>
+            ) : storyPdfUrl ? (
+              <StoryPdfViewer url={storyPdfUrl} />
             ) : bio ? (
               <div className="py-4">{renderStory(bio)}</div>
             ) : (
@@ -357,6 +368,47 @@ function renderStory(text: string) {
   flushParagraph('p-last');
 
   return blocks;
+}
+
+/**
+ * iPadOS 13+ reports its UA as a plain "Macintosh" (desktop Safari's UA
+ * string) -- multi-touch support is the standard way to tell it apart
+ * from a real Mac. Every browser on iOS shares Apple's WebKit rendering
+ * engine (Chrome/Firefox-on-iOS included), so this checks "iOS" as a
+ * platform, not "Safari" as a specific browser -- the embed reliability
+ * problem isn't Safari-specific, it's WebKit-in-iOS-specific.
+ */
+function isIOS(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) || (ua.includes('Macintosh') && navigator.maxTouchPoints > 1);
+}
+
+/** Renders a story PDF inline (desktop/Android: <iframe>) or, on iOS where embedded PDF rendering is unreliable, a large button that opens it in a new tab instead. */
+function StoryPdfViewer({ url }: { url: string }) {
+  if (isIOS()) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-16">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-8 py-4 text-base font-bold text-amber-950 shadow-lg hover:from-amber-300 hover:to-amber-500 transition-colors"
+        >
+          Open my story
+        </a>
+        <p className="text-xs text-amber-100/40 font-serif italic">Opens your story's PDF in a new tab</p>
+      </div>
+    );
+  }
+  return (
+    <iframe
+      src={url}
+      title="My Story"
+      className="w-full rounded-lg border border-amber-500/15 bg-white"
+      style={{ height: '65vh' }}
+    />
+  );
 }
 
 function EmptyState({ text, isOwner, addOnePath, addOneLabel }: { text: string; isOwner?: boolean; addOnePath?: string; addOneLabel: string }) {
