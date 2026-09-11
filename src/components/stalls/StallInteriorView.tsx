@@ -68,7 +68,7 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
             type="button"
             aria-label={h.label}
             onClick={() => setOpenKind(h.kind)}
-            className="absolute rounded-lg ring-0 hover:ring-4 active:ring-4 ring-amber-400/70 transition-[box-shadow] focus-visible:ring-4 outline-none"
+            className="absolute outline-none"
             style={{
               left: rect.offsetX + (h.x / 100) * rect.width,
               top: rect.offsetY + (h.y / 100) * rect.height,
