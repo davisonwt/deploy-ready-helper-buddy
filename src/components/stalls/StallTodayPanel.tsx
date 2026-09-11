@@ -50,35 +50,36 @@ export default function StallTodayPanel({ className = '' }: Props) {
 
   return (
     <div className={`gap-5 bg-[#140c06] px-4 py-4 overflow-y-auto ${className}`}>
-      {user && (
-        <>
-          <section>
-            <h3 className="font-serif text-xs tracking-[0.12em] uppercase text-amber-400/80 mb-2">💰 Wallet</h3>
-            <Link
-              to="/settings/payouts"
-              className={`flex items-center justify-between rounded-lg border px-3 py-2 transition-colors ${
-                low ? 'border-orange-500/40 bg-orange-500/10' : 'border-amber-500/15 bg-black/25 hover:bg-black/35'
-              }`}
-            >
-              <span className="flex items-center gap-1.5 text-xs text-amber-100/70">
-                <Wallet className="h-3.5 w-3.5" /> {address ? 'USDC balance' : 'Connect wallet'}
-              </span>
-              <span className={`text-sm font-semibold ${low ? 'text-orange-300' : 'text-amber-200'}`}>
-                {!address ? '—' : loading && balance === null && !error ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : error ? '?' : `$${(balance ?? 0).toFixed(2)}`}
-              </span>
-            </Link>
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new Event('s2g-open-let-it-rain'))}
-              className="mt-2 w-full flex items-center justify-center gap-1.5 rounded-lg border border-cyan-400/25 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/20 transition-colors"
-            >
-              <Cloud className="h-3.5 w-3.5" /> Let It Rain
-            </button>
-          </section>
+      <section>
+        <h3 className="font-serif text-xs tracking-[0.12em] uppercase text-amber-400/80 mb-2">💰 Wallet</h3>
+        {/* Wallet balance needs a signed-in member; Let It Rain doesn't --
+            StallSideNav's own nav item fires the same event ungated, reachable
+            by any stall visitor, signed in or not, so this stays consistent. */}
+        {user && (
+          <Link
+            to="/settings/payouts"
+            className={`flex items-center justify-between rounded-lg border px-3 py-2 transition-colors ${
+              low ? 'border-orange-500/40 bg-orange-500/10' : 'border-amber-500/15 bg-black/25 hover:bg-black/35'
+            }`}
+          >
+            <span className="flex items-center gap-1.5 text-xs text-amber-100/70">
+              <Wallet className="h-3.5 w-3.5" /> {address ? 'USDC balance' : 'Connect wallet'}
+            </span>
+            <span className={`text-sm font-semibold ${low ? 'text-orange-300' : 'text-amber-200'}`}>
+              {!address ? '—' : loading && balance === null && !error ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : error ? '?' : `$${(balance ?? 0).toFixed(2)}`}
+            </span>
+          </Link>
+        )}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event('s2g-open-let-it-rain'))}
+          className={`w-full flex items-center justify-center gap-1.5 rounded-lg border border-cyan-400/25 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/20 transition-colors ${user ? 'mt-2' : ''}`}
+        >
+          <Cloud className="h-3.5 w-3.5" /> Let It Rain
+        </button>
+      </section>
 
-          <div className="border-t border-amber-500/10" />
-        </>
-      )}
+      <div className="border-t border-amber-500/10" />
 
       <section>
         <h3 className="font-serif text-xs tracking-[0.12em] uppercase text-amber-400/80 mb-2">📅 Today</h3>
