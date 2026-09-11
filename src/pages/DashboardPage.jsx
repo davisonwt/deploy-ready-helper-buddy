@@ -26,6 +26,7 @@ import { useProductBasket } from '@/contexts/ProductBasketContext'
 import SettlementConsentBanner from '@/components/dashboard/SettlementConsentBanner'
 import { TileErrorBoundary } from '@/components/error/TileErrorBoundary';
 import { useAppContext } from '@/contexts/AppContext';
+import { COCKPIT_NAV as NAV, SCRIPTURE_STUDY_LINK } from '@/lib/nav/cockpitNav';
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
@@ -90,21 +91,9 @@ const SEEDS = [
   },
 ]
 
-const NAV = [
-  { label: 'SeedFlow',         sub: 'Community updates',         emoji: '🏠', path: '/dashboard',            color: '#38bdf8' },
-  { label: 'My Garden',        sub: 'Your seeds & orchards',     emoji: '🌱', path: '/my-orchards',           color: '#facc15' },
-  { label: 'Books',            sub: 'Business bookkeeping',       emoji: '📒', path: '/books',                  color: '#2563eb' },
-  { label: 'Tribal Gardens',   sub: 'All tribal seeds & orchards', emoji: '🌳', path: '/browse-orchards',     color: '#0d9488' },
-  { label: 'Community Videos', sub: 'Upload & watch',            emoji: '🎬', path: '/community-videos',      color: '#f97316' },
-  { label: 'ChatApp',          sub: 'Tribe messaging',           emoji: '💬', path: '/communications-hub',     color: '#0891b2' },
-  { label: '364yhvh',          sub: 'Scripture & spiritual hub', emoji: '📅', path: '/364yhvh-days',          color: '#7c3aed' },
-  { label: 'Let It Rain',      sub: 'Bestow blessings',          emoji: '🌧', path: 'action:let-it-rain',     color: '#ec4899' },
-  { label: 'Learn & Share Marketing Videos', sub: 'Share to grow your tribe', emoji: '🎥', path: '/learn-share',           color: '#f97316' },
-  { label: 'Whisperers',       sub: 'List yourself or find one', emoji: '🌬️', path: '/whisperers',            color: '#a855f7' },
-  { label: 'Wandering Hearts', sub: 'Tribal connections',        emoji: '💚', path: '/tribal-hearts',         color: '#dc2626' },
-  { label: 'My Tribe',         sub: 'Your invitation code & tribe', emoji: '🌿', path: '/my-tribe',           color: '#22c55e' },
-  { label: "Gosat's",          sub: 'Elder management',          emoji: '🏛', path: '/admin/dashboard',       color: '#7c3aed' },
-]
+// NAV moved to src/lib/nav/cockpitNav.ts (imported above as COCKPIT_NAV,
+// aliased to NAV) -- Farm-Stalls batch 2e's interior nav panel/drawer
+// reuses the same config so the two never drift on route strings.
 
 const GROWTH_TIPS = [
   'Your seeds are in motion. Something is growing.',
@@ -416,6 +405,17 @@ export default function SeedFlowDashboard() {
   const [activePath, setActivePath] = useState('/dashboard')
   const [mobilePanel, setMobilePanel] = useState(null)
   const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
+  // Same window event Layout.jsx listens for (its own LetItRainPanel
+  // instance) -- this page renders LetItRainPanel itself rather than via
+  // Layout (see the /cockpit route), so the stall interior's nav panel
+  // (Farm-Stalls batch 2e), which dispatches this event for its "Let It
+  // Rain" item regardless of which page embeds it, needs a listener here
+  // too or the Cockpit's own embedded stall preview couldn't open it.
+  useEffect(() => {
+    const open = () => setIsLetItRainOpen(true)
+    window.addEventListener('s2g-open-let-it-rain', open)
+    return () => window.removeEventListener('s2g-open-let-it-rain', open)
+  }, [])
   const [showVideoUpload, setShowVideoUpload] = useState(false)
   const [plantMenuOpen, setPlantMenuOpen] = useState(false)
   const [tribalFeedsOpen, setTribalFeedsOpen] = useState(false)
@@ -1004,7 +1004,7 @@ export default function SeedFlowDashboard() {
               </div>
             </div>
             <a
-              href="https://364yhvh.org"
+              href={SCRIPTURE_STUDY_LINK.href}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -1013,9 +1013,9 @@ export default function SeedFlowDashboard() {
                 background: 'rgba(180,140,40,0.14)', border: '1px solid rgba(212,175,55,0.35)',
                 color: '#e6c86a', fontSize: 12, fontWeight: 600, textDecoration: 'none',
               }}
-              title="Open 364yhvh.org scripture study site in a new tab"
+              title={`Open ${SCRIPTURE_STUDY_LINK.sub} scripture study site in a new tab`}
             >
-              📖 Scripture Study · 364yhvh.org
+              {SCRIPTURE_STUDY_LINK.emoji} {SCRIPTURE_STUDY_LINK.label} · {SCRIPTURE_STUDY_LINK.sub}
             </a>
 
             <div style={styles.keeperBadge}>

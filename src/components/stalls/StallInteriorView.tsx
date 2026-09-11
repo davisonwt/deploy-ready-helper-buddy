@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
 import StallHotspotSheet from './StallHotspotSheet';
+import StallSideNav from './StallSideNav';
+import StallTodayPanel from './StallTodayPanel';
 import type { StallHotspot } from '@/lib/stalls/stallTypes';
 
 interface Props {
@@ -32,6 +34,16 @@ interface Props {
  * Owns the full viewport while mounted: sets AppContext.stallInteriorOpen
  * (hides the global FABs and the Cockpit's own Plant-Seed/Go-Live/Chat
  * bar) and locks body scroll, restoring both on unmount.
+ *
+ * "The stall is the frame" (batch 2e): >=1024px gets a permanent 3-column
+ * layout -- StallSideNav (Cockpit nav, restyled) on the left, this same
+ * image+hotspots column in the middle, StallTodayPanel (Today/Omer/Your
+ * Growth, restyled) on the right. Below 1024px stays the full-screen
+ * single column it always was, with the same two panels available as
+ * slide-in drawers instead (see isNavDrawerOpen/isTodayDrawerOpen).
+ * useContainImageRect measures containerRef itself, so the hotspot math is
+ * unaffected either way -- it already accounts for whatever width the
+ * image's own column actually has, not the viewport.
  */
 /** Reads #stall-kind=<kind> off the current URL -- lets a fresh mount (e.g. after browser Back from an item-detail page) restore which sheet was open. */
 function readKindFromHash(): string | null {
@@ -97,64 +109,73 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black flex flex-col">
-      <div ref={containerRef} className="relative flex-1 min-h-0">
-        <img
-          ref={imgRef}
-          src={interiorImageUrl}
-          alt={stallName}
-          className={`absolute inset-0 w-full h-full object-contain transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
+      <div className="relative flex-1 min-h-0 flex">
+        <StallSideNav
+          onNavigate={onClose}
+          className="hidden lg:flex lg:flex-col lg:w-[220px] lg:shrink-0 lg:border-r lg:border-amber-500/15"
         />
 
-        {rect && hotspots.map((h) => (
-          <button
-            key={h.kind}
+        <div ref={containerRef} className="relative flex-1 min-h-0">
+          <img
+            ref={imgRef}
+            src={interiorImageUrl}
+            alt={stallName}
+            className={`absolute inset-0 w-full h-full object-contain transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
+          />
+
+          {rect && hotspots.map((h) => (
+            <button
+              key={h.kind}
+              type="button"
+              aria-label={h.label}
+              onClick={() => handleHotspotTap(h)}
+              className="absolute outline-none group"
+              style={{
+                left: rect.offsetX + (h.x / 100) * rect.width,
+                top: rect.offsetY + (h.y / 100) * rect.height,
+                width: (h.w / 100) * rect.width,
+                height: (h.h / 100) * rect.height,
+              }}
+            >
+              {h.caption && (
+                <span
+                  className={`pointer-events-none absolute bottom-full left-1/2 mb-1.5 w-max max-w-[180px] -translate-x-1/2 rounded-md bg-black/85 px-2 py-1 text-[11px] leading-tight text-white shadow-lg transition-opacity duration-150 ${
+                    previewKind === h.kind ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                  }`}
+                >
+                  {h.caption}
+                </span>
+              )}
+            </button>
+          ))}
+
+          <Button
             type="button"
-            aria-label={h.label}
-            onClick={() => handleHotspotTap(h)}
-            className="absolute outline-none group"
-            style={{
-              left: rect.offsetX + (h.x / 100) * rect.width,
-              top: rect.offsetY + (h.y / 100) * rect.height,
-              width: (h.w / 100) * rect.width,
-              height: (h.h / 100) * rect.height,
-            }}
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full"
+            aria-label="Close"
           >
-            {h.caption && (
-              <span
-                className={`pointer-events-none absolute bottom-full left-1/2 mb-1.5 w-max max-w-[180px] -translate-x-1/2 rounded-md bg-black/85 px-2 py-1 text-[11px] leading-tight text-white shadow-lg transition-opacity duration-150 ${
-                  previewKind === h.kind ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                }`}
-              >
-                {h.caption}
-              </span>
-            )}
-          </button>
-        ))}
+            <X className="h-6 w-6" />
+          </Button>
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full"
-          aria-label="Close"
-        >
-          <X className="h-6 w-6" />
-        </Button>
+          {isOwner && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/70 transition-colors"
+            >
+              <Pencil className="h-3.5 w-3.5" /> Edit stall
+            </button>
+          )}
 
-        {isOwner && (
-          <button
-            type="button"
-            onClick={onEdit}
-            className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/70 transition-colors"
-          >
-            <Pencil className="h-3.5 w-3.5" /> Edit stall
-          </button>
-        )}
+          <p className="absolute bottom-3 left-4 text-xs font-semibold uppercase tracking-wide text-white/80 drop-shadow">
+            {stallName}
+          </p>
+        </div>
 
-        <p className="absolute bottom-3 left-4 text-xs font-semibold uppercase tracking-wide text-white/80 drop-shadow">
-          {stallName}
-        </p>
+        <StallTodayPanel className="hidden lg:flex lg:flex-col lg:w-[220px] lg:shrink-0 lg:border-l lg:border-amber-500/15" />
       </div>
 
       {activeHotspot && (
