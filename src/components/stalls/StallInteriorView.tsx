@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { X, Pencil } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { X, Pencil, Menu, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
@@ -54,12 +54,58 @@ function readKindFromHash(): string | null {
 /** Tap-preview delay (mobile): how long a hotspot's caption shows before its sheet opens. */
 const CAPTION_PREVIEW_MS = 800;
 
+/**
+ * Below 1024px, StallSideNav / StallTodayPanel live in one of these
+ * instead of a permanent column (batch 2e, task 2) -- same slide +
+ * backdrop pattern as StallHotspotSheet (mount immediately, animate in on
+ * the next frame, animate out then unmount on close).
+ */
+function StallDrawer({ side, open, onClose, children }: { side: 'left' | 'right'; open: boolean; onClose: () => void; children: ReactNode }) {
+  const [mounted, setMounted] = useState(open);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      const id = requestAnimationFrame(() => setVisible(true));
+      return () => cancelAnimationFrame(id);
+    }
+    setVisible(false);
+    const t = setTimeout(() => setMounted(false), 200);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  if (!mounted) return null;
+
+  const sideClass = side === 'left' ? 'left-0 border-r' : 'right-0 border-l';
+  const hiddenTransform = side === 'left' ? '-translate-x-full' : 'translate-x-full';
+
+  return (
+    <>
+      <div
+        className={`fixed inset-0 z-[9990] bg-black/60 transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`}
+        onClick={onClose}
+      />
+      <div
+        className={`fixed inset-y-0 z-[9991] ${sideClass} w-[260px] max-w-[80vw] flex flex-col bg-[#140c06] border-amber-500/25 shadow-2xl transition-transform duration-200 ease-out ${
+          visible ? 'translate-x-0' : hiddenTransform
+        }`}
+      >
+        {children}
+      </div>
+    </>
+  );
+}
+
 export default function StallInteriorView({ ownerId, interiorImageUrl, stallName, hotspots, onClose, isOwner, onEdit }: Props) {
   const { setStallInteriorOpen } = useAppContext();
   const [openKind, setOpenKind] = useState<StallHotspot['kind'] | null>(() => readKindFromHash() as StallHotspot['kind'] | null);
   // Mobile-only: the hotspot whose caption is being shown for CAPTION_PREVIEW_MS before its sheet opens.
   const [previewKind, setPreviewKind] = useState<StallHotspot['kind'] | null>(null);
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Mobile-only (<1024px): StallSideNav / StallTodayPanel as slide-in drawers instead of the desktop's permanent columns.
+  const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
+  const [isTodayDrawerOpen, setIsTodayDrawerOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const rect = useContainImageRect(containerRef, imgRef);
@@ -149,26 +195,46 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
             </button>
           ))}
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full"
-            aria-label="Close"
-          >
-            <X className="h-6 w-6" />
-          </Button>
-
-          {isOwner && (
+          <div className="absolute top-4 right-4 flex items-center gap-2">
             <button
               type="button"
-              onClick={onEdit}
-              className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/70 transition-colors"
+              onClick={() => setIsTodayDrawerOpen(true)}
+              aria-label="Open Today, Omer & Growth"
+              className="lg:hidden flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
             >
-              <Pencil className="h-3.5 w-3.5" /> Edit stall
+              <CalendarDays className="h-4 w-4" />
             </button>
-          )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="text-white hover:bg-white/20 rounded-full"
+              aria-label="Close"
+            >
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
+
+          <div className="absolute top-4 left-4 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsNavDrawerOpen(true)}
+              aria-label="Open menu"
+              className="lg:hidden flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
+            >
+              <Menu className="h-4 w-4" />
+            </button>
+            {isOwner && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/70 transition-colors"
+              >
+                <Pencil className="h-3.5 w-3.5" /> Edit stall
+              </button>
+            )}
+          </div>
 
           <p className="absolute bottom-3 left-4 text-xs font-semibold uppercase tracking-wide text-white/80 drop-shadow">
             {stallName}
@@ -177,6 +243,14 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
 
         <StallTodayPanel className="hidden lg:flex lg:flex-col lg:w-[220px] lg:shrink-0 lg:border-l lg:border-amber-500/15" />
       </div>
+
+      <StallDrawer side="left" open={isNavDrawerOpen} onClose={() => setIsNavDrawerOpen(false)}>
+        <StallSideNav onNavigate={onClose} className="flex flex-col flex-1 min-h-0" />
+      </StallDrawer>
+
+      <StallDrawer side="right" open={isTodayDrawerOpen} onClose={() => setIsTodayDrawerOpen(false)}>
+        <StallTodayPanel className="flex flex-col flex-1 min-h-0" />
+      </StallDrawer>
 
       {activeHotspot && (
         <StallHotspotSheet
