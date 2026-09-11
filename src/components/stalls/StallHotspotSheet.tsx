@@ -69,7 +69,7 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
  * Bottom sheet opened by tapping a painted-interior hotspot -- styled to
  * feel like still being inside the stall (dark wood-tone panel, gold
  * hairline + serif title, cover-first cards), not a default app dialog.
- * Slides up/down in 200ms, ~70% viewport height, drag handle. Lists the
+ * Slides up/down in 200ms, 85vh, drag handle. Lists the
  * STALL OWNER's own published items of that kind (never the viewer's).
  *
  * Data sources (batch 2c correctness fixes over batch 2b's version):
@@ -272,7 +272,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
         onClick={handleClose}
       />
       <div
-        className={`fixed inset-x-0 bottom-0 z-[10001] h-[70vh] flex flex-col rounded-t-2xl
+        className={`fixed inset-x-0 bottom-0 z-[10001] h-[85vh] flex flex-col rounded-t-2xl
           bg-[#180f08]/95 backdrop-blur-md border-t border-x border-amber-500/25 shadow-[0_-8px_40px_rgba(0,0,0,0.6)]
           transition-transform duration-200 ease-out ${visible ? 'translate-y-0' : 'translate-y-full'}`}
       >
@@ -303,10 +303,12 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
             <EmptyState text={EMPTY_TEXT[kind] ?? 'Nothing here yet'} isOwner={isOwner} addOnePath={ADD_ONE_PATH[kind]} addOneLabel="Add one" />
           ) : (
             // Horizontal swipeable row of SeedCards (Flow v2 step 2) --
-            // snap-x, ~80% width per card on phone, 3-up on desktop.
+            // snap-x, ~80% width per card on phone, capped at 300px on
+            // desktop so 4-5 sit in view (whole card incl. Bestow button)
+            // without scrolling.
             <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory py-3 -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {items.map((item) => (
-                <div key={item.id} className="shrink-0 snap-center w-[80%] lg:w-[calc(33.333%-0.6rem)]">
+                <div key={item.id} className="shrink-0 snap-center w-[80%] lg:w-[calc(20%-0.6rem)] lg:max-w-[300px]">
                   <SeedCard
                     id={item.id}
                     kind={SHEET_KIND_TO_SEED_KIND[kind] ?? 'seed'}
