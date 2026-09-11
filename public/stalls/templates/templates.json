@@ -5,7 +5,13 @@
       "id": "farm-stall-1",
       "label": "Farm Stall",
       "front": "/stalls/templates/farm-stall-front.png",
-      "interior": "/stalls/templates/farm-stall-interior.png"
+      "interior": "/stalls/templates/farm-stall-interior.png",
+      "hotspots": [
+        { "kind": "books", "label": "Books", "x": 6.2, "y": 68.5, "w": 20.0, "h": 21.2 },
+        { "kind": "music", "label": "Music", "x": 28.5, "y": 68.5, "w": 20.0, "h": 21.2 },
+        { "kind": "lyrics", "label": "Lyrics", "x": 50.8, "y": 68.5, "w": 20.3, "h": 21.2 },
+        { "kind": "story", "label": "My Story", "x": 73.4, "y": 68.5, "w": 20.4, "h": 21.2 }
+      ]
     }
   ],
   "art_craft": [],

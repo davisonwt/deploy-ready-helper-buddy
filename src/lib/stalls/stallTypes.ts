@@ -80,12 +80,42 @@ export interface StallTile {
   link_target: string;
 }
 
+/**
+ * A tap region painted into a template's interior image (batch 2b). All of
+ * x/y/w/h are percentages of the IMAGE's own natural width/height, not the
+ * viewport -- StallInterior converts these to the rendered (object-contain,
+ * possibly letterboxed) image box's own coordinates at render time.
+ */
+export interface StallHotspot {
+  kind: TileKind;
+  label: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export interface StallTemplate {
   id: string;
   label: string;
   front: string;
   interior: string;
+  hotspots?: StallHotspot[];
 }
+
+/**
+ * Four evenly-spaced bottom hotspots, used when a stall's interior is a
+ * member's own upload (no template, so no painted buttons/known layout) or
+ * a template with no `hotspots` entry of its own. Per-stall overrides live
+ * in stalls.hotspots (20260911000000_stall_hotspots.sql) once a member
+ * repositions them for their own uploaded image.
+ */
+export const DEFAULT_HOTSPOTS: StallHotspot[] = [
+  { kind: 'books', label: 'Books', x: 2, y: 70, w: 22, h: 25 },
+  { kind: 'music', label: 'Music', x: 26, y: 70, w: 22, h: 25 },
+  { kind: 'lyrics', label: 'Lyrics', x: 50, y: 70, w: 22, h: 25 },
+  { kind: 'story', label: 'My Story', x: 74, y: 70, w: 22, h: 25 },
+];
 
 export type StallTemplatesByCategory = Record<StallCategory, StallTemplate[]>;
 
