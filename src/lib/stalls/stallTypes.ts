@@ -119,5 +119,33 @@ export const DEFAULT_HOTSPOTS: StallHotspot[] = [
 
 export type StallTemplatesByCategory = Record<StallCategory, StallTemplate[]>;
 
+/**
+ * Which hotspots a stall's interior actually uses, in priority order:
+ * 1. stalls.hotspots -- an explicit per-stall override, once one exists.
+ * 2. The template's own `hotspots`, matched by the stall's stored
+ *    interior_image_path against every template's `interior` path across
+ *    every category (a stall's category and its interior template's
+ *    listed category don't have to be the same lookup key here -- the
+ *    image URL is the only reliable link back to "which template").
+ * 3. DEFAULT_HOTSPOTS -- a member's own uploaded interior, or a template
+ *    that hasn't been given hotspots of its own yet.
+ */
+export function resolveStallHotspots(
+  interiorImagePath: string | null | undefined,
+  stallHotspots: StallHotspot[] | null | undefined,
+  templates: StallTemplatesByCategory | null | undefined,
+): StallHotspot[] {
+  if (stallHotspots && stallHotspots.length > 0) return stallHotspots;
+
+  if (interiorImagePath && templates) {
+    for (const list of Object.values(templates)) {
+      const match = list.find((t) => t.interior === interiorImagePath);
+      if (match?.hotspots && match.hotspots.length > 0) return match.hotspots;
+    }
+  }
+
+  return DEFAULT_HOTSPOTS;
+}
+
 export const MIN_TILES = 3;
 export const MAX_TILES = 5;

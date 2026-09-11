@@ -4,12 +4,9 @@ import { Loader2, Store, UserX } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useStallTemplates } from '@/hooks/useStallTemplates';
 import StallInteriorView from '@/components/stalls/StallInteriorView';
-import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
-import { useGiftBestowal } from '@/hooks/useGiftBestowal';
-import type { PayoutProviderId } from '@/lib/payments/providerFees';
-import { STALL_TIER_LABEL, type StallTier, type StallTile } from '@/lib/stalls/stallTypes';
+import { STALL_TIER_LABEL, resolveStallHotspots, type StallHotspot, type StallTier } from '@/lib/stalls/stallTypes';
 
 interface StallRow {
   id: string;
@@ -19,27 +16,29 @@ interface StallRow {
   tier: StallTier;
   front_image_path: string | null;
   interior_image_path: string | null;
-  tiles: StallTile[];
+  hotspots: StallHotspot[] | null;
   published: boolean;
 }
 
 /**
- * Public visitor route (Farm-Stalls batch 2, item 3): front -> interior ->
- * shelves, same components the Cockpit owner view uses. A visitor gets a
- * Bestow button on the interior; the owner previewing their own stall gets
- * an Edit button instead. RLS (stalls_owner_all / stalls_read_published)
- * already restricts a non-owner to a published row only -- the query here
- * doesn't filter on published itself, so the owner can preview a draft.
+ * Public visitor route: front -> interior -> hotspot sheets, same
+ * StallInteriorView the Cockpit owner view uses. Owner view is identical
+ * to the visitor view except an "Edit stall" pill top-right (Farm-Stalls
+ * batch 2b, task 4) -- Bestow now happens per-item inside
+ * StallHotspotSheet, not as a stall-level button here.
+ *
+ * RLS (stalls_owner_all / stalls_read_published) already restricts a
+ * non-owner to a published row only -- the query here doesn't filter on
+ * published itself, so the owner can preview a draft.
  */
 export default function StallVisitPage() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { send: sendGift, loading: bestowing } = useGiftBestowal();
+  const templates = useStallTemplates();
 
   const [stall, setStall] = useState<StallRow | null | undefined>(undefined); // undefined = loading
   const [open, setOpen] = useState(false);
-  const [bestowOpen, setBestowOpen] = useState(false);
 
   useEffect(() => {
     if (!username) { setStall(null); return; }
@@ -54,7 +53,7 @@ export default function StallVisitPage() {
 
       const { data } = await supabase
         .from('stalls')
-        .select('id, user_id, name, tagline, tier, front_image_path, interior_image_path, tiles, published')
+        .select('id, user_id, name, tagline, tier, front_image_path, interior_image_path, hotspots, published')
         .eq('user_id', ownerId)
         .maybeSingle();
       if (alive) setStall((data as StallRow | null) ?? null);
@@ -63,22 +62,6 @@ export default function StallVisitPage() {
   }, [username]);
 
   const isOwner = !!user && !!stall && user.id === stall.user_id;
-
-  const handleBestowConfirm = async (provider: PayoutProviderId) => {
-    if (!stall) return;
-    const result = await sendGift({
-      recipientId: stall.user_id,
-      amount: 5,
-      contextKind: 'chat_tip',
-      contextId: stall.id,
-      provider,
-      message: `Bestowal for ${stall.name}'s stall`,
-    });
-    if (result.success) {
-      toast.success(`${stall.name} will receive your bestowal!`);
-      setBestowOpen(false);
-    }
-  };
 
   if (stall === undefined) {
     return <div className="flex min-h-[50vh] items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
@@ -135,26 +118,12 @@ export default function StallVisitPage() {
           ownerId={stall.user_id}
           interiorImageUrl={stall.interior_image_path}
           stallName={stall.name}
-          tiles={stall.tiles ?? []}
+          hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
+          isOwner={isOwner}
+          onEdit={() => navigate('/stall/build')}
           onClose={() => setOpen(false)}
-          footerAction={
-            isOwner
-              ? { label: 'Edit', onClick: () => navigate('/stall/build') }
-              : { label: 'Bestow', onClick: () => setBestowOpen(true) }
-          }
         />
       )}
-
-      <ConfirmBestowModal
-        isOpen={bestowOpen}
-        onClose={() => setBestowOpen(false)}
-        title={stall.name}
-        amount={5}
-        onConfirm={handleBestowConfirm}
-        confirming={bestowing}
-        actionLabel="Bestow"
-        enablePaystack
-      />
     </div>
   );
 }

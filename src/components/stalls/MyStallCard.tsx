@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Store, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { STALL_TIER_LABEL, type StallTier, type StallTile } from '@/lib/stalls/stallTypes';
+import { useStallTemplates } from '@/hooks/useStallTemplates';
+import { STALL_TIER_LABEL, resolveStallHotspots, type StallHotspot, type StallTier } from '@/lib/stalls/stallTypes';
 import StallInteriorView from './StallInteriorView';
 
 interface StallRow {
@@ -12,7 +13,7 @@ interface StallRow {
   tier: StallTier;
   front_image_path: string | null;
   interior_image_path: string | null;
-  tiles: StallTile[];
+  hotspots: StallHotspot[] | null;
   published: boolean;
 }
 
@@ -24,6 +25,8 @@ interface StallRow {
  */
 export default function MyStallCard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const templates = useStallTemplates();
   const [stall, setStall] = useState<StallRow | null | undefined>(undefined); // undefined = loading
   const [open, setOpen] = useState(false);
 
@@ -32,7 +35,7 @@ export default function MyStallCard() {
     let alive = true;
     supabase
       .from('stalls')
-      .select('name, tier, front_image_path, interior_image_path, tiles, published')
+      .select('name, tier, front_image_path, interior_image_path, hotspots, published')
       .eq('user_id', user.id)
       .maybeSingle()
       .then(({ data }) => { if (alive) setStall((data as StallRow | null) ?? null); });
@@ -87,7 +90,9 @@ export default function MyStallCard() {
           ownerId={user.id}
           interiorImageUrl={stall.interior_image_path}
           stallName={stall.name}
-          tiles={stall.tiles ?? []}
+          hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
+          isOwner
+          onEdit={() => navigate('/stall/build')}
           onClose={() => setOpen(false)}
         />
       )}
