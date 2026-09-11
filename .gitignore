@@ -45,3 +45,9 @@ supabase/.temp/
 scripts/.contrast-audit.json
 
 .swarm/memory.db
+.vercel
+.env*
+
+# Claude Code agent worktrees -- full duplicate checkouts (700MB+ each),
+# local scratch state, never source
+.claude/worktrees/

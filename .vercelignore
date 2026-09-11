@@ -1,0 +1,63 @@
+# Only matters for `vercel deploy`/`vercel --prod`'s local CLI upload --
+# a git-triggered deployment clones straight from GitHub and never reads
+# this file at all. Written as defense-in-depth for whenever the CLI path
+# gets used again (a preview deploy, local testing, etc.).
+#
+# Root cause of the 1.8GB CLI upload that hit Vercel's free-tier rate
+# limit: .claude/worktrees/ held two full duplicate repo checkouts
+# (778MB each) that weren't excluded by .gitignore at the time, so the
+# CLI's default gitignore-based upload walker swept them in.
+# .vercelignore REPLACES gitignore-based inference entirely once it
+# exists (doesn't extend it), so .gitignore's own exclusions are
+# repeated below too, or they'd stop applying to CLI uploads.
+#
+# Note: *.mp4/*.wav here are bare globs, so they also match public/*.mp4
+# (let-it-rain-1280x720.mp4, orchards-strip2.mp4 -- real assets normally
+# copied into dist/ at build time) -- a `vercel --prod` CLI deploy would
+# ship without them. Not a concern for git-triggered deploys (this file
+# doesn't apply there), only for the CLI path.
+
+.claude
+node_modules
+dist
+dist-ssr
+.git
+supabase
+scripts
+docs
+.tmp-*
+*.mp4
+*.wav
+
+# Mirror of .gitignore's own exclusions
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.local
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.env
+.env.*
+!.env.example
+!.env.jitsi.example
+.s2g-service-role-key
+.s2g-keys.json
+supabase/.temp/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+scripts/.contrast-audit.json
+.swarm/memory.db
+.vercel
