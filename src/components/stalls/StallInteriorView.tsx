@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { X, Pencil, Menu, CalendarDays } from 'lucide-react';
+import { X, Pencil, Menu, CalendarDays, Eye, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
@@ -107,6 +107,13 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const [isTodayDrawerOpen, setIsTodayDrawerOpen] = useState(false);
   const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
+  // Owner Menu -> "View as visitor": renders everything (this view, the
+  // hotspot sheets) exactly as a non-owner sees it -- all visitor action
+  // icons, Bestow -- without actually signing out. effectiveIsOwner is the
+  // one thing every owner-only affordance below checks instead of the raw
+  // `isOwner` prop.
+  const [viewingAsVisitor, setViewingAsVisitor] = useState(false);
+  const effectiveIsOwner = isOwner && !viewingAsVisitor;
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const rect = useContainImageRect(containerRef, imgRef);
@@ -226,7 +233,15 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
             >
               <Menu className="h-4 w-4" />
             </button>
-            {isOwner && (
+            {viewingAsVisitor ? (
+              <button
+                type="button"
+                onClick={() => setViewingAsVisitor(false)}
+                className="flex items-center gap-1.5 rounded-full bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-400 transition-colors"
+              >
+                <LogOut className="h-3.5 w-3.5" /> Viewing as visitor — exit
+              </button>
+            ) : isOwner && (
               <div className="relative">
                 <button
                   type="button"
@@ -240,11 +255,20 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
                 {ownerMenuOpen && (
                   <>
                     <div className="fixed inset-0 z-[9998]" onClick={() => setOwnerMenuOpen(false)} />
-                    <OwnerMenuItems
-                      onNavigate={() => setOwnerMenuOpen(false)}
-                      className="absolute left-0 top-full mt-2 min-w-[190px] rounded-lg border border-amber-500/20 bg-[#140c06] py-1.5 shadow-2xl z-[9999]"
-                      itemClassName="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
-                    />
+                    <div className="absolute left-0 top-full mt-2 min-w-[190px] rounded-lg border border-amber-500/20 bg-[#140c06] py-1.5 shadow-2xl z-[9999]">
+                      <OwnerMenuItems
+                        onNavigate={() => setOwnerMenuOpen(false)}
+                        itemClassName="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
+                      />
+                      <div className="my-1 border-t border-amber-500/15" />
+                      <button
+                        type="button"
+                        onClick={() => { setViewingAsVisitor(true); setOwnerMenuOpen(false); }}
+                        className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
+                      >
+                        <Eye className="h-4 w-4 shrink-0" /> View as visitor
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
@@ -272,7 +296,7 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
           ownerId={ownerId}
           ownerName={stallName}
           kind={activeHotspot.kind}
-          isOwner={isOwner}
+          isOwner={effectiveIsOwner}
           onClose={() => setOpenKind(null)}
         />
       )}

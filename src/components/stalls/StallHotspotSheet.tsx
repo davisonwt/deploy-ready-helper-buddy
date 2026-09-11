@@ -21,7 +21,11 @@ interface Item {
   id: string;
   title: string;
   blurb: string;
+  /** Full, untruncated description -- for SeedCard's inline detail overlay (tapBehavior='inline'). `blurb` above stays truncated for the card body. */
+  description: string;
   cover: string | null;
+  /** Multi-image gallery (products.image_urls) -- products-sourced items only. */
+  imageUrls: string[] | null;
   price: number;
   source: ItemSource;
   fileUrl: string | null;
@@ -155,13 +159,13 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
 
       if (sowerId || companyId) {
         const typeFilter = kind === 'music' ? ['music'] : kind === 'mugs' ? ['product'] : ['book', 'ebook'];
-        let q = supabase.from('products').select('id, title, description, cover_image_url, price, category, file_url, preview_url').in('type', typeFilter);
+        let q = supabase.from('products').select('id, title, description, cover_image_url, image_urls, price, category, file_url, preview_url').in('type', typeFilter);
         const orParts: string[] = [];
         if (sowerId) orParts.push(`sower_id.eq.${sowerId}`);
         if (companyId) orParts.push(`company_id.eq.${companyId}`);
         q = q.or(orParts.join(','));
         const { data } = await q.order('created_at', { ascending: false }).limit(100);
-        for (const p of (data ?? []) as { id: string; title: string; description: string | null; cover_image_url: string | null; price: number | null; category: string | null; file_url: string | null; preview_url: string | null }[]) {
+        for (const p of (data ?? []) as { id: string; title: string; description: string | null; cover_image_url: string | null; image_urls: string[] | null; price: number | null; category: string | null; file_url: string | null; preview_url: string | null }[]) {
           const isLyrics = (p.category ?? '').toLowerCase() === 'lyrics';
           const isMugs = (p.category ?? '').toLowerCase() === 'mugs';
           if (kind === 'lyrics' && !isLyrics) continue;
@@ -171,7 +175,9 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
             id: p.id,
             title: p.title,
             blurb: (p.description ?? '').slice(0, 90),
+            description: p.description ?? '',
             cover: p.cover_image_url,
+            imageUrls: p.image_urls,
             price: Number(p.price || 0),
             source: 'products',
             fileUrl: p.file_url,
@@ -199,7 +205,9 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
             id: b.id,
             title: b.title,
             blurb: (b.description ?? '').slice(0, 90),
+            description: b.description ?? '',
             cover: b.cover_image_url,
+            imageUrls: null,
             price: Number(b.bestowal_value || 0),
             source: 'sower_books',
             fileUrl: null,
@@ -229,7 +237,9 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
               id: t.id,
               title: t.track_title,
               blurb: '',
+              description: '',
               cover: t.cover_image_url,
+              imageUrls: null,
               price: 0,
               source: 'dj_music_tracks',
               fileUrl: null,
@@ -248,14 +258,12 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
     return () => { alive = false; };
   }, [kind, ownerId]);
 
-  // Item detail: no dedicated per-book/per-track page with its own Bestow
-  // exists app-wide yet (Bestow already lives on the card, via SeedCard's
-  // own ConfirmBestowModal) -- this opens the closest real destination the
-  // rest of the app already uses for this content kind (seedCardBuilders.js's
-  // own openPath convention, same for every item of a given kind). The
-  // interior's own open/kind state is hash-synced (StallInteriorView) so
-  // browser Back lands here again with this same sheet open.
-  const itemOpenPath = kind === 'music' ? '/music-library' : '/my-s2g-library';
+  // A tap on a sheet card never navigates anymore (tapBehavior="inline"
+  // below) -- this is only ever used as the Share target, so it just
+  // points back at this same stall page rather than a per-item page that
+  // doesn't exist (no dedicated per-book/per-track detail page exists
+  // app-wide yet).
+  const itemOpenPath = typeof window !== 'undefined' ? window.location.pathname : '/';
 
   return (
     <>
@@ -304,7 +312,9 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
                     kind={SHEET_KIND_TO_SEED_KIND[kind] ?? 'seed'}
                     title={item.title}
                     subtitle={item.blurb}
+                    fullDescription={item.description}
                     cover={item.cover}
+                    images={item.imageUrls}
                     ownerId={ownerId}
                     ownerName={ownerName}
                     price={item.price}
@@ -314,6 +324,8 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
                     productId={kind === 'music' && item.source === 'products' ? item.id : undefined}
                     pdfUrl={item.source === 'products' && item.fileUrl && PDF_RE.test(item.fileUrl) ? item.fileUrl : undefined}
                     hideSowerLine
+                    tapBehavior="inline"
+                    forceViewerIsOwner={isOwner ? undefined : false}
                   />
                 </div>
               ))}

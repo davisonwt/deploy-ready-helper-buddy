@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Heart, MessageCircle, Phone, Video as VideoIcon, Share2, BookOpen, X, UserPlus, UserCheck, Radio, ChevronLeft, ChevronRight, Volume2, VolumeX, Gift } from 'lucide-react';
+import { Heart, MessageCircle, Phone, Video as VideoIcon, Share2, BookOpen, X, UserPlus, UserCheck, Radio, ChevronLeft, ChevronRight, Volume2, VolumeX, Gift, Play, Pause, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,9 +8,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSocialActions } from '@/hooks/useSocialActions';
 import { useGiftBestowal } from '@/hooks/useGiftBestowal';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
+import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
-import PreviewPlayer from '@/components/media/PreviewPlayer';
-import SignedImg from '@/components/media/SignedImg';
+import { useSignedImages } from '@/lib/storage/signedImage';
 import { resolvePlayableUrl } from '@/lib/media/resolvePlayableUrl';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import ReportButton from '@/components/moderation/ReportButton';
@@ -55,6 +55,24 @@ export interface SeedCardProps {
   /** Hide the avatar/name row -- for a context where every card already shares one obvious owner (e.g. inside that owner's own StallHotspotSheet). Follow still applies if shown. */
   hideSowerLine?: boolean;
   className?: string;
+  /** Untruncated description for the inline detail overlay (tapBehavior 'inline', non-music/book kinds) -- falls back to `subtitle` when unset. Separate from `subtitle` because some callers (e.g. StallHotspotSheet) truncate subtitle for the card body. */
+  fullDescription?: string | null;
+  /**
+   * 'navigate' (default): tapping the cover/title calls navigate(openPath),
+   * same as always. 'inline': tap never leaves the page -- music toggles
+   * the 45s sample, book opens "Read a page" if a PDF exists (else does
+   * nothing), everything else opens an in-place detail overlay (gallery,
+   * full description, price, Bestow). Built for StallHotspotSheet, where
+   * navigating away from the stall interior on a card tap was never right.
+   */
+  tapBehavior?: 'navigate' | 'inline';
+  /**
+   * Overrides the real-auth-derived viewerIsOwner check -- pass `false` to
+   * force every owner-only affordance hidden and every visitor-only action
+   * shown, even when the signed-in user genuinely is `ownerId` (Owner
+   * Menu's "View as visitor" toggle). Leave unset for the real check.
+   */
+  forceViewerIsOwner?: boolean;
 
   /** 'compact' (default) is the stall-row/grid card; 'feed' is the full-bleed TikTok-style layout (Tribal Gardens live feed). */
   variant?: SeedCardVariant;
@@ -177,7 +195,7 @@ const KIND_WHAT_YOU_GET: Record<SeedCardKind, string> = {
 export default function SeedCard({
   id, kind, title, subtitle, cover, ownerId, ownerName, ownerAvatar,
   price, openPath, isProductRow = true, previewUrl, productId, pdfUrl,
-  hideSowerLine, className = '',
+  hideSowerLine, className = '', fullDescription, tapBehavior = 'navigate', forceViewerIsOwner,
   variant = 'compact', images, videoUrl, resolveVideoUrl, ownerUsername, chip, bestowWhatYouGet, isActive,
   onMessageOverride, onVoiceOverride, onVideoOverride, onShareOverride, onBestowOverride,
   onFollowOverride, isFollowingOverride,
@@ -191,7 +209,8 @@ export default function SeedCard({
   void _goLive; // Step In only ever joins an already-live orchard here -- starting a new session is the Owner Menu's own Go Live, not this card's job.
 
   const isFeed = variant === 'feed';
-  const viewerIsOwner = !!user && user.id === ownerId;
+  const isInline = tapBehavior === 'inline';
+  const viewerIsOwner = forceViewerIsOwner !== undefined ? forceViewerIsOwner : (!!user && user.id === ownerId);
   const heartEnabled = kind === 'orchard' || isProductRow;
 
   const [isFollowing, setIsFollowing] = useState(false);
@@ -199,18 +218,30 @@ export default function SeedCard({
   const [imageFailed, setImageFailed] = useState(false);
   const [bestowOpen, setBestowOpen] = useState(false);
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [detailOverlayOpen, setDetailOverlayOpen] = useState(false);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
   const [starting, setStarting] = useState<'message' | 'voice' | 'video' | null>(null);
 
-  // Feed-only: gallery position + video autoplay/mute
+  // Gallery position (both variants) + video autoplay/mute (feed only)
   const [imgIdx, setImgIdx] = useState(0);
   const [muted, setMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const gallery = images && images.length > 0 ? images : cover ? [cover] : [];
-  const hasGallery = isFeed && !videoUrl && gallery.length > 1;
-  const feedCover = gallery[imgIdx] ?? cover ?? null;
+  const rawGallery = images && images.length > 0 ? images : cover ? [cover] : [];
+  const gallery = useSignedImages(rawGallery);
+  const hasGallery = !videoUrl && gallery.length > 1;
+  const displayCover = gallery[imgIdx] ?? gallery[0] ?? null;
 
   useEffect(() => { setImgIdx(0); }, [id]);
+
+  // One shared player instance for the whole card -- music kind only.
+  // Rendered inline (not via the separate PreviewPlayer component) so a
+  // tapBehavior='inline' card tap can drive the exact same toggle its own
+  // play button uses, rather than two independent player instances.
+  const musicPlayer = usePreviewPlayer({
+    id,
+    previewUrl: kind === 'music' ? (previewUrl ?? null) : null,
+    productId: kind === 'music' && isProductRow ? (productId ?? undefined) : undefined,
+  });
 
   // Signs the URL when it's in a known private bucket (same resolver every
   // other seed card's preview already uses) -- a no-op passthrough for an
@@ -304,7 +335,13 @@ export default function SeedCard({
   const isLiveHere = liveHere.length > 0;
   const effectiveReportTarget = reportTarget !== undefined ? reportTarget : { type: KIND_REPORT_TYPE[kind], id };
 
-  const openDetail = () => navigate(openPath);
+  const openDetail = (e?: React.MouseEvent) => {
+    if (!isInline) { navigate(openPath); return; }
+    e?.stopPropagation(); e?.preventDefault();
+    if (kind === 'music') { musicPlayer.toggle(e); return; }
+    if (kind === 'book') { if (pdfUrl) setPdfPreviewOpen(true); return; }
+    setDetailOverlayOpen(true);
+  };
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.stopPropagation(); e.preventDefault();
@@ -462,6 +499,47 @@ export default function SeedCard({
     </div>
   );
 
+  // tapBehavior 'inline' detail overlay -- mugs/other (any kind besides
+  // music/book, which get their own inline tap behavior instead). Opens
+  // in place over the stall interior rather than navigating away.
+  const detailOverlay = detailOverlayOpen && (
+    <div className="fixed inset-0 z-[10050] bg-black/80 flex items-center justify-center p-4" onClick={() => setDetailOverlayOpen(false)}>
+      <div className="max-w-md w-full max-h-[90vh] overflow-y-auto rounded-xl bg-[#180f08] border border-amber-500/20" onClick={(e) => e.stopPropagation()}>
+        <div className="relative aspect-square">
+          {displayCover ? (
+            <>
+              <img src={displayCover} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70" />
+              <div className="absolute inset-0 bg-black/20" />
+              <img src={displayCover} alt={title} className="absolute inset-0 w-full h-full object-contain" />
+            </>
+          ) : (
+            <GradientPlaceholder type={KIND_PLACEHOLDER[kind]} title={title} className="w-full h-full" />
+          )}
+          {hasGallery && <GalleryChrome gallery={gallery} imgIdx={imgIdx} setImgIdx={setImgIdx} large />}
+          <button type="button" onClick={() => setDetailOverlayOpen(false)} aria-label="Close" className="absolute top-2 right-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur hover:bg-black/70">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="p-4 space-y-3">
+          <h2 className="font-serif text-lg text-amber-50">{title}</h2>
+          {(fullDescription ?? subtitle) && (
+            <p className="text-sm text-amber-100/70 whitespace-pre-wrap">{fullDescription ?? subtitle}</p>
+          )}
+          {price != null && price > 0 && <p className="text-amber-300 font-semibold">${price.toFixed(2)}</p>}
+          {!viewerIsOwner && (
+            <button
+              type="button"
+              onClick={handleBestowClick}
+              className="w-full rounded-md bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-amber-950 text-sm font-bold py-2 transition-colors"
+            >
+              Bestow {price && price > 0 ? `$${price.toFixed(2)}` : ''}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   const liveOverlay = activeRoom && (
     <LiveStageOverlay
       seedId={id}
@@ -494,8 +572,8 @@ export default function SeedCard({
     return (
       <>
         <div className={`relative h-full w-full overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950 ${className}`}>
-          {feedCover && (
-            <img src={feedCover} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover opacity-40 blur-2xl scale-110" />
+          {displayCover && (
+            <img src={displayCover} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover opacity-40 blur-2xl scale-110" />
           )}
 
           {videoUrl ? (
@@ -503,7 +581,7 @@ export default function SeedCard({
               <video
                 ref={videoRef}
                 src={resolvedVideoUrl ?? undefined}
-                poster={feedCover ?? undefined}
+                poster={displayCover ?? undefined}
                 className="absolute inset-0 h-full w-full object-cover"
                 playsInline
                 loop
@@ -513,29 +591,13 @@ export default function SeedCard({
                 {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
               </span>
             </button>
-          ) : feedCover ? (
-            <img src={feedCover} alt={title} className="absolute inset-0 h-full w-full object-cover" />
+          ) : displayCover ? (
+            <img src={displayCover} alt={title} className="absolute inset-0 h-full w-full object-cover" />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-[20rem] opacity-10">🌱</div>
           )}
 
-          {hasGallery && (
-            <>
-              <div className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex items-center gap-2 sm:left-3">
-                <button type="button" onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i - 1 + gallery.length) % gallery.length); }} aria-label="Previous image" className="grid h-10 w-10 place-items-center rounded-full bg-black/60 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-black/80 transition">
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button type="button" onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i + 1) % gallery.length); }} aria-label="Next image" className="grid h-10 w-10 place-items-center rounded-full bg-black/60 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-black/80 transition">
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="absolute left-1/2 top-3 -translate-x-1/2 z-10 flex gap-1.5 rounded-full bg-black/50 px-2 py-1 backdrop-blur-sm">
-                {gallery.map((_, i) => (
-                  <span key={i} className={`h-1.5 rounded-full transition-all ${i === imgIdx ? 'w-4 bg-white' : 'w-1.5 bg-white/40'}`} />
-                ))}
-              </div>
-            </>
-          )}
+          {hasGallery && !videoUrl && <GalleryChrome gallery={gallery} imgIdx={imgIdx} setImgIdx={setImgIdx} large />}
 
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
 
@@ -623,8 +685,10 @@ export default function SeedCard({
 
             {whisperBlock && <div className="mt-1.5">{whisperBlock}</div>}
 
-            {kind === 'music' && (previewUrl || productId) && (
-              <FeedPreviewRow id={id} previewUrl={previewUrl ?? null} productId={isProductRow ? productId : null} />
+            {kind === 'music' && musicPlayer.hasSource && (
+              <div className="relative mt-2 h-11 max-w-md overflow-hidden rounded-2xl bg-black/40">
+                <InlinePreviewBar player={musicPlayer} />
+              </div>
             )}
 
             {kind === 'book' && pdfUrl && (
@@ -649,6 +713,7 @@ export default function SeedCard({
         </div>
 
         {pdfModal}
+        {detailOverlay}
         {liveOverlay}
         {bestowModal}
       </>
@@ -660,14 +725,21 @@ export default function SeedCard({
       <Card className={`overflow-hidden bg-[#180f08] border-amber-500/20 ${className}`}>
         <button type="button" onClick={openDetail} className="block w-full text-left relative">
           <div className="relative aspect-square">
-            {cover && !imageFailed ? (
-              <SignedImg src={cover} alt={title} className="w-full h-full object-cover" onError={() => setImageFailed(true)} />
+            {displayCover && !imageFailed ? (
+              <>
+                {/* Blurred cover copy fills the square behind the real image --
+                    the real image itself is object-contain so it's never
+                    cropped, whatever its own aspect ratio (same treatment as
+                    the stall front). */}
+                <img src={displayCover} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70" />
+                <div className="absolute inset-0 bg-black/20" />
+                <img src={displayCover} alt={title} className="absolute inset-0 w-full h-full object-contain" onError={() => setImageFailed(true)} />
+              </>
             ) : (
               <GradientPlaceholder type={KIND_PLACEHOLDER[kind]} title={title} className="w-full h-full" />
             )}
-            {kind === 'music' && (previewUrl || productId) && (
-              <PreviewPlayer id={id} previewUrl={previewUrl ?? null} productId={isProductRow ? productId : null} />
-            )}
+            {kind === 'music' && musicPlayer.hasSource && <InlinePreviewBar player={musicPlayer} />}
+            {hasGallery && <GalleryChrome gallery={gallery} imgIdx={imgIdx} setImgIdx={setImgIdx} />}
             {badgePct != null && (
               <span className="absolute top-2 left-2 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-950 shadow">
                 🎤 Whisperer {badgePct}%
@@ -772,6 +844,7 @@ export default function SeedCard({
       </Card>
 
       {pdfModal}
+      {detailOverlay}
       {liveOverlay}
       {bestowModal}
     </>
@@ -810,10 +883,72 @@ function FeedRailButton({ icon, label, onClick, disabled, accent, dataCall }: {
  * image); a plain fixed-height relative box gives it the same "fills the
  * bar" effect here.
  */
-function FeedPreviewRow({ id, previewUrl, productId }: { id: string; previewUrl: string | null; productId?: string | null }) {
+/**
+ * A 45s-sample play button + progress bar, driven by a `usePreviewPlayer`
+ * instance the caller already owns (SeedCard keeps exactly one per card,
+ * shared between the cover overlay, the feed content stack, and an inline
+ * whole-card tap toggle -- never a second competing player instance for
+ * the same id). Meant to sit inside a `relative`-positioned box.
+ */
+function InlinePreviewBar({ player }: { player: ReturnType<typeof usePreviewPlayer> }) {
   return (
-    <div className="relative mt-2 h-11 max-w-md overflow-hidden rounded-2xl bg-black/40">
-      <PreviewPlayer id={id} previewUrl={previewUrl} productId={productId} />
+    <div
+      className="absolute bottom-0 inset-x-0 flex items-center gap-2 px-2.5 py-2 bg-black/70 backdrop-blur-sm"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        onClick={player.toggle}
+        aria-label={player.isPlaying ? 'Pause preview' : 'Play preview'}
+        className="shrink-0 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-black flex items-center justify-center transition-colors"
+      >
+        {player.isLoading ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        ) : player.isPlaying ? (
+          <Pause className="w-3.5 h-3.5" />
+        ) : (
+          <Play className="w-3.5 h-3.5 ml-0.5" />
+        )}
+      </button>
+      <div className="flex-1 min-w-0">
+        <div className="h-1 rounded-full bg-white/25 overflow-hidden">
+          <div
+            className="h-full bg-emerald-400 transition-[width] duration-150"
+            style={{ width: `${Math.min(100, Math.max(0, player.progress * 100))}%` }}
+          />
+        </div>
+        <p className="mt-1 text-[10px] font-medium text-white/85 truncate">
+          {player.isFullTrack ? 'Full track' : '45s preview'}
+        </p>
+      </div>
     </div>
+  );
+}
+
+/** Left/right arrows + position dots over a multi-image gallery -- shared by both variants. */
+function GalleryChrome({ gallery, imgIdx, setImgIdx, large }: {
+  gallery: string[];
+  imgIdx: number;
+  setImgIdx: (fn: (i: number) => number) => void;
+  large?: boolean;
+}) {
+  const btnSize = large ? 'h-10 w-10' : 'h-7 w-7';
+  const iconSize = large ? 'h-5 w-5' : 'h-3.5 w-3.5';
+  return (
+    <>
+      <div className={`absolute left-2 top-1/2 -translate-y-1/2 z-20 flex items-center gap-2 ${large ? 'sm:left-3' : ''}`}>
+        <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); setImgIdx((i) => (i - 1 + gallery.length) % gallery.length); }} aria-label="Previous image" className={`grid ${btnSize} place-items-center rounded-full bg-black/60 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-black/80 transition`}>
+          <ChevronLeft className={iconSize} />
+        </button>
+        <button type="button" onClick={(e) => { e.stopPropagation(); e.preventDefault(); setImgIdx((i) => (i + 1) % gallery.length); }} aria-label="Next image" className={`grid ${btnSize} place-items-center rounded-full bg-black/60 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-black/80 transition`}>
+          <ChevronRight className={iconSize} />
+        </button>
+      </div>
+      <div className="absolute left-1/2 top-2 -translate-x-1/2 z-10 flex gap-1.5 rounded-full bg-black/50 px-2 py-1 backdrop-blur-sm">
+        {gallery.map((_, i) => (
+          <span key={i} className={`h-1.5 rounded-full transition-all ${i === imgIdx ? 'w-4 bg-white' : 'w-1.5 bg-white/40'}`} />
+        ))}
+      </div>
+    </>
   );
 }
