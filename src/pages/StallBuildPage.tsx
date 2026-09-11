@@ -10,6 +10,7 @@ import { Trash2, Plus, Store } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import StallImageUpload, { type StallImageResult } from '@/components/stalls/StallImageUpload';
+import StallPdfUpload, { type StallPdfResult } from '@/components/stalls/StallPdfUpload';
 import {
   STALL_CATEGORIES,
   TILE_KINDS,
@@ -56,6 +57,7 @@ export default function StallBuildPage() {
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
   const [story, setStory] = useState('');
+  const [storyPdf, setStoryPdf] = useState<StallPdfResult | null>(null);
   const [front, setFront] = useState<StallImageResult | null>(null);
   const [interior, setInterior] = useState<StallImageResult | null>(null);
   const [tiles, setTiles] = useState<TileDraft[]>([emptyTile(), emptyTile(), emptyTile()]);
@@ -81,6 +83,10 @@ export default function StallBuildPage() {
         setName(data.name ?? '');
         setTagline(data.tagline ?? '');
         setStory(data.story ?? '');
+        if (data.story_pdf_path) {
+          // Fixed upload path (StallPdfUpload always writes `${user.id}/story.pdf`) -- deterministic, no need to parse it back out of the URL.
+          setStoryPdf({ url: data.story_pdf_path, storagePath: `${user.id}/story.pdf`, fileName: 'story.pdf' });
+        }
         if (data.front_image_path) setFront({ url: data.front_image_path, storagePath: null });
         if (data.interior_image_path) setInterior({ url: data.interior_image_path, storagePath: null });
         const savedTiles = Array.isArray(data.tiles) ? data.tiles : [];
@@ -135,6 +141,7 @@ export default function StallBuildPage() {
           name: name.trim(),
           tagline: tagline.trim() || null,
           story: story.trim() || null,
+          story_pdf_path: storyPdf?.url ?? null,
           front_image_path: front.url,
           interior_image_path: interior.url,
           tiles: tilesPayload,
@@ -216,6 +223,10 @@ export default function StallBuildPage() {
               rows={8}
               placeholder={"MY JOURNEY\n\nit started with a single song..."}
             />
+            <p className="text-xs text-muted-foreground mt-3 mb-1.5">
+              Prefer a PDF instead? Upload one and it replaces the text above inside your stall.
+            </p>
+            <StallPdfUpload pathPrefix={pathPrefix} value={storyPdf} onChange={setStoryPdf} />
           </div>
         </div>
       )}
