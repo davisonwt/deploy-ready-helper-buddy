@@ -70,8 +70,13 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
  *     music-duplicates.sql for the read-only audit this was checked
  *     against: 4 of one owner's 32 music products shared a title with
  *     one of their 25 dj_music_tracks rows).
- *   - story: profiles.bio for the owner -- no price/Bestow (not a
- *     purchasable item).
+ *   - story: stalls.story for the owner, falling back to profiles.bio when
+ *     null (a story written for the stall vs. the general profile bio) --
+ *     no price/Bestow (not a purchasable item). Rendered by renderStory()
+ *     below: blank-line-separated paragraphs, any line that is entirely
+ *     upper-case becomes a gold serif heading. The text is lowercase by
+ *     design in real use -- renderStory never changes case, only chooses
+ *     paragraph vs. heading per line.
  *   - mugs: products (type = 'product', category = 'mugs'). `type` has a
  *     CHECK constraint with no 'merch' value (confirmed live against
  *     products_type_check) so, like lyrics, this is a category filter on
@@ -103,6 +108,12 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
     let alive = true;
     (async () => {
       if (kind === 'story') {
+        const { data: stallRow } = await supabase.from('stalls').select('story').eq('user_id', ownerId).maybeSingle();
+        const story = (stallRow as { story?: string | null } | null)?.story;
+        if (story && story.trim()) {
+          if (alive) setBio(story);
+          return;
+        }
         const { data } = await supabase.from('profiles').select('bio').eq('user_id', ownerId).maybeSingle();
         if (alive) setBio((data as { bio?: string } | null)?.bio ?? null);
         return;
@@ -249,9 +260,9 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
             bio === null ? (
               <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-amber-100/40" /></div>
             ) : bio ? (
-              <p className="whitespace-pre-wrap leading-relaxed text-[15px] text-amber-50/90 py-4 font-serif">{bio}</p>
+              <div className="py-4">{renderStory(bio)}</div>
             ) : (
-              <EmptyState text={EMPTY_TEXT.story!} isOwner={isOwner} addOnePath="/profile" addOneLabel="Write your story" />
+              <EmptyState text={EMPTY_TEXT.story!} isOwner={isOwner} addOnePath="/stall/build" addOneLabel="Write your story" />
             )
           ) : items === null ? (
             <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-amber-100/40" /></div>
@@ -303,6 +314,49 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
       />
     </>
   );
+}
+
+/**
+ * Renders MY STORY text (stalls.story or profiles.bio) as paragraphs
+ * (blank-line separated, internal single line breaks kept via
+ * whitespace-pre-wrap) with any line that is ENTIRELY UPPER CASE promoted
+ * to a gold serif heading. Never changes the case of anything -- the text
+ * is lowercase by design in real use; a line only becomes a heading
+ * because the owner already typed it in caps.
+ */
+function renderStory(text: string) {
+  const isAllCaps = (line: string) => /[A-Za-z]/.test(line) && line === line.toUpperCase() && line !== line.toLowerCase();
+
+  const blocks: JSX.Element[] = [];
+  let paragraph: string[] = [];
+  const flushParagraph = (key: string) => {
+    if (paragraph.length === 0) return;
+    blocks.push(
+      <p key={key} className="whitespace-pre-wrap leading-relaxed text-[15px] text-amber-50/90 font-serif mb-4 last:mb-0">
+        {paragraph.join('\n')}
+      </p>,
+    );
+    paragraph = [];
+  };
+
+  text.split('\n').forEach((rawLine, i) => {
+    const trimmed = rawLine.trim();
+    if (isAllCaps(trimmed)) {
+      flushParagraph(`p-${i}`);
+      blocks.push(
+        <h3 key={`h-${i}`} className="font-serif text-lg text-amber-300 tracking-wide mt-6 mb-2 first:mt-0">
+          {trimmed}
+        </h3>,
+      );
+    } else if (trimmed === '') {
+      flushParagraph(`p-${i}`);
+    } else {
+      paragraph.push(rawLine);
+    }
+  });
+  flushParagraph('p-last');
+
+  return blocks;
 }
 
 function EmptyState({ text, isOwner, addOnePath, addOneLabel }: { text: string; isOwner?: boolean; addOnePath?: string; addOneLabel: string }) {

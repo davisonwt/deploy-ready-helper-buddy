@@ -55,6 +55,7 @@ export default function StallBuildPage() {
   const [category, setCategory] = useState<StallCategory>('books_writing');
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
+  const [story, setStory] = useState('');
   const [front, setFront] = useState<StallImageResult | null>(null);
   const [interior, setInterior] = useState<StallImageResult | null>(null);
   const [tiles, setTiles] = useState<TileDraft[]>([emptyTile(), emptyTile(), emptyTile()]);
@@ -79,6 +80,7 @@ export default function StallBuildPage() {
         setCategory(data.category);
         setName(data.name ?? '');
         setTagline(data.tagline ?? '');
+        setStory(data.story ?? '');
         if (data.front_image_path) setFront({ url: data.front_image_path, storagePath: null });
         if (data.interior_image_path) setInterior({ url: data.interior_image_path, storagePath: null });
         const savedTiles = Array.isArray(data.tiles) ? data.tiles : [];
@@ -132,6 +134,7 @@ export default function StallBuildPage() {
           category,
           name: name.trim(),
           tagline: tagline.trim() || null,
+          story: story.trim() || null,
           front_image_path: front.url,
           interior_image_path: interior.url,
           tiles: tilesPayload,
@@ -199,6 +202,20 @@ export default function StallBuildPage() {
           <div>
             <label className="text-sm font-medium mb-2 block">Tagline (optional)</label>
             <Textarea value={tagline} onChange={(e) => setTagline(e.target.value)} maxLength={160} rows={2} placeholder="Words that heal, songs that awaken." />
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">My Story (optional)</label>
+            <p className="text-xs text-muted-foreground mb-1.5">
+              Shown under the MY STORY button inside your stall. Blank lines start a new paragraph.
+              Type a line in ALL CAPS to make it a heading — everything renders exactly as typed, so write it the way you want it read.
+            </p>
+            <Textarea
+              value={story}
+              onChange={(e) => setStory(e.target.value)}
+              maxLength={4000}
+              rows={8}
+              placeholder={"MY JOURNEY\n\nit started with a single song..."}
+            />
           </div>
         </div>
       )}
