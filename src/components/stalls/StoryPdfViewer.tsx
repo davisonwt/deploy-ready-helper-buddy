@@ -87,6 +87,8 @@ function PdfPage({ pdf, pageNumber, width }: PdfPageProps) {
 
 interface Props {
   url: string;
+  /** Cap how many pages render (e.g. 2 for SeedCard's "Read a page" teaser) -- omit to render the whole document, as StallHotspotSheet's MY STORY does. */
+  maxPages?: number;
 }
 
 /**
@@ -97,7 +99,7 @@ interface Props {
  * A plain "Open in a new tab" link sits under the last page as a minor
  * fallback/convenience, not the primary path anymore.
  */
-export default function StoryPdfViewer({ url }: Props) {
+export default function StoryPdfViewer({ url, maxPages }: Props) {
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [width, setWidth] = useState(0);
@@ -154,7 +156,7 @@ export default function StoryPdfViewer({ url }: Props) {
       ) : (
         <>
           <div className="space-y-3">
-            {Array.from({ length: pdf.numPages }, (_, i) => (
+            {Array.from({ length: maxPages ? Math.min(maxPages, pdf.numPages) : pdf.numPages }, (_, i) => (
               <PdfPage key={i + 1} pdf={pdf} pageNumber={i + 1} width={width} />
             ))}
           </div>
@@ -165,7 +167,7 @@ export default function StoryPdfViewer({ url }: Props) {
               rel="noopener noreferrer"
               className="text-sm text-amber-400 hover:text-amber-300 underline underline-offset-2"
             >
-              Open in a new tab
+              {maxPages && maxPages < pdf.numPages ? 'Read the rest in a new tab' : 'Open in a new tab'}
             </a>
           </div>
         </>

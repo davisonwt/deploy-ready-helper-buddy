@@ -2,12 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useGiftBestowal } from '@/hooks/useGiftBestowal';
-import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
 import StoryPdfViewer from './StoryPdfViewer';
-import type { PayoutProviderId } from '@/lib/payments/providerFees';
+import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
 import type { TileKind } from '@/lib/stalls/stallTypes';
-import { toast } from 'sonner';
 
 interface Props {
   ownerId: string;
@@ -17,13 +14,28 @@ interface Props {
   onClose: () => void;
 }
 
+/** Which table an Item came from -- drives SeedCard's isProductRow (Heart/Whisperer are FK'd to products/orchards only) and whether a book has a real PDF to preview. */
+type ItemSource = 'products' | 'sower_books' | 'dj_music_tracks';
+
 interface Item {
   id: string;
   title: string;
   blurb: string;
   cover: string | null;
   price: number;
+  source: ItemSource;
+  fileUrl: string | null;
+  previewUrl: string | null;
 }
+
+const SHEET_KIND_TO_SEED_KIND: Partial<Record<TileKind, SeedCardKind>> = {
+  books: 'book',
+  lyrics: 'book',
+  music: 'music',
+  mugs: 'seed',
+};
+
+const PDF_RE = /\.pdf(\?|$)/i;
 
 const KIND_LABEL: Partial<Record<TileKind, string>> = {
   books: 'Books',
@@ -92,14 +104,11 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
  *     2d audit for a real example of this).
  */
 export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, onClose }: Props) {
-  const navigate = useNavigate();
   const [items, setItems] = useState<Item[] | null>(null);
   // undefined = still loading; null = loaded, nothing there; string = loaded, has content.
   const [bio, setBio] = useState<string | null | undefined>(undefined);
   const [storyPdfUrl, setStoryPdfUrl] = useState<string | null | undefined>(undefined);
-  const [bestowTarget, setBestowTarget] = useState<Item | null>(null);
   const [visible, setVisible] = useState(false);
-  const { send: sendGift, loading: bestowing } = useGiftBestowal();
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true));
@@ -146,13 +155,13 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
 
       if (sowerId || companyId) {
         const typeFilter = kind === 'music' ? ['music'] : kind === 'mugs' ? ['product'] : ['book', 'ebook'];
-        let q = supabase.from('products').select('id, title, description, cover_image_url, price, category').in('type', typeFilter);
+        let q = supabase.from('products').select('id, title, description, cover_image_url, price, category, file_url, preview_url').in('type', typeFilter);
         const orParts: string[] = [];
         if (sowerId) orParts.push(`sower_id.eq.${sowerId}`);
         if (companyId) orParts.push(`company_id.eq.${companyId}`);
         q = q.or(orParts.join(','));
         const { data } = await q.order('created_at', { ascending: false }).limit(100);
-        for (const p of (data ?? []) as { id: string; title: string; description: string | null; cover_image_url: string | null; price: number | null; category: string | null }[]) {
+        for (const p of (data ?? []) as { id: string; title: string; description: string | null; cover_image_url: string | null; price: number | null; category: string | null; file_url: string | null; preview_url: string | null }[]) {
           const isLyrics = (p.category ?? '').toLowerCase() === 'lyrics';
           const isMugs = (p.category ?? '').toLowerCase() === 'mugs';
           if (kind === 'lyrics' && !isLyrics) continue;
@@ -164,13 +173,18 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
             blurb: (p.description ?? '').slice(0, 90),
             cover: p.cover_image_url,
             price: Number(p.price || 0),
+            source: 'products',
+            fileUrl: p.file_url,
+            previewUrl: p.preview_url,
           });
         }
       }
 
       // sower_books -- a separate, older books table (keyed directly by
       // user_id, no sower_id indirection) that src/api/sowerContent.ts
-      // already unions into "books" elsewhere in the app.
+      // already unions into "books" elsewhere in the app. No PDF/file
+      // column exists here (confirmed live) -- "Read a page" never applies
+      // to a sower_books-sourced item.
       if (kind === 'books') {
         const { data } = await supabase
           .from('sower_books')
@@ -187,6 +201,9 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
             blurb: (b.description ?? '').slice(0, 90),
             cover: b.cover_image_url,
             price: Number(b.bestowal_value || 0),
+            source: 'sower_books',
+            fileUrl: null,
+            previewUrl: null,
           });
         }
       }
@@ -201,14 +218,27 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
         if (djId) {
           const { data } = await supabase
             .from('dj_music_tracks')
-            .select('id, track_title, cover_image_url')
+            .select('id, track_title, cover_image_url, preview_url')
             .eq('dj_id', djId)
             .order('created_at', { ascending: false })
             .limit(200);
-          for (const t of (data ?? []) as { id: string; track_title: string; cover_image_url: string | null }[]) {
+          for (const t of (data ?? []) as { id: string; track_title: string; cover_image_url: string | null; preview_url: string | null }[]) {
             const key = normalize(t.track_title);
             if (byNormTitle.has(key)) continue; // a products row already claimed this title
-            byNormTitle.set(key, { id: t.id, title: t.track_title, blurb: '', cover: t.cover_image_url, price: 0 });
+            byNormTitle.set(key, {
+              id: t.id,
+              title: t.track_title,
+              blurb: '',
+              cover: t.cover_image_url,
+              price: 0,
+              source: 'dj_music_tracks',
+              fileUrl: null,
+              // No client-side cap available on this path (that's
+              // MusicLibraryTable's own bespoke toggleDjPreview) -- only
+              // ever offer a sample when the row has a real short preview
+              // clip of its own, never the full file_url uncapped.
+              previewUrl: t.preview_url,
+            });
           }
         }
       }
@@ -218,31 +248,14 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
     return () => { alive = false; };
   }, [kind, ownerId]);
 
-  const handleBestowConfirm = async (provider: PayoutProviderId) => {
-    if (!bestowTarget) return;
-    const result = await sendGift({
-      recipientId: ownerId,
-      amount: bestowTarget.price > 0 ? bestowTarget.price : 5,
-      contextKind: 'chat_tip',
-      contextId: bestowTarget.id,
-      provider,
-      message: `Bestowal for "${bestowTarget.title}"`,
-    });
-    if (result.success) {
-      toast.success(`${ownerName} will receive your bestowal!`);
-      setBestowTarget(null);
-    }
-  };
-
   // Item detail: no dedicated per-book/per-track page with its own Bestow
-  // exists app-wide yet (Bestow already lives on this card) -- this opens
-  // the closest real destination the rest of the app already uses for
-  // this content kind (seedCardBuilders.js's own openPath convention).
-  // The interior's own open/kind state is hash-synced (StallInteriorView)
-  // so browser Back lands here again with this same sheet open.
-  const openItemDetail = (item: Item) => {
-    navigate(kind === 'music' ? '/music-library' : '/my-s2g-library', { state: { fromStallItem: item.id } });
-  };
+  // exists app-wide yet (Bestow already lives on the card, via SeedCard's
+  // own ConfirmBestowModal) -- this opens the closest real destination the
+  // rest of the app already uses for this content kind (seedCardBuilders.js's
+  // own openPath convention, same for every item of a given kind). The
+  // interior's own open/kind state is hash-synced (StallInteriorView) so
+  // browser Back lands here again with this same sheet open.
+  const itemOpenPath = kind === 'music' ? '/music-library' : '/my-s2g-library';
 
   return (
     <>
@@ -281,49 +294,33 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
           ) : items.length === 0 ? (
             <EmptyState text={EMPTY_TEXT[kind] ?? 'Nothing here yet'} isOwner={isOwner} addOnePath={ADD_ONE_PATH[kind]} addOneLabel="Add one" />
           ) : (
-            <div className="space-y-3 py-3">
+            // Horizontal swipeable row of SeedCards (Flow v2 step 2) --
+            // snap-x, ~80% width per card on phone, 3-up on desktop.
+            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory py-3 -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {items.map((item) => (
-                <div key={item.id} className="flex gap-3 rounded-xl border border-amber-500/15 bg-black/25 p-2.5">
-                  <button type="button" onClick={() => openItemDetail(item)} className="shrink-0">
-                    {item.cover ? (
-                      <img src={item.cover} alt="" className="h-20 w-20 rounded-lg object-cover" />
-                    ) : (
-                      <div className="h-20 w-20 rounded-lg bg-amber-950/60 border border-amber-500/10" />
-                    )}
-                  </button>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <button type="button" onClick={() => openItemDetail(item)} className="text-left">
-                      <p className="font-serif text-base text-amber-50 truncate">{item.title}</p>
-                      {item.blurb && <p className="text-xs text-amber-100/50 truncate mt-0.5">{item.blurb}</p>}
-                    </button>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm text-amber-300/90">${item.price.toFixed(2)}</span>
-                      <button
-                        type="button"
-                        onClick={() => setBestowTarget(item)}
-                        className="rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-3 py-1 text-xs font-bold text-amber-950 shadow hover:from-amber-300 hover:to-amber-500 transition-colors"
-                      >
-                        Bestow
-                      </button>
-                    </div>
-                  </div>
+                <div key={item.id} className="shrink-0 snap-center w-[80%] lg:w-[calc(33.333%-0.6rem)]">
+                  <SeedCard
+                    id={item.id}
+                    kind={SHEET_KIND_TO_SEED_KIND[kind] ?? 'seed'}
+                    title={item.title}
+                    subtitle={item.blurb}
+                    cover={item.cover}
+                    ownerId={ownerId}
+                    ownerName={ownerName}
+                    price={item.price}
+                    openPath={itemOpenPath}
+                    isProductRow={item.source === 'products'}
+                    previewUrl={kind === 'music' ? item.previewUrl : undefined}
+                    productId={kind === 'music' && item.source === 'products' ? item.id : undefined}
+                    pdfUrl={item.source === 'products' && item.fileUrl && PDF_RE.test(item.fileUrl) ? item.fileUrl : undefined}
+                    hideSowerLine
+                  />
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
-
-      <ConfirmBestowModal
-        isOpen={!!bestowTarget}
-        onClose={() => setBestowTarget(null)}
-        title={bestowTarget?.title ?? ''}
-        amount={bestowTarget && bestowTarget.price > 0 ? bestowTarget.price : 5}
-        onConfirm={handleBestowConfirm}
-        confirming={bestowing}
-        actionLabel="Bestow"
-        enablePaystack
-      />
     </>
   );
 }
