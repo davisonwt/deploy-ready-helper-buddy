@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Store, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,7 +25,6 @@ interface StallRow {
  */
 export default function MyStallCard() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const templates = useStallTemplates();
   const [stall, setStall] = useState<StallRow | null | undefined>(undefined); // undefined = loading
   // Re-opens the interior automatically if we're arriving back from an
@@ -95,7 +94,6 @@ export default function MyStallCard() {
           stallName={stall.name}
           hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
           isOwner
-          onEdit={() => navigate('/stall/build')}
           onClose={() => setOpen(false)}
         />
       )}

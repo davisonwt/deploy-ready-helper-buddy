@@ -6,6 +6,7 @@ import { useContainImageRect } from '@/hooks/useContainImageRect';
 import StallHotspotSheet from './StallHotspotSheet';
 import StallSideNav from './StallSideNav';
 import StallTodayPanel from './StallTodayPanel';
+import OwnerMenuItems from '@/components/owner/OwnerMenuItems';
 import type { StallHotspot } from '@/lib/stalls/stallTypes';
 
 interface Props {
@@ -15,9 +16,8 @@ interface Props {
   stallName: string;
   hotspots: StallHotspot[];
   onClose: () => void;
-  /** True for the owner previewing their own stall -- shows "Edit stall" top-right instead of nothing (batch 2b, task 4: otherwise identical to the visitor view). */
+  /** True for the owner previewing their own stall -- shows the Owner Menu trigger top-left instead of nothing (batch 2b, task 4: otherwise identical to the visitor view). */
   isOwner?: boolean;
-  onEdit?: () => void;
 }
 
 /**
@@ -97,7 +97,7 @@ function StallDrawer({ side, open, onClose, children }: { side: 'left' | 'right'
   );
 }
 
-export default function StallInteriorView({ ownerId, interiorImageUrl, stallName, hotspots, onClose, isOwner, onEdit }: Props) {
+export default function StallInteriorView({ ownerId, interiorImageUrl, stallName, hotspots, onClose, isOwner }: Props) {
   const { setStallInteriorOpen } = useAppContext();
   const [openKind, setOpenKind] = useState<StallHotspot['kind'] | null>(() => readKindFromHash() as StallHotspot['kind'] | null);
   // Mobile-only: the hotspot whose caption is being shown for CAPTION_PREVIEW_MS before its sheet opens.
@@ -106,6 +106,7 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
   // Mobile-only (<1024px): StallSideNav / StallTodayPanel as slide-in drawers instead of the desktop's permanent columns.
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const [isTodayDrawerOpen, setIsTodayDrawerOpen] = useState(false);
+  const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const rect = useContainImageRect(containerRef, imgRef);
@@ -226,13 +227,27 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
               <Menu className="h-4 w-4" />
             </button>
             {isOwner && (
-              <button
-                type="button"
-                onClick={onEdit}
-                className="flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/70 transition-colors"
-              >
-                <Pencil className="h-3.5 w-3.5" /> Edit stall
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setOwnerMenuOpen((v) => !v)}
+                  className="flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/70 transition-colors"
+                  aria-label="Owner menu"
+                  aria-expanded={ownerMenuOpen}
+                >
+                  <Pencil className="h-3.5 w-3.5" /> Edit stall
+                </button>
+                {ownerMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[9998]" onClick={() => setOwnerMenuOpen(false)} />
+                    <OwnerMenuItems
+                      onNavigate={() => setOwnerMenuOpen(false)}
+                      className="absolute left-0 top-full mt-2 min-w-[190px] rounded-lg border border-amber-500/20 bg-[#140c06] py-1.5 shadow-2xl z-[9999]"
+                      itemClassName="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
+                    />
+                  </>
+                )}
+              </div>
             )}
           </div>
 

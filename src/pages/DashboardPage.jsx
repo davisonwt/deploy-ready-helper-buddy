@@ -21,7 +21,7 @@ import MyStallCard from '@/components/stalls/MyStallCard'
 import LiveNowStrip from '@/components/live/LiveNowStrip'
 import SacredDayBanner from '@/components/SacredDayBanner'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
+import OwnerMenuItems from '@/components/owner/OwnerMenuItems'
 import { useProductBasket } from '@/contexts/ProductBasketContext'
 import SettlementConsentBanner from '@/components/dashboard/SettlementConsentBanner'
 import { TileErrorBoundary } from '@/components/error/TileErrorBoundary';
@@ -416,7 +416,6 @@ export default function SeedFlowDashboard() {
     window.addEventListener('s2g-open-let-it-rain', open)
     return () => window.removeEventListener('s2g-open-let-it-rain', open)
   }, [])
-  const [showVideoUpload, setShowVideoUpload] = useState(false)
   const [plantMenuOpen, setPlantMenuOpen] = useState(false)
   const [tribalFeedsOpen, setTribalFeedsOpen] = useState(false)
   const tribalFeedsRef = useRef(null)
@@ -1174,21 +1173,9 @@ export default function SeedFlowDashboard() {
                     document.body
                   )}
                 </div>
-                <Link to="/sow" style={{ textDecoration: 'none', flexShrink: 0 }}>
-                  <div style={{
-                    ...styles.seedflowLabel,
-                    background: 'linear-gradient(135deg, rgba(234,179,8,0.25), rgba(132,204,22,0.18), rgba(34,197,94,0.22))',
-                    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(253,224,71,0.45)',
-                    color: '#fef9c3', fontWeight: 700,
-                    boxShadow: '0 4px 16px rgba(234,179,8,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
-                    cursor: 'pointer',
-                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                    padding: '4px 8px', fontSize: 11, whiteSpace: 'nowrap',
-                  }}>
-                    🌱 Sow a seed
-                  </div>
-                </Link>
+                {/* Flow v2 step 5: top-bar "Sow a seed" removed -- Sow a
+                    seed is now one of the 4 Owner Menu items (header tap /
+                    bottom-bar Plant Seed), not a separate top-bar button. */}
                 <Link to="/companions" style={{ textDecoration: 'none', flexShrink: 0 }}>
                   <div style={{
                     ...styles.seedflowLabel,
@@ -1402,20 +1389,16 @@ export default function SeedFlowDashboard() {
               </div>
             </PopoverTrigger>
             <PopoverContent side="top" align="start" className="w-56 p-2 bg-slate-900 border-slate-700">
-              <button
-                type="button"
-                onClick={() => { setPlantMenuOpen(false); navigate('/create-orchard') }}
-                className="w-full text-left px-3 py-2 rounded-md text-sm text-white hover:bg-white/10 flex items-center gap-2"
-              >
-                🌱 <span>Plant a Seed</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => { setPlantMenuOpen(false); setShowVideoUpload(true) }}
-                className="w-full text-left px-3 py-2 rounded-md text-sm text-white hover:bg-white/10 flex items-center gap-2"
-              >
-                🎬 <span>Upload a Video</span>
-              </button>
+              {/* Flow v2 step 5: the Owner Menu (Edit stall / Sow a seed /
+                  Bulk upload seeds / My orchards) -- same 4 items the stall
+                  interior's header tap opens. Replaces the old "Plant a
+                  Seed"/"Upload a Video" shortcuts (both still reachable:
+                  My orchards -> create new; video upload also lives on
+                  Community Videos and My Orchards). */}
+              <OwnerMenuItems
+                onNavigate={() => setPlantMenuOpen(false)}
+                itemClassName="w-full text-left px-3 py-2 rounded-md text-sm text-white hover:bg-white/10 flex items-center gap-2"
+              />
             </PopoverContent>
           </Popover>
           <Link to="/communications-hub" style={{ flex: 1, textDecoration: 'none' }}>
@@ -1431,7 +1414,6 @@ export default function SeedFlowDashboard() {
         </div>
         )}
         <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
-        <VideoUploadModal isOpen={showVideoUpload} onClose={() => setShowVideoUpload(false)} />
       </div>
     </>
   )

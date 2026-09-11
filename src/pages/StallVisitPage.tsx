@@ -119,7 +119,6 @@ export default function StallVisitPage() {
         stallName={stall.name}
         hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
         isOwner={isOwner}
-        onEdit={() => navigate('/stall/build')}
         onClose={handleClose}
       />
     );
