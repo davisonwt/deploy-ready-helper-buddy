@@ -54,6 +54,7 @@ export default function SowBookPage() {
   const navigate = useNavigate();
 
   const [seedFile, setSeedFile] = useState<SeedFileResult | null>(null);
+  const [audioSample, setAudioSample] = useState<SeedFileResult | null>(null);
   const [cover, setCover] = useState<CoverResult | null>(null);
   const [previewPages, setPreviewPages] = useState<string[]>([]);
   const [previewGenerating, setPreviewGenerating] = useState(false);
@@ -207,9 +208,11 @@ export default function SowBookPage() {
       if (previewPages.length) metadata.preview_pages = previewPages;
 
       // Cover always comes from the sower's own upload (required, like
-      // music). preview_url is the PDF's first rendered page when one
-      // exists; EPUB has none, so it stays null and the detail page falls
-      // back to the cover it already shows. file_url (premium-room,
+      // music). preview_url is the optional ≤60s audio sample (a short
+      // reading), same column/meaning every other seed card's preview_url
+      // already uses (music's 45s clip) -- not the PDF page image, which
+      // lives in metadata.preview_pages instead and was never read back as
+      // a preview_url anywhere in the app. file_url (premium-room,
       // private) stays gated behind get-seed-file either way — only the
       // owner or a completed buyer ever reaches it.
       const inserted = await insertProduct({
@@ -224,7 +227,7 @@ export default function SowBookPage() {
         price: basePrice,
         cover_image_url: cover.fileUrl,
         file_url: seedFile.fileUrl,
-        preview_url: previewPages[0] ?? null,
+        preview_url: audioSample?.previewUrl ?? null,
         delivery_type: 'digital',
         has_whisperer: whispererPercent != null && whispererPercent > 0,
         whisperer_commission_percent: whispererPercent,
@@ -312,6 +315,23 @@ export default function SowBookPage() {
                 <Loader2 className="w-3.5 h-3.5 animate-spin" /> Rendering your preview pages…
               </p>
             )}
+          </div>
+
+          <div>
+            <Label className="mb-1.5 block">Audio sample (max 1 min)</Label>
+            <p className="text-xs text-muted-foreground mb-1.5">
+              Optional — a short reading from your book, played from a sample bar on your book's card.
+            </p>
+            <SeedDropZone
+              kind="audio"
+              bucket="premium-room"
+              pathPrefix={pathPrefix}
+              generatePreview
+              previewSeconds={60}
+              accept=".wav,.mp3"
+              allowedLabel="WAV or MP3 only, for an automatic 1-minute preview."
+              onChange={setAudioSample}
+            />
           </div>
 
           <PriceWithSplit

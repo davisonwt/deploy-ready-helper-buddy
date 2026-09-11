@@ -36,8 +36,10 @@ interface Props {
   bucket: string;
   /** e.g. `products/${user.id}` */
   pathPrefix: string;
-  /** Audio only, for now — the new 45s server-side preview (spec-seed-protection Phase 1). */
+  /** Audio only, for now — the new server-side preview (spec-seed-protection Phase 1). */
   generatePreview?: boolean;
+  /** Audio + generatePreview only — server-side trim length. Defaults to 45s (music's clip) inside generate-preview; pass 60 for a book's audio sample. */
+  previewSeconds?: number;
   accept?: string;
   allowedLabel?: string;
   onChange: (result: SeedFileResult | null) => void;
@@ -108,6 +110,7 @@ export default function SeedDropZone({
   bucket,
   pathPrefix,
   generatePreview = false,
+  previewSeconds,
   accept,
   allowedLabel,
   onChange,
@@ -184,7 +187,7 @@ export default function SeedDropZone({
 
     emit({ file, fileUrl: pub.publicUrl, storagePath: path, previewStatus: 'generating', ...base });
     try {
-      const { previewUrl } = await invokePaymentFunction<{ previewUrl: string }>('generate-preview', { bucket, path });
+      const { previewUrl } = await invokePaymentFunction<{ previewUrl: string }>('generate-preview', { bucket, path, maxSeconds: previewSeconds });
       emit({ file, fileUrl: pub.publicUrl, storagePath: path, previewUrl, previewStatus: 'ready', ...base });
     } catch (err: any) {
       if (err?.message === 'unsupported_preview_format') {
@@ -208,7 +211,7 @@ export default function SeedDropZone({
         ...base,
       });
     }
-  }, [bucket, pathPrefix, generatePreview, kind, extensions, allowedLabel, emit]);
+  }, [bucket, pathPrefix, generatePreview, previewSeconds, kind, extensions, allowedLabel, emit]);
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -240,7 +243,7 @@ export default function SeedDropZone({
           <>
             <Loader2 className="w-6 h-6 mb-2 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">
-              {result?.previewStatus === 'uploading' ? 'Uploading…' : result?.previewStatus === 'generating' ? 'Making your 45-second preview…' : 'Reading file…'}
+              {result?.previewStatus === 'uploading' ? 'Uploading…' : result?.previewStatus === 'generating' ? `Making your ${previewSeconds ?? 45}-second preview…` : 'Reading file…'}
             </p>
           </>
         ) : isReady ? (

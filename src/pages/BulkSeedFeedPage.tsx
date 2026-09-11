@@ -172,7 +172,7 @@ function FeedCard({ product, sower, onAdd }: {
           ownerName={sower?.display_name ?? product.sowers?.display_name}
           price={product.price}
           openPath={`/bulk/products/${product.slug ?? product.id}`}
-          previewUrl={product.type === 'music' ? product.preview_url ?? null : undefined}
+          previewUrl={product.type === 'music' || product.type === 'book' || product.type === 'ebook' ? product.preview_url ?? null : undefined}
           productId={product.type === 'music' ? product.id : undefined}
           pdfUrl={(product.type === 'book' || product.type === 'ebook') && /\.pdf(\?|$)/i.test(product.file_url ?? '') ? product.file_url : undefined}
           hideSowerLine

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import StoryPdfViewer from './StoryPdfViewer';
 import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
@@ -265,6 +265,18 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
   // app-wide yet).
   const itemOpenPath = typeof window !== 'undefined' ? window.location.pathname : '/';
 
+  // Desktop row-scroll arrows -- scroll by one card's width (+ gap) at a
+  // time rather than a fixed pixel amount, since the card width itself
+  // varies with the sheet's viewport width (capped at 300px).
+  const rowRef = useRef<HTMLDivElement>(null);
+  const scrollRow = (dir: 1 | -1) => {
+    const row = rowRef.current;
+    const card = row?.firstElementChild as HTMLElement | null;
+    if (!row || !card) return;
+    const delta = card.offsetWidth + 12; // 12px = gap-3
+    row.scrollBy({ left: dir * delta, behavior: 'smooth' });
+  };
+
   return (
     <>
       <div
@@ -305,32 +317,56 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
             // Horizontal swipeable row of SeedCards (Flow v2 step 2) --
             // snap-x, ~80% width per card on phone, capped at 300px on
             // desktop so 4-5 sit in view (whole card incl. Bestow button)
-            // without scrolling.
-            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory py-3 -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {items.map((item) => (
-                <div key={item.id} className="shrink-0 snap-center w-[80%] lg:w-[calc(20%-0.6rem)] lg:max-w-[300px]">
-                  <SeedCard
-                    id={item.id}
-                    kind={SHEET_KIND_TO_SEED_KIND[kind] ?? 'seed'}
-                    title={item.title}
-                    subtitle={item.blurb}
-                    fullDescription={item.description}
-                    cover={item.cover}
-                    images={item.imageUrls}
-                    ownerId={ownerId}
-                    ownerName={ownerName}
-                    price={item.price}
-                    openPath={itemOpenPath}
-                    isProductRow={item.source === 'products'}
-                    previewUrl={kind === 'music' ? item.previewUrl : undefined}
-                    productId={kind === 'music' && item.source === 'products' ? item.id : undefined}
-                    pdfUrl={item.source === 'products' && item.fileUrl && PDF_RE.test(item.fileUrl) ? item.fileUrl : undefined}
-                    hideSowerLine
-                    tapBehavior="inline"
-                    forceViewerIsOwner={isOwner ? undefined : false}
-                  />
-                </div>
-              ))}
+            // without scrolling. Desktop also gets left/right arrows at the
+            // row edges (scroll one card at a time) -- dots aren't needed,
+            // the row is short enough to scan without a position indicator.
+            <div className="relative">
+              <div ref={rowRef} className="flex gap-3 overflow-x-auto snap-x snap-mandatory py-3 -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {items.map((item) => (
+                  <div key={item.id} className="shrink-0 snap-center w-[80%] lg:w-[calc(20%-0.6rem)] lg:max-w-[300px]">
+                    <SeedCard
+                      id={item.id}
+                      kind={SHEET_KIND_TO_SEED_KIND[kind] ?? 'seed'}
+                      title={item.title}
+                      subtitle={item.blurb}
+                      fullDescription={item.description}
+                      cover={item.cover}
+                      images={item.imageUrls}
+                      ownerId={ownerId}
+                      ownerName={ownerName}
+                      price={item.price}
+                      openPath={itemOpenPath}
+                      isProductRow={item.source === 'products'}
+                      previewUrl={kind === 'music' || kind === 'books' || kind === 'lyrics' ? item.previewUrl : undefined}
+                      productId={kind === 'music' && item.source === 'products' ? item.id : undefined}
+                      pdfUrl={item.source === 'products' && item.fileUrl && PDF_RE.test(item.fileUrl) ? item.fileUrl : undefined}
+                      hideSowerLine
+                      tapBehavior="inline"
+                      forceViewerIsOwner={isOwner ? undefined : false}
+                    />
+                  </div>
+                ))}
+              </div>
+              {items.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => scrollRow(-1)}
+                    aria-label="Scroll left"
+                    className="hidden lg:grid absolute left-1 top-1/2 -translate-y-1/2 z-10 h-9 w-9 place-items-center rounded-full bg-black/60 text-amber-100 backdrop-blur-md ring-1 ring-amber-500/25 hover:bg-black/80 transition"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scrollRow(1)}
+                    aria-label="Scroll right"
+                    className="hidden lg:grid absolute right-1 top-1/2 -translate-y-1/2 z-10 h-9 w-9 place-items-center rounded-full bg-black/60 text-amber-100 backdrop-blur-md ring-1 ring-amber-500/25 hover:bg-black/80 transition"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>

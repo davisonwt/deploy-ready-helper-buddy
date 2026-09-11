@@ -1,8 +1,10 @@
-// Generates a real 45-second preview clip server-side for a just-uploaded
-// seed file, and stores it as its own object in the public seed-previews
-// bucket — spec-seed-protection.md Phase 1 ("a real 45-second audio file,
-// a separate object, publicly readable"), landing via the new /sow/music
-// form per spec-sowing-forms.md.
+// Generates a real preview clip server-side for a just-uploaded seed file
+// (45s by default, or body.maxSeconds when the caller wants a different
+// length -- e.g. /sow/book's 60s audio-sample reading), and stores it as
+// its own object in the public seed-previews bucket — spec-seed-
+// protection.md Phase 1 ("a real 45-second audio file, a separate object,
+// publicly readable"), landing via the new /sow/music form per spec-
+// sowing-forms.md.
 //
 // Trimming is pure byte-level (WAV/MP3 only — see _shared/audioTrim.ts);
 // there is no ffmpeg or audio decoder available in this runtime. If the
@@ -30,6 +32,10 @@ const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 // runtime (this is Deno, that's Vite/React), so the constant can't be
 // shared directly; keep both in sync by hand if this ever changes.
 const PREVIEW_SECONDS = 45;
+// Callers may ask for a different trim length (e.g. /sow/book's 60s audio
+// reading) via body.maxSeconds — clamped so nothing can request an
+// unreasonably long "preview" object.
+const MAX_PREVIEW_SECONDS = 120;
 
 const SOURCE_BUCKETS = new Set(["premium-room"]);
 
@@ -52,6 +58,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const bucket = typeof body?.bucket === "string" ? body.bucket : "";
     const path = typeof body?.path === "string" ? body.path : "";
+    const requestedSeconds = typeof body?.maxSeconds === "number" && body.maxSeconds > 0 ? body.maxSeconds : PREVIEW_SECONDS;
+    const previewSeconds = Math.min(requestedSeconds, MAX_PREVIEW_SECONDS);
 
     let userId: string;
     if (CRON_SECRET && token === CRON_SECRET) {
@@ -82,7 +90,7 @@ Deno.serve(async (req) => {
     }
     const inputBytes = new Uint8Array(await fileBlob.arrayBuffer());
 
-    const trimmed = trimAudio(inputBytes, PREVIEW_SECONDS);
+    const trimmed = trimAudio(inputBytes, previewSeconds);
     if (!trimmed) {
       return json({
         error: "unsupported_preview_format",

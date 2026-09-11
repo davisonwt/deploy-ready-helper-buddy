@@ -211,7 +211,7 @@ export default function BulkSowerPage() {
                     ownerAvatar={sower!.logo_url}
                     price={p.price}
                     openPath={`/bulk/products/${p.slug || p.id}`}
-                    previewUrl={p.type === 'music' ? p.preview_url ?? null : undefined}
+                    previewUrl={p.type === 'music' || p.type === 'book' || p.type === 'ebook' ? p.preview_url ?? null : undefined}
                     productId={p.type === 'music' ? p.id : undefined}
                     pdfUrl={(p.type === 'book' || p.type === 'ebook') && /\.pdf(\?|$)/i.test(p.file_url ?? '') ? p.file_url : undefined}
                     hideSowerLine

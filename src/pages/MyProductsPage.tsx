@@ -231,7 +231,7 @@ export default function MyProductsPage() {
                                 ownerAvatar={product.sowers?.logo_url}
                                 price={product.price}
                                 openPath={`/products/edit/${product.id}`}
-                                previewUrl={product.type === 'music' ? product.preview_url ?? null : undefined}
+                                previewUrl={product.type === 'music' || product.type === 'book' || product.type === 'ebook' ? product.preview_url ?? null : undefined}
                                 productId={product.type === 'music' ? product.id : undefined}
                                 pdfUrl={(product.type === 'book' || product.type === 'ebook') && /\.pdf(\?|$)/i.test(product.file_url ?? '') ? product.file_url : undefined}
                               />
