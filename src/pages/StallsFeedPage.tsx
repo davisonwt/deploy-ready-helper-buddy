@@ -26,6 +26,14 @@ const CATEGORY_LABEL: Record<StallCategory, string> = Object.fromEntries(
   STALL_CATEGORIES.map((c) => [c.id, c.label]),
 ) as Record<StallCategory, string>;
 
+/**
+ * S2G's own radio station stall (scripts/studio/create-grove-station-stall.sql)
+ * -- pinned first in this feed regardless of chip/sort (not during
+ * search, where it behaves like any other stall). Hardcoded: it's a
+ * singleton system stall, not something that changes.
+ */
+const GROVE_STATION_USER_ID = 'e9758e23-fba4-4778-8e58-4fd8e5550a72';
+
 interface StallCard {
   id: string;
   user_id: string;
@@ -107,6 +115,7 @@ export default function StallsFeedPage() {
   // re-fetched per chip/search change -- it covers every stall with new
   // content regardless of which chip is active.
   const [newSeedInfo, setNewSeedInfo] = useState<Map<string, { total: number; latest: string }>>(new Map());
+  const [groveStationCard, setGroveStationCard] = useState<StallCard | null>(null);
 
   const liveOwnerIds = useMemo(() => new Set((liveSeeds ?? []).map((p) => p.user_id)), [liveSeeds]);
 
@@ -123,6 +132,35 @@ export default function StallsFeedPage() {
     })();
     return () => { alive = false; };
   }, [user]);
+
+  // Grove Station pin: fetched once, independent of the active chip, so
+  // it can be prepended regardless of which category chip is selected.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data: stallRow } = await supabase
+        .from('stalls')
+        .select('id, user_id, name, tagline, tier, category, front_image_path')
+        .eq('user_id', GROVE_STATION_USER_ID)
+        .eq('published', true)
+        .maybeSingle();
+      if (!stallRow) return;
+      const { data: profileRow } = await supabase
+        .from('public_profiles' as any)
+        .select('username, display_name')
+        .eq('user_id', GROVE_STATION_USER_ID)
+        .maybeSingle();
+      const p = profileRow as { username: string | null; display_name: string | null } | null;
+      if (alive) {
+        setGroveStationCard({
+          ...(stallRow as Omit<StallCard, 'username' | 'displayName'>),
+          username: p?.username ?? null,
+          displayName: p?.display_name ?? null,
+        });
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
 
   const filteredCards = useMemo(() => {
     if (!cards) return cards;
@@ -167,6 +205,17 @@ export default function StallsFeedPage() {
       return 0;
     });
   }, [filteredCards, chip, newSeedInfo]);
+
+  // Grove Station pinned first, regardless of chip/sort -- not during
+  // search, where it's just another stall (found or not, on its own
+  // merits). Deduped: if it's already present (chip is 'for_you'/'new'/
+  // 'music', or it happens to match the search), it isn't listed twice.
+  const pinnedOrderedCards = useMemo(() => {
+    if (!orderedCards) return orderedCards;
+    if (search.trim() || !groveStationCard) return orderedCards;
+    const rest = orderedCards.filter((c) => c.user_id !== GROVE_STATION_USER_ID);
+    return [groveStationCard, ...rest];
+  }, [orderedCards, groveStationCard, search]);
 
   useEffect(() => {
     if (!showPanHint) return;
@@ -373,18 +422,19 @@ export default function StallsFeedPage() {
             )
           ) : cards === null ? (
             <div className="flex-1 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-          ) : cards.length === 0 ? (
+          ) : pinnedOrderedCards && pinnedOrderedCards.length === 0 ? (
             <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm px-6 text-center">
-              No stalls here yet — check back soon, or{' '}
-              {user && <Link to="/stall/build" className="underline ml-1">build your own</Link>}
-            </div>
-          ) : filteredCards && filteredCards.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm px-6 text-center">
-              No stalls match “{search.trim()}”.
+              {search.trim() ? (
+                <>No stalls match "{search.trim()}".</>
+              ) : (
+                <>No stalls here yet — check back soon, or{' '}
+                  {user && <Link to="/stall/build" className="underline ml-1">build your own</Link>}
+                </>
+              )}
             </div>
           ) : (
             <div className="flex-1 min-h-0 overflow-y-auto snap-y snap-mandatory">
-              {(orderedCards ?? []).map((card) => (
+              {(pinnedOrderedCards ?? []).map((card) => (
                 <article key={card.id} className="snap-start h-[calc(100dvh-8rem)] lg:h-full relative overflow-hidden">
                   {/* Portrait phones (<lg, portrait): pannable sideways --
                       image height = container height, width auto, instead

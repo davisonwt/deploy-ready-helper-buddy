@@ -30,7 +30,12 @@ export const COCKPIT_NAV: CockpitNavItem[] = [
   { label: 'Wandering Hearts', sub: 'Tribal connections', emoji: '💚', path: '/tribal-hearts', color: '#dc2626' },
   { label: 'My Tribe', sub: 'Your invitation code & tribe', emoji: '🌿', path: '/my-tribe', color: '#22c55e' },
   { label: 'ChatApp', sub: 'Tribe messaging', emoji: '💬', path: '/chatapp', color: '#0891b2' },
-  { label: 'Grove Station', sub: 'Community radio', emoji: '📻', path: '/grove-station', color: '#a78bfa' },
+  // Grove Station now has its own stall (S2G's own radio station,
+  // phase 1) -- points there instead of the /grove-station app page for
+  // now; phase 2's plaques (On Air/Schedule/Shows/Advertise) are meant to
+  // be the real path into /grove-station's own tabs, same as any other
+  // stall's hotspots lead into that content, not this top-level nav item.
+  { label: 'Grove Station', sub: 'Community radio', emoji: '📻', path: '/stall/grovestation', color: '#a78bfa' },
   { label: 'Community Videos', sub: 'Upload & watch', emoji: '🎬', path: '/community-videos', color: '#f97316' },
   { label: 'Learn & Share Marketing Videos', sub: 'Share to grow your tribe', emoji: '🎥', path: '/learn-share', color: '#f97316' },
   { label: '364yhvh', sub: 'Scripture & spiritual hub', emoji: '📅', path: '/364yhvh-days', color: '#7c3aed' },
