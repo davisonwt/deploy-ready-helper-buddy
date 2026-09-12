@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { COCKPIT_NAV, SCRIPTURE_STUDY_LINK } from '@/lib/nav/cockpitNav';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { COCKPIT_NAV, COCKPIT_NAV_MORE, SCRIPTURE_STUDY_LINK, type CockpitNavItem } from '@/lib/nav/cockpitNav';
+import { useRoles } from '@/hooks/useRoles';
 
 interface Props {
   /** Called on every tap, before navigating (or before the action fires) -- lets the caller close the stall interior first. */
@@ -13,9 +16,14 @@ interface Props {
  * fixed left column and mobile's slide-in drawer both render this same
  * component, just wrapped differently by StallInteriorView. Data comes
  * from src/lib/nav/cockpitNav.ts, the same config DashboardPage.jsx's own
- * sidebar uses, so the two can't drift on labels or routes.
+ * sidebar and StallBookshelfNav's bookshelf variant use, so none of the
+ * three can drift on labels or routes.
  */
 export default function StallSideNav({ onNavigate, className = '' }: Props) {
+  const { isAdminOrGosat } = useRoles();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const visibleMore = COCKPIT_NAV_MORE.filter((item) => !item.gated || isAdminOrGosat);
+
   const handleAction = (path: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     const action = path.split(':')[1];
@@ -23,6 +31,28 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
       window.dispatchEvent(new Event('s2g-open-let-it-rain'));
     }
     onNavigate();
+  };
+
+  const renderRow = (item: CockpitNavItem, bordered: boolean) => {
+    const isAction = item.path.startsWith('action:');
+    const content = (
+      <>
+        <span className="text-base leading-none w-5 text-center shrink-0" style={{ color: item.color }}>{item.emoji}</span>
+        <span className="truncate font-serif text-[13px] text-amber-100/90">{item.label}</span>
+      </>
+    );
+    const rowClassName = `flex items-center gap-2.5 px-3 py-2 hover:bg-amber-500/10 transition-colors ${
+      bordered ? 'border-t border-amber-500/10' : ''
+    }`;
+    return isAction ? (
+      <a key={item.label} href="#" className={rowClassName} onClick={handleAction(item.path)}>
+        {content}
+      </a>
+    ) : (
+      <Link key={item.label} to={item.path} className={rowClassName} onClick={onNavigate}>
+        {content}
+      </Link>
+    );
   };
 
   return (
@@ -58,27 +88,19 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
       </a>
 
       <nav className="flex-1 min-h-0 overflow-y-auto py-1">
-        {COCKPIT_NAV.map((item, i) => {
-          const isAction = item.path.startsWith('action:');
-          const content = (
-            <>
-              <span className="text-base leading-none w-5 text-center shrink-0" style={{ color: item.color }}>{item.emoji}</span>
-              <span className="truncate font-serif text-[13px] text-amber-100/90">{item.label}</span>
-            </>
-          );
-          const rowClassName = `flex items-center gap-2.5 px-3 py-2 hover:bg-amber-500/10 transition-colors ${
-            i > 0 ? 'border-t border-amber-500/10' : ''
-          }`;
-          return isAction ? (
-            <a key={item.label} href="#" className={rowClassName} onClick={handleAction(item.path)}>
-              {content}
-            </a>
-          ) : (
-            <Link key={item.label} to={item.path} className={rowClassName} onClick={onNavigate}>
-              {content}
-            </Link>
-          );
-        })}
+        {COCKPIT_NAV.map((item, i) => renderRow(item, i > 0))}
+
+        {/* Flow v2 step 8: everything KEEP-but-secondary lives behind this
+            toggle instead of cluttering the primary list above. */}
+        <button
+          type="button"
+          onClick={() => setMoreOpen((v) => !v)}
+          className="flex w-full items-center gap-2.5 px-3 py-2 border-t border-amber-500/10 hover:bg-amber-500/10 transition-colors"
+        >
+          {moreOpen ? <ChevronUp className="h-4 w-4 text-amber-300 shrink-0" /> : <ChevronDown className="h-4 w-4 text-amber-300 shrink-0" />}
+          <span className="truncate font-serif text-[13px] font-semibold text-amber-300">More</span>
+        </button>
+        {moreOpen && visibleMore.map((item) => renderRow(item, true))}
       </nav>
     </div>
   );

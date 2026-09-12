@@ -10,7 +10,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Sprout, BookOpen, Sparkles, Sun } from 'lucide-react';
+import { ArrowLeft, Sprout, BookOpen, Sparkles, Sun, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -76,6 +76,15 @@ export default function Yhvh364Page() {
           <Link to="/dashboard">
             <Button variant="ghost" size="sm" className="gap-2">
               <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+            </Button>
+          </Link>
+          {/* Flow v2 step 8: /tequfah-clock nests under 364yhvh instead of
+              its own top-level nav entry -- a real navigation (not an
+              inline tab) since TrueTequfahClock renders its own
+              `fixed inset-0` full-screen scene, not embeddable content. */}
+          <Link to="/tequfah-clock">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <Clock className="h-4 w-4" /> Tequfah Clock
             </Button>
           </Link>
           <div className="text-right">

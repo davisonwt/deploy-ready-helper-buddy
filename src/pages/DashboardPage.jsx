@@ -26,7 +26,9 @@ import { useProductBasket } from '@/contexts/ProductBasketContext'
 import SettlementConsentBanner from '@/components/dashboard/SettlementConsentBanner'
 import { TileErrorBoundary } from '@/components/error/TileErrorBoundary';
 import { useAppContext } from '@/contexts/AppContext';
-import { COCKPIT_NAV as NAV, SCRIPTURE_STUDY_LINK } from '@/lib/nav/cockpitNav';
+import { COCKPIT_NAV as NAV, COCKPIT_NAV_MORE as NAV_MORE, SCRIPTURE_STUDY_LINK } from '@/lib/nav/cockpitNav';
+import { useRoles } from '@/hooks/useRoles';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
@@ -403,6 +405,10 @@ export default function SeedFlowDashboard() {
 
   const [tip] = useState(GROWTH_TIPS[Math.floor(Math.random() * GROWTH_TIPS.length)])
   const [activePath, setActivePath] = useState('/dashboard')
+  // Flow v2 step 8: "More ▾" -- everything KEEP-but-secondary, collapsed
+  // by default so the primary 8-item list stays the whole story.
+  const [moreOpen, setMoreOpen] = useState(false)
+  const { isAdminOrGosat } = useRoles()
   const [mobilePanel, setMobilePanel] = useState(null)
   const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
   // Same window event Layout.jsx listens for (its own LetItRainPanel
@@ -920,6 +926,47 @@ export default function SeedFlowDashboard() {
     },
   }
 
+  // Flow v2 step 8: "Gosat's" only shown to an admin/gosat viewer.
+  const visibleMore = NAV_MORE.filter(item => !item.gated || isAdminOrGosat)
+
+  function renderNavItem(item) {
+    const isAction = typeof item.path === 'string' && item.path.startsWith('action:')
+    const isActive = !isAction && activePath === item.path
+    const handleAction = (e) => {
+      if (!isAction) return
+      e.preventDefault()
+      const action = item.path.split(':')[1]
+      if (action === 'let-it-rain') {
+        setIsLetItRainOpen(true)
+      }
+      setMobilePanel(null)
+    }
+    if (isAction) {
+      return (
+        <a key={item.label} href="#" className="nav-link"
+          onClick={handleAction}
+          style={styles.navItem(false, item.color)}>
+          <div style={styles.navEmoji(false, item.color)}>{item.emoji}</div>
+          <div>
+            <div style={styles.navLabel}>{item.label}</div>
+            <div style={styles.navSub}>{item.sub}</div>
+          </div>
+        </a>
+      )
+    }
+    return (
+      <Link key={item.label} to={item.path} className="nav-link"
+        onClick={() => { setActivePath(item.path); setMobilePanel(null) }}
+        style={styles.navItem(isActive, item.color)}>
+        <div style={styles.navEmoji(isActive, item.color)}>{item.emoji}</div>
+        <div>
+          <div style={styles.navLabel}>{item.label}</div>
+          <div style={styles.navSub}>{item.sub}</div>
+        </div>
+      </Link>
+    )
+  }
+
   return (
     <>
       <style>{`
@@ -1023,52 +1070,22 @@ export default function SeedFlowDashboard() {
           </div>
 
           <nav style={styles.nav}>
-            {NAV.map(item => {
-              const isAction = typeof item.path === 'string' && item.path.startsWith('action:')
-              const isActive = !isAction && activePath === item.path
-              const handleAction = (e) => {
-                if (!isAction) return
-                e.preventDefault()
-                const action = item.path.split(':')[1]
-                if (action === 'let-it-rain') {
-                  setIsLetItRainOpen(true)
-                }
-                setMobilePanel(null)
-              }
-              if (isAction) {
-                return (
-                  <a key={item.label} href="#" className="nav-link"
-                    onClick={handleAction}
-                    style={styles.navItem(false, item.color)}>
-                    <div style={styles.navEmoji(false, item.color)}>{item.emoji}</div>
-                    <div>
-                      <div style={styles.navLabel}>{item.label}</div>
-                      <div style={styles.navSub}>{item.sub}</div>
-                    </div>
-                  </a>
-                )
-              }
-              return (
-                <Link key={item.label} to={item.path} className="nav-link"
-                  onClick={() => { setActivePath(item.path); setMobilePanel(null) }}
-                  style={styles.navItem(isActive, item.color)}>
-                  <div style={styles.navEmoji(isActive, item.color)}>{item.emoji}</div>
-                  <div>
-                    <div style={styles.navLabel}>
-                      {item.label}
-                      {isActive && item.label === 'SeedFlow' && (
-                        <span style={{ marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-                          Active
-                        </span>
-                      )}
-                    </div>
-                    <div style={styles.navSub}>{item.sub}</div>
-                  </div>
-                </Link>
-              )
+            {NAV.map(item => renderNavItem(item))}
 
-            })}
+            {/* Flow v2 step 8: "More ▾" -- KEEP-but-secondary routes,
+                collapsed by default. visibleMore already drops "Gosat's"
+                for a non-admin/gosat viewer. */}
+            <a href="#" className="nav-link"
+              onClick={(e) => { e.preventDefault(); setMoreOpen(v => !v) }}
+              style={styles.navItem(false, '#94a3b8')}>
+              <div style={styles.navEmoji(false, '#94a3b8')}>
+                {moreOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              </div>
+              <div>
+                <div style={styles.navLabel}>More</div>
+              </div>
+            </a>
+            {moreOpen && visibleMore.map(item => renderNavItem(item))}
           </nav>
 
         </div>

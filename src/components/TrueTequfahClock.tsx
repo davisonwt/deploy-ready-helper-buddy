@@ -10,6 +10,10 @@ import { useState, useEffect } from "react";
 
 import { motion } from "framer-motion";
 
+import { Link } from "react-router-dom";
+
+import { ArrowLeft } from "lucide-react";
+
 
 
 export default function TrueTequfahClock() {
@@ -65,6 +69,15 @@ export default function TrueTequfahClock() {
   return (
 
     <div className="fixed inset-0 flex items-center justify-center bg-black overflow-hidden">
+
+      {/* Golden rule: every routed page needs a way back -- this component
+          had none (it's rendered bare, no Layout, at /tequfah-clock). */}
+      <Link
+        to="/364yhvh-days"
+        className="fixed top-4 left-4 z-50 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm text-white backdrop-blur hover:bg-white/20 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back to 364yhvh
+      </Link>
 
       <div className="relative w-[90vmin] h-[90vmin]">
 
