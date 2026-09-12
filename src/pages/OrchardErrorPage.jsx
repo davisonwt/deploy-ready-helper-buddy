@@ -142,7 +142,7 @@ export default function OrchardErrorPage() {
         {/* Back Navigation */}
         <div className="mb-6">
           <Link 
-            to="/browse-orchards" 
+            to="/stalls-feed?chip=orchard" 
             className="inline-flex items-center text-muted-foreground hover:text-foreground transition-all duration-300 hover:scale-105 font-medium group"
           >
             <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
@@ -274,7 +274,7 @@ export default function OrchardErrorPage() {
                   )}
                 </Button>
                 
-                <Link to="/browse-orchards" className="block">
+                <Link to="/stalls-feed?chip=orchard" className="block">
                   <Button 
                     variant="outline" 
                     size="lg"

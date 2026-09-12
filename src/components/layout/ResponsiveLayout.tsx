@@ -15,7 +15,7 @@ interface Props {
 
 const navigationItems = [
   { name: 'Cockpit', href: '/cockpit', icon: Home },
-  { name: 'Browse Orchards', href: '/browse-orchards', icon: Leaf },
+  { name: 'Tribal Gardens', href: '/stalls-feed', icon: Leaf },
   { name: 'My Orchards', href: '/my-orchards', icon: Leaf },
   { name: 'Platform Fee', href: '/admin-fee', icon: DollarSign },
   { name: 'Community', href: '/community-videos', icon: Users },

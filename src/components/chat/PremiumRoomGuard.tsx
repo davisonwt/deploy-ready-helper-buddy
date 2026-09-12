@@ -162,7 +162,7 @@ const PremiumRoomGuard = ({ roomId, children }: PremiumRoomGuardProps) => {
               </Button>
             ) : (
               <Button 
-                onClick={() => window.location.href = '/browse-orchards'}
+                onClick={() => window.location.href = '/stalls-feed?chip=orchard'}
                 className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 rounded-lg shadow-lg"
               >
                 <Gift className="h-5 w-5 mr-2" />

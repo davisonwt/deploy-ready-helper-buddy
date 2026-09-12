@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { VoiceCommands } from './voice/VoiceCommands'
 import { MyGardenPanel } from './MyGardenPanel'
-import { LetItRainPanel } from './LetItRainPanel'
 import { SupportPanel } from './SupportPanel'
 import { GosatPanel } from './GosatPanel'
 import { useAppContext } from '../contexts/AppContext'
@@ -12,7 +11,6 @@ function Layout({ children }) {
   const { voiceCommandsEnabled, setVoiceCommandsEnabled } = useAppContext()
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
   const [isGardenOpen, setIsGardenOpen] = useState(false)
-  const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
   const [isSupportOpen, setIsSupportOpen] = useState(false)
   const [isGosatOpen, setIsGosatOpen] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
@@ -25,12 +23,6 @@ function Layout({ children }) {
 
     window.addEventListener('jitsi-start-call', handleJitsiStart)
     return () => window.removeEventListener('jitsi-start-call', handleJitsiStart)
-  }, [])
-
-  useEffect(() => {
-    const open = () => setIsLetItRainOpen(true)
-    window.addEventListener('s2g-open-let-it-rain', open)
-    return () => window.removeEventListener('s2g-open-let-it-rain', open)
   }, [])
 
   useEffect(() => {
@@ -69,7 +61,6 @@ function Layout({ children }) {
       />
 
       <MyGardenPanel isOpen={isGardenOpen} onClose={() => setIsGardenOpen(false)} />
-      <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
       <SupportPanel isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
       <GosatPanel isOpen={isGosatOpen} onClose={() => setIsGosatOpen(false)} />
 

@@ -110,9 +110,9 @@ export default function MarketingVideosGallery() {
     } else {
       if (video.tags && video.tags.length > 0) {
         const searchTerm = video.tags.find(tag => tag !== 'marketing' && tag !== 'orchard') || video.tags[0]
-        navigate(`/browse-orchards?search=${encodeURIComponent(searchTerm)}`)
+        navigate(`/stalls-feed?chip=orchard&q=${encodeURIComponent(searchTerm)}`)
       } else {
-        navigate('/browse-orchards')
+        navigate('/stalls-feed?chip=orchard')
       }
       toast.success('Searching orchards - find the matching orchard to bestow!')
     }

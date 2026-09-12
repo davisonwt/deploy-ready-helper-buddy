@@ -129,7 +129,7 @@ export default function BasketPage() {
               You have {productItems.length} seed{productItems.length > 1 ? 's' : ''} waiting in your seed basket.
             </p>
             <Button onClick={() => navigate('/products/basket')} className="w-full mb-3">Go to Seed Basket</Button>
-            <Button variant="outline" onClick={() => navigate('/browse-orchards')} className="w-full">Browse Orchards</Button>
+            <Button variant="outline" onClick={() => navigate('/stalls-feed?chip=orchard')} className="w-full">Browse Orchards</Button>
           </Card>
         </div>
       )
@@ -141,7 +141,7 @@ export default function BasketPage() {
           <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
           <h2 className="text-2xl font-bold mb-3 text-foreground">Your Basket is Empty</h2>
           <p className="mb-6 text-muted-foreground">Add some orchard pockets to your basket to continue.</p>
-          <Button onClick={() => navigate('/browse-orchards')} className="w-full">Browse Orchards</Button>
+          <Button onClick={() => navigate('/stalls-feed?chip=orchard')} className="w-full">Browse Orchards</Button>
         </Card>
       </div>
     )
@@ -156,7 +156,7 @@ export default function BasketPage() {
             <LayoutDashboard className="w-4 h-4 mr-2" />
             Dashboard
           </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate("/browse-orchards")}>
+          <Button variant="outline" size="sm" onClick={() => navigate('/stalls-feed?chip=orchard')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Browse Orchards
           </Button>

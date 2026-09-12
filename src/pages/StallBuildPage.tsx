@@ -6,11 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trash2, Plus, Store } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import StallImageUpload, { type StallImageResult } from '@/components/stalls/StallImageUpload';
 import StallPdfUpload, { type StallPdfResult } from '@/components/stalls/StallPdfUpload';
+import MyProductsPage from '@/pages/MyProductsPage';
+import MyS2GLibraryPage from '@/pages/MyS2GLibraryPage';
+import ProfilePage from '@/pages/ProfilePage';
 import {
   STALL_CATEGORIES,
   TILE_KINDS,
@@ -185,18 +189,34 @@ export default function StallBuildPage() {
   ];
 
   return (
-    <WizardContainer
-      steps={steps}
-      currentStep={step}
-      onStepChange={setStep}
-      title={stallId ? 'Edit your stall' : 'Build your stall'}
-      description="A shop-front for your seeds, sower or whisperer — visitors tap in to browse."
-      onCancel={() => navigate('/cockpit')}
-      onSubmit={handlePublish}
-      isSubmitting={submitting}
-      canGoNext={canGoNext}
-      submitLabel={stallId ? 'Save & publish' : 'Publish'}
-    >
+    <Tabs defaultValue="setup" className="max-w-4xl mx-auto px-4 py-6">
+      {/* Flow v2 step 9: /stall/build absorbs the actual /my-products,
+          /my-s2g-library and /profile CRUD UI (embedded wholesale below,
+          not rebuilt) as sibling tabs alongside the existing 5-step
+          wizard -- they're always-editable management panels, not
+          sequential publish steps, so they sit outside WizardContainer's
+          own step/Next/Back model rather than inside it. Orchards stay
+          OUT of this (Owner Menu's own "My orchards" item, step 5). */}
+      <TabsList className="mb-4 flex-wrap h-auto">
+        <TabsTrigger value="setup">Stall Setup</TabsTrigger>
+        <TabsTrigger value="products">Products</TabsTrigger>
+        <TabsTrigger value="library">Library</TabsTrigger>
+        <TabsTrigger value="profile">Profile</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="setup">
+        <WizardContainer
+          steps={steps}
+          currentStep={step}
+          onStepChange={setStep}
+          title={stallId ? 'Edit your stall' : 'Build your stall'}
+          description="A shop-front for your seeds, sower or whisperer — visitors tap in to browse."
+          onCancel={() => navigate('/cockpit')}
+          onSubmit={handlePublish}
+          isSubmitting={submitting}
+          canGoNext={canGoNext}
+          submitLabel={stallId ? 'Save & publish' : 'Publish'}
+        >
       {step === 0 && (
         <div className="space-y-4">
           <div>
@@ -369,6 +389,27 @@ export default function StallBuildPage() {
           </div>
         </div>
       )}
-    </WizardContainer>
+        </WizardContainer>
+      </TabsContent>
+
+      {/* [contain:layout] -- MyProductsPage/MyS2GLibraryPage/ProfilePage
+          each render their own `fixed inset-0` decorative background
+          layer, built for standalone-page use where that's harmless.
+          Nested in a tab, an un-contained `fixed` element paints over the
+          WHOLE viewport (including the TabsList above it), blocking
+          clicks on every other tab. CSS containment makes this element
+          the containing block for fixed/absolute descendants instead of
+          the viewport -- confirmed via a real click-interception repro,
+          not assumed. */}
+      <TabsContent value="products" className="relative [contain:layout]">
+        <MyProductsPage />
+      </TabsContent>
+      <TabsContent value="library" className="relative [contain:layout]">
+        <MyS2GLibraryPage />
+      </TabsContent>
+      <TabsContent value="profile" className="relative [contain:layout]">
+        <ProfilePage />
+      </TabsContent>
+    </Tabs>
   );
 }

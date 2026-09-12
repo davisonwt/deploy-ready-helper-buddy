@@ -24,33 +24,14 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
   const [moreOpen, setMoreOpen] = useState(false);
   const visibleMore = COCKPIT_NAV_MORE.filter((item) => !item.gated || isAdminOrGosat);
 
-  const handleAction = (path: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    const action = path.split(':')[1];
-    if (action === 'let-it-rain') {
-      window.dispatchEvent(new Event('s2g-open-let-it-rain'));
-    }
-    onNavigate();
-  };
-
   const renderRow = (item: CockpitNavItem, bordered: boolean) => {
-    const isAction = item.path.startsWith('action:');
-    const content = (
-      <>
-        <span className="text-base leading-none w-5 text-center shrink-0" style={{ color: item.color }}>{item.emoji}</span>
-        <span className="truncate font-serif text-[13px] text-amber-100/90">{item.label}</span>
-      </>
-    );
     const rowClassName = `flex items-center gap-2.5 px-3 py-2 hover:bg-amber-500/10 transition-colors ${
       bordered ? 'border-t border-amber-500/10' : ''
     }`;
-    return isAction ? (
-      <a key={item.label} href="#" className={rowClassName} onClick={handleAction(item.path)}>
-        {content}
-      </a>
-    ) : (
+    return (
       <Link key={item.label} to={item.path} className={rowClassName} onClick={onNavigate}>
-        {content}
+        <span className="text-base leading-none w-5 text-center shrink-0" style={{ color: item.color }}>{item.emoji}</span>
+        <span className="truncate font-serif text-[13px] text-amber-100/90">{item.label}</span>
       </Link>
     );
   };

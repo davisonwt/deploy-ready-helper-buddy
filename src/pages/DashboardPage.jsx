@@ -5,7 +5,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
 import SeedFlow from '../components/SeedFlow'
 import LivingButton from '../components/LivingButton'
-import { LetItRainPanel } from '../components/LetItRainPanel'
 import { useSacredNow } from '../hooks/useSacredNow'
 import { BeadPopup } from '../components/watch/BeadPopup'
 import SeedSlider from '../components/garden/SeedSlider'
@@ -50,7 +49,7 @@ const SEEDS = [
     color: '#0e7490',
     glow: '#06b6d4',
     playPath: '/grove-station',
-    bookPath: '/browse-orchards',
+    bookPath: '/stalls-feed?chip=orchard',
   },
   {
     id: 2,
@@ -62,8 +61,8 @@ const SEEDS = [
     image: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
     color: '#166534',
     glow: '#22c55e',
-    playPath: '/browse-orchards',
-    bookPath: '/browse-orchards',
+    playPath: '/stalls-feed?chip=orchard',
+    bookPath: '/stalls-feed?chip=orchard',
   },
   {
     id: 3,
@@ -410,18 +409,6 @@ export default function SeedFlowDashboard() {
   const [moreOpen, setMoreOpen] = useState(false)
   const { isAdminOrGosat } = useRoles()
   const [mobilePanel, setMobilePanel] = useState(null)
-  const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
-  // Same window event Layout.jsx listens for (its own LetItRainPanel
-  // instance) -- this page renders LetItRainPanel itself rather than via
-  // Layout (see the /cockpit route), so the stall interior's nav panel
-  // (Farm-Stalls batch 2e), which dispatches this event for its "Let It
-  // Rain" item regardless of which page embeds it, needs a listener here
-  // too or the Cockpit's own embedded stall preview couldn't open it.
-  useEffect(() => {
-    const open = () => setIsLetItRainOpen(true)
-    window.addEventListener('s2g-open-let-it-rain', open)
-    return () => window.removeEventListener('s2g-open-let-it-rain', open)
-  }, [])
   const [plantMenuOpen, setPlantMenuOpen] = useState(false)
   const [tribalFeedsOpen, setTribalFeedsOpen] = useState(false)
   const tribalFeedsRef = useRef(null)
@@ -930,30 +917,7 @@ export default function SeedFlowDashboard() {
   const visibleMore = NAV_MORE.filter(item => !item.gated || isAdminOrGosat)
 
   function renderNavItem(item) {
-    const isAction = typeof item.path === 'string' && item.path.startsWith('action:')
-    const isActive = !isAction && activePath === item.path
-    const handleAction = (e) => {
-      if (!isAction) return
-      e.preventDefault()
-      const action = item.path.split(':')[1]
-      if (action === 'let-it-rain') {
-        setIsLetItRainOpen(true)
-      }
-      setMobilePanel(null)
-    }
-    if (isAction) {
-      return (
-        <a key={item.label} href="#" className="nav-link"
-          onClick={handleAction}
-          style={styles.navItem(false, item.color)}>
-          <div style={styles.navEmoji(false, item.color)}>{item.emoji}</div>
-          <div>
-            <div style={styles.navLabel}>{item.label}</div>
-            <div style={styles.navSub}>{item.sub}</div>
-          </div>
-        </a>
-      )
-    }
+    const isActive = activePath === item.path
     return (
       <Link key={item.label} to={item.path} className="nav-link"
         onClick={() => { setActivePath(item.path); setMobilePanel(null) }}
@@ -1429,7 +1393,6 @@ export default function SeedFlowDashboard() {
           </Link>
         </div>
         )}
-        <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
       </div>
     </>
   )

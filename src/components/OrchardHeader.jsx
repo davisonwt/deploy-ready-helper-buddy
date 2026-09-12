@@ -7,7 +7,7 @@ export function OrchardHeader({ orchard, selectedPockets, takenPockets }) {
     <header className="bg-white/90 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <Link to="/browse-orchards" className="flex items-center space-x-3 group">
+          <Link to="/stalls-feed?chip=orchard" className="flex items-center space-x-3 group">
             <ArrowLeft className="h-5 w-5 text-green-600 group-hover:text-green-700 transition-colors flex-shrink-0" />
             <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center flex-shrink-0">
               <Sprout className="h-7 w-7 text-white" />

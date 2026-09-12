@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Cloud, Loader2 } from 'lucide-react';
+import { Wallet, Loader2 } from 'lucide-react';
 import { useSacredNow } from '@/hooks/useSacredNow';
 import { useCommunityGrowthStats } from '@/hooks/useCommunityGrowthStats';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,16 +23,14 @@ const LOW_BALANCE_THRESHOLD = 5;
  * so it can be dropped into the stall interior's desktop column or mobile
  * drawer without the parent needing to know about sacred-date/stats state.
  *
- * Flow v2 step 4: Wallet balance + Let It Rain, additive on top of the
- * above. Wallet reads the same live on-chain USDC balance as
- * WalletBalanceChip.tsx/DashboardTribeStats.tsx (useLiveWalletBalance,
- * non-custodial -- all three always agree). Let It Rain dispatches the
- * same `s2g-open-let-it-rain` window event StallSideNav's own nav item
- * already uses -- Layout.jsx (wraps /stall/:username) and DashboardPage.jsx
- * (renders /cockpit directly, outside Layout) each already listen for it
- * and own a LetItRainPanel instance, so this works from both the owner's
- * Cockpit and a visitor's /stall/:username without this panel needing to
- * render its own copy.
+ * Flow v2 step 4: Wallet balance, additive on top of the above. Reads the
+ * same live on-chain USDC balance as WalletBalanceChip.tsx/
+ * DashboardTribeStats.tsx (useLiveWalletBalance, non-custodial -- all
+ * three always agree).
+ *
+ * Flow v2 step 9 (Davison decision): the standalone Let It Rain panel/
+ * button that used to live here is retired -- the Heart tip picker on a
+ * SeedCard IS Let It Rain now, no separate feature.
  */
 export default function StallTodayPanel({ className = '', stacked = false }: Props) {
   const sacred = useSacredNow();
@@ -62,9 +60,6 @@ export default function StallTodayPanel({ className = '', stacked = false }: Pro
     <div className={`${stacked ? 'flex flex-col gap-3' : 'gap-5'} bg-[#140c06] px-4 py-4 ${stacked ? '' : 'overflow-y-auto'} ${className}`}>
       <Section>
         <h3 className="font-serif text-xs tracking-[0.12em] uppercase text-amber-400/80 mb-2">💰 Wallet</h3>
-        {/* Wallet balance needs a signed-in member; Let It Rain doesn't --
-            StallSideNav's own nav item fires the same event ungated, reachable
-            by any stall visitor, signed in or not, so this stays consistent. */}
         {user && (
           <Link
             to="/settings/payouts"
@@ -80,13 +75,6 @@ export default function StallTodayPanel({ className = '', stacked = false }: Pro
             </span>
           </Link>
         )}
-        <button
-          type="button"
-          onClick={() => window.dispatchEvent(new Event('s2g-open-let-it-rain'))}
-          className={`w-full flex items-center justify-center gap-1.5 rounded-lg border border-cyan-400/25 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/20 transition-colors ${user ? 'mt-2' : ''}`}
-        >
-          <Cloud className="h-3.5 w-3.5" /> Let It Rain
-        </button>
       </Section>
 
       <Divider />

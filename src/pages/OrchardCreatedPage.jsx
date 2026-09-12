@@ -56,7 +56,7 @@ export default function OrchardCreatedPage() {
         setOrchard(orchardData);
       } catch (error) {
         console.error("💥 Error fetching orchard:", error);
-        navigate("/browse-orchards");
+        navigate("/stalls-feed?chip=orchard");
       } finally {
         setLoading(false);
       }

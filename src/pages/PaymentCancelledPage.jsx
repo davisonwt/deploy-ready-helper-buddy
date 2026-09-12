@@ -51,7 +51,7 @@ const PaymentCancelledPage = () => {
               </Button>
               
               <div className="grid grid-cols-2 gap-3">
-                <Link to="/browse-orchards">
+                <Link to="/stalls-feed?chip=orchard">
                   <Button
                     variant="outline"
                     className="w-full border-primary/30 text-primary hover:bg-primary/5"

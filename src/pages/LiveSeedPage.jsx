@@ -98,7 +98,7 @@ export default function LiveSeedPage() {
       <style>{`@keyframes glow{0%,100%{box-shadow:0 0 10px rgba(239,68,68,0.4)}50%{box-shadow:0 0 30px rgba(239,68,68,0.8)}}.live-badge{animation:glow 2s infinite}`}</style>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', background: 'rgba(0,0,0,0.5)', borderBottom: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link to="/browse-orchards" style={{ textDecoration: 'none', color: '#64748b', fontSize: 13 }}>← Exit</Link>
+          <Link to="/stalls-feed?chip=orchard" style={{ textDecoration: 'none', color: '#64748b', fontSize: 13 }}>← Exit</Link>
           <div className="live-badge" style={{ background: '#ef4444', borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block' }} />LIVE
           </div>

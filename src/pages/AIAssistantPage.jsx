@@ -544,7 +544,7 @@ export default function AIAssistantPage() {
                       </a>
                     </Button>
                     <Button size="sm" variant="outline" className="w-full" asChild>
-                      <a href="/browse-orchards" target="_blank">
+                      <a href="/stalls-feed?chip=orchard" target="_blank">
                         <ExternalLink className="w-4 h-4 mr-2" />
                         Share in Community
                       </a>
@@ -566,7 +566,7 @@ export default function AIAssistantPage() {
                   Copy Content
                 </Button>
                 <Button asChild>
-                  <a href="/browse-orchards" target="_blank">
+                  <a href="/stalls-feed?chip=orchard" target="_blank">
                     Go to Sow2Grow
                     <ExternalLink className="w-4 h-4 ml-2" />
                   </a>

@@ -73,7 +73,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
           description: "Failed to load orchard data.",
           variant: "destructive"
         })
-        navigate('/browse-orchards')
+        navigate('/stalls-feed?chip=orchard')
       } finally {
         setLoading(false)
       }
@@ -184,7 +184,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
         <div className="text-center">
           <p className="text-gray-600 mb-4">Orchard not found</p>
           <button 
-            onClick={() => navigate('/browse-orchards')}
+            onClick={() => navigate('/stalls-feed?chip=orchard')}
             className="bg-green-600 text-white px-4 py-2 rounded"
           >
             Back to Browse Orchards

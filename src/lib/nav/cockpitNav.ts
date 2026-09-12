@@ -2,11 +2,9 @@
 // DashboardPage.jsx's own sidebar, the Farm-Stalls interior's nav panel/
 // drawer (batch 2e), and its mobile-portrait bookshelf variant
 // (StallBookshelfNav) so none of the three ever drift on labels or route
-// strings. `path` is a real in-app route, except 'action:<name>' which a
-// renderer intercepts instead of navigating (today just
-// 'action:let-it-rain', which opens LetItRainPanel -- see the
-// `s2g-open-let-it-rain` window event both DashboardPage.jsx and
-// Layout.jsx listen for).
+// strings. `path` is always a real in-app route -- the old 'action:<name>'
+// escape hatch (only ever used for Let It Rain) is gone along with it,
+// Flow v2 step 9.
 
 export interface CockpitNavItem {
   label: string;
@@ -21,10 +19,11 @@ export interface CockpitNavItem {
 /**
  * Flow v2 step 8's left-panel list -- SeedFlow (self-link to /cockpit,
  * now redundant with the dedicated "My Stall / Cockpit" link every nav
- * surface already renders above this list), My Garden (now the Owner
- * Menu's own "My orchards" item, step 5), and Let It Rain (now
- * StallTodayPanel's own right-panel section, step 4) are dropped here,
- * not carried forward -- each already has its real v2 home built.
+ * surface already renders above this list) and My Garden (now the Owner
+ * Menu's own "My orchards" item, step 5) are dropped here, not carried
+ * forward -- each already has its real v2 home built. Let It Rain is
+ * retired outright (step 9, Davison decision) -- the Heart tip picker on
+ * a SeedCard IS Let It Rain now, no separate feature/nav entry at all.
  */
 export const COCKPIT_NAV: CockpitNavItem[] = [
   { label: 'Tribal Gardens', sub: 'All tribal seeds & orchards', emoji: '🌳', path: '/stalls-feed', color: '#0d9488' },

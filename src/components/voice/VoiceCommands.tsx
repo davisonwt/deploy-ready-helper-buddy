@@ -231,7 +231,7 @@ export function VoiceCommands({ isEnabled, onToggle, isOpen, onOpenChange }: Voi
     // Navigation commands
     if (command.includes('show me orchards') || command.includes('browse orchards')) {
       speak("Navigating to orchards")
-      window.location.href = '/browse-orchards'
+      window.location.href = '/stalls-feed?chip=orchard'
     } else if (command.includes('create orchard') || command.includes('new orchard')) {
       speak("Opening orchard creation")
       window.location.href = '/create-orchard'

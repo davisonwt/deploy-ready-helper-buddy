@@ -264,6 +264,11 @@ const AppRoutes = () => (
     <Route path="/dashboard" element={<Navigate to="/cockpit" replace />} />
     {/* The landing page's own "open my stall" buttons link here -- /register is the real route, this is just the friendlier name a marketing page would use. */}
     <Route path="/signup" element={<Navigate to="/register" replace />} />
+    {/* Flow v2 step 9 (Davison decision): Let It Rain is retired as a
+        separate feature -- the Heart tip picker on a SeedCard IS Let It
+        Rain now. No code ever routed here, but redirect defensively in
+        case an old link/bookmark exists. */}
+    <Route path="/let-it-rain" element={<Navigate to="/stalls-feed" replace />} />
     <Route path="/stall/build" element={
       <ProtectedRoute>
         <RequireVerification>

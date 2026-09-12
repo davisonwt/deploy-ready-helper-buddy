@@ -24,8 +24,8 @@ const SPINE_TONES = [
  * Mobile-portrait stall interior nav (<1024px, portrait): a horizontal
  * snap-scroll row of book-spine buttons standing on a wooden shelf strip,
  * replacing the slide-in StallSideNav drawer for this layout. Same
- * COCKPIT_NAV data source (and the same `action:let-it-rain` handling) as
- * StallSideNav, so the two can't drift on items or routes.
+ * COCKPIT_NAV data source as StallSideNav, so the two can't drift on
+ * items or routes.
  *
  * Flow v2 step 8: COCKPIT_NAV_MORE's secondary items stand as additional
  * spines on the same shelf, revealed by a "More" spine at the end
@@ -41,12 +41,7 @@ export default function StallBookshelfNav({ onNavigate, className = '' }: Props)
   const spines: CockpitNavItem[] = moreOpen ? [...COCKPIT_NAV, ...visibleMore] : COCKPIT_NAV;
 
   const handleTap = (path: string) => {
-    const action = path.startsWith('action:') ? path.split(':')[1] : null;
-    if (action === 'let-it-rain') {
-      window.dispatchEvent(new Event('s2g-open-let-it-rain'));
-    } else {
-      navigate(path);
-    }
+    navigate(path);
     onNavigate();
   };
 
