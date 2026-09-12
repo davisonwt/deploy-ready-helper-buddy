@@ -73,6 +73,18 @@ export default function StallBuildPage() {
 
   const categoryTemplates: StallTemplate[] = templates?.[category] ?? [];
 
+  // Keyed on user?.id, NOT the whole `user` object: useAuth's AuthProviderClass
+  // hands out a brand-new `user` object reference on every onAuthStateChange
+  // firing -- including a background TOKEN_REFRESHED (its own auto-refresh
+  // ticker, or iOS Safari's visibility-change-triggered recheck when the tab
+  // regains focus, e.g. returning from the native photo picker) -- even
+  // though the signed-in member hasn't changed. Keying this effect on the
+  // object itself re-ran it on every such event, re-fetching the stall row
+  // and re-hydrating front/interior/etc. straight back to their last-SAVED
+  // values -- silently reverting an in-progress edit (2026-09-13 bug report:
+  // clearing the shop-front image, then the original reappearing). `id` is
+  // a stable primitive for the same signed-in member for the whole session,
+  // so this now only actually re-runs on a genuine sign-in/sign-out.
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -101,7 +113,8 @@ export default function StallBuildPage() {
       }
       setLoading(false);
     })();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const pathPrefix = user ? `${user.id}` : '';
 

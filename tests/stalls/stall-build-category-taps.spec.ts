@@ -121,6 +121,15 @@ async function stubBackend(page: Page) {
 async function findObscuredControls(page: Page): Promise<Array<{ el: string; blockedBy: string }>> {
   return page.evaluate(() => {
     const interactive = [...document.querySelectorAll('button, input, textarea, [role="button"]')].filter((el) => {
+      // A visually-hidden (sr-only: clipped to ~1px, not display:none) file
+      // input wrapped in its own <label> is intentional, not a bug -- the
+      // LABEL is the real tap target (StallImageUpload/StallPdfUpload's own
+      // fix for iOS Safari's file-picker quirk requires exactly this
+      // shape). Checking the input's own 1x1 hit-point isn't meaningful;
+      // the label itself still gets checked as its own entry here.
+      if (el instanceof HTMLInputElement && el.type === 'file' && (el.closest('label') || el.labels?.length)) {
+        return false;
+      }
       const rect = el.getBoundingClientRect();
       const cs = getComputedStyle(el);
       return rect.width > 0 && rect.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none';

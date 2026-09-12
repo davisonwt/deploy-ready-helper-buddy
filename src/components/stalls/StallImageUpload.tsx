@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 import { Loader2, ImagePlus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,6 +53,10 @@ export default function StallImageUpload({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Unique per instance -- up to 5 of these render at once (one per tile,
+  // step 3), so a hardcoded id would collide and only the first input
+  // would ever actually be reachable from its label.
+  const inputId = useId();
 
   const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -117,6 +121,7 @@ export default function StallImageUpload({
   return (
     <div className="space-y-3">
       <label
+        htmlFor={inputId}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
@@ -142,11 +147,21 @@ export default function StallImageUpload({
             <p className="text-sm text-muted-foreground">{label} — drag &amp; drop or tap to upload</p>
           </div>
         )}
+        {/*
+          Visually hidden, NOT display:none (sr-only vs. Tailwind's
+          .hidden) -- a display:none file input's associated <label> does
+          not reliably open iOS Safari's photo/file picker on tap (a
+          longstanding WebKit quirk; the input must still be part of the
+          accessibility tree / layout for the label's implicit-activation
+          behavior to fire). 2026-09-13 bug report: tapping the empty zone
+          on iPhone Safari never opened the picker at all.
+        */}
         <input
+          id={inputId}
           ref={inputRef}
           type="file"
           accept="image/*"
-          className="hidden"
+          className="sr-only"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
         />
       </label>

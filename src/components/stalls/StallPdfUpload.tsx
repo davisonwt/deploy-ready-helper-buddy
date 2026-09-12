@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 import { Loader2, FileText, Upload, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatSizeMessage, mapStorageUploadError } from '@/lib/uploadErrors';
@@ -38,6 +38,7 @@ export default function StallPdfUpload({ pathPrefix, value, onChange }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = useId();
 
   const handleFile = useCallback(async (file: File) => {
     if (file.type !== 'application/pdf') {
@@ -122,6 +123,7 @@ export default function StallPdfUpload({ pathPrefix, value, onChange }: Props) {
   return (
     <div className="space-y-1.5">
       <label
+        htmlFor={inputId}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
@@ -136,11 +138,13 @@ export default function StallPdfUpload({ pathPrefix, value, onChange }: Props) {
             <span className="text-muted-foreground">Upload PDF — drag &amp; drop or tap</span>
           </>
         )}
+        {/* See StallImageUpload.tsx's identical fix for why sr-only, not display:none. */}
         <input
+          id={inputId}
           ref={inputRef}
           type="file"
           accept="application/pdf"
-          className="hidden"
+          className="sr-only"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
         />
       </label>
