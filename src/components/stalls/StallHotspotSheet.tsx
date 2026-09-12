@@ -53,6 +53,8 @@ const SHEET_KIND_TO_SEED_KIND: Partial<Record<TileKind, SeedCardKind>> = {
   lyrics: 'book',
   music: 'music',
   mugs: 'seed',
+  products: 'seed',
+  services: 'seed',
 };
 
 const PDF_RE = /\.pdf(\?|$)/i;
@@ -63,6 +65,8 @@ const KIND_LABEL: Partial<Record<TileKind, string>> = {
   lyrics: 'Lyrics',
   story: 'My Story',
   mugs: 'Mugs',
+  products: 'Products',
+  services: 'Services',
 };
 
 const EMPTY_TEXT: Partial<Record<TileKind, string>> = {
@@ -71,6 +75,8 @@ const EMPTY_TEXT: Partial<Record<TileKind, string>> = {
   lyrics: 'No lyrics written yet',
   story: 'Story still being written',
   mugs: 'No mugs on the table yet',
+  products: 'No products on the shelf yet',
+  services: 'No services listed yet',
 };
 
 /** Where "Add one" sends the owner, per kind -- the only real create flow each maps to. */
@@ -79,6 +85,8 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
   music: '/sow/music',
   lyrics: '/sow/book', // lyrics are a category on the same book form (products.category = 'lyrics') -- no dedicated lyrics form exists
   mugs: '/sow/product', // mugs are a category on the general Shop product form (products.type = 'product', category = 'mugs')
+  products: '/sow/product', // general Shop product form (products.type = 'product')
+  services: '/sow/hand', // the only form that writes products.type = 'service'
 };
 
 /**
@@ -122,6 +130,20 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
  *     category (e.g. 'kitchenware') won't show here until recategorized
  *     via the Mugs quick-pick on /sow/product (see the Farm-Stalls batch
  *     2d audit for a real example of this).
+ *   - products: products (type = 'product'), unfiltered by category --
+ *     the general "everything for sale" bucket. Deliberately NOT excluding
+ *     category = 'mugs': a stall with both a 'products' and a 'mugs'
+ *     hotspot painted will show mugs under both (mugs is a narrower,
+ *     opt-in view onto the same type, not a different one), which matches
+ *     what a visitor tapping "Products" actually expects -- everything.
+ *   - services: products (type = 'service') -- the only sow form that
+ *     ever writes this type is /sow/hand (SowHandPage.tsx). Added
+ *     2026-09-13 (scripts/studio/set-karoo-honey-hotspots.sql) alongside
+ *     'products' above -- both TileKind values already existed (used by
+ *     stall TILES, a different UI element with its own default-target
+ *     routing) but had no hotspot-sheet data source until now; a hotspot
+ *     painted with either kind before this fell through to the generic
+ *     else branch below and silently showed books/ebooks instead.
  */
 export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, onClose, scrollToItemId, viewerCutoff }: Props) {
   const [items, setItems] = useState<Item[] | null>(null);
@@ -174,7 +196,11 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
       const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
 
       if (sowerId || companyId) {
-        const typeFilter = kind === 'music' ? ['music'] : kind === 'mugs' ? ['product'] : ['book', 'ebook'];
+        const typeFilter =
+          kind === 'music' ? ['music'] :
+          kind === 'mugs' || kind === 'products' ? ['product'] :
+          kind === 'services' ? ['service'] :
+          ['book', 'ebook'];
         let q = supabase.from('products').select('id, title, description, cover_image_url, image_urls, price, category, file_url, preview_url, created_at').in('type', typeFilter);
         const orParts: string[] = [];
         if (sowerId) orParts.push(`sower_id.eq.${sowerId}`);
