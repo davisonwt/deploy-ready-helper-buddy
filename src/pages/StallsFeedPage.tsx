@@ -111,12 +111,20 @@ export default function StallsFeedPage() {
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto snap-y snap-mandatory">
           {cards.map((card) => (
-            <article key={card.id} className="snap-start h-[calc(100dvh-8rem)] relative flex items-end overflow-hidden">
-              <button type="button" onClick={() => openStall(card)} className="absolute inset-0" aria-label={`Open ${card.name}'s stall`}>
+            <article key={card.id} className="snap-start h-[calc(100dvh-8rem)] relative flex flex-col overflow-hidden">
+              <button
+                type="button"
+                onClick={() => openStall(card)}
+                className="relative w-full flex-1 min-h-0"
+                aria-label={`Open ${card.name}'s stall`}
+              >
                 {/* Blurred cover copy fills the frame behind the real image --
                     the real image itself is object-contain so it's never
                     cropped or stretched, whatever its own aspect ratio (same
-                    treatment as MyStallCard / the Cockpit hero). */}
+                    treatment as MyStallCard / the Cockpit hero). Name/tagline
+                    live in their own strip below (not overlaid) so they can
+                    never cover any part of the image, whatever its aspect
+                    ratio letterboxes to. */}
                 <img
                   src={card.front_image_path}
                   alt=""
@@ -133,22 +141,21 @@ export default function StallsFeedPage() {
                   decoding="async"
                   className="absolute inset-0 w-full h-full object-contain"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+
+                {liveOwnerIds.has(card.user_id) && (
+                  <span className="absolute top-4 left-4 flex items-center gap-1 rounded-full bg-rose-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
+                    <Radio className="h-3 w-3" /> LIVE
+                  </span>
+                )}
+                <span className="absolute top-4 right-4 rounded-full bg-black/50 px-2.5 py-1 text-xs font-medium text-white">
+                  {STALL_TIER_LABEL[card.tier]}
+                </span>
               </button>
 
-              {liveOwnerIds.has(card.user_id) && (
-                <span className="absolute top-4 left-4 flex items-center gap-1 rounded-full bg-rose-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
-                  <Radio className="h-3 w-3" /> LIVE
-                </span>
-              )}
-              <span className="absolute top-4 right-4 rounded-full bg-black/50 px-2.5 py-1 text-xs font-medium text-white">
-                {STALL_TIER_LABEL[card.tier]}
-              </span>
-
-              <div className="relative z-10 w-full p-5 pointer-events-none">
-                <h2 className="text-white font-bold text-2xl drop-shadow">{card.name}</h2>
-                {card.tagline && <p className="text-white/85 mt-1 drop-shadow">{card.tagline}</p>}
-              </div>
+              <button type="button" onClick={() => openStall(card)} className="shrink-0 w-full p-5 text-left bg-background border-t">
+                <h2 className="font-bold text-2xl">{card.name}</h2>
+                {card.tagline && <p className="text-muted-foreground mt-1">{card.tagline}</p>}
+              </button>
             </article>
           ))}
         </div>

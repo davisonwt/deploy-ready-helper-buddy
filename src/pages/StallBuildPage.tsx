@@ -234,7 +234,7 @@ export default function StallBuildPage() {
       {step === 1 && (
         <StallImageUpload
           pathPrefix={pathPrefix}
-          mode="square"
+          mode="width"
           maxSize={1200}
           value={front}
           onChange={setFront}
@@ -322,7 +322,13 @@ export default function StallBuildPage() {
       {step === 4 && (
         <div className="space-y-4">
           <div className="rounded-xl border overflow-hidden">
-            {front && <img src={front.url} alt={name} className="w-full aspect-square object-cover" />}
+            {front && (
+              <div className="relative w-full aspect-[4/3] bg-muted">
+                <img src={front.url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70" />
+                <div className="absolute inset-0 bg-black/10" />
+                <img src={front.url} alt={name} className="absolute inset-0 w-full h-full object-contain" />
+              </div>
+            )}
             <div className="p-4">
               <h3 className="font-bold text-lg flex items-center gap-2"><Store className="h-4 w-4" />{name}</h3>
               {tagline && <p className="text-sm text-muted-foreground mt-1">{tagline}</p>}

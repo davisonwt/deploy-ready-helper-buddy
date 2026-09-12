@@ -140,22 +140,23 @@ export default function StallVisitPage() {
             {/* Blurred cover copy fills the frame behind the real image --
                 the real image itself is object-contain so it's never
                 cropped or stretched, whatever its own aspect ratio (same
-                treatment as MyStallCard / the Cockpit hero). */}
+                treatment as MyStallCard / the Cockpit hero). Name/tagline
+                sit in their own strip below (not overlaid) so they can
+                never cover any part of the image. */}
             <img src={stall.front_image_path} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70" />
             <div className="absolute inset-0 bg-black/20" />
             <img src={stall.front_image_path} alt={stall.name} className="absolute inset-0 w-full h-full object-contain" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            <div className="absolute bottom-0 inset-x-0 p-4 flex items-end justify-between">
-              <div>
-                <h1 className="text-white font-bold text-xl drop-shadow">{stall.name}</h1>
-                {stall.tagline && <p className="text-white/80 text-sm drop-shadow">{stall.tagline}</p>}
-              </div>
-              <span className="text-[11px] font-medium text-white/90 bg-black/40 rounded-full px-2 py-0.5 shrink-0">
-                {STALL_TIER_LABEL[stall.tier]}
-              </span>
-            </div>
           </div>
-          <CardContent className="py-3 text-sm text-muted-foreground">Couldn't load the interior -- tap to try again</CardContent>
+          <div className="flex items-end justify-between gap-3 p-4">
+            <div>
+              <h1 className="font-bold text-xl">{stall.name}</h1>
+              {stall.tagline && <p className="text-sm text-muted-foreground">{stall.tagline}</p>}
+            </div>
+            <span className="text-[11px] font-medium bg-muted rounded-full px-2 py-0.5 shrink-0">
+              {STALL_TIER_LABEL[stall.tier]}
+            </span>
+          </div>
+          <CardContent className="py-3 text-sm text-muted-foreground border-t">Couldn't load the interior -- tap to try again</CardContent>
         </Card>
       </button>
     </div>

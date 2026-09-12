@@ -72,17 +72,18 @@ export default function MyStallCard() {
           <div className="relative w-full aspect-square">
             {/* Blurred cover copy fills the square behind the real image --
                 the real image itself is object-contain so it's never
-                cropped, whatever its own aspect ratio. */}
+                cropped, whatever its own aspect ratio. Name/tier sit in
+                their own strip below (not overlaid) so they can never cover
+                any part of the image. */}
             <img src={stall.front_image_path} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70" />
             <div className="absolute inset-0 bg-black/20" />
             <img src={stall.front_image_path} alt={stall.name} className="absolute inset-0 w-full h-full object-contain" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 p-3 flex items-center gap-2">
-              <h3 className="text-white font-bold drop-shadow">{stall.name}</h3>
-              <span className="text-[11px] font-medium text-white/90 bg-black/40 rounded-full px-2 py-0.5 shrink-0">
-                {STALL_TIER_LABEL[stall.tier]}
-              </span>
-            </div>
+          </div>
+          <div className="flex items-center gap-2 p-3">
+            <h3 className="font-bold truncate">{stall.name}</h3>
+            <span className="text-[11px] font-medium bg-muted rounded-full px-2 py-0.5 shrink-0">
+              {STALL_TIER_LABEL[stall.tier]}
+            </span>
           </div>
         </Card>
       </button>
