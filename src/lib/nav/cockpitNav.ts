@@ -27,7 +27,11 @@ export interface CockpitNavItem {
  */
 export const COCKPIT_NAV: CockpitNavItem[] = [
   { label: 'Tribal Gardens', sub: 'All tribal seeds & orchards', emoji: '🌳', path: '/stalls-feed', color: '#0d9488' },
-  { label: 'Wandering Hearts', sub: 'Tribal connections', emoji: '💚', path: '/tribal-hearts', color: '#dc2626' },
+  // Wandering Hearts now has its own stall (S2G-run, phase 1) -- points
+  // there instead of /tribal-hearts for now; /tribal-hearts keeps working
+  // on its own, phase 2 makes it the "Live circle" plaque's real target
+  // (same pattern as Grove Station's nav entry -> its own stall).
+  { label: 'Wandering Hearts', sub: 'Tribal connections', emoji: '💚', path: '/stall/wanderinghearts', color: '#dc2626' },
   { label: 'My Tribe', sub: 'Your invitation code & tribe', emoji: '🌿', path: '/my-tribe', color: '#22c55e' },
   { label: 'ChatApp', sub: 'Tribe messaging', emoji: '💬', path: '/chatapp', color: '#0891b2' },
   // Grove Station now has its own stall (S2G's own radio station,

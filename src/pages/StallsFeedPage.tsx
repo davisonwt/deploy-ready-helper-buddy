@@ -27,12 +27,16 @@ const CATEGORY_LABEL: Record<StallCategory, string> = Object.fromEntries(
 ) as Record<StallCategory, string>;
 
 /**
- * S2G's own radio station stall (scripts/studio/create-grove-station-stall.sql)
- * -- pinned first in this feed regardless of chip/sort (not during
- * search, where it behaves like any other stall). Hardcoded: it's a
- * singleton system stall, not something that changes.
+ * S2G-run system stalls, pinned first in this feed in this exact order,
+ * regardless of chip/sort (not during search, where they behave like any
+ * other stall). Hardcoded: each is a singleton system stall, not
+ * something that changes. Add more here as new S2G-run stalls launch --
+ * the fetch/pin logic below is generic over this list.
  */
-const GROVE_STATION_USER_ID = 'e9758e23-fba4-4778-8e58-4fd8e5550a72';
+const PINNED_STALL_USER_IDS = [
+  'e9758e23-fba4-4778-8e58-4fd8e5550a72', // Grove Station (scripts/studio/create-grove-station-stall.sql)
+  '54ba45c3-382b-4cc2-9bb7-c1f895c3c119', // Wandering Hearts (scripts/studio/create-wandering-hearts-stall.sql)
+];
 
 interface StallCard {
   id: string;
@@ -115,7 +119,7 @@ export default function StallsFeedPage() {
   // re-fetched per chip/search change -- it covers every stall with new
   // content regardless of which chip is active.
   const [newSeedInfo, setNewSeedInfo] = useState<Map<string, { total: number; latest: string }>>(new Map());
-  const [groveStationCard, setGroveStationCard] = useState<StallCard | null>(null);
+  const [pinnedCards, setPinnedCards] = useState<StallCard[]>([]);
 
   const liveOwnerIds = useMemo(() => new Set((liveSeeds ?? []).map((p) => p.user_id)), [liveSeeds]);
 
@@ -133,31 +137,40 @@ export default function StallsFeedPage() {
     return () => { alive = false; };
   }, [user]);
 
-  // Grove Station pin: fetched once, independent of the active chip, so
-  // it can be prepended regardless of which category chip is selected.
+  // Pinned system stalls: fetched once, independent of the active chip,
+  // so they can be prepended regardless of which category chip is
+  // selected. Order follows PINNED_STALL_USER_IDS; any not found (not
+  // yet created, or unpublished) is just skipped, not a gap.
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { data: stallRow } = await supabase
+      const { data: stallRows } = await supabase
         .from('stalls')
         .select('id, user_id, name, tagline, tier, category, front_image_path')
-        .eq('user_id', GROVE_STATION_USER_ID)
-        .eq('published', true)
-        .maybeSingle();
-      if (!stallRow) return;
-      const { data: profileRow } = await supabase
+        .in('user_id', PINNED_STALL_USER_IDS)
+        .eq('published', true);
+      const rows = (stallRows ?? []) as Omit<StallCard, 'username' | 'displayName'>[];
+      if (rows.length === 0) return;
+      const { data: profileRows } = await supabase
         .from('public_profiles' as any)
-        .select('username, display_name')
-        .eq('user_id', GROVE_STATION_USER_ID)
-        .maybeSingle();
-      const p = profileRow as { username: string | null; display_name: string | null } | null;
-      if (alive) {
-        setGroveStationCard({
-          ...(stallRow as Omit<StallCard, 'username' | 'displayName'>),
-          username: p?.username ?? null,
-          displayName: p?.display_name ?? null,
-        });
-      }
+        .select('user_id, username, display_name')
+        .in('user_id', PINNED_STALL_USER_IDS);
+      const profileByOwner = new Map<string, { username: string | null; display_name: string | null }>(
+        ((profileRows ?? []) as { user_id: string; username: string | null; display_name: string | null }[]).map((p) => [
+          p.user_id,
+          { username: p.username, display_name: p.display_name },
+        ]),
+      );
+      const byOwner = new Map(rows.map((r) => [r.user_id, r]));
+      const ordered = PINNED_STALL_USER_IDS
+        .map((id) => byOwner.get(id))
+        .filter((r): r is Omit<StallCard, 'username' | 'displayName'> => !!r)
+        .map((r) => ({
+          ...r,
+          username: profileByOwner.get(r.user_id)?.username ?? null,
+          displayName: profileByOwner.get(r.user_id)?.display_name ?? null,
+        }));
+      if (alive) setPinnedCards(ordered);
     })();
     return () => { alive = false; };
   }, []);
@@ -206,16 +219,18 @@ export default function StallsFeedPage() {
     });
   }, [filteredCards, chip, newSeedInfo]);
 
-  // Grove Station pinned first, regardless of chip/sort -- not during
-  // search, where it's just another stall (found or not, on its own
-  // merits). Deduped: if it's already present (chip is 'for_you'/'new'/
-  // 'music', or it happens to match the search), it isn't listed twice.
+  // Pinned system stalls first, in PINNED_STALL_USER_IDS order,
+  // regardless of chip/sort -- not during search, where they're just
+  // another stall (found or not, on their own merits). Deduped: if one
+  // is already present (chip is 'for_you'/'new'/its own category, or it
+  // happens to match the search), it isn't listed twice.
   const pinnedOrderedCards = useMemo(() => {
     if (!orderedCards) return orderedCards;
-    if (search.trim() || !groveStationCard) return orderedCards;
-    const rest = orderedCards.filter((c) => c.user_id !== GROVE_STATION_USER_ID);
-    return [groveStationCard, ...rest];
-  }, [orderedCards, groveStationCard, search]);
+    if (search.trim() || pinnedCards.length === 0) return orderedCards;
+    const pinnedIds = new Set(pinnedCards.map((c) => c.user_id));
+    const rest = orderedCards.filter((c) => !pinnedIds.has(c.user_id));
+    return [...pinnedCards, ...rest];
+  }, [orderedCards, pinnedCards, search]);
 
   useEffect(() => {
     if (!showPanHint) return;
