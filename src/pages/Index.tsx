@@ -1,9 +1,12 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../integrations/supabase/client";
 import { AppContextProvider, useAppContext } from "../contexts/AppContext";
 import { VoiceCommands } from "../components/voice/VoiceCommands";
+import { useContainImageRect } from "@/hooks/useContainImageRect";
+import StallJoinSheet from "@/components/stalls/StallJoinSheet";
 
 // Index.tsx is imported eagerly (src/routes/AppRoutes.tsx's page barrel,
 // not behind React.lazy itself, unlike most other routes) -- a static
@@ -33,6 +36,135 @@ interface GardenCard {
   username: string | null;
   name: string;
   front_image_path: string;
+}
+
+const LANDING_HERO_FRONT = `${STALLS_BASE}/landing/hero-front.webp`;
+const LANDING_HERO_INTERIOR = `${STALLS_BASE}/landing/hero-interior.webp`;
+const LANDING_GARDENS_BG = `${STALLS_BASE}/landing/gardens.webp`;
+
+// Measured directly off the real hero-interior photo's 4 blank plaques
+// (column/row brightness profiling -- max chord width at each plaque's
+// own vertical center, not assumed) -- x/y/w/h are percentages of the
+// image's own natural size, same convention stalls.hotspots uses, so
+// they're correct regardless of the image's final rendered size/
+// letterboxing. Left to right per the task's own labels.
+const DEMO_HOTSPOTS: { label: string; x: number; y: number; w: number; h: number }[] = [
+  { label: "BOOKS", x: 22.4, y: 78.4, w: 11.6, h: 16.7 },
+  { label: "MUSIC", x: 36.9, y: 78.4, w: 11.6, h: 16.7 },
+  { label: "CRAFTS", x: 51.5, y: 78.4, w: 11.6, h: 16.7 },
+  { label: "SERVICES", x: 65.9, y: 78.4, w: 11.6, h: 16.7 },
+];
+
+/**
+ * The hero's "tap to step inside" destination -- a fictional flagship
+ * stall (no real owner/products behind it, unlike every other stall this
+ * page links to), so every one of its 4 hotspots does the same thing:
+ * open the join sheet. Deliberately NOT StallInteriorView -- that
+ * component expects a real ownerId and resolves each hotspot's kind to a
+ * real StallHotspotSheet query, neither of which apply here. Same dual-
+ * tree structure (portrait pannable with plain %-positioned hotspots,
+ * landscape/desktop object-contain with useContainImageRect-positioned
+ * ones) as StallInteriorView for the same reason it's needed there.
+ */
+function DemoInteriorView({ onClose, onHotspotTap }: { onClose: () => void; onHotspotTap: () => void }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const rect = useContainImageRect(containerRef, imgRef);
+  const mobileImgRef = useRef<HTMLImageElement>(null);
+  const panScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scrollEl = panScrollRef.current;
+    const img = mobileImgRef.current;
+    if (!scrollEl) return;
+    const center = () => { scrollEl.scrollLeft = (scrollEl.scrollWidth - scrollEl.clientWidth) / 2; };
+    if (img && !img.complete) {
+      img.addEventListener("load", center, { once: true });
+      return () => img.removeEventListener("load", center);
+    }
+    center();
+  }, []);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  const hotspotButtonClass =
+    "absolute outline-none flex items-center justify-center rounded-full border border-amber-300/50 bg-black/10 hover:bg-amber-500/20 transition-colors";
+
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black flex flex-col overflow-hidden max-lg:portrait:overflow-y-auto">
+      {/* Portrait mobile */}
+      <div className="hidden max-lg:portrait:flex flex-col w-full">
+        <div className="sticky top-0 z-20 h-[48px] flex items-center justify-between gap-2 px-4 bg-[#0d0805]/95 backdrop-blur-sm border-b border-amber-500/15">
+          <span className="min-w-0 flex-1 truncate text-xs font-semibold uppercase tracking-wide text-white/70">sow2grow flagship</span>
+          <button type="button" onClick={onClose} aria-label="Close" className="shrink-0 flex items-center justify-center rounded-full p-2 text-white hover:bg-white/20">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="relative w-full h-[calc(100dvh-48px)]">
+          <div
+            ref={panScrollRef}
+            className="relative w-full h-full overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            <div className="relative h-full w-max mx-auto snap-center">
+              <img ref={mobileImgRef} src={LANDING_HERO_INTERIOR} alt="sow2grow flagship interior" className="block h-full w-auto max-w-none" />
+              {DEMO_HOTSPOTS.map((h) => (
+                <button
+                  key={h.label}
+                  type="button"
+                  aria-label={h.label}
+                  onClick={onHotspotTap}
+                  className={hotspotButtonClass}
+                  style={{ left: `${h.x}%`, top: `${h.y}%`, width: `${h.w}%`, height: `${h.h}%`, minWidth: 44, minHeight: 44 }}
+                >
+                  <span className="text-[10px] font-bold tracking-wide text-amber-100 drop-shadow">{h.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Landscape phone/tablet + desktop */}
+      <div className="relative flex-1 min-h-0 max-lg:portrait:hidden flex">
+        <div ref={containerRef} className="relative flex-1 min-h-0">
+          <img ref={imgRef} src={LANDING_HERO_INTERIOR} alt="sow2grow flagship interior" className="absolute inset-0 w-full h-full object-contain" />
+          {rect && DEMO_HOTSPOTS.map((h) => (
+            <button
+              key={h.label}
+              type="button"
+              aria-label={h.label}
+              onClick={onHotspotTap}
+              className={hotspotButtonClass}
+              style={{
+                left: rect.offsetX + (h.x / 100) * rect.width,
+                top: rect.offsetY + (h.y / 100) * rect.height,
+                width: (h.w / 100) * rect.width,
+                height: (h.h / 100) * rect.height,
+              }}
+            >
+              <span className="text-xs font-bold tracking-wide text-amber-100 drop-shadow">{h.label}</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="absolute top-4 right-4 flex items-center justify-center rounded-full bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <p className="absolute bottom-3 left-4 text-xs font-semibold uppercase tracking-wide text-white/80 drop-shadow">
+            sow2grow flagship
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -97,6 +229,8 @@ function IndexContent() {
   const [showVoiceCommands, setShowVoiceCommands] = useState(false);
   const { voiceCommandsEnabled, setVoiceCommandsEnabled } = useAppContext();
   const [gardenCards, setGardenCards] = useState<GardenCard[] | null>(null);
+  const [showDemoInterior, setShowDemoInterior] = useState(false);
+  const [showJoinSheet, setShowJoinSheet] = useState(false);
 
   useEffect(() => {
     if (!loading && isAuthenticated) navigate("/cockpit", { replace: true });
@@ -182,11 +316,16 @@ function IndexContent() {
         {/* Same "the stall is the frame" 3-panel composition as the Stalls
             feed, decorative here (no real nav content -- this is a public,
             logged-out page, and StallSideNav/StallTodayPanel are both
-            signed-in-only surfaces) purely for the visual frame. */}
-        <Link to={`/stall/${DAVISON.username}`} className="mt-8 flex justify-center">
+            signed-in-only surfaces) purely for the visual frame. The
+            flagship front/interior are their own dedicated landing photos
+            (stalls bucket, landing/hero-front.webp + landing/hero-
+            interior.webp) -- not a real member's stall, so tapping it
+            opens DemoInteriorView (below) rather than navigating to a
+            /stall/:username that doesn't exist. */}
+        <button type="button" onClick={() => setShowDemoInterior(true)} className="mt-8 flex justify-center w-full">
           <div className="hidden lg:block w-[140px] shrink-0 rounded-l-2xl border border-r-0 border-amber-500/15 bg-black/30" />
           <div className="relative w-full max-w-4xl aspect-[4/3] sm:aspect-[16/9] overflow-hidden border border-amber-500/20 bg-black">
-            <StallImage src={`${STALLS_BASE}/${DAVISON.id}/front.webp`} alt="Davison's stall" className="absolute inset-0" />
+            <StallImage src={LANDING_HERO_FRONT} alt="sow2grow flagship stall" className="absolute inset-0" />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center bg-gradient-to-t from-black/70 to-transparent pb-3 pt-10 sm:pb-4">
               <span className="rounded-full bg-black/60 px-4 py-1.5 text-xs sm:text-sm font-medium text-amber-100">
                 tap to step inside
@@ -194,7 +333,7 @@ function IndexContent() {
             </div>
           </div>
           <div className="hidden lg:block w-[140px] shrink-0 rounded-r-2xl border border-l-0 border-amber-500/15 bg-black/30" />
-        </Link>
+        </button>
 
         <Link
           to="/signup"
@@ -246,23 +385,29 @@ function IndexContent() {
         </div>
       </section>
 
-      {/* 4. walk the gardens */}
-      <section className="px-4 py-10 sm:px-8 sm:py-16 bg-black/20">
-        <h2 className="text-center font-serif text-2xl sm:text-3xl font-semibold text-amber-50">walk the gardens</h2>
-        <p className="mt-2 text-center text-sm text-amber-100/60">real stalls, sown by real members.</p>
-        <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-5xl mx-auto">
-          {(gardenCards ?? []).filter((c) => c.username).map((c) => (
-            <Link
-              key={c.user_id}
-              to={`/stall/${c.username}`}
-              className="group relative aspect-square overflow-hidden rounded-xl border border-amber-500/15 bg-black"
-            >
-              <img src={c.front_image_path} alt={c.name} className="absolute inset-0 w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                <p className="truncate text-xs font-medium text-amber-50">{c.name}</p>
-              </div>
-            </Link>
-          ))}
+      {/* 4. walk the gardens -- full-bleed market-street photo behind the
+          real stall-front row, dark scrim so the cards/text stay
+          readable over whatever's busy in the background photo. */}
+      <section className="relative px-4 py-10 sm:px-8 sm:py-16 overflow-hidden">
+        <img src={LANDING_GARDENS_BG} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/75" />
+        <div className="relative">
+          <h2 className="text-center font-serif text-2xl sm:text-3xl font-semibold text-amber-50">walk the gardens</h2>
+          <p className="mt-2 text-center text-sm text-amber-100/60">real stalls, sown by real members.</p>
+          <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-5xl mx-auto">
+            {(gardenCards ?? []).filter((c) => c.username).map((c) => (
+              <Link
+                key={c.user_id}
+                to={`/stall/${c.username}`}
+                className="group relative aspect-square overflow-hidden rounded-xl border border-amber-500/25 bg-black"
+              >
+                <img src={c.front_image_path} alt={c.name} className="absolute inset-0 w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                  <p className="truncate text-xs font-medium text-amber-50">{c.name}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -300,6 +445,19 @@ function IndexContent() {
         isOpen={showVoiceCommands}
         onOpenChange={setShowVoiceCommands}
       />
+
+      {showDemoInterior && (
+        <DemoInteriorView
+          onClose={() => setShowDemoInterior(false)}
+          onHotspotTap={() => setShowJoinSheet(true)}
+        />
+      )}
+      {/* Renders on top of DemoInteriorView (z-[10000]/[10001] vs its
+          z-[9999]) rather than closing it -- same "sheet floats over the
+          still-open interior" behaviour StallInteriorView itself uses. */}
+      {showJoinSheet && (
+        <StallJoinSheet stallName="the sow2grow flagship" onClose={() => setShowJoinSheet(false)} />
+      )}
     </div>
   );
 }
