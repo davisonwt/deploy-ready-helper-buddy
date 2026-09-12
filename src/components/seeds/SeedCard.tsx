@@ -581,6 +581,21 @@ export default function SeedCard({
 
   const handleBestowClick = (e: React.MouseEvent) => {
     e.stopPropagation(); e.preventDefault();
+    // Temporary diagnostic (2026-09-13, "why does Bestow do nothing on
+    // Amber's stall" investigation) -- logs exactly the fields that decide
+    // this handler's branch: hasOverride short-circuits everything below
+    // (a parent's own richer Bestow flow is expected to take over, e.g.
+    // TribalAliveFeedPage), isPhysical routes to the basket instead of
+    // ConfirmBestowModal. console.warn, not .log -- vite.config.ts strips
+    // console.log/info/debug from the production bundle (Slice 7b), which
+    // is exactly what's actually deployed; .warn survives so this is still
+    // visible from a real browser's console on the live site while this
+    // investigation is open. Remove once the live report is confirmed
+    // resolved or narrowed further.
+    console.warn('[SeedCard] handleBestowClick', {
+      id, title, price, kind, ownerId, isProductRow, productDeliveryType, isPhysical,
+      hasOverride: !!onBestowOverride, viewerIsOwner, user: user?.id ?? null,
+    });
     if (onBestowOverride) { onBestowOverride(); return; }
     if (isPhysical) {
       addToBasket({
@@ -952,7 +967,7 @@ export default function SeedCard({
             ) : (
               <GradientPlaceholder type={KIND_PLACEHOLDER[kind]} title={title} className="w-full h-full" />
             )}
-            {hasSamplePlayer && musicPlayer.hasSource && <InlinePreviewBar player={musicPlayer} />}
+            {hasSamplePlayer && musicPlayer.hasSource && <InlinePreviewBar player={musicPlayer} insetForRail />}
             {hasGallery && <GalleryChrome gallery={gallery} imgIdx={imgIdx} setImgIdx={setImgIdx} />}
             {badgePct != null && (
               <span className="absolute top-2 left-2 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-950 shadow">
@@ -970,8 +985,29 @@ export default function SeedCard({
 
             {/* Same right-hand action rail as the feed variant -- one card,
                 two sizes, nothing dropped here. Greyed (not hidden) for the
-                owner viewing their own card. */}
-            <div className="absolute right-1 top-1 bottom-1 z-10 flex flex-col items-center justify-start gap-1 overflow-y-auto no-scrollbar">
+                owner viewing their own card.
+
+                Fixed w-10 (not auto-width) so the player bar below can
+                reserve exactly this much space (44px total with this
+                right-1: see InlinePreviewBar's own right-11) on its own
+                right edge -- two independently-positioned absolute
+                elements can't otherwise agree on a shared boundary. When
+                the 45s player
+                bar renders (hasSamplePlayer && musicPlayer.hasSource),
+                bottom-12 (44px player bar + the same 4px breathing room
+                bottom-1 gives everywhere else) keeps this scroll area's
+                own clip boundary from ever dipping into the player bar's
+                territory -- with 7 stacked buttons (Message/Voice/Video/
+                Heart/Go Live/Share/Report) not all fitting in a compact
+                card's cover height, the overflowing tail end used to be
+                scrolled out of view past the rail's own bottom-1 edge,
+                landing (per elementFromPoint measurement) on whatever was
+                actually painted at that now-unclipped position -- the
+                player bar itself, or the content below the cover,
+                depending on exact overflow amount. Scrolling to reach
+                Report is unchanged; where it lands once scrolled into
+                view is what's fixed. */}
+            <div className={`absolute right-1 top-1 z-10 flex w-10 flex-col items-center justify-start gap-1 overflow-y-auto no-scrollbar ${hasSamplePlayer && musicPlayer.hasSource ? 'bottom-12' : 'bottom-1'}`}>
               <FeedRailButton icon={<MessageCircle className="h-3.5 w-3.5" />} label="Message" onClick={handleMessage} disabled={railDisabled || starting === 'message'} />
               <FeedRailButton icon={<Phone className="h-3.5 w-3.5" />} label="Voice" onClick={handleCall} disabled={railDisabled || starting === 'voice'} dataCall="voice" />
               <FeedRailButton icon={<VideoIcon className="h-3.5 w-3.5" />} label="Video" onClick={handleCall} disabled={railDisabled || starting === 'video'} dataCall="video" />
@@ -1108,10 +1144,21 @@ function FeedRailButton({ icon, label, onClick, disabled, tone = 'default', data
  * whole-card tap toggle -- never a second competing player instance for
  * the same id). Meant to sit inside a `relative`-positioned box.
  */
-function InlinePreviewBar({ player }: { player: ReturnType<typeof usePreviewPlayer> }) {
+function InlinePreviewBar({ player, insetForRail }: { player: ReturnType<typeof usePreviewPlayer>; insetForRail?: boolean }) {
   return (
     <div
-      className="absolute bottom-0 inset-x-0 flex items-center gap-2 px-2.5 py-2 bg-black/70 backdrop-blur-sm"
+      // insetForRail: the compact variant embeds this directly in the
+      // cover, where the action rail owns a fixed-width column on the
+      // right (right-1 + w-10 = 44px from the cover's own right edge, see
+      // its own comment) -- right-11 (also 44px) here keeps this bar's own
+      // width to exactly "cover width minus rail width" instead of the
+      // default inset-x-0 full width, which used to extend underneath the
+      // rail column. The feed variant places this inside its own separate
+      // h-11 wrapper below the cover (no rail there, insetForRail unset,
+      // unchanged inset-x-0/full-width behavior). h-11 here too (was
+      // intrinsic/padding-driven) so the rail above has a fixed, known
+      // height to size its own bottom-12 inset against.
+      className={`absolute bottom-0 left-0 flex h-11 items-center gap-2 px-2.5 py-2 bg-black/70 backdrop-blur-sm ${insetForRail ? 'right-11' : 'right-0'}`}
       onClick={(e) => e.stopPropagation()}
     >
       <button
