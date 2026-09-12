@@ -62,3 +62,11 @@ Treat these as protected unless explicitly asked to change them: auth, user role
 ## Supabase edge functions
 - Live in `supabase/functions/`. Required env vars for payment functions are documented in `README.md`.
 - Treat RLS policies as part of the security surface — don't bypass them from client code.
+
+## Speed rules
+1. Never stash/revert source to prove a test fails before restoring it. Trust the diff.
+2. No hermetic fixtures when `.env.test` creds exist — test against the live `TEST_BASE_URL` instead.
+3. Run only the spec you touched, not the whole suite.
+4. Reports are ≤ 10 lines: hash, what changed, what's verified, what's not.
+5. Don't rewrite comments or explain history in code — say it in the commit message instead.
+6. One commit per task, pushed immediately.
