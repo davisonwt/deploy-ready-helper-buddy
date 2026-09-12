@@ -12,9 +12,9 @@ const LogoHeader = ({
   return (
     <Link to={linkTo} className={`flex items-center space-x-3 ${className}`}>
       <div className="flex items-center justify-center bg-transparent">
-        <img 
-          src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
-          alt="sow2grow logo" 
+        <img
+          src="/s2g-logo.webp"
+          alt="sow2grow logo"
           className={`${logoSize} object-contain bg-transparent`}
           style={{ backgroundColor: 'transparent' }}
         />

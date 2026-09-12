@@ -287,7 +287,7 @@ function IndexContent() {
       <header className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-amber-500/15 bg-[#140c06]/95 backdrop-blur-sm px-4 py-3 sm:px-8">
         <Link to="/" className="flex items-center gap-2">
           <img
-            src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png"
+            src="/s2g-logo.webp"
             alt="sow2grow"
             className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
           />

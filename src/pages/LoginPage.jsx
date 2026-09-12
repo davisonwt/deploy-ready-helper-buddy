@@ -167,9 +167,9 @@ export default function LoginPage() {
           <CardHeader className="text-center pb-4">
             <div className="flex justify-center mb-6">
               <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-2xl ring-4 ring-blue-100">
-                <img 
-                  src="/logo.jpeg"
-                  alt="sow2grow logo" 
+                <img
+                  src="/s2g-logo.webp"
+                  alt="sow2grow logo"
                   className="w-full h-full object-cover"
                 />
               </div>
