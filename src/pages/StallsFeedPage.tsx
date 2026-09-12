@@ -65,8 +65,28 @@ export default function StallsFeedPage() {
   // shows the input, so this flag never gates it there (max-lg: below).
   const [search, setSearch] = useState('');
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  // "New seeds" (supabase/migrations/20260912140000_stall_visits.sql) --
+  // stall_user_id -> {total, latest}, from the same RPC StallInteriorView
+  // uses for its own hotspot dots. Fetched once per signed-in viewer, not
+  // re-fetched per chip/search change -- it covers every stall with new
+  // content regardless of which chip is active.
+  const [newSeedInfo, setNewSeedInfo] = useState<Map<string, { total: number; latest: string }>>(new Map());
 
   const liveOwnerIds = useMemo(() => new Set((liveSeeds ?? []).map((p) => p.user_id)), [liveSeeds]);
+
+  useEffect(() => {
+    if (!user) { setNewSeedInfo(new Map()); return; }
+    let alive = true;
+    (async () => {
+      const { data } = await supabase.rpc('stall_new_seed_counts' as any, { viewer: user.id });
+      const map = new Map<string, { total: number; latest: string }>();
+      for (const row of (data ?? []) as { stall_user_id: string; total_count: number; latest_created_at: string }[]) {
+        map.set(row.stall_user_id, { total: row.total_count, latest: row.latest_created_at });
+      }
+      if (alive) setNewSeedInfo(map);
+    })();
+    return () => { alive = false; };
+  }, [user]);
 
   const filteredCards = useMemo(() => {
     if (!cards) return cards;
@@ -79,6 +99,24 @@ export default function StallsFeedPage() {
       (c.tagline ?? '').toLowerCase().includes(q),
     );
   }, [cards, search]);
+
+  // "For You" only: stalls with new seeds first, newest seed first among
+  // those -- everything else keeps the base query's own created_at-desc
+  // order (a stable sort leaves ties as they were). Other chips are
+  // unaffected -- "New"/a category chip already has its own meaning for
+  // order.
+  const orderedCards = useMemo(() => {
+    if (!filteredCards || chip !== 'for_you') return filteredCards;
+    return [...filteredCards].sort((a, b) => {
+      const aInfo = newSeedInfo.get(a.user_id);
+      const bInfo = newSeedInfo.get(b.user_id);
+      const aHas = (aInfo?.total ?? 0) > 0;
+      const bHas = (bInfo?.total ?? 0) > 0;
+      if (aHas !== bHas) return aHas ? -1 : 1;
+      if (aHas && bHas) return new Date(bInfo!.latest).getTime() - new Date(aInfo!.latest).getTime();
+      return 0;
+    });
+  }, [filteredCards, chip, newSeedInfo]);
 
   useEffect(() => {
     if (!showPanHint) return;
@@ -255,7 +293,7 @@ export default function StallsFeedPage() {
             </div>
           ) : (
             <div className="flex-1 min-h-0 overflow-y-auto snap-y snap-mandatory">
-              {(filteredCards ?? []).map((card) => (
+              {(orderedCards ?? []).map((card) => (
                 <article key={card.id} className="snap-start h-[calc(100dvh-8rem)] lg:h-full relative overflow-hidden">
                   {/* Portrait phones (<lg, portrait): pannable sideways --
                       image height = container height, width auto, instead
@@ -342,9 +380,10 @@ export default function StallsFeedPage() {
 
                   {/* Name bar: 40px overlay on mobile (portrait + landscape/
                       tablet), 48px on desktop -- tagline dropped at every
-                      size now (no room in a 40px bar). Category badge (the
+                      size now (no room in a 40px bar). "New seeds" pill
+                      (gold, hidden at 0) leads, then category badge (the
                       STALL_CATEGORIES label, singular -- not CHIPS' own
-                      pluralized filter label) plus tier, both shrink-0 so
+                      pluralized filter label) and tier -- all shrink-0 so
                       the name truncates first if space is tight. Floats
                       over the image instead of eating into its height,
                       same treatment at every breakpoint now. */}
@@ -354,6 +393,11 @@ export default function StallsFeedPage() {
                     className="absolute bottom-0 left-0 right-0 z-10 h-10 lg:h-12 px-4 flex items-center gap-2 text-left bg-gradient-to-t from-black/80 to-transparent lg:bg-[#140c06] lg:border-t lg:border-amber-500/15"
                   >
                     <h2 className="flex-1 min-w-0 font-bold text-sm truncate text-white lg:text-amber-50">{card.name}</h2>
+                    {(newSeedInfo.get(card.user_id)?.total ?? 0) > 0 && (
+                      <span className="shrink-0 text-[11px] font-bold rounded-full px-2 py-0.5 bg-gradient-to-b from-amber-400 to-amber-600 text-amber-950">
+                        🌱 {newSeedInfo.get(card.user_id)!.total} new seed{newSeedInfo.get(card.user_id)!.total === 1 ? '' : 's'}
+                      </span>
+                    )}
                     <span className="shrink-0 text-[11px] font-medium rounded-full px-2 py-0.5 bg-white/15 text-white lg:bg-amber-500/10 lg:text-amber-300">
                       {CATEGORY_LABEL[card.category]}
                     </span>

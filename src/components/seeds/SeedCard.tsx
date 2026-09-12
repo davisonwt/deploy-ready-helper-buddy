@@ -132,6 +132,8 @@ export interface SeedCardProps {
    * distinct from 'seed', each with a different real report target_type).
    */
   reportTarget?: { type: string; id: string } | null;
+  /** "New seeds" (Farm-Stalls, supabase/migrations/20260912140000_stall_visits.sql) -- true when this row's created_at is after the viewer's own last visit to this stall (or within 14 days if they've never visited). Caller-computed (StallHotspotSheet) since only it knows the viewer's cutoff and each item's created_at. Renders a small gold "New" corner badge; omit/false for no badge. */
+  isNew?: boolean;
 }
 
 const KIND_REPORT_TYPE: Record<SeedCardKind, string> = {
@@ -209,7 +211,7 @@ export default function SeedCard({
   variant = 'compact', images, videoUrl, resolveVideoUrl, ownerUsername, chip, isActive,
   onMessageOverride, onVoiceOverride, onVideoOverride, onShareOverride, onBestowOverride,
   onFollowOverride, isFollowingOverride,
-  onGift, onGoLiveExtra, reportTarget,
+  onGift, onGoLiveExtra, reportTarget, isNew,
 }: SeedCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -796,6 +798,12 @@ export default function SeedCard({
 
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
 
+          {isNew && (
+            <span className="absolute top-3 left-3 z-10 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-amber-950 shadow">
+              🌱 New
+            </span>
+          )}
+
           {/* Right action rail -- greyed (not hidden) for the owner viewing
               their own card, so they can see what a visitor gets; Owner
               Menu's "View as visitor" is what makes it live for them. */}
@@ -938,6 +946,14 @@ export default function SeedCard({
             {badgePct != null && (
               <span className="absolute top-2 left-2 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-950 shadow">
                 🎤 Whisperer {badgePct}%
+              </span>
+            )}
+            {isNew && (
+              // Stacks below the Whisperer badge (same left corner) rather
+              // than the right -- the action rail owns the entire right
+              // edge (right-1 top-1 bottom-1) at every scroll position.
+              <span className={`absolute left-2 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-950 shadow ${badgePct != null ? 'top-9' : 'top-2'}`}>
+                🌱 New
               </span>
             )}
 

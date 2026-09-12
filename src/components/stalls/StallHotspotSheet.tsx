@@ -14,6 +14,18 @@ interface Props {
   onClose: () => void;
   /** Scrolls this item into view once its card mounts -- arriving back from a SeedCard Message action via the URL's one-time &seed=<id> (see StallInteriorView.tsx's readSeedIdFromHash). */
   scrollToItemId?: string | null;
+  /**
+   * "New seeds" (supabase/migrations/20260912140000_stall_visits.sql) --
+   * the viewer's own last_seen_at for THIS stall, as of before the
+   * current visit's own upsert ran (StallInteriorView reads it first,
+   * then upserts -- passing it down here rather than re-querying avoids
+   * a race where this sheet would otherwise see the just-upserted
+   * now(), making every item look "not new"). Undefined/null (owner
+   * viewing their own stall, or the visitor row genuinely doesn't exist
+   * yet and StallInteriorView hasn't resolved a 14-day fallback) means
+   * no item is marked new.
+   */
+  viewerCutoff?: string | null;
 }
 
 /** Which table an Item came from -- drives SeedCard's isProductRow (Heart/Whisperer are FK'd to products/orchards only) and whether a book has a real PDF to preview. */
@@ -32,6 +44,8 @@ interface Item {
   source: ItemSource;
   fileUrl: string | null;
   previewUrl: string | null;
+  /** Drives both the newest-first sort and each SeedCard's "New" badge (viewerCutoff comparison happens at render time, not here). */
+  createdAt: string;
 }
 
 const SHEET_KIND_TO_SEED_KIND: Partial<Record<TileKind, SeedCardKind>> = {
@@ -109,7 +123,7 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
  *     via the Mugs quick-pick on /sow/product (see the Farm-Stalls batch
  *     2d audit for a real example of this).
  */
-export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, onClose, scrollToItemId }: Props) {
+export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, onClose, scrollToItemId, viewerCutoff }: Props) {
   const [items, setItems] = useState<Item[] | null>(null);
   // undefined = still loading; null = loaded, nothing there; string = loaded, has content.
   const [bio, setBio] = useState<string | null | undefined>(undefined);
@@ -161,13 +175,13 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
 
       if (sowerId || companyId) {
         const typeFilter = kind === 'music' ? ['music'] : kind === 'mugs' ? ['product'] : ['book', 'ebook'];
-        let q = supabase.from('products').select('id, title, description, cover_image_url, image_urls, price, category, file_url, preview_url').in('type', typeFilter);
+        let q = supabase.from('products').select('id, title, description, cover_image_url, image_urls, price, category, file_url, preview_url, created_at').in('type', typeFilter);
         const orParts: string[] = [];
         if (sowerId) orParts.push(`sower_id.eq.${sowerId}`);
         if (companyId) orParts.push(`company_id.eq.${companyId}`);
         q = q.or(orParts.join(','));
         const { data } = await q.order('created_at', { ascending: false }).limit(100);
-        for (const p of (data ?? []) as { id: string; title: string; description: string | null; cover_image_url: string | null; image_urls: string[] | null; price: number | null; category: string | null; file_url: string | null; preview_url: string | null }[]) {
+        for (const p of (data ?? []) as { id: string; title: string; description: string | null; cover_image_url: string | null; image_urls: string[] | null; price: number | null; category: string | null; file_url: string | null; preview_url: string | null; created_at: string }[]) {
           const isLyrics = (p.category ?? '').toLowerCase() === 'lyrics';
           const isMugs = (p.category ?? '').toLowerCase() === 'mugs';
           if (kind === 'lyrics' && !isLyrics) continue;
@@ -184,6 +198,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
             source: 'products',
             fileUrl: p.file_url,
             previewUrl: p.preview_url,
+            createdAt: p.created_at,
           });
         }
       }
@@ -196,11 +211,11 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
       if (kind === 'books') {
         const { data } = await supabase
           .from('sower_books')
-          .select('id, title, description, cover_image_url, bestowal_value')
+          .select('id, title, description, cover_image_url, bestowal_value, created_at')
           .eq('user_id', ownerId)
           .order('created_at', { ascending: false })
           .limit(100);
-        for (const b of (data ?? []) as { id: string; title: string; description: string | null; cover_image_url: string | null; bestowal_value: number | null }[]) {
+        for (const b of (data ?? []) as { id: string; title: string; description: string | null; cover_image_url: string | null; bestowal_value: number | null; created_at: string }[]) {
           const key = normalize(b.title);
           if (byNormTitle.has(key)) continue; // a products row already claimed this title
           byNormTitle.set(key, {
@@ -214,6 +229,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
             source: 'sower_books',
             fileUrl: null,
             previewUrl: null,
+            createdAt: b.created_at,
           });
         }
       }
@@ -228,11 +244,11 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
         if (djId) {
           const { data } = await supabase
             .from('dj_music_tracks')
-            .select('id, track_title, cover_image_url, preview_url')
+            .select('id, track_title, cover_image_url, preview_url, created_at')
             .eq('dj_id', djId)
             .order('created_at', { ascending: false })
             .limit(200);
-          for (const t of (data ?? []) as { id: string; track_title: string; cover_image_url: string | null; preview_url: string | null }[]) {
+          for (const t of (data ?? []) as { id: string; track_title: string; cover_image_url: string | null; preview_url: string | null; created_at: string }[]) {
             const key = normalize(t.track_title);
             if (byNormTitle.has(key)) continue; // a products row already claimed this title
             byNormTitle.set(key, {
@@ -250,12 +266,19 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
               // ever offer a sample when the row has a real short preview
               // clip of its own, never the full file_url uncapped.
               previewUrl: t.preview_url,
+              createdAt: t.created_at,
             });
           }
         }
       }
 
-      if (alive) setItems([...byNormTitle.values()]);
+      // Newest first across ALL sources combined -- each source above is
+      // already ordered within itself, but the Map is populated source-by-
+      // source (products, then sower_books, then dj_music_tracks), so the
+      // merged insertion order is only piecewise-sorted until this final
+      // global sort.
+      const merged = [...byNormTitle.values()].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      if (alive) setItems(merged);
     })();
     return () => { alive = false; };
   }, [kind, ownerId]);
@@ -357,6 +380,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
                       hideSowerLine
                       tapBehavior="inline"
                       forceViewerIsOwner={isOwner ? undefined : false}
+                      isNew={!!viewerCutoff && new Date(item.createdAt).getTime() > new Date(viewerCutoff).getTime()}
                     />
                   </div>
                 ))}

@@ -2,12 +2,14 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { X, Pencil, Menu, CalendarDays, Eye, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
 import StallHotspotSheet from './StallHotspotSheet';
 import StallSideNav from './StallSideNav';
 import StallTodayPanel from './StallTodayPanel';
 import OwnerMenuItems from '@/components/owner/OwnerMenuItems';
-import type { StallHotspot } from '@/lib/stalls/stallTypes';
+import type { StallHotspot, TileKind } from '@/lib/stalls/stallTypes';
 
 interface Props {
   /** Stall owner's user id -- the sheet pulls THEIR published items, never the viewer's. */
@@ -105,6 +107,7 @@ function StallDrawer({ side, open, onClose, children }: { side: 'left' | 'right'
 
 export default function StallInteriorView({ ownerId, interiorImageUrl, stallName, hotspots, onClose, isOwner }: Props) {
   const { setStallInteriorOpen } = useAppContext();
+  const { user } = useAuth();
   const [openKind, setOpenKind] = useState<StallHotspot['kind'] | null>(() => readKindFromHash() as StallHotspot['kind'] | null);
   // One-time: which card (if any) to scroll into view when the sheet
   // above opens on mount, arriving from a SeedCard Message action.
@@ -144,6 +147,54 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
   // for now).
   const [showPanHint, setShowPanHint] = useState(true);
 
+  // "New seeds" (supabase/migrations/20260912140000_stall_visits.sql) --
+  // viewerCutoff is the viewer's own last_seen_at for THIS stall as of
+  // BEFORE this visit's own upsert (read first, upsert second, in the
+  // same effect below -- reading it after upserting would make every
+  // item look "not new" since last_seen_at would already be now()).
+  // newSeedCounts is the per-kind new-item count (for the hotspot dots),
+  // from the same RPC call the feed uses. dismissedKinds tracks which
+  // kinds have had their sheet opened THIS session -- their dot
+  // disappears immediately rather than waiting for a re-fetch (the
+  // underlying "new" state doesn't change just because they looked; the
+  // dot hiding is a local, one-way UI dismissal).
+  const [viewerCutoff, setViewerCutoff] = useState<string | null>(null);
+  const [newSeedCounts, setNewSeedCounts] = useState<Partial<Record<TileKind, number>>>({});
+  const [dismissedKinds, setDismissedKinds] = useState<Set<TileKind>>(new Set());
+
+  useEffect(() => {
+    // Owner viewing their own stall (real or "view as visitor" hasn't been
+    // toggled on) has nothing to be "new" to -- skip entirely, no upsert,
+    // no RPC call.
+    if (!user || effectiveIsOwner) return;
+    let alive = true;
+    (async () => {
+      const { data: visitRow } = await supabase
+        .from('stall_visits')
+        .select('last_seen_at')
+        .eq('viewer_id', user.id)
+        .eq('stall_user_id', ownerId)
+        .maybeSingle();
+      const cutoff = (visitRow as { last_seen_at?: string } | null)?.last_seen_at
+        ?? new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+      if (alive) setViewerCutoff(cutoff);
+
+      const { data: countRows } = await supabase.rpc('stall_new_seed_counts' as any, { viewer: user.id });
+      const mine = ((countRows ?? []) as { stall_user_id: string; per_kind: Partial<Record<TileKind, number>> | null }[])
+        .find((r) => r.stall_user_id === ownerId);
+      if (alive) setNewSeedCounts(mine?.per_kind ?? {});
+
+      // Debounced, once per open -- this effect's deps (ownerId, viewer
+      // identity, owner-mode) only change on a genuinely new stall/
+      // session, not on every re-render of an already-mounted interior.
+      await supabase.from('stall_visits').upsert(
+        { viewer_id: user.id, stall_user_id: ownerId, last_seen_at: new Date().toISOString() },
+        { onConflict: 'viewer_id,stall_user_id' },
+      );
+    })();
+    return () => { alive = false; };
+  }, [ownerId, user, effectiveIsOwner]);
+
   // Starts the horizontal pan centered on the image rather than its left edge.
   useEffect(() => {
     const scrollEl = panScrollRef.current;
@@ -171,6 +222,9 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
   // the sheet opens. `(hover: hover) and (pointer: fine)` is the standard
   // way to tell those apart -- a real mouse, not just viewport width.
   function handleHotspotTap(h: StallHotspot) {
+    // "New seeds" gold dot disappears the moment this kind's sheet opens
+    // -- a one-way dismissal, not a re-fetch (see dismissedKinds above).
+    setDismissedKinds((prev) => (prev.has(h.kind) ? prev : new Set(prev).add(h.kind)));
     const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     if (h.caption && !isFinePointer) {
       setPreviewKind(h.kind);
@@ -181,6 +235,17 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
       return;
     }
     setOpenKind(h.kind);
+  }
+
+  /** Gold dot + per-kind count -- rendered on a painted hotspot button when it has unseen new seeds. */
+  function NewSeedDot({ kind }: { kind: TileKind }) {
+    const count = newSeedCounts[kind] ?? 0;
+    if (count <= 0 || dismissedKinds.has(kind)) return null;
+    return (
+      <span className="pointer-events-none absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-1 text-[10px] font-extrabold text-amber-950 shadow ring-2 ring-black/40">
+        {count > 9 ? '9+' : count}
+      </span>
+    );
   }
 
   useEffect(() => {
@@ -359,6 +424,7 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
                       {h.caption}
                     </span>
                   )}
+                  <NewSeedDot kind={h.kind} />
                 </button>
               ))}
             </div>
@@ -413,6 +479,7 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
                   {h.caption}
                 </span>
               )}
+              <NewSeedDot kind={h.kind} />
             </button>
           ))}
 
@@ -512,6 +579,7 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
           isOwner={effectiveIsOwner}
           onClose={() => setOpenKind(null)}
           scrollToItemId={initialScrollSeedId}
+          viewerCutoff={viewerCutoff}
         />
       )}
     </div>
