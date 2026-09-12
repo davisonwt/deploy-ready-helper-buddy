@@ -128,7 +128,7 @@ export default function ReceiptPage() {
 
       <div className="receipt-page max-w-xl mx-auto bg-white px-8 py-10">
         <div className="flex items-center justify-between border-b border-gray-200 pb-6 mb-6">
-          <img src="/logo.jpeg" alt="Sow2Grow" className="h-12 w-auto rounded" />
+          <img src="/s2g-logo.webp" alt="Sow2Grow" className="h-12 w-auto" />
           <div className="text-right">
             <h1 className="text-lg font-bold text-gray-900">Receipt</h1>
             <p className="text-xs text-gray-500">Sow2Grow</p>

@@ -27,6 +27,11 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
 
   return (
     <div className={`bg-[#140c06] ${className}`}>
+      <div className="flex items-center gap-2 px-3 pt-3 pb-1">
+        <img src="/s2g-logo.webp" alt="" className="h-7 w-7 object-contain shrink-0" />
+        <span className="font-serif text-sm font-semibold text-amber-100">sow2grow</span>
+      </div>
+
       {/* Farm-Stalls feed/interior (StallsFeedPage, StallVisitPage) had no
           way back to the Cockpit at all -- this is that way back, first
           thing in the nav so it's never missed. Same row shape as the

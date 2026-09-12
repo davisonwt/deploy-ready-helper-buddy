@@ -996,10 +996,9 @@ export default function SeedFlowDashboard() {
         <div className={`s2g-dashboard-sidebar ${mobilePanel === 'left' ? 'is-open' : ''}`} style={styles.sidebar}>
           <div style={styles.logoArea}>
             <div style={styles.logoRow}>
-              <img src="/favicon.png" alt="S2G" style={{ width: 36, height: 36, borderRadius: 9, objectFit: 'cover' }} />
+              <img src="/s2g-logo.webp" alt="S2G" style={{ width: 36, height: 36, objectFit: 'contain' }} />
               <div>
                 <div style={styles.logoText}>Sow2Grow</div>
-                <div style={styles.logoSub}>364yhvh community farm</div>
               </div>
             </div>
             <a

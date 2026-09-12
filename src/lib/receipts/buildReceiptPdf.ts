@@ -24,10 +24,10 @@ interface ReceiptMetadata {
 
 const usd = (n: number | null | undefined) => (typeof n === 'number' ? `$${n.toFixed(2)}` : '-');
 
-/** Loads /logo.jpeg as a data URL so jsPDF can embed it (addImage needs a data URI or raw bytes, not a plain path). */
+/** Loads /s2g-logo.webp as a data URL so jsPDF can embed it (addImage needs a data URI or raw bytes, not a plain path). */
 async function loadLogoDataUrl(): Promise<string | null> {
   try {
-    const res = await fetch('/logo.jpeg');
+    const res = await fetch('/s2g-logo.webp');
     const blob = await res.blob();
     return await new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -55,7 +55,7 @@ export async function buildReceiptPdf(m: ReceiptMetadata, orderId: string): Prom
 
   const logo = await loadLogoDataUrl();
   if (logo) {
-    try { doc.addImage(logo, 'JPEG', marginX, y - 20, 48, 48); } catch { /* unsupported image data -- skip, text header still renders */ }
+    try { doc.addImage(logo, 'WEBP', marginX, y - 20, 48, 48); } catch { /* unsupported image data -- skip, text header still renders */ }
   }
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
