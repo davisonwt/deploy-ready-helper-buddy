@@ -7,6 +7,8 @@ import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import StallSideNav from '@/components/stalls/StallSideNav';
 import StallTodayPanel from '@/components/stalls/StallTodayPanel';
 import { STALL_CATEGORIES, STALL_TIER_LABEL, type StallCategory, type StallTier } from '@/lib/stalls/stallTypes';
+import SeedCard from '@/components/seeds/SeedCard';
+import { fetchTribeOrchards } from '@/api/sowerContent';
 
 type Chip = 'for_you' | 'new' | StallCategory;
 
@@ -37,6 +39,30 @@ interface StallCard {
 }
 
 /**
+ * Real orchard campaigns (public.orchards), for the "Orchards" chip --
+ * distinct from a stall whose own business `category` happens to be
+ * "orchard" (STALL_CATEGORIES' 8th option, a real but separate concept).
+ * Flow v2 step 6 folds /browse-orchards's orchard browsing in here; this
+ * chip's label was already pluralized to "Orchards" in CHIPS below ahead
+ * of this, so it's the natural home rather than a second competing chip.
+ * Same fetchTribeOrchards() AdvancedSearchPage/BrowseOrchardsPage already
+ * share -- main_image/grower_name are real denormalized columns on the
+ * table itself, no extra profile join needed.
+ */
+interface OrchardCard {
+  id: string;
+  title: string;
+  description: string | null;
+  main_image: string | null;
+  images: string[] | null;
+  video_url: string | null;
+  user_id: string;
+  grower_name: string | null;
+  pocket_price: number | null;
+  pocket_bestow: number | null;
+}
+
+/**
  * Default "Stalls" feed (Farm-Stalls batch 2, item 4): category chips over
  * full-width, vertically snap-scrolling shop-front cards. Gated the same
  * way /orchard-alive already is (signed-in members) -- unlike
@@ -51,6 +77,7 @@ export default function StallsFeedPage() {
 
   const [chip, setChip] = useState<Chip>('for_you');
   const [cards, setCards] = useState<StallCard[] | null>(null);
+  const [orchardCards, setOrchardCards] = useState<OrchardCard[] | null>(null);
   // "‹ pan ›" hint on the portrait-pannable front image -- one shared flag
   // for the whole feed (only one card is ever visible at a time, snap-y),
   // dismissed on first touch/drag or after a few seconds. Not persisted
@@ -100,6 +127,20 @@ export default function StallsFeedPage() {
     );
   }, [cards, search]);
 
+  // Same client-side narrowing as filteredCards above -- no extra
+  // round-trip, combines for free with the active chip (there's only one
+  // chip that ever populates orchardCards).
+  const filteredOrchards = useMemo(() => {
+    if (!orchardCards) return orchardCards;
+    const q = search.trim().toLowerCase();
+    if (!q) return orchardCards;
+    return orchardCards.filter((o) =>
+      o.title.toLowerCase().includes(q) ||
+      (o.description ?? '').toLowerCase().includes(q) ||
+      (o.grower_name ?? '').toLowerCase().includes(q),
+    );
+  }, [orchardCards, search]);
+
   // "For You" only: stalls with new seeds first, newest seed first among
   // those -- everything else keeps the base query's own created_at-desc
   // order (a stable sort leaves ties as they were). Other chips are
@@ -127,6 +168,14 @@ export default function StallsFeedPage() {
   useEffect(() => {
     let alive = true;
     setCards(null);
+    setOrchardCards(null);
+    if (chip === 'orchard') {
+      (async () => {
+        const { data } = await fetchTribeOrchards({ sortBy: 'recent', limit: 60 });
+        if (alive) setOrchardCards((data ?? []) as unknown as OrchardCard[]);
+      })();
+      return () => { alive = false; };
+    }
     (async () => {
       let q = supabase
         .from('stalls')
@@ -232,7 +281,7 @@ export default function StallsFeedPage() {
                     autoFocus
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search stalls…"
+                    placeholder={chip === 'orchard' ? "Search orchards…" : "Search stalls…"}
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
                   />
                   <button
@@ -261,7 +310,7 @@ export default function StallsFeedPage() {
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search stalls…"
+                placeholder={chip === 'orchard' ? "Search orchards…" : "Search stalls…"}
                 className="w-36 bg-transparent text-sm text-amber-100 placeholder:text-amber-300/50 outline-none"
               />
             </div>
@@ -280,7 +329,40 @@ export default function StallsFeedPage() {
             </button>
           </div>
 
-          {cards === null ? (
+          {chip === 'orchard' ? (
+            orchardCards === null ? (
+              <div className="flex-1 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            ) : orchardCards.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm px-6 text-center">
+                No orchards growing yet — check back soon.
+              </div>
+            ) : filteredOrchards && filteredOrchards.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm px-6 text-center">
+                No orchards match “{search.trim()}”.
+              </div>
+            ) : (
+              <div className="flex-1 min-h-0 overflow-y-auto snap-y snap-mandatory">
+                {(filteredOrchards ?? []).map((o) => (
+                  <article key={o.id} className="snap-start h-[calc(100dvh-8rem)] lg:h-full relative overflow-hidden">
+                    <SeedCard
+                      variant="feed"
+                      id={o.id}
+                      kind="orchard"
+                      title={o.title}
+                      subtitle={o.description}
+                      cover={o.main_image ?? o.images?.[0] ?? null}
+                      images={o.images ?? undefined}
+                      videoUrl={o.video_url ?? undefined}
+                      ownerId={o.user_id}
+                      ownerName={o.grower_name}
+                      price={o.pocket_bestow ?? o.pocket_price ?? 2}
+                      openPath={`/orchard/${o.id}`}
+                    />
+                  </article>
+                ))}
+              </div>
+            )
+          ) : cards === null ? (
             <div className="flex-1 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : cards.length === 0 ? (
             <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm px-6 text-center">
