@@ -34,15 +34,16 @@ export default function WalletBalanceChip() {
   // this is the only place wallet-address connect/change UI lives (see
   // CryptoPayoutSettings), never duplicated here.
   const hideForChatOrCall = CHAT_OR_CALL_ROUTES.some((p) => location.pathname.startsWith(p));
-  if (!user || location.pathname === '/settings/payouts' || hideForChatOrCall) return null;
-
   // Farm-Stalls' desktop 3-column frame (StallsFeedPage, StallVisitPage's
   // StallInteriorView) already shows the wallet balance in StallTodayPanel,
   // the permanent right column -- this chip on top of it there is a
-  // duplicate. Below 1024px neither page has that column (it's a drawer,
-  // not shown by default), so the chip stays useful there -- hide with a
-  // CSS breakpoint (lg:hidden) rather than unmounting outright.
-  const desktopDuplicatesWalletPanel = location.pathname === '/stalls-feed' || location.pathname.startsWith('/stall/');
+  // duplicate. Below 1024px there's no such column, but the front/interior
+  // image itself now fills the viewport edge-to-edge on portrait phones
+  // too (pannable interior/front, batch 2f) -- this chip's own bottom-
+  // right corner sits right on top of it there just the same, so hide it
+  // unconditionally on these two routes now rather than only at lg: and up.
+  const hideOnStallRoutes = location.pathname === '/stalls-feed' || location.pathname.startsWith('/stall/');
+  if (!user || location.pathname === '/settings/payouts' || hideForChatOrCall || hideOnStallRoutes) return null;
 
   const low = !!address && balance !== null && balance < LOW_BALANCE_THRESHOLD;
 
@@ -51,7 +52,6 @@ export default function WalletBalanceChip() {
       to="/settings/payouts"
       className={cn(
         'fixed bottom-6 right-24 z-50 flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-semibold shadow-lg backdrop-blur transition-colors',
-        desktopDuplicatesWalletPanel && 'lg:hidden',
         !address
           ? 'border-border bg-background/90 text-muted-foreground hover:text-foreground'
           : low

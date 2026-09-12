@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Volume2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -21,8 +22,17 @@ const DISMISSED_KEY = 'soundBannerDismissed';
 const UNLOCKED_KEY = 'audioUnlocked';
 
 const SoundUnlockBanner: React.FC = () => {
+  const location = useLocation();
   const [visible, setVisible] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
+
+  // Farm-Stalls' front/interior image now fills the viewport edge-to-edge
+  // on portrait phones (pannable interior/front, batch 2f) -- this pill's
+  // fixed bottom-right corner sat right on top of it there. Desktop and
+  // landscape phones/tablets keep their existing 3-panel/object-contain
+  // frame, which this pill doesn't intrude on, so it stays there
+  // (max-lg:hidden, not an unconditional hide).
+  const hideOnMobileStallRoutes = location.pathname === '/stalls-feed' || location.pathname.startsWith('/stall/');
 
   const shouldShow = useMemo(() => {
     try {
@@ -96,6 +106,7 @@ const SoundUnlockBanner: React.FC = () => {
       aria-label="Enable sound"
       className={cn(
         'fixed bottom-4 right-4 z-[110] max-w-[calc(100vw-2rem)]',
+        hideOnMobileStallRoutes && 'max-lg:hidden',
       )}
     >
       <div

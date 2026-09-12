@@ -144,7 +144,26 @@ export default function StallVisitPage() {
 
       <button type="button" onClick={() => setRetryNonce((n) => n + 1)} className="block w-full text-left">
         <Card className="overflow-hidden hover:opacity-95 transition-opacity">
-          <div className="relative aspect-[16/9] sm:aspect-[21/9]">
+          {/* Portrait phones (<lg, portrait): pannable sideways, same
+              reasoning as StallsFeedPage's cards -- a landscape front image
+              squeezed into a 16:9 box here is just as unreadably short as
+              it was in the feed. Landscape phones/tablets and desktop keep
+              the object-contain box below, unchanged. */}
+          <div data-pan-scroll className="hidden max-lg:portrait:block relative w-full h-[70vh] overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="relative h-full w-max mx-auto snap-center">
+              <img
+                src={stall.front_image_path}
+                alt={stall.name}
+                onLoad={(e) => {
+                  const scrollEl = e.currentTarget.closest('[data-pan-scroll]') as HTMLDivElement | null;
+                  if (scrollEl) scrollEl.scrollLeft = (scrollEl.scrollWidth - scrollEl.clientWidth) / 2;
+                }}
+                className="block h-full w-auto max-w-none"
+              />
+            </div>
+          </div>
+
+          <div className="relative aspect-[16/9] sm:aspect-[21/9] max-lg:portrait:hidden">
             {/* Blurred cover copy fills the frame behind the real image --
                 the real image itself is object-contain so it's never
                 cropped or stretched, whatever its own aspect ratio (same

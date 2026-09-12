@@ -45,8 +45,19 @@ export default function StallsFeedPage() {
 
   const [chip, setChip] = useState<Chip>('for_you');
   const [cards, setCards] = useState<StallCard[] | null>(null);
+  // "‹ pan ›" hint on the portrait-pannable front image -- one shared flag
+  // for the whole feed (only one card is ever visible at a time, snap-y),
+  // dismissed on first touch/drag or after a few seconds. Not persisted
+  // across visits, same call as StallInteriorView's own pan hint.
+  const [showPanHint, setShowPanHint] = useState(true);
 
   const liveOwnerIds = useMemo(() => new Set((liveSeeds ?? []).map((p) => p.user_id)), [liveSeeds]);
+
+  useEffect(() => {
+    if (!showPanHint) return;
+    const t = setTimeout(() => setShowPanHint(false), 2500);
+    return () => clearTimeout(t);
+  }, [showPanHint]);
 
   useEffect(() => {
     let alive = true;
@@ -142,11 +153,60 @@ export default function StallsFeedPage() {
           ) : (
             <div className="flex-1 min-h-0 overflow-y-auto snap-y snap-mandatory">
               {cards.map((card) => (
-                <article key={card.id} className="snap-start h-[calc(100dvh-8rem)] lg:h-full relative flex flex-col overflow-hidden">
+                <article key={card.id} className="snap-start h-[calc(100dvh-8rem)] lg:h-full relative overflow-hidden">
+                  {/* Portrait phones (<lg, portrait): pannable sideways --
+                      image height = container height, width auto, instead
+                      of object-contain shrinking a 1216-wide front image
+                      down to ~270px tall (unreadable). Opens scrolled to
+                      the image's horizontal centre; momentum scroll.
+                      Nothing cropped -- pan to see the edges. Landscape
+                      phones/tablets and desktop keep the object-contain
+                      tree below, unchanged. */}
+                  <div className="absolute inset-0 hidden max-lg:portrait:block">
+                    <div
+                      data-pan-scroll
+                      className="relative w-full h-full overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                      style={{ WebkitOverflowScrolling: 'touch' }}
+                      onPointerDown={() => setShowPanHint(false)}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => openStall(card)}
+                        className="relative block h-full w-max mx-auto"
+                        aria-label={`Open ${card.name}'s stall`}
+                      >
+                        <img
+                          src={card.front_image_path}
+                          alt={card.name}
+                          loading="lazy"
+                          decoding="async"
+                          onLoad={(e) => {
+                            const scrollEl = e.currentTarget.closest('[data-pan-scroll]') as HTMLDivElement | null;
+                            if (scrollEl) scrollEl.scrollLeft = (scrollEl.scrollWidth - scrollEl.clientWidth) / 2;
+                          }}
+                          className="block h-full w-auto max-w-none"
+                        />
+                      </button>
+                    </div>
+                    {liveOwnerIds.has(card.user_id) && (
+                      <span className="pointer-events-none absolute top-4 left-4 flex items-center gap-1 rounded-full bg-rose-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
+                        <Radio className="h-3 w-3" /> LIVE
+                      </span>
+                    )}
+                    {showPanHint && (
+                      <div className="pointer-events-none absolute inset-x-0 bottom-14 flex justify-center">
+                        <span className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm">
+                          ‹ pan ›
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Landscape phones/tablets + desktop: unchanged object-contain. */}
                   <button
                     type="button"
                     onClick={() => openStall(card)}
-                    className="relative w-full flex-1 min-h-0 lg:flex-none lg:h-full"
+                    className="absolute inset-0 max-lg:portrait:hidden"
                     aria-label={`Open ${card.name}'s stall`}
                   >
                     {/* Blurred cover copy fills the frame behind the real image --
@@ -175,27 +235,20 @@ export default function StallsFeedPage() {
                         <Radio className="h-3 w-3" /> LIVE
                       </span>
                     )}
-                    <span className="absolute top-4 right-4 rounded-full bg-black/50 px-2.5 py-1 text-xs font-medium text-white lg:hidden">
-                      {STALL_TIER_LABEL[card.tier]}
-                    </span>
                   </button>
 
-                  {/* Mobile: unchanged -- full name/tagline strip below the
-                      image, in its own flow (not overlaid). Desktop: shrunk
-                      to one 48px bar (name left, tier chip right, tagline
-                      dropped) that floats over the bottom of the image
-                      instead of eating into its height -- same treatment as
-                      the interior's own floating name label -- so the image
-                      box matches the interior's frame at the same max
-                      height. */}
+                  {/* Name bar: 40px overlay on mobile (portrait + landscape/
+                      tablet), 48px on desktop -- tagline dropped at every
+                      size now (no room in a 40px bar), tier chip stays.
+                      Floats over the image instead of eating into its
+                      height, same treatment at every breakpoint now. */}
                   <button
                     type="button"
                     onClick={() => openStall(card)}
-                    className="shrink-0 w-full p-5 text-left bg-background border-t lg:absolute lg:bottom-0 lg:left-0 lg:right-0 lg:z-10 lg:h-12 lg:p-0 lg:px-4 lg:flex lg:items-center lg:justify-between lg:gap-3 lg:bg-gradient-to-t lg:from-black/80 lg:to-transparent lg:border-0"
+                    className="absolute bottom-0 left-0 right-0 z-10 h-10 lg:h-12 px-4 flex items-center justify-between gap-3 text-left bg-gradient-to-t from-black/80 to-transparent lg:bg-[#140c06] lg:border-t lg:border-amber-500/15"
                   >
-                    <h2 className="font-bold text-2xl lg:text-sm lg:truncate lg:text-amber-50">{card.name}</h2>
-                    {card.tagline && <p className="text-muted-foreground lg:hidden">{card.tagline}</p>}
-                    <span className="shrink-0 text-[11px] font-medium bg-muted rounded-full px-2 py-0.5 hidden lg:inline-block lg:bg-amber-500/10 lg:text-amber-300">
+                    <h2 className="font-bold text-sm truncate text-white lg:text-amber-50">{card.name}</h2>
+                    <span className="shrink-0 text-[11px] font-medium rounded-full px-2 py-0.5 bg-white/15 text-white lg:bg-amber-500/10 lg:text-amber-300">
                       {STALL_TIER_LABEL[card.tier]}
                     </span>
                   </button>
