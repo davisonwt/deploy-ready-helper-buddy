@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Heart, MessageCircle, Phone, Video as VideoIcon, Share2, BookOpen, X, UserPlus, UserCheck, Radio, ChevronLeft, ChevronRight, Volume2, VolumeX, Gift, Play, Pause, Loader2 } from 'lucide-react';
+import { Heart, MessageCircle, Phone, Video as VideoIcon, Share2, BookOpen, X, UserPlus, UserCheck, Radio, ChevronLeft, ChevronRight, Volume2, VolumeX, Gift, Play, Pause, Loader2, MoreHorizontal } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Popover, PopoverTrigger, PopoverClose, PopoverContent } from '@/components/ui/popover';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -983,57 +984,93 @@ export default function SeedCard({
               </span>
             )}
 
-            {/* Same right-hand action rail as the feed variant -- one card,
-                two sizes, nothing dropped here. Greyed (not hidden) for the
-                owner viewing their own card.
-
-                Fixed w-10 (not auto-width) so the player bar below can
-                reserve exactly this much space (44px total with this
-                right-1: see InlinePreviewBar's own right-11) on its own
-                right edge -- two independently-positioned absolute
-                elements can't otherwise agree on a shared boundary. When
-                the 45s player
-                bar renders (hasSamplePlayer && musicPlayer.hasSource),
-                bottom-12 (44px player bar + the same 4px breathing room
-                bottom-1 gives everywhere else) keeps this scroll area's
-                own clip boundary from ever dipping into the player bar's
-                territory -- with 7 stacked buttons (Message/Voice/Video/
-                Heart/Go Live/Share/Report) not all fitting in a compact
-                card's cover height, the overflowing tail end used to be
-                scrolled out of view past the rail's own bottom-1 edge,
-                landing (per elementFromPoint measurement) on whatever was
-                actually painted at that now-unclipped position -- the
-                player bar itself, or the content below the cover,
-                depending on exact overflow amount. Scrolling to reach
-                Report is unchanged; where it lands once scrolled into
-                view is what's fixed. */}
-            <div className={`absolute right-1 top-1 z-10 flex w-10 flex-col items-center justify-start gap-1 overflow-y-auto no-scrollbar ${hasSamplePlayer && musicPlayer.hasSource ? 'bottom-12' : 'bottom-1'}`}>
-              <FeedRailButton icon={<MessageCircle className="h-3.5 w-3.5" />} label="Message" onClick={handleMessage} disabled={railDisabled || starting === 'message'} />
-              <FeedRailButton icon={<Phone className="h-3.5 w-3.5" />} label="Voice" onClick={handleCall} disabled={railDisabled || starting === 'voice'} dataCall="voice" />
-              <FeedRailButton icon={<VideoIcon className="h-3.5 w-3.5" />} label="Video" onClick={handleCall} disabled={railDisabled || starting === 'video'} dataCall="video" />
-              <FeedRailButton icon={<Heart className="h-3.5 w-3.5" />} label="Heart" title="Heart — a small gift" onClick={handleHeartClick} disabled={railDisabled} />
-              {onGift && <FeedRailButton icon={<Gift className="h-3.5 w-3.5" />} label="Gift" onClick={(e) => { e.stopPropagation(); e.preventDefault(); onGift(); }} disabled={railDisabled} />}
-              <FeedRailButton
-                icon={<Radio className="h-3.5 w-3.5" />}
-                label={goLiveLabel}
-                title={goLiveTitle}
-                onClick={handleGoLiveClick}
-                disabled={goLiveDisabled}
-                tone={goLiveTone}
-              />
-              <FeedRailButton icon={<Share2 className="h-3.5 w-3.5" />} label="Share" onClick={handleShare} disabled={railDisabled} />
-              {effectiveReportTarget && (
-                <div className={`flex flex-col items-center gap-0.5 text-white/95 ${railDisabled ? 'opacity-40 pointer-events-none' : ''}`}>
-                  <ReportButton
-                    targetType={effectiveReportTarget.type}
-                    targetId={effectiveReportTarget.id}
-                    size="icon"
-                    variant="ghost"
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 hover:bg-black/65 hover:text-white text-white/95 backdrop-blur transition active:scale-90"
-                  />
-                  <span className="text-[7px] font-semibold drop-shadow leading-none">Report</span>
-                </div>
-              )}
+            {/* Fixed 6 slots (Message/Voice/Video/Heart/Go Live/More), never
+                scrolls -- each slot is flex-1 (CSS splits the height), each
+                button capped at aspect-square h-full max-h-10 max-w-10 =
+                min(40px, slotHeight). Share/Gift/Report live in the More
+                popover. w-10 here must match InlinePreviewBar's right-11
+                below. */}
+            <div className={`absolute right-1 top-1 z-10 flex w-10 flex-col items-stretch gap-1 ${hasSamplePlayer && musicPlayer.hasSource ? 'bottom-12' : 'bottom-1'}`}>
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <FeedRailButton fillSlot icon={<MessageCircle className="h-3.5 w-3.5" />} label="Message" onClick={handleMessage} disabled={railDisabled || starting === 'message'} />
+              </div>
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <FeedRailButton fillSlot icon={<Phone className="h-3.5 w-3.5" />} label="Voice" onClick={handleCall} disabled={railDisabled || starting === 'voice'} dataCall="voice" />
+              </div>
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <FeedRailButton fillSlot icon={<VideoIcon className="h-3.5 w-3.5" />} label="Video" onClick={handleCall} disabled={railDisabled || starting === 'video'} dataCall="video" />
+              </div>
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <FeedRailButton fillSlot icon={<Heart className="h-3.5 w-3.5" />} label="Heart" title="Heart — a small gift" onClick={handleHeartClick} disabled={railDisabled} />
+              </div>
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <FeedRailButton
+                  fillSlot
+                  icon={<Radio className="h-3.5 w-3.5" />}
+                  label={goLiveLabel}
+                  title={goLiveTitle}
+                  onClick={handleGoLiveClick}
+                  disabled={goLiveDisabled}
+                  tone={goLiveTone}
+                />
+              </div>
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="More"
+                      title="More"
+                      className="flex aspect-square h-full max-h-10 max-w-10 items-center justify-center rounded-full bg-black/45 text-white/95 ring-1 ring-white/20 backdrop-blur transition hover:bg-black/65 active:scale-90"
+                    >
+                      <MoreHorizontal className="h-3.5 w-3.5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="left"
+                    align="start"
+                    sideOffset={6}
+                    className="w-40 p-1.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <PopoverClose asChild>
+                        <button
+                          type="button"
+                          onClick={handleShare}
+                          disabled={railDisabled}
+                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent disabled:opacity-50"
+                        >
+                          <Share2 className="h-4 w-4" /> Share
+                        </button>
+                      </PopoverClose>
+                      {onGift && (
+                        <PopoverClose asChild>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onGift(); }}
+                            disabled={railDisabled}
+                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent disabled:opacity-50"
+                          >
+                            <Gift className="h-4 w-4" /> Gift
+                          </button>
+                        </PopoverClose>
+                      )}
+                      {effectiveReportTarget && (
+                        <ReportButton
+                          targetType={effectiveReportTarget.type}
+                          targetId={effectiveReportTarget.id}
+                          size="sm"
+                          variant="ghost"
+                          label="Report"
+                          className={`w-full justify-start gap-2 px-2 py-1.5 text-sm font-normal ${railDisabled ? 'pointer-events-none opacity-40' : ''}`}
+                        />
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
         </button>
@@ -1103,7 +1140,7 @@ const RAIL_BUTTON_TONE: Record<'default' | 'accent' | 'gold', string> = {
   gold: 'bg-gradient-to-b from-amber-400 to-amber-600 ring-amber-300/50',
 };
 
-function FeedRailButton({ icon, label, onClick, disabled, tone = 'default', dataCall, title }: {
+function FeedRailButton({ icon, label, onClick, disabled, tone = 'default', dataCall, title, fillSlot }: {
   icon: React.ReactNode;
   label: string;
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -1111,7 +1148,31 @@ function FeedRailButton({ icon, label, onClick, disabled, tone = 'default', data
   tone?: 'default' | 'accent' | 'gold';
   dataCall?: string;
   title?: string;
+  /**
+   * Icon-only, sized to fill its parent flex slot (h-full, aspect-square,
+   * capped at 40px) instead of the default fixed h-8/h-9 icon-over-label
+   * column. Built for the compact variant's fixed 6-slot rail (see its own
+   * comment) -- that rail never scrolls, so each button's own size must
+   * shrink to whatever space the cover actually has left, not a hardcoded
+   * one. No visible label at this size (aria-label/title still carry it).
+   */
+  fillSlot?: boolean;
 }) {
+  if (fillSlot) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        data-call={dataCall}
+        aria-label={label}
+        title={title ?? label}
+        className={`flex aspect-square h-full max-h-10 max-w-10 items-center justify-center rounded-full text-white/95 backdrop-blur ring-1 transition active:scale-90 disabled:opacity-50 ${RAIL_BUTTON_TONE[tone]}`}
+      >
+        {icon}
+      </button>
+    );
+  }
   return (
     <button
       type="button"
