@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
 import { checkoutErrorMessage } from '@/lib/payments/checkoutErrors';
+import { ensureFreshSession } from '@/lib/payments/invokeFunction';
 
 export type GiftContextKind = 'live_session' | 'radio_session' | 'chat_tip';
 export type GiftProvider = 'solana' | 'paypal' | 'balance' | 'paystack';
@@ -45,6 +46,11 @@ export function useGiftBestowal() {
   const send = async (input: GiftBestowalInput): Promise<GiftBestowalResult> => {
     setLoading(true);
     try {
+      // Defensive, likely-redundant staleness check -- see
+      // invokeFunction.ts's ensureFreshSession() for why (getSession()
+      // already self-heals an expired session on this supabase-js
+      // version). Harmless no-op when the session is already fresh.
+      await ensureFreshSession();
       const { data, error } = await supabase.functions.invoke('create-gift-bestowal-order', {
         body: {
           recipientId: input.recipientId,

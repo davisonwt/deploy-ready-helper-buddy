@@ -17,18 +17,25 @@ import { test, expect, type Page } from '@playwright/test';
 //      from localStorage was already past (or very near) expiry,
 //      JitsiCall's token fetch could reach create-daily-meeting-token
 //      before that session had actually been refreshed.
-//   2. invokePaymentFunction (the helper create-daily-meeting-token goes
-//      through) called supabase.auth.getSession() and used whatever it
-//      returned as-is -- getSession() only recovers/refreshes as part of
-//      the client's own construction-time initialize(); called later
-//      against an in-memory session that's since expired, it just returns
-//      that stale session, token included.
+//   2. invokePaymentFunction called supabase.auth.getSession() and used
+//      whatever it returned. CORRECTION (2026-09-12, added while auditing
+//      the rest of the SeedCard rail, tests/stalls/seedcard-rail.spec.ts):
+//      re-checked against the installed @supabase/supabase-js (2.108.2)
+//      source and this specific claim was wrong -- getSession() already
+//      re-checks the recovered session's expiry and self-refreshes on
+//      EVERY call in this version (see invokeFunction.ts's own correction
+//      comment), not just once at client construction. The genuine,
+//      still-valid part of this fix is #1 above (same-tab navigation);
+//      the explicit refresh check added to invokePaymentFunction is a
+//      harmless, likely-redundant duplicate of what the library already
+//      does, kept as defensive belt-and-suspenders rather than removed.
 //
 // Fixed by: SeedCard now navigates to the call in the SAME tab (removing
-// bug #1 by construction -- no fresh client boot, no fresh-session race),
-// and invokePaymentFunction now explicitly checks expiry and calls
-// refreshSession() before use (closing bug #2 for every caller of that
-// helper, not just this one).
+// bug #1 by construction -- no fresh client boot, no fresh-session race).
+// invokePaymentFunction's explicit expiry check/refreshSession() call
+// (originally framed as closing bug #2) turned out to be redundant with
+// what getSession() already does internally -- see the correction above --
+// but is kept as a defensive duplicate.
 //
 // The edge function's own chat_room authorization (chat_participants
 // membership, service-role, checked against the CALLER's own row) was

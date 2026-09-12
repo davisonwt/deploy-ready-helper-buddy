@@ -7,23 +7,46 @@ const SUPABASE_ANON_KEY =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
   'sb_publishable_Z8-I1gu2Q1yid1Q4jKRf7Q_jSGcsVpa';
 
-// getSession() only recovers/refreshes an expired session as part of the
-// Supabase client's own construction-time initialize() -- a call made
-// later, against an in-memory session that's since expired (the
-// background auto-refresh timer only runs while a tab has focus/is
-// alive), returns that stale session as-is. A brand-new tab/window
-// opened via window.open() used to hit exactly this: its own fresh
-// client initializes fine, but if the token it recovered from
-// localStorage was already past (or very near) expiry, getSession()
-// alone handed back a token the server would reject as unauthorized --
-// this is what "Call failed: unauthorized" traced back to (SeedCard's
-// Voice/Video button, which used to open the call in a new tab).
-// Explicitly checking expiry and calling refreshSession() here closes
-// that gap for every caller of this helper, not just the one that
-// surfaced it.
+// CORRECTION (2026-09-12, re-verified against the installed
+// @supabase/supabase-js@2.108.2 source, node_modules/@supabase/auth-js/
+// dist/main/GoTrueClient.js __loadSession()): this file originally claimed
+// getSession() hands back a stale/expired session as-is unless something
+// else explicitly refreshes it first. That is WRONG for this installed
+// version -- __loadSession() (which getSession() calls on every single
+// invocation, not just once at client construction) checks the recovered
+// session's own expiry itself and calls _callRefreshToken() inline before
+// returning if it's expired (or within its EXPIRY_MARGIN_MS). A plain
+// `await supabase.auth.getSession()` already self-heals an expired
+// session on every call, including in a brand-new tab's freshly
+// constructed client.
+//
+// The explicit check below is consequently NOT closing a real gap in this
+// supabase-js version -- it's a redundant, harmless duplicate of what
+// getSession() already does internally. Left in (rather than removed) as
+// defensive belt-and-suspenders against a future supabase-js version
+// changing that internal behavior, and because SeedCard's Voice/Video fix
+// (same-tab navigation instead of window.open, see SeedCard.tsx) already
+// covers the actual, real, still-valid concern with a new tab: cold-start
+// latency/race in general, not specifically a "the token doesn't
+// self-refresh" bug. Kept the explicit check + this correction rather than
+// silently deleting it, so a future reader doesn't have to redo this
+// investigation from scratch.
 const SESSION_EXPIRY_BUFFER_SECONDS = 30;
 
 async function getFreshAccessToken(): Promise<string | null> {
+  const session = await ensureFreshSession();
+  return session?.access_token ?? null;
+}
+
+/**
+ * Defensive duplicate of getSession()'s own internal expiry check (see the
+ * correction above) -- for callers that go through
+ * `supabase.functions.invoke()` (which reads the token itself from the
+ * client's own current session, not one passed in) rather than a raw
+ * fetch. Calling this first is a harmless no-op when the session is
+ * already fresh (the overwhelmingly common case).
+ */
+export async function ensureFreshSession() {
   const { data: sessionData } = await supabase.auth.getSession();
   let session = sessionData?.session ?? null;
   const nowSeconds = Date.now() / 1000;
@@ -32,7 +55,7 @@ async function getFreshAccessToken(): Promise<string | null> {
     const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
     if (!refreshErr && refreshed?.session) session = refreshed.session;
   }
-  return session?.access_token ?? null;
+  return session;
 }
 
 /**
