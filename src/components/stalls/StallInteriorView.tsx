@@ -217,10 +217,12 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black flex flex-col overflow-hidden max-lg:portrait:overflow-y-auto">
-      {/* Mobile portrait (<1024px, portrait) -- header (≡ / name / ✕ only,
-          the tile-nav strip and inline owner-menu that used to live here
-          are gone -- ≡ opens the same left drawer the landscape/desktop
-          branch below uses), then the interior itself: pannable sideways,
+      {/* Mobile portrait (<1024px, portrait) -- header (≡ / name / ✕ for a
+          visitor; owner gets a pencil before the ✕ too, opening the same
+          Edit-stall menu the landscape/desktop branch has -- the tile-nav
+          strip that used to live here is gone, and ≡ now opens the same
+          left drawer the landscape/desktop branch below uses), then the
+          interior itself: pannable sideways,
           filling the rest of the viewport (100dvh minus this 48px header)
           instead of a fixed ~70vh -- a 1216-wide interior shown at full
           width here was only ~270px tall (unreadable sign, untappable
@@ -255,6 +257,61 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
           <p className="min-w-0 flex-1 truncate text-center text-xs font-semibold uppercase tracking-wide text-white/70">
             {stallName}
           </p>
+          {/* Owner-only: pencil opens the same Edit-stall menu (OwnerMenuItems
+              + "View as visitor") the landscape/desktop branch has, just as
+              an icon here instead of a labelled pill -- the portrait header
+              is real chrome with limited width (≡ + name + this + ✕), not a
+              free-floating overlay over the image. A visitor (non-owner)
+              sees plain ≡ / name / ✕, nothing added. */}
+          {isOwner && (
+            viewingAsVisitor ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setViewingAsVisitor(false)}
+                className="shrink-0 text-amber-300 hover:bg-white/20 rounded-full"
+                aria-label="Exit visitor view"
+                title="Viewing as visitor — exit"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            ) : (
+              <div className="relative shrink-0">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setOwnerMenuOpen((v) => !v)}
+                  className="text-white hover:bg-white/20 rounded-full"
+                  aria-label="Owner menu"
+                  aria-expanded={ownerMenuOpen}
+                  title="Edit stall"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                {ownerMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[9998]" onClick={() => setOwnerMenuOpen(false)} />
+                    <div className="absolute right-0 top-full mt-2 min-w-[190px] rounded-lg border border-amber-500/20 bg-[#140c06] py-1.5 shadow-2xl z-[9999]">
+                      <OwnerMenuItems
+                        onNavigate={() => setOwnerMenuOpen(false)}
+                        itemClassName="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
+                      />
+                      <div className="my-1 border-t border-amber-500/15" />
+                      <button
+                        type="button"
+                        onClick={() => { setViewingAsVisitor(true); setOwnerMenuOpen(false); }}
+                        className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
+                      >
+                        <Eye className="h-4 w-4 shrink-0" /> View as visitor
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )
+          )}
           <Button
             type="button"
             variant="ghost"
