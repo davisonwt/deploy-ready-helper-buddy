@@ -1,840 +1,313 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
-import { 
-  Sprout, 
-  Heart, 
-  Users, 
-  Gift,
-   TreePine,
-   Mic
-} from "lucide-react";
-import seedsStrip from '@/assets/seeds-strip.jpg';
-import { ThemeProvider } from "../components/ui/theme-provider";
-import { AdminButton } from "../components/AdminButton";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../integrations/supabase/client";
-
-import OnboardingTour from "../components/onboarding/OnboardingTour";
-import { VoiceCommands } from "../components/voice/VoiceCommands";
 import { AppContextProvider, useAppContext } from "../contexts/AppContext";
-import DeferredVideo from "@/components/performance/DeferredVideo";
-import { getCurrentTheme } from "@/utils/dashboardThemes";
+import { VoiceCommands } from "../components/voice/VoiceCommands";
 
-function IndexContent() {
-  const [showVoiceCommands, setShowVoiceCommands] = useState(false)
-  const { isAuthenticated, loading } = useAuth()
-  const navigate = useNavigate()
-  const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
+// Index.tsx is imported eagerly (src/routes/AppRoutes.tsx's page barrel,
+// not behind React.lazy itself, unlike most other routes) -- a static
+// SeedCard import here would pull its whole dependency graph into the
+// main bundle for every single page load, not just this one. It's
+// normally its own ~510kB chunk (confirmed via a build before this
+// change); lazy() here keeps it that way.
+const SeedCard = lazy(() => import("@/components/seeds/SeedCard"));
 
-  // Update theme every 2 hours
-  useEffect(() => {
-    const themeInterval = setInterval(() => {
-      setCurrentTheme(getCurrentTheme());
-    }, 2 * 60 * 60 * 1000); // 2 hours
-    return () => clearInterval(themeInterval);
-  }, [])
-  
-  // Get context values - MUST be called before any early returns
-  const { 
-    showOnboarding, 
-    setShowOnboarding, 
-    voiceCommandsEnabled,
-    setVoiceCommandsEnabled
-  } = useAppContext()
-  
-  // Redirect authenticated users to dashboard
-  useEffect(() => {
-    console.log('🏠 Index: Auth state changed:', { isAuthenticated, loading })
-    if (!loading && isAuthenticated) {
-      console.log('🏠 Index: Redirecting authenticated user to dashboard')
-      navigate('/dashboard', { replace: true })
-    }
-  }, [isAuthenticated, loading, navigate])
-  
-  // Show loading while checking auth state
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-  
-  // Don't render the landing page if user is authenticated (they're being redirected)
-  if (isAuthenticated) {
-    return null // Return null instead of loading spinner to avoid visual flash
-  }
+const STALLS_BASE = "https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/stalls";
+const DAVISON = { id: "04754d57-d41d-4ea7-93df-542047a6785b", username: "davison.taljaard" };
+const AMBER = { id: "c34c0eba-0010-480b-8326-7063cd7221ae", username: "amberswheeles" };
+const ED = { id: "110b5a23-ce07-45c8-a432-086550aa78b5", username: "primitivevsns" };
+// Davison's own real music product (products.sower_id -> sowers.id ->
+// sowers.user_id = DAVISON.id) -- a real row, not a mock, per the task's
+// own "a real SeedCard from Davison's music" ask.
+const DAVISON_SEED = {
+  id: "9af96ac8-9029-43db-8a5b-78ba1369915c",
+  title: "the true fast",
+  subtitle: "lyricist: davison",
+  cover: "/__l5e/assets-v1/79a8b712-6713-4560-bafb-8ed3278973d7/7fe0fb45-316d-46dd-b83c-e135c1162498.png",
+  price: 2,
+};
 
+interface GardenCard {
+  user_id: string;
+  username: string | null;
+  name: string;
+  front_image_path: string;
+}
 
+/**
+ * A stall front image, pannable-sideways on portrait phones (same
+ * height=container/width=auto/overflow-x-auto technique StallsFeedPage's
+ * cards and StallInteriorView's own pannable interior use -- a wide
+ * landscape photo squeezed into a portrait box via object-contain is the
+ * exact "sign unreadable" problem that batch already fixed elsewhere;
+ * reused here rather than reinvented). Landscape phones/tablets and
+ * desktop stay plain object-contain, never cropped.
+ */
+function StallImage({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
+  // Every caller wraps this in its own position:relative box and passes
+  // `className="absolute inset-0"` to fill it -- no hardcoded "relative"
+  // default here. Tailwind's own utilities.css orders position classes
+  // static/fixed/absolute/relative/sticky, so a combined "relative
+  // absolute inset-0" string would have relative win the cascade
+  // regardless of attribute order, collapsing this wrapper to its
+  // (empty) intrinsic height instead of actually filling the parent --
+  // caught via Playwright screenshot (two of three "three steps" cards
+  // rendered as blank black boxes), not assumed from the markup looking right.
   return (
-    <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
-    <div className="min-h-screen">
-      {/* Navigation */}
-      <nav 
-        className="backdrop-blur-sm border-b sticky top-0 z-50"
-        style={{
-          backgroundColor: currentTheme.cardBg,
-          borderColor: currentTheme.cardBorder,
-        }}
+    <div className={className}>
+      <div
+        data-pan-scroll
+        className="hidden max-lg:portrait:block relative w-full h-full overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20 md:h-[90px]">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="flex items-center justify-center bg-transparent">
-                <img
-                  src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png"
-                  alt="sow2grow logo"
-                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-[90px] md:h-[90px] object-contain bg-transparent"
-                  style={{ backgroundColor: 'transparent' }}
-                />
-              </div>
-              <div>
-                <h1 className="text-base sm:text-xl font-bold" style={{ color: currentTheme.textPrimary }}>sow2grow</h1>
-                <p className="text-[10px] sm:text-xs" style={{ color: currentTheme.textSecondary }}>364yhvh community farm</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4">
-              <button
-                onClick={() => setShowVoiceCommands(true)}
-                className="hover-scale h-9 w-9 sm:h-10 sm:w-10 inline-flex items-center justify-center rounded-lg transition-all duration-200"
-                title="Voice Commands"
-                aria-label="Voice Commands"
-                style={{
-                  color: currentTheme.textSecondary,
-                  backgroundColor: 'transparent'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = currentTheme.accent;
-                  e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = currentTheme.textSecondary;
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <Mic className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
-              </button>
-              
-              <AdminButton />
-              
-              <Link to="/login">
-                <button 
-                  className="h-9 px-4 text-sm sm:h-10 sm:px-6 sm:text-base rounded-lg border transition-all duration-200"
-                  style={{
-                    backgroundColor: currentTheme.primaryButton,
-                    color: currentTheme.textPrimary,
-                    borderColor: currentTheme.accent,
-                    boxShadow: `0 2px 4px ${currentTheme.shadow}`
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = currentTheme.primaryButtonHover;
-                    e.currentTarget.style.boxShadow = `0 4px 8px ${currentTheme.shadow}`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = currentTheme.primaryButton;
-                    e.currentTarget.style.boxShadow = `0 2px 4px ${currentTheme.shadow}`;
-                  }}
-                >
-                  login
-                </button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section with Video Background */}
-      <section className="relative min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-5rem)] md:h-screen w-screen flex items-center justify-center overflow-hidden">
-        {/* Video Background */}
-        <div className="absolute inset-0 w-full h-full bg-black -z-10">
-          <DeferredVideo
-            className="absolute inset-0 w-full h-full object-cover"
-            src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/hero-background-new.mp4.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="none"
-            onError={(e) => {
-              console.log('Video error:', e);
-              (e.currentTarget as HTMLVideoElement).style.display = 'none';
+        <div className="relative h-full w-max mx-auto snap-center">
+          <img
+            src={src}
+            alt={alt}
+            onLoad={(e) => {
+              const scrollEl = e.currentTarget.closest("[data-pan-scroll]") as HTMLDivElement | null;
+              if (scrollEl) scrollEl.scrollLeft = (scrollEl.scrollWidth - scrollEl.clientWidth) / 2;
             }}
+            className="block h-full w-auto max-w-none"
           />
         </div>
-        {/* Video Background Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-900/50 to-green-900/50 z-10"></div>
-        
-        <div className="relative z-20 text-center max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-          <div className="mb-4 sm:mb-8">
-            <div className="inline-flex items-center bg-amber-500/90 text-amber-950 px-4 py-2 sm:px-6 sm:py-2 rounded-full mb-4 sm:mb-8 text-xs sm:text-base">
-              <Sprout className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-              364yhvh community farm stall
+      </div>
+      <img src={src} alt={alt} className="max-lg:portrait:hidden absolute inset-0 w-full h-full object-contain" />
+    </div>
+  );
+}
+
+/** "paint your front" / "paint your inside" -- a real stall photo, a one-line caption, tapping it opens the real guest-mode StallInteriorView (StallVisitPage already handles this, no ProtectedRoute -- see the invite-link batch). */
+function StepCard({ image, title, line, href }: { image: string; title: string; line: string; href: string }) {
+  return (
+    <Link to={href} className="block rounded-2xl border border-amber-500/20 bg-black/30 p-4 hover:border-amber-500/40 transition-colors">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-black">
+        <StallImage src={image} alt={title} className="absolute inset-0" />
+      </div>
+      <h3 className="mt-3 font-serif text-lg font-semibold text-amber-100">{title}</h3>
+      <p className="mt-1 text-xs text-amber-100/60">{line}</p>
+    </Link>
+  );
+}
+
+function IndexContent() {
+  const { isAuthenticated, loading } = useAuth();
+  const navigate = useNavigate();
+  const [showVoiceCommands, setShowVoiceCommands] = useState(false);
+  const { voiceCommandsEnabled, setVoiceCommandsEnabled } = useAppContext();
+  const [gardenCards, setGardenCards] = useState<GardenCard[] | null>(null);
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) navigate("/cockpit", { replace: true });
+  }, [isAuthenticated, loading, navigate]);
+
+  // "walk the gardens": same card list StallsFeedPage's own "For You"
+  // query uses (published, has a front image, newest first), just
+  // capped to 6 and with no chip/search UI -- a guest tapping any card
+  // lands on the real /stall/:username (front + interior, read-only,
+  // any painted button prompts the join sheet).
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data: stallRows } = await supabase
+        .from("stalls")
+        .select("user_id, name, front_image_path")
+        .eq("published", true)
+        .not("front_image_path", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      const rows = (stallRows ?? []) as Omit<GardenCard, "username">[];
+      if (rows.length === 0) { if (alive) setGardenCards([]); return; }
+
+      // profiles_public (NOT public_profiles -- that view is granted to
+      // `authenticated` only, confirmed live; this page is the one place
+      // in the app a signed-OUT visitor needs a batch username lookup,
+      // same anon-safe view StallVisitPage/api/stall.ts's single-row
+      // lookups already rely on).
+      const ownerIds = Array.from(new Set(rows.map((r) => r.user_id)));
+      const { data: profileRows } = await supabase
+        .from("profiles_public" as any)
+        .select("user_id, username")
+        .in("user_id", ownerIds);
+      const usernameByOwner = new Map<string, string | null>(
+        ((profileRows ?? []) as { user_id: string; username: string | null }[]).map((p) => [p.user_id, p.username]),
+      );
+      if (alive) setGardenCards(rows.map((r) => ({ ...r, username: usernameByOwner.get(r.user_id) ?? null })));
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#140c06]">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-amber-500" />
+      </div>
+    );
+  }
+  if (isAuthenticated) return null; // being redirected to /cockpit
+
+  return (
+    <div className="min-h-screen bg-[#140c06] text-amber-50">
+      {/* 1. Header */}
+      <header className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-amber-500/15 bg-[#140c06]/95 backdrop-blur-sm px-4 py-3 sm:px-8">
+        <Link to="/" className="flex items-center gap-2">
+          <img
+            src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png"
+            alt="sow2grow"
+            className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
+          />
+          <span className="font-serif text-lg sm:text-xl font-semibold text-amber-50">sow2grow</span>
+        </Link>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link to="/login" className="text-sm text-amber-100/80 hover:text-amber-100 transition-colors">login</Link>
+          <Link
+            to="/signup"
+            className="rounded-full bg-amber-500 px-3.5 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-400 transition-colors whitespace-nowrap"
+          >
+            open my stall
+          </Link>
+        </div>
+      </header>
+
+      {/* 2. Hero */}
+      <section className="px-4 py-10 sm:px-8 sm:py-16 text-center">
+        <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold text-amber-50">
+          your own shop. your own style.
+        </h1>
+        <p className="mt-3 text-sm sm:text-lg text-amber-100/70 max-w-xl mx-auto">
+          your books, music, crafts and services — behind your own doors.
+        </p>
+
+        {/* Same "the stall is the frame" 3-panel composition as the Stalls
+            feed, decorative here (no real nav content -- this is a public,
+            logged-out page, and StallSideNav/StallTodayPanel are both
+            signed-in-only surfaces) purely for the visual frame. */}
+        <Link to={`/stall/${DAVISON.username}`} className="mt-8 flex justify-center">
+          <div className="hidden lg:block w-[140px] shrink-0 rounded-l-2xl border border-r-0 border-amber-500/15 bg-black/30" />
+          <div className="relative w-full max-w-4xl aspect-[4/3] sm:aspect-[16/9] overflow-hidden border border-amber-500/20 bg-black">
+            <StallImage src={`${STALLS_BASE}/${DAVISON.id}/front.webp`} alt="Davison's stall" className="absolute inset-0" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center bg-gradient-to-t from-black/70 to-transparent pb-3 pt-10 sm:pb-4">
+              <span className="rounded-full bg-black/60 px-4 py-1.5 text-xs sm:text-sm font-medium text-amber-100">
+                tap to step inside
+              </span>
             </div>
           </div>
-          
-          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-primary mb-4 sm:mb-8 animate-fade-in">
-            welcome to sow2grow
-          </h1>
-          
-          <p className="text-sm sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-4 sm:mb-8 max-w-4xl mx-auto leading-relaxed">
-            the farm stall of the 364yhvh community; a haven of hands and harvest, where sacred seasons meet the fruits of faithful labor.
-          </p>
-          
-          <p className="text-xs sm:text-base md:text-lg lg:text-xl text-white/80 mb-6 sm:mb-12 max-w-3xl mx-auto italic px-4">
-            a fertile ground where <span className="text-green-300">every sower finds their orchard</span>, 
-            <span className="text-blue-300"> every seed becomes a fruit-bearing tree</span>,
-            and <span className="text-amber-300">every harvest meets the hands destined to gather it</span>.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4">
-            <Link to="/register" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg rounded-full">
-                <Heart className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                sow your first seed
-              </Button>
+          <div className="hidden lg:block w-[140px] shrink-0 rounded-r-2xl border border-l-0 border-amber-500/15 bg-black/30" />
+        </Link>
+
+        <Link
+          to="/signup"
+          className="mt-6 inline-block rounded-full bg-amber-500 px-8 py-3 text-base font-semibold text-amber-950 hover:bg-amber-400 transition-colors"
+        >
+          open my stall
+        </Link>
+      </section>
+
+      {/* 3. three steps */}
+      <section className="px-4 py-10 sm:px-8 sm:py-16">
+        <h2 className="text-center font-serif text-2xl sm:text-3xl font-semibold text-amber-50">three steps</h2>
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-5xl mx-auto">
+          <StepCard
+            image={`${STALLS_BASE}/${AMBER.id}/front.webp`}
+            title="paint your front"
+            line="pick a photo, give it a sign."
+            href={`/stall/${AMBER.username}`}
+          />
+          <StepCard
+            image={`${STALLS_BASE}/${ED.id}/interior.webp`}
+            title="paint your inside"
+            line="a room for your books, music and more."
+            href={`/stall/${ED.username}`}
+          />
+          <div className="rounded-2xl border border-amber-500/20 bg-black/30 p-4">
+            <h3 className="font-serif text-lg font-semibold text-amber-100">sow your seeds</h3>
+            <p className="mt-1 mb-3 text-xs text-amber-100/60">list what you're offering — a book, a song, a service.</p>
+            {/* forceViewerIsOwner: this is a demo card, not a real
+                interaction -- SeedCard already renders the rail greyed
+                (not hidden) for the "owner viewing their own card" case,
+                exactly the look a pure illustration wants here. */}
+            <Suspense fallback={<div className="aspect-square rounded-xl bg-black/40 animate-pulse" />}>
+              <SeedCard
+                id={DAVISON_SEED.id}
+                kind="music"
+                title={DAVISON_SEED.title}
+                subtitle={DAVISON_SEED.subtitle}
+                cover={DAVISON_SEED.cover}
+                ownerId={DAVISON.id}
+                ownerName="Davison"
+                price={DAVISON_SEED.price}
+                openPath={`/stall/${DAVISON.username}`}
+                forceViewerIsOwner
+                hideSowerLine
+              />
+            </Suspense>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. walk the gardens */}
+      <section className="px-4 py-10 sm:px-8 sm:py-16 bg-black/20">
+        <h2 className="text-center font-serif text-2xl sm:text-3xl font-semibold text-amber-50">walk the gardens</h2>
+        <p className="mt-2 text-center text-sm text-amber-100/60">real stalls, sown by real members.</p>
+        <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-5xl mx-auto">
+          {(gardenCards ?? []).filter((c) => c.username).map((c) => (
+            <Link
+              key={c.user_id}
+              to={`/stall/${c.username}`}
+              className="group relative aspect-square overflow-hidden rounded-xl border border-amber-500/15 bg-black"
+            >
+              <img src={c.front_image_path} alt={c.name} className="absolute inset-0 w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                <p className="truncate text-xs font-medium text-amber-50">{c.name}</p>
+              </div>
             </Link>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* Three Features Cards */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-background via-card/30 to-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-12">
-            <Card className="text-center bg-gradient-to-br from-pink-100 to-pink-50 border-pink-200 hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-6 sm:p-8">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-pink-400 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                  <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">community giving</h2>
-                <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
-                  give with joy, not just duty,<br />
-                  first fruits and love, a gift of beauty.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center bg-gradient-to-br from-green-100 to-green-50 border-green-200 hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-6 sm:p-8">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                  <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">community support</h2>
-                <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
-                  sowers sow, bestowers flow;<br />
-                  shared harvest makes the body grow.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center bg-gradient-to-br from-purple-100 to-purple-50 border-purple-200 hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-6 sm:p-8">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                  <Gift className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">s2g farm mall</h2>
-                <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
-                  each stall blooms, each hand gives;<br />
-                  fruit shared fresh, the body lives.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+      {/* 5. you keep your price */}
+      <section className="px-4 py-10 sm:px-8 sm:py-16 text-center">
+        <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-amber-50">you keep your price</h2>
+        <div className="mt-6 max-w-xl mx-auto space-y-3 text-sm sm:text-base text-amber-100/80">
+          <p>buyers pay your price; sow2grow adds 15% on top, never takes from it</p>
+          <p>paid out to paypal, usdc or card/eft</p>
+          <p>chat, calls, live rooms and radio built in — no email needed</p>
         </div>
       </section>
 
-      {/* How it Works Section */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-background to-card/40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-8" style={{ color: '#D69759' }}>How s2g farm mall works</h2>
-          <p className="text-base sm:text-lg md:text-xl mb-8 sm:mb-16 italic px-4" style={{ color: '#BCC4E9' }}>
-            roots receive, branches share; one grove, one people, one prayer.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 md:gap-16 items-start">
-            <div className="space-y-6 sm:space-y-8">
-              <div className="bg-card/80 backdrop-blur p-6 sm:p-8 rounded-2xl shadow-xl border border-primary/20 hover:border-primary/40 hover:shadow-2xl transition-all">
-                <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6" style={{ color: '#9DD6AD' }}>sower (farm stall owners)</h3>
-                <div className="space-y-3 sm:space-y-4 text-left">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
-                    <span className="text-sm sm:text-base" style={{ color: '#D3B8A1' }}>get your own farm stall</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
-                    <span className="text-sm sm:text-base" style={{ color: '#D3B8A1' }}>create multiple orchards</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
-                    <span className="text-sm sm:text-base" style={{ color: '#D3B8A1' }}>sow into your own orchards</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
-                    <span className="text-sm sm:text-base" style={{ color: '#D3B8A1' }}>receive community support</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-6 sm:space-y-8">
-              <div className="bg-card/80 backdrop-blur p-6 sm:p-8 rounded-2xl shadow-xl border border-accent/20 hover:border-accent/40 hover:shadow-2xl transition-all">
-                <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6" style={{ color: '#B2C9E2' }}>bestowers (cultivators and harvesters)</h3>
-                <div className="space-y-3 sm:space-y-4 text-left">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
-                    <span className="text-sm sm:text-base" style={{ color: '#EF9967' }}>browse the farm mall</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
-                    <span className="text-sm sm:text-base" style={{ color: '#EF9967' }}>visit different farm stalls</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
-                    <span className="text-sm sm:text-base" style={{ color: '#EF9967' }}>bestow support to projects</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
-                    <span className="text-sm sm:text-base" style={{ color: '#EF9967' }}>build community connections</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* 6. Final band */}
+      <section className="px-4 py-10 sm:px-8 sm:py-16 text-center border-t border-amber-500/15">
+        <Link
+          to="/signup"
+          className="inline-block rounded-full bg-amber-500 px-8 py-3 text-base font-semibold text-amber-950 hover:bg-amber-400 transition-colors"
+        >
+          open my stall
+        </Link>
+        <p className="mt-4 text-sm text-amber-100/60">
+          already a member?{" "}
+          <Link to="/login" className="underline hover:text-amber-100">login</Link>
+        </p>
       </section>
 
-      {/* Process Video Sections */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-card/40 to-background">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16 md:space-y-20">
-          {/* Seeds Section */}
-          <div className="text-center relative">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8" style={{ color: '#D69759' }}>Seeds</h2>
-            
-            {/* Seeds Strip with 3D Lifted Effect */}
-            <div className="relative mb-4 sm:mb-6 transform-gpu">
-              <div className="seeds-strip-container relative z-20 transform 
-                            perspective-1000 
-                            hover:scale-105 
-                            transition-all duration-500 ease-out
-                            shadow-xl sm:shadow-2xl 
-                            hover:shadow-2xl sm:hover:shadow-3xl
-                            rotate-x-5
-                             translate-y-[-10px] sm:translate-y-[-20px]">
-                 {/* Text Overlay */}
-                 <div className="absolute inset-0 z-30 flex items-center justify-center">
-                    <div className="text-center px-4 sm:px-8">
-                      <p className="text-lg sm:text-2xl md:text-3xl font-bold drop-shadow-2xl animate-fade-in leading-tight" style={{ color: '#D5F6FB' }}>
-                        products, produce...dreams
-                      </p>
-                    </div>
-                 </div>
-<DeferredVideo
-  className="w-full h-40 sm:h-48 md:h-64 object-cover rounded-lg 
-           shadow-[0_15px_30px_-8px_rgba(0,0,0,0.4)] sm:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-           hover:shadow-[0_25px_45px_-8px_rgba(0,0,0,0.5)] sm:hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-           transition-shadow duration-500 border-0 outline-0"
-  style={{ aspectRatio: '1920/350' }}
-  autoPlay
-  muted
-  loop
-  playsInline
-  preload="none"
-  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds%20strip%202aa%20mp4.mp4"
-/>
-                {/* 3D depth effect */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
-              </div>
-              
-              {/* Underneath shadow effect */}
-              <div className="absolute top-4 sm:top-6 md:top-8 left-2 sm:left-4 right-2 sm:right-4 h-40 sm:h-48 md:h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
-            </div>
-            
-            {/* First Video - Emerging from underneath */}
-            <div className="relative overflow-hidden mt-[-20px] sm:mt-[-30px] md:mt-[-40px] mb-8 sm:mb-10 md:mb-12 z-10">
-              <div className="video-emerging transform translate-y-4 sm:translate-y-6 md:translate-y-8 
-                            transition-all duration-700 ease-out
-                            hover:translate-y-0 hover:scale-105
-                            shadow-lg sm:shadow-xl hover:shadow-xl sm:hover:shadow-2xl">
-                <DeferredVideo
-                  className="w-full h-[50vh] sm:h-[60vh] md:h-screen object-cover rounded-lg 
-                           shadow-[0_15px_30px_-6px_rgba(0,0,0,0.3)] sm:shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="none"
-                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 1 mp4.mp4"
-                />
-              </div>
-            </div>
-            
-            {/* Second Seeds Strip with 3D Lifted Effect */}
-            <div className="relative mb-6 transform-gpu">
-              <div className="seeds-strip-container relative z-20 transform 
-                            perspective-1000 
-                            hover:scale-105 
-                            transition-all duration-500 ease-out
-                            shadow-2xl 
-                            hover:shadow-3xl
-                            rotate-x-5
-                            translate-y-[-20px]">
-                {/* Text Overlay */}
-                <div className="absolute inset-0 z-30 flex items-center justify-center">
-                  <div className="text-center px-8">
-                    <p className="text-2xl md:text-3xl font-bold text-[#6a5acd] drop-shadow-2xl animate-fade-in leading-tight">
-                      seeds grow into harvestable 'fruits'
-                    </p>
-                  </div>
-                </div>
-                <img 
-                  src={seedsStrip}
-                  alt="Seeds and sprouting plants"
-                  className="w-full h-64 object-cover rounded-lg 
-                           shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                           hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                           transition-shadow duration-500"
-                  style={{ aspectRatio: '1920/350' }}
-                />
-                {/* 3D depth effect */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
-              </div>
-              
-              {/* Underneath shadow effect */}
-              <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
-            </div>
-            
-            {/* Seeds 2 Video - Emerging from underneath the strip above */}
-            <div className="relative overflow-hidden mt-[-40px] mb-12 z-10">
-              <div className="video-emerging transform translate-y-8
-                            transition-all duration-700 ease-out delay-200
-                            hover:translate-y-0 hover:scale-105
-                            shadow-xl hover:shadow-2xl">
-                {/* Text Overlay */}
-                <div className="absolute inset-0 z-20 flex items-center justify-center">
-                  <div className="text-center px-8">
-                    <p className="text-4xl md:text-6xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
-                      ...into a home for anyone of our harvesters.{" "}
-                      <span className="text-green-300">it is born from purpose, ready to be sown.</span>
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Flickering Arrow */}
-                <div className="absolute top-10 left-1/2 transform -translate-x-1/2 z-30">
-                  <div className="flickering-arrow">
-                    <svg 
-                      className="w-20 h-20 text-yellow-400 drop-shadow-2xl filter drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]" 
-                      fill="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 22l-8-8h5V2h6v12h5l-8 8z"/>
-                    </svg>
-                  </div>
-                </div>
-                
-                <DeferredVideo
-                  className="w-full h-screen object-cover rounded-lg
-                           shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="none"
-                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 2 mp4.mp4"
-                />
-              </div>
-            </div>
-          </div>
+      <footer className="px-4 py-6 text-center text-xs text-amber-100/40 border-t border-amber-500/10">
+        364yhvh community farm
+      </footer>
 
-          {/* Orchards Section */}
-          <div className="text-center relative">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8" style={{ color: '#A5E3E0' }}>Orchards</h2>
-            
-            {/* Third Seeds Strip with 3D Lifted Effect */}
-            <div className="relative mb-4 sm:mb-6 transform-gpu">
-              <div className="seeds-strip-container relative z-20 transform 
-                            perspective-1000 
-                            hover:scale-105 
-                            transition-all duration-500 ease-out
-                            shadow-xl sm:shadow-2xl 
-                            hover:shadow-2xl sm:hover:shadow-3xl
-                            rotate-x-5
-                             translate-y-[-10px] sm:translate-y-[-20px]">
-                 {/* Text Overlay */}
-                 <div className="absolute inset-0 z-30 flex items-center justify-center">
-                    <div className="text-center px-4 sm:px-8">
-                      <p className="text-lg sm:text-2xl md:text-3xl font-bold drop-shadow-2xl animate-fade-in leading-tight" style={{ color: '#ffc40c' }}>
-                        your farm stall
-                      </p>
-                    </div>
-                 </div>
-                 <video
-                  className="w-full h-64 object-cover rounded-lg 
-                           shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                           hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                           transition-shadow duration-500 border-0 outline-0"
-                  style={{ aspectRatio: '1920/350' }}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                >
-                  <DeferredVideo
-                    className="w-full h-64 object-cover rounded-lg 
-                             shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                             hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                             transition-shadow duration-500 border-0 outline-0"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="none"
-                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards strip1 mp4.mp4"
-                  />
-                </video>
-                {/* 3D depth effect */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
-              </div>
-              
-              {/* Underneath shadow effect */}
-              <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
-            </div>
-            
-            {/* MP4 Holder Video - With 3D Effects - Now emerges from strip above */}
-            <div className="relative mb-2 transform-gpu mt-[-60px]">
-              <div className="video-container relative z-20 transform 
-                            perspective-1000 
-                            hover:scale-105 
-                            transition-all duration-500 ease-out
-                            shadow-2xl 
-                            hover:shadow-3xl
-                            rotate-x-2
-                            translate-y-[-15px]">
-                <video
-                  className="w-full h-screen object-cover rounded-lg
-                           shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                           hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                           transition-shadow duration-500"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  poster="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=1920&h=1080&fit=crop"
-                >
-                  <source 
-                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards%20main%20mp4.mp4" 
-                    type="video/mp4" 
-                  />
-                  Your browser does not support the video tag.
-                </video>
-                {/* 3D depth effect */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
-              </div>
-              
-              {/* Underneath shadow effect */}
-              <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
-            </div>
-            
-            {/* Fourth Seeds Strip with 3D Lifted Effect - Community Text Overlay */}
-            <div className="relative mb-6 transform-gpu mt-[-80px]">
-              <div className="seeds-strip-container relative z-20 transform 
-                            perspective-1000 
-                            hover:scale-105 
-                            transition-all duration-500 ease-out
-                            shadow-2xl 
-                            hover:shadow-3xl
-                            rotate-x-5
-                            translate-y-[-20px]">
-                {/* Text Overlay */}
-                <div className="absolute inset-0 z-30 flex items-center justify-center">
-                  <div className="text-center px-8">
-                    <p className="text-2xl md:text-3xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
-                      our community members act as your online outlets; making tiktok, placing orders, and cultivating your gift into global fruit.
-                    </p>
-                  </div>
-                </div>
-                <video
-                  className="w-full h-64 object-cover rounded-lg 
-                           shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                           hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                           transition-shadow duration-500"
-                  style={{ aspectRatio: '1920/350' }}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                >
-                  <source 
-                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards%20strip2%20mp4.mp4" 
-                    type="video/mp4" 
-                  />
-                  Your browser does not support the video tag.
-                </video>
-                {/* 3D depth effect */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
-             </div>
-             
-             {/* Bestowers Section */}
-             <div className="text-center relative mt-12">
-               <h2 className="text-4xl font-bold mb-8" style={{ color: '#F6C1B2' }}>Bestowers</h2>
-               
-               {/* Bestowers Strip with 3D Effects - FIXED URL */}
-               <div className="relative mb-6 transform-gpu">
-                 <div className="seeds-strip-container relative z-20 transform 
-                               perspective-1000 
-                               hover:scale-105 
-                               transition-all duration-500 ease-out
-                               shadow-2xl 
-                               hover:shadow-3xl
-                               rotate-x-5
-                                translate-y-[-20px]">
-                     {/* Text Overlay */}
-                     <div className="absolute inset-0 z-30 flex items-center justify-center">
-                        <div className="text-center px-8">
-                          <p className="text-2xl md:text-3xl font-bold drop-shadow-2xl animate-fade-in leading-tight" style={{ color: '#ff1493' }}>
-                            ...they make it rain!
-                          </p>
-                        </div>
-                     </div>
-                     <video
-                      className="w-full h-64 object-cover rounded-lg 
-                               shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                               hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                               transition-shadow duration-500"
-                      style={{ aspectRatio: '1920/350' }}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      poster="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1920&h=350&fit=crop"
-                      onError={(e) => console.error('Bestowers strip video error:', e)}
-                      onLoadStart={() => console.log('Bestowers strip video loading started')}
-                      onCanPlay={() => console.log('Bestowers strip video can play')}
-                    >
-                      <source 
-                        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/bestowers%20strip%20mp4.mp4" 
-                        type="video/mp4" 
-                      />
-                      Your browser does not support the video tag.
-                   </video>
-                   {/* 3D depth effect */}
-                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
-                 </div>
-                 
-                 {/* Underneath shadow effect */}
-                 <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
-               </div>
-               
-               {/* Bestowers Main Video with 3D Effects - ADDED VIDEO URL */}
-               <div className="relative mb-12 transform-gpu">
-                 <div className="video-container relative z-20 transform 
-                               perspective-1000 
-                               hover:scale-105 
-                               transition-all duration-500 ease-out
-                               shadow-2xl 
-                               hover:shadow-3xl
-                               rotate-x-2
-                                translate-y-[-15px]">
-                    {/* Text Overlay */}
-                    <div className="absolute inset-0 z-30 flex items-center justify-center">
-                      <div className="text-center px-8">
-                        <p className="text-3xl md:text-4xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
-                          those who water and or add compost to your orchard by choosing to grow what you sow.
-                        </p>
-                      </div>
-                    </div>
-                    <video
-                     className="w-full h-screen object-cover rounded-lg
-                              shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                              hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                              transition-shadow duration-500"
-                     autoPlay
-                     muted
-                     loop
-                     playsInline
-                     poster="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=1920&h=1080&fit=crop"
-                      onError={(e) => console.error('Bestowers main video error:', e)}
-                      onLoadStart={() => console.log('Bestowers main video loading started')}
-                      onCanPlay={() => console.log('Bestowers main video can play')}
-                    >
-                      <source 
-                        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/bestowers%20main%20mp4.mp4" 
-                        type="video/mp4" 
-                      />
-                     Your browser does not support the video tag.
-                   </video>
-                   {/* 3D depth effect */}
-                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
-                 </div>
-                 
-                 {/* Underneath shadow effect */}
-                 <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
-               </div>
-             </div>
-             
-              {/* Harvesters Section */}
-              <div className="text-center relative mt-12">
-                <h2 className="text-4xl font-bold mb-8" style={{ color: '#cfac94' }}>Harvesters</h2>
-               
-               {/* Harvesters Strip with 3D Effects */}
-               <div className="relative mb-6 transform-gpu">
-                 <div className="seeds-strip-container relative z-20 transform 
-                               perspective-1000 
-                               hover:scale-105 
-                               transition-all duration-500 ease-out
-                               shadow-2xl 
-                               hover:shadow-3xl
-                               rotate-x-5
-                                translate-y-[-20px]">
-                     {/* Text Overlay */}
-                     <div className="absolute inset-0 z-30 flex items-center justify-center">
-                       <div className="text-center px-8">
-                         <p className="text-2xl md:text-3xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
-                           it could be you!?
-                         </p>
-                       </div>
-                     </div>
-                     <video
-                      className="w-full h-64 object-cover rounded-lg 
-                               shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                               hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                               transition-shadow duration-500"
-                      style={{ aspectRatio: '1920/350' }}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      poster="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1920&h=350&fit=crop"
-                      onError={(e) => console.error('Harvesters strip video error:', e)}
-                      onLoadStart={() => console.log('Harvesters strip video loading started')}
-                      onCanPlay={() => console.log('Harvesters strip video can play')}
-                    >
-                      <source 
-                        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/harvesters%20strip%20mp4.mp4" 
-                        type="video/mp4" 
-                      />
-                      Your browser does not support the video tag.
-                    </video>
-                   {/* 3D depth effect */}
-                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
-                 </div>
-                 
-                 {/* Underneath shadow effect */}
-                 <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
-               </div>
-               
-                {/* Harvesters Video with 3D Effects - Text Overlay */}
-                <div className="relative mb-12 transform-gpu">
-                  <div className="video-container relative z-20 transform 
-                                perspective-1000 
-                                hover:scale-105 
-                                transition-all duration-500 ease-out
-                                shadow-2xl 
-                                hover:shadow-3xl
-                                rotate-x-2
-                                translate-y-[-15px]">
-                     {/* Text Overlay */}
-                     <div className="absolute inset-0 z-30 flex items-center justify-center">
-                       <div className="text-center px-4 sm:px-8">
-                         <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
-                           our bestowers, our harvesters.
-                         </p>
-                       </div>
-                     </div>
-                     
-                     {/* Start Your Journey Button - Responsive positioning */}
-                     <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 z-40">
-                       <Link to="/register">
-                         <Button size="lg" className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-sm sm:text-base md:text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                           <Heart className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                           start your journey
-                         </Button>
-                       </Link>
-                     </div>
-                     <video
-                       className="w-full h-[50vh] sm:h-[60vh] md:h-screen object-cover rounded-lg
-                                shadow-[0_15px_30px_-8px_rgba(0,0,0,0.4)] sm:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                                hover:shadow-[0_25px_45px_-8px_rgba(0,0,0,0.5)] sm:hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                                transition-shadow duration-500"
-                       autoPlay
-                       muted
-                       loop
-                       playsInline
-                       poster="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1920&h=1080&fit=crop"
-                       onError={(e) => console.error('Harvesters main video error:', e)}
-                       onLoadStart={() => console.log('Harvesters main video loading started')}
-                       onCanPlay={() => console.log('Harvesters main video can play')}
-                     >
-                        <source 
-                          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/harvesters%20main%20mp4.mp4" 
-                          type="video/mp4" 
-                        />
-                       Your browser does not support the video tag.
-                     </video>
-                    {/* 3D depth effect */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
-                  </div>
-                  
-                  {/* Underneath shadow effect */}
-                  <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
-                </div>
-              </div>
-              
-              {/* Floating Scripture Strip */}
-              <div className="relative mt-8 sm:mt-12 md:mt-16 mb-8 sm:mb-10 md:mb-12 transform-gpu">
-                <div className="floating-strip relative z-20 transform 
-                              perspective-1000 
-                              hover:scale-105 
-                              transition-all duration-500 ease-out
-                              shadow-lg sm:shadow-xl 
-                              hover:shadow-xl sm:hover:shadow-2xl
-                              translate-y-[-5px] sm:translate-y-[-10px]
-                              animate-pulse">
-                  <div className="bg-green-100 rounded-lg p-4 sm:p-6 md:p-8 text-center border border-green-200
-                                shadow-[0_10px_20px_-3px_rgba(34,197,94,0.3)] sm:shadow-[0_15px_30px_-5px_rgba(34,197,94,0.3)]
-                                hover:shadow-[0_15px_30px_-3px_rgba(34,197,94,0.4)] sm:hover:shadow-[0_20px_40px_-5px_rgba(34,197,94,0.4)]
-                                transition-shadow duration-500">
-                    <p className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold text-green-800 mb-2 sm:mb-3 md:mb-4 leading-tight">
-                      "I planted, apollos watered, but elohiym gave the growth."
-                    </p>
-                    <p className="text-sm sm:text-base md:text-lg text-green-600 font-semibold italic">
-                      1 Corinthians 3:6
-                    </p>
-                  </div>
-                  {/* Floating effect shadow */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-green-100/20 rounded-lg blur-sm"></div>
-                </div>
-                
-                {/* Underneath floating shadow effect */}
-                <div className="absolute top-4 left-4 right-4 h-20 bg-green-300/20 rounded-lg blur-lg z-10"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* OnboardingTour rendered at App root only */}
-      
-      {/* Voice Commands */}
-      <VoiceCommands 
+      <VoiceCommands
         isEnabled={voiceCommandsEnabled}
         onToggle={() => setVoiceCommandsEnabled(!voiceCommandsEnabled)}
         isOpen={showVoiceCommands}
         onOpenChange={setShowVoiceCommands}
       />
     </div>
-    </ThemeProvider>
   );
 }
 
-const Index = () => {
-  return (
-    <AppContextProvider>
-      <IndexContent />
-    </AppContextProvider>
-  );
-};
+const Index = () => (
+  <AppContextProvider>
+    <IndexContent />
+  </AppContextProvider>
+);
 
 export default Index;

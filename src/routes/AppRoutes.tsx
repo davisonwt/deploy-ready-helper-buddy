@@ -254,6 +254,8 @@ const AppRoutes = () => (
     } />
     {/* Renamed to /cockpit -- kept as a redirect so existing bookmarks/links still land somewhere. */}
     <Route path="/dashboard" element={<Navigate to="/cockpit" replace />} />
+    {/* The landing page's own "open my stall" buttons link here -- /register is the real route, this is just the friendlier name a marketing page would use. */}
+    <Route path="/signup" element={<Navigate to="/register" replace />} />
     <Route path="/stall/build" element={
       <ProtectedRoute>
         <RequireVerification>
