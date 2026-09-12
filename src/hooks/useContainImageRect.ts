@@ -25,33 +25,52 @@ export function useContainImageRect(
   const [rect, setRect] = useState<ContainRect | null>(null);
 
   useEffect(() => {
-    const container = containerRef.current;
-    const img = imgRef.current;
-    if (!container || !img) return;
+    let rafId: number | undefined;
+    let teardown: (() => void) | undefined;
 
-    const compute = () => {
-      const iw = img.naturalWidth;
-      const ih = img.naturalHeight;
-      const cw = container.clientWidth;
-      const ch = container.clientHeight;
-      if (!iw || !ih || !cw || !ch) return;
-      const scale = Math.min(cw / iw, ch / ih);
-      const width = iw * scale;
-      const height = ih * scale;
-      setRect({ offsetX: (cw - width) / 2, offsetY: (ch - height) / 2, width, height });
+    // containerRef/imgRef may still be null on the frame this effect first
+    // runs (e.g. a conditionally-rendered interior view mounted after its
+    // parent) -- a plain one-shot check would permanently miss them, since
+    // this effect's deps (the ref objects themselves) never change to
+    // trigger a re-run. Poll each frame until both are attached.
+    const trySetup = () => {
+      const container = containerRef.current;
+      const img = imgRef.current;
+      if (!container || !img) {
+        rafId = requestAnimationFrame(trySetup);
+        return;
+      }
+
+      const compute = () => {
+        const iw = img.naturalWidth;
+        const ih = img.naturalHeight;
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        if (!iw || !ih || !cw || !ch) return;
+        const scale = Math.min(cw / iw, ch / ih);
+        const width = iw * scale;
+        const height = ih * scale;
+        setRect({ offsetX: (cw - width) / 2, offsetY: (ch - height) / 2, width, height });
+      };
+
+      if (img.complete && img.naturalWidth) compute();
+      img.addEventListener('load', compute);
+
+      const ro = new ResizeObserver(compute);
+      ro.observe(container);
+      window.addEventListener('orientationchange', compute);
+
+      teardown = () => {
+        img.removeEventListener('load', compute);
+        ro.disconnect();
+        window.removeEventListener('orientationchange', compute);
+      };
     };
-
-    if (img.complete && img.naturalWidth) compute();
-    img.addEventListener('load', compute);
-
-    const ro = new ResizeObserver(compute);
-    ro.observe(container);
-    window.addEventListener('orientationchange', compute);
+    trySetup();
 
     return () => {
-      img.removeEventListener('load', compute);
-      ro.disconnect();
-      window.removeEventListener('orientationchange', compute);
+      if (rafId !== undefined) cancelAnimationFrame(rafId);
+      teardown?.();
     };
   }, [containerRef, imgRef]);
 
