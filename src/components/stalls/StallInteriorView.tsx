@@ -52,6 +52,12 @@ function readKindFromHash(): string | null {
   return m ? m[1] : null;
 }
 
+/** A SeedCard's Message action tags `&seed=<id>` onto the hash (SeedCard.tsx's captureStallReturn) so the reopened sheet can scroll that exact card into view -- one-time use, stripped back out by the hash-sync effect right after. */
+function readSeedIdFromHash(): string | null {
+  const m = /[#&]seed=([a-zA-Z0-9-]+)/.exec(window.location.hash);
+  return m ? m[1] : null;
+}
+
 /** Tap-preview delay (mobile): how long a hotspot's caption shows before its sheet opens. */
 const CAPTION_PREVIEW_MS = 800;
 
@@ -101,6 +107,9 @@ function StallDrawer({ side, open, onClose, children }: { side: 'left' | 'right'
 export default function StallInteriorView({ ownerId, interiorImageUrl, stallName, hotspots, onClose, isOwner }: Props) {
   const { setStallInteriorOpen } = useAppContext();
   const [openKind, setOpenKind] = useState<StallHotspot['kind'] | null>(() => readKindFromHash() as StallHotspot['kind'] | null);
+  // One-time: which card (if any) to scroll into view when the sheet
+  // above opens on mount, arriving from a SeedCard Message action.
+  const [initialScrollSeedId] = useState<string | null>(() => readSeedIdFromHash());
   // Mobile-only: the hotspot whose caption is being shown for CAPTION_PREVIEW_MS before its sheet opens.
   const [previewKind, setPreviewKind] = useState<StallHotspot['kind'] | null>(null);
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -435,6 +444,7 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
           kind={activeHotspot.kind}
           isOwner={effectiveIsOwner}
           onClose={() => setOpenKind(null)}
+          scrollToItemId={initialScrollSeedId}
         />
       )}
     </div>

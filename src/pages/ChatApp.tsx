@@ -57,13 +57,20 @@ import { useToast } from '@/hooks/use-toast';
 import { JitsiCall } from '@/components/JitsiCall';
 import { CallErrorBoundary } from '@/components/media/CallErrorBoundary';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 
 const ChatApp = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
+  // Set when this room was opened via a SeedCard Message action (or a
+  // physical Bestow's basket redirect passing back through here) --
+  // SeedCard.tsx's captureStallReturn(). Back returns to that exact stall
+  // sheet instead of the chat list ("Community Chats") it always fell
+  // back to before.
+  const chatReturnTo = (location.state as { returnTo?: { pathname: string; label?: string } } | null)?.returnTo;
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newChatName, setNewChatName] = useState('');
@@ -479,8 +486,9 @@ const ChatApp = () => {
   };
 
   const handleBackToList = () => {
-    try { 
-      sessionStorage.setItem('chat:listPref', 'list'); 
+    if (chatReturnTo?.pathname) { navigate(chatReturnTo.pathname); return; }
+    try {
+      sessionStorage.setItem('chat:listPref', 'list');
     } catch {
       // Ignore sessionStorage errors
     }
@@ -548,7 +556,7 @@ const ChatApp = () => {
       )}
 
       {currentRoomId ? (
-        <ChatRoom roomId={currentRoomId} onBack={handleBackToList} />
+        <ChatRoom roomId={currentRoomId} onBack={handleBackToList} backLabel={chatReturnTo?.label} />
       ) : filter === 'unread' ? (
         <UnreadInbox
           onOpenRoom={(roomId) => setSearchParams({ room: roomId }, { replace: true })}

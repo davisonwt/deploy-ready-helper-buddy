@@ -439,13 +439,74 @@ export default function SeedCard({
     return roomId;
   };
 
+  // Whatever page this card's action was tapped from -- StallInteriorView
+  // keeps the URL hash in sync with the open hotspot sheet via a raw
+  // history.replaceState (#stall-kind=<kind>, src/components/stalls/
+  // StallInteriorView.tsx), so a plain window.location read here already
+  // has the right "come back to this exact sheet" address, no extra
+  // plumbing through StallHotspotSheet/StallInteriorView needed. Only
+  // meaningful for a genuine in-app SPA navigate (Message); Voice/Video
+  // open the call in a new tab, where the original tab -- stall sheet and
+  // all -- is untouched, so there's no "back" state to capture there.
+  const captureStallReturn = (): { pathname: string; label?: string } | null => {
+    if (typeof window === 'undefined') return null;
+    const { pathname, hash } = window.location;
+    if (!pathname.startsWith('/stall/')) return null;
+    // Tags this specific card onto the hash so the reopened sheet can
+    // scroll it into view (StallHotspotSheet's scrollToItemId) -- stripped
+    // back out by StallInteriorView's own hash-sync effect right after, so
+    // it never lingers if the page is later reloaded/shared.
+    const withSeed = hash ? `${hash}&seed=${id}` : hash;
+    return { pathname: `${pathname}${withSeed}`, label: ownerName ? `Back to ${ownerName}'s stall` : undefined };
+  };
+
+  // Attaches this seed's context (title, cover, a link back to this exact
+  // stall sheet) as a quoted card on the room's first-ever message, so the
+  // conversation doesn't lose track of what it was actually about once
+  // the chat scrolls past that point. Only on a genuinely empty room --
+  // never re-injected into an existing conversation the two of them
+  // already had about something else. Direct chat_messages insert (not
+  // the send_chat_message RPC, which has no system_metadata param) --
+  // same RLS-safe pattern BookingRequestMessage.tsx already uses:
+  // sender_id = auth.uid(), system_metadata.is_system left false/absent.
+  const attachSeedReferenceIfFirstMessage = async (roomId: string) => {
+    if (!user) return;
+    try {
+      const { count } = await supabase
+        .from('chat_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('room_id', roomId);
+      if (count) return; // not the first message -- leave the existing thread alone
+      const stallReturn = captureStallReturn();
+      await supabase.from('chat_messages').insert({
+        room_id: roomId,
+        sender_id: user.id,
+        content: null,
+        message_type: 'seed_reference',
+        system_metadata: {
+          type: 'seed_reference',
+          seed_id: id,
+          title,
+          cover: cover ?? null,
+          href: stallReturn?.pathname ?? openPath,
+        },
+      } as never);
+    } catch {
+      // Best-effort context card -- never block the conversation from opening over this.
+    }
+  };
+
   const handleMessage = async (e: React.MouseEvent) => {
     e.stopPropagation(); e.preventDefault();
     if (onMessageOverride) { onMessageOverride(); return; }
     setStarting('message');
     const roomId = await startDirectRoom();
+    if (roomId) await attachSeedReferenceIfFirstMessage(roomId);
     setStarting(null);
-    if (roomId) navigate(`/chatapp?room=${roomId}`);
+    if (roomId) {
+      const returnTo = captureStallReturn();
+      navigate(`/chatapp?room=${roomId}`, returnTo ? { state: { returnTo } } : undefined);
+    }
   };
 
   const handleCall = async (e: React.MouseEvent) => {
@@ -499,7 +560,8 @@ export default function SeedCard({
         sowers: { display_name: ownerName ?? '' },
       });
       toast.success('Added to your basket');
-      navigate('/products/basket');
+      const returnTo = captureStallReturn();
+      navigate('/products/basket', returnTo ? { state: { returnTo } } : undefined);
       return;
     }
     setBestowAmount(null);

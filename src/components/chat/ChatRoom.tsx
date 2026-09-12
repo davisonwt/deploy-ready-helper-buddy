@@ -40,6 +40,8 @@ import { getVoiceColor, classifyVoiceState, initialFrom } from './voiceColor';
 interface ChatRoomProps {
   roomId: string;
   onBack: () => void;
+  /** Overrides the Back button's "Back" text -- e.g. "Back to Amber's stall" when this room was opened from a stall's SeedCard Message action (ChatApp.tsx's chatReturnTo). */
+  backLabel?: string;
   /** When set, messages from this user are treated as "instructor" — others render a raised-hand badge. Classroom-only. */
   instructorId?: string;
   /** Optional side rail node (e.g. classroom lesson outline). Renders as a desktop aside + mobile top accordion when provided. */
@@ -48,11 +50,24 @@ interface ChatRoomProps {
   dropAnimation?: boolean;
 }
 
-export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId, rail, dropAnimation }) => {
+export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, instructorId, rail, dropAnimation }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { startCall, currentCall, endCall } = useCallManager();
   const [messages, setMessages] = useState([]);
+  // useAuth's `user` already carries the signed-in member's own `profiles`
+  // row merged onto it (see fetchUserProfile in useAuth.jsx) -- the sender
+  // of a just-sent message always knows their own name/avatar, so the
+  // optimistic local append below never needs a round-trip and never
+  // falls back to ChatMessage.jsx's "Unknown User" (which only fires when
+  // `sender_profile` is missing entirely).
+  const mySenderProfile = useMemo(() => (user ? {
+    user_id: user.id,
+    display_name: user.display_name,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    avatar_url: user.avatar_url,
+  } : null), [user]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -397,6 +412,12 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
   const setupRealtimeSubscription = () =>
     subscribeRoomRealtime(supabase, roomId, {
       onMessageInsert: async (payload) => {
+        // The sender's own message is already appended locally (see
+        // handleSendMessage/handleFileUpload/recordAndSend) the moment its
+        // insert resolves -- this realtime echo would otherwise render it
+        // a second time (it used to: unconditional append here, no id
+        // check, was the second "duplicate" bubble on top of the first
+        // "Unknown User" one from the un-enriched optimistic append).
         // Fetch the message and its sender profile separately
         const { data: msg } = await supabase
           .from('chat_messages')
@@ -411,7 +432,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
             .eq('user_id', msg.sender_id)
             .maybeSingle();
 
-          setMessages(prev => [...prev, { ...msg, sender_profile: profile || null }]);
+          setMessages(prev => (prev.some(m => m.id === msg.id) ? prev : [...prev, { ...msg, sender_profile: profile || null }]));
         }
       },
       onRoomDeleted: () => {
@@ -476,8 +497,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
 
       if (error) throw error;
 
-      // Optimistically append so it shows even if realtime publication isn't enabled
-      if (inserted) setMessages(prev => [...prev, inserted]);
+      // Optimistically append so it shows even if realtime publication isn't
+      // enabled -- carries the sender's own profile immediately (never
+      // "Unknown User"), and the realtime echo above dedupes by id so this
+      // never renders twice.
+      if (inserted) {
+        setMessages(prev => (prev.some(m => m.id === inserted.id) ? prev : [...prev, { ...inserted, sender_profile: mySenderProfile }]));
+      }
       setMessage('');
       setReplyingTo(null);
 
@@ -590,8 +616,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
         p_file_size: file.size
       });
       if (error) throw error;
-      if (inserted) setMessages(prev => [...prev, inserted]);
-      
+      if (inserted) {
+        setMessages(prev => (prev.some(m => m.id === inserted.id) ? prev : [...prev, { ...inserted, sender_profile: mySenderProfile }]));
+      }
+
       toast({
         title: 'File uploaded',
         description: 'File uploaded successfully',
@@ -634,7 +662,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
         p_file_size: blob.size,
       });
       if (error) throw error;
-      if (inserted) setMessages(prev => [...prev, inserted]);
+      if (inserted) {
+        setMessages(prev => (prev.some(m => m.id === inserted.id) ? prev : [...prev, { ...inserted, sender_profile: mySenderProfile }]));
+      }
     } catch (error: any) {
       console.error('Recording error:', error);
       toast({ variant: 'destructive', title: 'Recording failed', description: error?.message || 'Could not capture media' });
@@ -675,14 +705,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                console.log('Back button clicked');
-                onBack();
-              }}
+              onClick={onBack}
               className="text-[#8AA99A] hover:text-[#F3F7F0] hover:bg-[#4FA876]/10 px-2"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
-              <span className="text-sm">Back</span>
+              <span className="text-sm">{backLabel || 'Back'}</span>
             </Button>
             <div className="min-w-0">
               <h2

@@ -12,6 +12,8 @@ interface Props {
   kind: TileKind;
   isOwner?: boolean;
   onClose: () => void;
+  /** Scrolls this item into view once its card mounts -- arriving back from a SeedCard Message action via the URL's one-time &seed=<id> (see StallInteriorView.tsx's readSeedIdFromHash). */
+  scrollToItemId?: string | null;
 }
 
 /** Which table an Item came from -- drives SeedCard's isProductRow (Heart/Whisperer are FK'd to products/orchards only) and whether a book has a real PDF to preview. */
@@ -107,7 +109,7 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
  *     via the Mugs quick-pick on /sow/product (see the Farm-Stalls batch
  *     2d audit for a real example of this).
  */
-export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, onClose }: Props) {
+export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, onClose, scrollToItemId }: Props) {
   const [items, setItems] = useState<Item[] | null>(null);
   // undefined = still loading; null = loaded, nothing there; string = loaded, has content.
   const [bio, setBio] = useState<string | null | undefined>(undefined);
@@ -277,6 +279,18 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
     row.scrollBy({ left: dir * delta, behavior: 'smooth' });
   };
 
+  // Arriving back from a SeedCard Message action (scrollToItemId set) --
+  // once the real item this sheet's asking about has actually loaded,
+  // scroll it into view instead of leaving the visitor to hunt for it
+  // among however many other items this kind has.
+  useEffect(() => {
+    if (!scrollToItemId || !items || items.length === 0) return;
+    const row = rowRef.current;
+    if (!row) return;
+    const card = row.querySelector<HTMLElement>(`[data-seed-id="${scrollToItemId}"]`);
+    card?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [scrollToItemId, items]);
+
   return (
     <>
       <div
@@ -323,7 +337,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
             <div className="relative">
               <div ref={rowRef} className="flex gap-3 overflow-x-auto snap-x snap-mandatory py-3 -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {items.map((item) => (
-                  <div key={item.id} className="shrink-0 snap-center w-[80%] lg:w-[calc(20%-0.6rem)] lg:max-w-[300px]">
+                  <div key={item.id} data-seed-id={item.id} className="shrink-0 snap-center w-[80%] lg:w-[calc(20%-0.6rem)] lg:max-w-[300px]">
                     <SeedCard
                       id={item.id}
                       kind={SHEET_KIND_TO_SEED_KIND[kind] ?? 'seed'}

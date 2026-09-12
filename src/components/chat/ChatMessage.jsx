@@ -11,6 +11,7 @@ import { BestowalReceiptMessage } from './BestowalReceiptMessage';
 import { BookingRequestMessage } from './BookingRequestMessage';
 import { BookingResponseMessage } from './BookingResponseMessage';
 import { BookingConfirmedMessage } from './BookingConfirmedMessage';
+import { SeedReferenceMessage } from './SeedReferenceMessage';
 import ReportButton from '@/components/moderation/ReportButton';
 
 const getFileIcon = (fileType) => {
@@ -73,6 +74,19 @@ const ChatMessage = ({ message, isOwn = false, onDelete, isInstructor, instructo
       <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
         <div className="flex-1 max-w-[80%]">
           <BookingConfirmedMessage metadata={message.system_metadata} />
+        </div>
+      </div>
+    );
+  }
+
+  // Seed-context quote card, auto-sent as the room's first message by a
+  // SeedCard Message action -- see SeedCard.tsx's
+  // attachSeedReferenceIfFirstMessage.
+  if (message.message_type === 'seed_reference' && message.system_metadata) {
+    return (
+      <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
+        <div className="flex-1 max-w-[80%]">
+          <SeedReferenceMessage metadata={message.system_metadata} />
         </div>
       </div>
     );
