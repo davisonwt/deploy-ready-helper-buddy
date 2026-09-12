@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Loader2, Radio, X } from 'lucide-react';
+import { Loader2, Radio, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
@@ -19,10 +19,16 @@ const CHIPS: { id: Chip; label: string }[] = [
   })),
 ];
 
+/** Singular form (STALL_CATEGORIES' own label, not CHIPS' pluralized filter label) for the per-card category badge. */
+const CATEGORY_LABEL: Record<StallCategory, string> = Object.fromEntries(
+  STALL_CATEGORIES.map((c) => [c.id, c.label]),
+) as Record<StallCategory, string>;
+
 interface StallCard {
   id: string;
   user_id: string;
   username: string | null;
+  displayName: string | null;
   name: string;
   tagline: string | null;
   tier: StallTier;
@@ -50,8 +56,29 @@ export default function StallsFeedPage() {
   // dismissed on first touch/drag or after a few seconds. Not persisted
   // across visits, same call as StallInteriorView's own pan hint.
   const [showPanHint, setShowPanHint] = useState(true);
+  // Search: client-side only, on top of whatever the active chip already
+  // fetched -- no extra round-trip, and "combined with the active
+  // category chip" falls out for free since search only ever narrows
+  // `cards`, never widens past what the chip query returned. Mobile-only
+  // toggle: the 🔍 icon expands into this same input, replacing the chip
+  // row while open (no room for both on a narrow screen); desktop always
+  // shows the input, so this flag never gates it there (max-lg: below).
+  const [search, setSearch] = useState('');
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   const liveOwnerIds = useMemo(() => new Set((liveSeeds ?? []).map((p) => p.user_id)), [liveSeeds]);
+
+  const filteredCards = useMemo(() => {
+    if (!cards) return cards;
+    const q = search.trim().toLowerCase();
+    if (!q) return cards;
+    return cards.filter((c) =>
+      c.name.toLowerCase().includes(q) ||
+      (c.username ?? '').toLowerCase().includes(q) ||
+      (c.displayName ?? '').toLowerCase().includes(q) ||
+      (c.tagline ?? '').toLowerCase().includes(q),
+    );
+  }, [cards, search]);
 
   useEffect(() => {
     if (!showPanHint) return;
@@ -80,14 +107,21 @@ export default function StallsFeedPage() {
       const ownerIds = Array.from(new Set(rows.map((r) => r.user_id)));
       const { data: profileRows } = await supabase
         .from('public_profiles' as any)
-        .select('user_id, username')
+        .select('user_id, username, display_name')
         .in('user_id', ownerIds);
-      const usernameByOwner = new Map<string, string | null>(
-        ((profileRows ?? []) as { user_id: string; username: string | null }[]).map((p) => [p.user_id, p.username]),
+      const profileByOwner = new Map<string, { username: string | null; display_name: string | null }>(
+        ((profileRows ?? []) as { user_id: string; username: string | null; display_name: string | null }[]).map((p) => [
+          p.user_id,
+          { username: p.username, display_name: p.display_name },
+        ]),
       );
 
       if (alive) {
-        setCards(rows.map((r) => ({ ...r, username: usernameByOwner.get(r.user_id) ?? null })));
+        setCards(rows.map((r) => ({
+          ...r,
+          username: profileByOwner.get(r.user_id)?.username ?? null,
+          displayName: profileByOwner.get(r.user_id)?.display_name ?? null,
+        })));
       }
     })();
     return () => { alive = false; };
@@ -104,45 +138,33 @@ export default function StallsFeedPage() {
     <div className="flex flex-col h-[calc(100dvh-4rem)] lg:h-[100dvh]">
       <div className="flex-1 min-h-0 flex">
         {/* Desktop: same 3-column "the stall is the frame" layout as
-            StallInteriorView (StallSideNav / image / StallTodayPanel) so the
-            front image gets exactly the same middle-column box the interior
-            image renders in, at the same max height -- instead of losing
-            most of its height to the old full-width p-5 name/tagline strip.
-            No stall interior is open here, so onNavigate is a no-op. Mobile
-            is untouched below: single-column snap-scroll, image full width,
-            bar underneath. */}
+            StallInteriorView (StallSideNav / image / StallTodayPanel) --
+            the front image fills whatever height remains under the chips/
+            search/✕ row (in flow now, not overlaid -- see below), object-
+            contain, same as the interior's own image. No stall interior is
+            open here, so onNavigate is a no-op. */}
         <StallSideNav
           onNavigate={() => {}}
           className="hidden lg:flex lg:flex-col lg:w-[220px] lg:shrink-0 lg:border-r lg:border-amber-500/15"
         />
 
-        <div className="flex-1 min-h-0 min-w-0 flex flex-col lg:relative lg:bg-[#140c06]">
-          {/* Chips: in-flow, horizontal-scroll on mobile (unchanged). On
-              desktop they still float over the top of the image (so the
-              image below keeps the full column height -- same
-              zero-extra-chrome frame as the interior) but wrap onto a
-              second line instead of overflowing off the right edge, and
-              are restyled gold-on-dark-wood -- solid enough pills to stay
-              readable over any photo, and belonging to the same "the stall
-              is the frame" language as StallSideNav/StallTodayPanel,
-              instead of a heavy black scrim. The ✕ (same close affordance
-              StallInteriorView's header has, here going straight to
-              /cockpit since there's no "interior" to close first) is a
-              shrink-0 sibling of the chip strip rather than an absolutely-
-              positioned corner overlay -- the chip strip can grow to two
-              lines now, and a fixed top-right overlay would sit on top of
-              wrapped chips at that point; living in the same row instead
-              keeps it clear at every width, mobile included (StallSideNav's
-              own new "My Stall / Cockpit" entry is the desktop/drawer path
-              back; this is the same destination for whoever's looking at
-              the top-right corner instead). min-w-0 on this row AND the
-              middle column above it -- without both, the nested flex
-              chain refuses to shrink the chip strip below its own
-              min-content width (the classic flexbox overflow bug), which
-              on mobile pushed the ✕ button off the right edge of the
-              viewport entirely; caught via Playwright measurement. */}
-          <div className="shrink-0 min-w-0 flex items-center gap-2 px-4 py-3 lg:absolute lg:top-0 lg:left-0 lg:right-0 lg:z-10 lg:bg-[#140c06]/70 lg:backdrop-blur-sm lg:border-b lg:border-amber-500/15">
-            <div className="flex-1 min-w-0 flex gap-2 overflow-x-auto lg:flex-wrap lg:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex-1 min-h-0 min-w-0 flex flex-col lg:bg-[#140c06]">
+          {/* Chips + search + ✕: in flow ABOVE the image at every size now
+              (was lg:absolute over the image -- wrapping to two rows there
+              was covering the top of the stall sign, the actual photo
+              content visitors need to see; trading a few px of image
+              height for a chrome row that never hides anything is the
+              right call here). min-w-0 on this row AND the middle column
+              above it -- without both, the nested flex chain refuses to
+              shrink the chip strip below its own min-content width (the
+              classic flexbox overflow bug), which previously pushed the ✕
+              button off the right edge on mobile; still needed now that
+              the row is in-flow rather than absolute. */}
+          <div className="shrink-0 min-w-0 flex items-center gap-2 px-4 py-3 lg:bg-[#140c06] lg:border-b lg:border-amber-500/15">
+            {/* Chips -- hidden on mobile only while the search input is
+                expanded (no room for both at that width); always shown on
+                desktop regardless of the mobile-only toggle state. */}
+            <div className={`flex-1 min-w-0 flex gap-2 overflow-x-auto lg:flex-wrap lg:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${mobileSearchOpen ? 'max-lg:hidden' : ''}`}>
               {CHIPS.map((c) => (
                 <button
                   key={c.id}
@@ -158,12 +180,63 @@ export default function StallsFeedPage() {
                 </button>
               ))}
             </div>
+
+            {/* Search -- desktop: always an icon+input pill, left of ✕.
+                Mobile: a bare 🔍 icon that expands into the same pill
+                (replacing the chip row above while open) with its own
+                collapse ✕, which also clears the query. */}
+            <div className="lg:hidden shrink-0">
+              {mobileSearchOpen ? (
+                <div className="flex-1 min-w-0 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5">
+                  <Search className="h-4 w-4 shrink-0 text-white/70" />
+                  <input
+                    type="search"
+                    autoFocus
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search stalls…"
+                    className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setMobileSearchOpen(false); setSearch(''); }}
+                    aria-label="Close search"
+                    className="shrink-0 text-white/70 hover:text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setMobileSearchOpen(true)}
+                  aria-label="Search stalls"
+                  className="flex items-center justify-center rounded-full bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <div className="hidden lg:flex items-center gap-1.5 shrink-0 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1.5">
+              <Search className="h-4 w-4 shrink-0 text-amber-300" />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search stalls…"
+                className="w-36 bg-transparent text-sm text-amber-100 placeholder:text-amber-300/50 outline-none"
+              />
+            </div>
+
+            {/* Hidden (not unmounted) on mobile while search is expanded --
+                CSS-only so it's unconditionally back at lg: regardless of
+                that mobile-only toggle's state. */}
             <button
               type="button"
               onClick={() => navigate('/cockpit')}
               aria-label="Close"
               title="Back to Cockpit"
-              className="shrink-0 flex items-center justify-center rounded-full bg-black/50 p-2 text-white hover:bg-black/70 lg:bg-amber-500/10 lg:text-amber-300 lg:border lg:border-amber-500/25 lg:hover:bg-amber-500/20 transition-colors"
+              className={`shrink-0 flex items-center justify-center rounded-full bg-black/50 p-2 text-white hover:bg-black/70 lg:bg-amber-500/10 lg:text-amber-300 lg:border lg:border-amber-500/25 lg:hover:bg-amber-500/20 transition-colors ${mobileSearchOpen ? 'max-lg:hidden' : ''}`}
             >
               <X className="h-5 w-5" />
             </button>
@@ -176,9 +249,13 @@ export default function StallsFeedPage() {
               No stalls here yet — check back soon, or{' '}
               {user && <Link to="/stall/build" className="underline ml-1">build your own</Link>}
             </div>
+          ) : filteredCards && filteredCards.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm px-6 text-center">
+              No stalls match “{search.trim()}”.
+            </div>
           ) : (
             <div className="flex-1 min-h-0 overflow-y-auto snap-y snap-mandatory">
-              {cards.map((card) => (
+              {(filteredCards ?? []).map((card) => (
                 <article key={card.id} className="snap-start h-[calc(100dvh-8rem)] lg:h-full relative overflow-hidden">
                   {/* Portrait phones (<lg, portrait): pannable sideways --
                       image height = container height, width auto, instead
@@ -265,15 +342,21 @@ export default function StallsFeedPage() {
 
                   {/* Name bar: 40px overlay on mobile (portrait + landscape/
                       tablet), 48px on desktop -- tagline dropped at every
-                      size now (no room in a 40px bar), tier chip stays.
-                      Floats over the image instead of eating into its
-                      height, same treatment at every breakpoint now. */}
+                      size now (no room in a 40px bar). Category badge (the
+                      STALL_CATEGORIES label, singular -- not CHIPS' own
+                      pluralized filter label) plus tier, both shrink-0 so
+                      the name truncates first if space is tight. Floats
+                      over the image instead of eating into its height,
+                      same treatment at every breakpoint now. */}
                   <button
                     type="button"
                     onClick={() => openStall(card)}
-                    className="absolute bottom-0 left-0 right-0 z-10 h-10 lg:h-12 px-4 flex items-center justify-between gap-3 text-left bg-gradient-to-t from-black/80 to-transparent lg:bg-[#140c06] lg:border-t lg:border-amber-500/15"
+                    className="absolute bottom-0 left-0 right-0 z-10 h-10 lg:h-12 px-4 flex items-center gap-2 text-left bg-gradient-to-t from-black/80 to-transparent lg:bg-[#140c06] lg:border-t lg:border-amber-500/15"
                   >
-                    <h2 className="font-bold text-sm truncate text-white lg:text-amber-50">{card.name}</h2>
+                    <h2 className="flex-1 min-w-0 font-bold text-sm truncate text-white lg:text-amber-50">{card.name}</h2>
+                    <span className="shrink-0 text-[11px] font-medium rounded-full px-2 py-0.5 bg-white/15 text-white lg:bg-amber-500/10 lg:text-amber-300">
+                      {CATEGORY_LABEL[card.category]}
+                    </span>
                     <span className="shrink-0 text-[11px] font-medium rounded-full px-2 py-0.5 bg-white/15 text-white lg:bg-amber-500/10 lg:text-amber-300">
                       {STALL_TIER_LABEL[card.tier]}
                     </span>
