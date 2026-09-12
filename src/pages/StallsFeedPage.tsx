@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, Radio, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -74,8 +74,17 @@ export default function StallsFeedPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { liveSeeds } = useTribalLiveOrchard();
+  // Flow v2 step 7: /browse-orchards and /search now redirect here with
+  // `?chip=`/`?q=` -- read once on mount as the initial state, same as a
+  // normal "restore where you left off" deep link (not kept in sync with
+  // the URL afterward, so picking a different chip/search doesn't rewrite
+  // it -- this page never wrote its own query string before).
+  const [searchParams] = useSearchParams();
 
-  const [chip, setChip] = useState<Chip>('for_you');
+  const [chip, setChip] = useState<Chip>(() => {
+    const requested = searchParams.get('chip');
+    return CHIPS.some((c) => c.id === requested) ? (requested as Chip) : 'for_you';
+  });
   const [cards, setCards] = useState<StallCard[] | null>(null);
   const [orchardCards, setOrchardCards] = useState<OrchardCard[] | null>(null);
   // "‹ pan ›" hint on the portrait-pannable front image -- one shared flag
@@ -90,8 +99,8 @@ export default function StallsFeedPage() {
   // toggle: the 🔍 icon expands into this same input, replacing the chip
   // row while open (no room for both on a narrow screen); desktop always
   // shows the input, so this flag never gates it there (max-lg: below).
-  const [search, setSearch] = useState('');
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(() => searchParams.has('q'));
   // "New seeds" (supabase/migrations/20260912140000_stall_visits.sql) --
   // stall_user_id -> {total, latest}, from the same RPC StallInteriorView
   // uses for its own hotspot dots. Fetched once per signed-in viewer, not

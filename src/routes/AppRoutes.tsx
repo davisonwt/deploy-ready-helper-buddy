@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 const TrustPage = lazy(() => import('@/pages/TrustPage'));
 import { Card, CardContent } from '@/components/ui/card';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -16,7 +16,6 @@ import {
   OnboardingPayoutPage,
   ForgotPasswordPage,
   GamificationDashboard,
-  AdvancedSearchPage,
   MyTribePage,
   GroveFeedPage,
   CommunicationsHub,
@@ -190,6 +189,15 @@ function RedirectWithParams({ to }: { to: string }) {
   return <Navigate to={path} replace />;
 }
 
+/** Flow v2 step 7: /search -> /stalls-feed, carrying a `?q=` search term
+ * across if the old link had one (StallsFeedPage reads it on mount to
+ * pre-fill its own search box). */
+function SearchRedirect() {
+  const location = useLocation();
+  const q = new URLSearchParams(location.search).get('q');
+  return <Navigate to={q ? `/stalls-feed?q=${encodeURIComponent(q)}` : '/stalls-feed'} replace />;
+}
+
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
@@ -305,9 +313,9 @@ const AppRoutes = () => (
     <Route path="/tribal-hearts" element={
       <ProtectedRoute><RequireVerification><TribalHeartsPage /></RequireVerification></ProtectedRoute>
     } />
-    <Route path="/browse-orchards" element={
-      <ProtectedRoute><RequireVerification><BrowseOrchardsPage /></RequireVerification></ProtectedRoute>
-    } />
+    {/* Flow v2 step 7: /browse-orchards's content folded into /stalls-feed's
+        Orchards tab (step 6) -- redirect with that tab pre-selected. */}
+    <Route path="/browse-orchards" element={<Navigate to="/stalls-feed?chip=orchard" replace />} />
     <Route path="/orchard-alive" element={
       <ProtectedRoute><RequireVerification><Layout><TribalAliveFeedPage /></Layout></RequireVerification></ProtectedRoute>
     } />
@@ -700,9 +708,9 @@ const AppRoutes = () => (
     <Route path="/eternal-forest" element={
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><EternalForestPage /></Suspense></ProtectedRoute>
     } />
-    <Route path="/search" element={
-      <Layout><Suspense fallback={<LoadingFallback />}><AdvancedSearchPage /></Suspense></Layout>
-    } />
+    {/* Flow v2 step 7: /search's content folded into /stalls-feed's own
+        search box (step 6) -- redirect, carrying a `?q=` term across. */}
+    <Route path="/search" element={<SearchRedirect />} />
     <Route path="/live-rooms" element={
       <ProtectedRoute><Layout><LiveRoomsPage /></Layout></ProtectedRoute>
     } />
