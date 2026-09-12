@@ -62,7 +62,21 @@ Grepped across `src/`, `supabase/functions/`, and `supabase/migrations/` directl
 - [ ] Point DNS at Vercel's provided records
 - [ ] Watch propagation (`dig sow2growapp.com`, or Vercel's own domain status page) until Vercel reports the domain as verified/active with a valid SSL cert issued
 
-## 6. Rollback plan
+## 6. Stall invite link previews (WhatsApp/Facebook/iMessage)
+
+Built alongside this doc, not a step to perform -- documented here because it's Vercel-specific plumbing (`api/stall.ts` + `vercel.json`) that only works once this repo is actually served BY Vercel, same as everything else in this checklist.
+
+**The problem**: this app is a pure SPA -- `/stall/<username>` always serves the same `index.html`, so a crawler (WhatsApp, Facebook, iMessage, Slack, Twitter, ...) scraping Open Graph tags for a link preview only ever sees the app's generic, stall-agnostic title -- never the real stall name or front photo.
+
+**The fix**: `vercel.json`'s `rewrites` array has a new FIRST entry (evaluated before the catch-all SPA rewrite, which stays last and unchanged): `/stall/:username` rewrites to the new `api/stall.ts` serverless function, but ONLY when the request's `User-Agent` header matches a known crawler pattern (`has: [{ type: "header", key: "user-agent", value: "...facebookexternalhit|Twitterbot|WhatsApp|..." }]`). A real browser's request never matches that condition, so it falls through to the existing catch-all and gets the normal SPA exactly as before -- **this changes nothing about how a real visitor experiences `/stall/:username`**.
+
+`api/stall.ts` does the same public, anon-readable lookup `StallVisitPage.tsx` already does (`get_stall_owner_id_by_username` RPC, then a `stalls` select scoped to `published = true`) via plain `fetch()` against Supabase's REST/RPC endpoints directly -- no supabase-js import (that client reads Vite's `import.meta.env` and sets up browser-only auth persistence, neither of which apply in this isolated serverless runtime). It returns a minimal HTML page with real `og:title`/`og:description`/`og:image`/`twitter:card` tags (stall name, tagline or "A stall on Sow2Grow", `front_image_path`) plus a `<meta http-equiv="refresh">` back to the real app URL (including `?ref=` if present), for the rare crawler that does follow it. An unresolvable/unpublished username falls back to generic Sow2Grow tags rather than erroring.
+
+- [ ] After the Vercel cutover, verify: `curl -A "facebookexternalhit/1.1" https://sow2growapp.com/stall/<a real published username>` returns the OG HTML (not the SPA's `index.html`) with a real `og:image` URL
+- [ ] Verify a real browser still gets the normal app: `curl -A "Mozilla/5.0" https://sow2growapp.com/stall/<username>` returns `index.html` (the rewrite's `has` condition correctly excludes it)
+- [ ] Optional real-world check: paste a stall link into WhatsApp/iMessage/a Slack channel and confirm the preview card shows the stall's name and front photo
+
+## 7. Rollback plan
 
 - [ ] Keep the Lovable deployment untouched and running throughout (this whole task was written under "Keep Lovable untouched" — nothing in `vercel.json` or the doc changes touches Lovable's own build/deploy path)
 - [ ] If anything breaks post-DNS-cutover: point DNS back at Lovable's original records (keep a copy of the pre-cutover DNS record values before changing anything in step 5)

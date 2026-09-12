@@ -4,6 +4,13 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
+    {
+      "source": "/stall/:username",
+      "has": [
+        { "type": "header", "key": "user-agent", "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|SkypeUriPreview|Applebot|W3C_Validator|Googlebot|bingbot|Yeti|DuckDuckBot|vkShare|Iframely).*" }
+      ],
+      "destination": "/api/stall?username=:username"
+    },
     { "source": "/((?!assets/|.*\\.(?:js|mjs|css|map|json|png|jpg|jpeg|webp|svg|ico|gif|woff|woff2|ttf|otf|mp3|mp4|webm|wav|txt|xml)).*)", "destination": "/index.html" }
   ],
   "headers": [

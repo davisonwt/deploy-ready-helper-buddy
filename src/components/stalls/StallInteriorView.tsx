@@ -1,19 +1,23 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { X, Pencil, Menu, CalendarDays, Eye, LogOut } from 'lucide-react';
+import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
+import { shareStallLink } from '@/lib/referral';
 import StallHotspotSheet from './StallHotspotSheet';
 import StallSideNav from './StallSideNav';
 import StallTodayPanel from './StallTodayPanel';
+import StallJoinSheet from './StallJoinSheet';
 import OwnerMenuItems from '@/components/owner/OwnerMenuItems';
 import type { StallHotspot, TileKind } from '@/lib/stalls/stallTypes';
 
 interface Props {
   /** Stall owner's user id -- the sheet pulls THEIR published items, never the viewer's. */
   ownerId: string;
+  /** For the invite link (/stall/<username>) and its own "Share my stall"/Share button -- null only if the caller genuinely doesn't have it yet. */
+  username?: string | null;
   interiorImageUrl: string;
   stallName: string;
   hotspots: StallHotspot[];
@@ -105,7 +109,7 @@ function StallDrawer({ side, open, onClose, children }: { side: 'left' | 'right'
   );
 }
 
-export default function StallInteriorView({ ownerId, interiorImageUrl, stallName, hotspots, onClose, isOwner }: Props) {
+export default function StallInteriorView({ ownerId, username, interiorImageUrl, stallName, hotspots, onClose, isOwner }: Props) {
   const { setStallInteriorOpen } = useAppContext();
   const { user } = useAuth();
   const [openKind, setOpenKind] = useState<StallHotspot['kind'] | null>(() => readKindFromHash() as StallHotspot['kind'] | null);
@@ -126,6 +130,14 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
   // `isOwner` prop.
   const [viewingAsVisitor, setViewingAsVisitor] = useState(false);
   const effectiveIsOwner = isOwner && !viewingAsVisitor;
+  // Stall invite links ("come see my shop"), guest gating: an
+  // unauthenticated visitor can browse the front and interior read-only
+  // (StallVisitPage has no ProtectedRoute), but tapping a painted hotspot
+  // is the one point every actual interaction (rail actions, Bestow --
+  // both live inside the sheet a tap would otherwise open) funnels
+  // through, so gating it here covers all three without touching
+  // SeedCard's own per-action guards used everywhere else in the app.
+  const [showJoinSheet, setShowJoinSheet] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const rect = useContainImageRect(containerRef, imgRef);
@@ -222,6 +234,10 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
   // the sheet opens. `(hover: hover) and (pointer: fine)` is the standard
   // way to tell those apart -- a real mouse, not just viewport width.
   function handleHotspotTap(h: StallHotspot) {
+    if (!user) {
+      setShowJoinSheet(true);
+      return;
+    }
     // "New seeds" gold dot disappears the moment this kind's sheet opens
     // -- a one-way dismissal, not a re-fetch (see dismissedKinds above).
     setDismissedKinds((prev) => (prev.has(h.kind) ? prev : new Set(prev).add(h.kind)));
@@ -363,6 +379,15 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
                         onNavigate={() => setOwnerMenuOpen(false)}
                         itemClassName="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
                       />
+                      {username && (
+                        <button
+                          type="button"
+                          onClick={() => { shareStallLink(username, stallName, user?.id); setOwnerMenuOpen(false); }}
+                          className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
+                        >
+                          <Share2 className="h-4 w-4 shrink-0" /> Share my stall
+                        </button>
+                      )}
                       <div className="my-1 border-t border-amber-500/15" />
                       <button
                         type="button"
@@ -376,6 +401,21 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
                 )}
               </div>
             )
+          )}
+          {/* Share (everyone, not owner-only -- "come see my shop" is meant
+              to spread from any viewer, burning THEIR own referral code if
+              signed in). "Share my stall" above is the owner-menu's own
+              entry point to the exact same action. */}
+          {username && (
+            <button
+              type="button"
+              onClick={() => shareStallLink(username, stallName, user?.id)}
+              aria-label="Share this stall"
+              title="Share this stall"
+              className="shrink-0 flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
           )}
           <Button
             type="button"
@@ -492,6 +532,17 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
             >
               <CalendarDays className="h-4 w-4" />
             </button>
+            {username && (
+              <button
+                type="button"
+                onClick={() => shareStallLink(username, stallName, user?.id)}
+                aria-label="Share this stall"
+                title="Share this stall"
+                className="flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+            )}
             <Button
               type="button"
               variant="ghost"
@@ -540,6 +591,15 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
                         onNavigate={() => setOwnerMenuOpen(false)}
                         itemClassName="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
                       />
+                      {username && (
+                        <button
+                          type="button"
+                          onClick={() => { shareStallLink(username, stallName, user?.id); setOwnerMenuOpen(false); }}
+                          className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
+                        >
+                          <Share2 className="h-4 w-4 shrink-0" /> Share my stall
+                        </button>
+                      )}
                       <div className="my-1 border-t border-amber-500/15" />
                       <button
                         type="button"
@@ -581,6 +641,10 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
           scrollToItemId={initialScrollSeedId}
           viewerCutoff={viewerCutoff}
         />
+      )}
+
+      {showJoinSheet && (
+        <StallJoinSheet stallName={stallName} onClose={() => setShowJoinSheet(false)} />
       )}
     </div>
   );

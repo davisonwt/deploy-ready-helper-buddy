@@ -2,11 +2,18 @@ import React, { createContext, useContext } from 'react'
 import { supabase } from "@/integrations/supabase/client"
 import { logError, logInfo, logWarn } from "@/lib/logging"
 import { friendlyAuthError, isStaleBuildError, requestServiceWorkerUpdate } from '@/lib/staleBuild'
+import { storePendingWelcomeInviter } from '@/lib/referral'
 
 // 2026-09-06: a tab still running an old build gets "Legacy API keys are
 // disabled" from Supabase after the key rotation. That is a stale page, not
 // bad credentials: say so, and ask the service worker for the new build.
 function staleAware(result) {
+  // The dev server has no build-id/service-worker story at all -- this
+  // mapping only makes sense for a stale PRODUCTION tab. Skipped in dev so
+  // a real Supabase error (e.g. a locally stale .env key) surfaces as-is
+  // instead of "refresh the page," which fixes nothing locally and would
+  // otherwise block every dev login attempt behind a dead-end message.
+  if (import.meta.env.DEV) return result
   if (result && !result.success && isStaleBuildError(result.error)) {
     requestServiceWorkerUpdate()
     return { ...result, error: friendlyAuthError(result.error), stale: true }
@@ -236,8 +243,25 @@ export class AuthProviderClass extends React.Component {
       // Best-effort: also call claim_referral_code RPC after signup so it sticks even if trigger missed it
       if (referral_code && data?.user?.id) {
         try {
-          await supabase.rpc('claim_referral_code', { p_code: referral_code })
+          const { data: claimResult } = await supabase.rpc('claim_referral_code', { p_code: referral_code })
           localStorage.removeItem('s2g_pending_ref')
+          // Stall invite links ("come see my shop"): process_referral (run
+          // by claim_referral_code) already stamped profiles.referred_by
+          // and auto-followed the inviter server-side -- this just queues
+          // the one-time welcome toast's inviter name, read+cleared
+          // wherever the visitor lands back in the app after the
+          // mandatory onboarding chain (src/lib/referral.ts).
+          const referrerId = claimResult?.success ? claimResult?.referrer_id : null
+          if (referrerId) {
+            const { data: referrerProfile } = await supabase
+              .from('profiles_public')
+              .select('display_name')
+              .eq('user_id', referrerId)
+              .maybeSingle()
+            if (referrerProfile?.display_name) {
+              storePendingWelcomeInviter(referrerProfile.display_name)
+            }
+          }
         } catch {}
       }
       await logAttempt(true, null)

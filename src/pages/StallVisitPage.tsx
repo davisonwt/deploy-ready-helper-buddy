@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Loader2, Store, UserX } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useStallTemplates } from '@/hooks/useStallTemplates';
 import StallInteriorView from '@/components/stalls/StallInteriorView';
+import { readAndClearPendingWelcomeInviter } from '@/lib/referral';
 import { STALL_TIER_LABEL, resolveStallHotspots, type StallHotspot, type StallTier } from '@/lib/stalls/stallTypes';
 
 interface StallRow {
@@ -81,6 +83,19 @@ export default function StallVisitPage() {
 
   const isOwner = !!user && !!stall && user.id === stall.user_id;
 
+  // Stall invite links ("come see my shop"): a referred signup queues the
+  // inviter's display name (useAuth.jsx's register(), src/lib/referral.ts)
+  // right after claim_referral_code resolves a real referrer -- shown
+  // here, once, wherever the visitor actually lands back after the
+  // mandatory onboarding chain (readPendingReturn already sent them back
+  // to this exact stall). Gated on `user` so it only ever fires for an
+  // actually-signed-in visitor, never while still loading/anonymous.
+  useEffect(() => {
+    if (!user) return;
+    const inviter = readAndClearPendingWelcomeInviter();
+    if (inviter) toast.success(`${inviter} invited you — welcome!`);
+  }, [user]);
+
   // Never a blind history.back() -- with the returnTo/chatReturnTo dance
   // (SeedCard.tsx's Message/Bestow actions, ChatApp.tsx, ProductBasketPage.tsx)
   // now replacing entries instead of pushing, back() here could still
@@ -123,6 +138,7 @@ export default function StallVisitPage() {
     return (
       <StallInteriorView
         ownerId={stall.user_id}
+        username={username ?? null}
         interiorImageUrl={stall.interior_image_path}
         stallName={stall.name}
         hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
