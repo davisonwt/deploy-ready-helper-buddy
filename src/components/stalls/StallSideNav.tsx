@@ -27,6 +27,20 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
 
   return (
     <div className={`bg-[#140c06] ${className}`}>
+      {/* Farm-Stalls feed/interior (StallsFeedPage, StallVisitPage) had no
+          way back to the Cockpit at all -- this is that way back, first
+          thing in the nav so it's never missed. Same row shape as the
+          COCKPIT_NAV items below, styled more prominently gold since it's
+          the one "leave the stall" action here. */}
+      <Link
+        to="/cockpit"
+        onClick={onNavigate}
+        className="flex items-center gap-2.5 px-3 py-2.5 border-b border-amber-500/15 hover:bg-amber-500/10 transition-colors"
+      >
+        <span className="text-base leading-none w-5 text-center shrink-0 text-amber-400">🏠</span>
+        <span className="truncate font-serif text-[13px] font-semibold text-amber-300">My Stall / Cockpit</span>
+      </Link>
+
       <a
         href={SCRIPTURE_STUDY_LINK.href}
         target="_blank"

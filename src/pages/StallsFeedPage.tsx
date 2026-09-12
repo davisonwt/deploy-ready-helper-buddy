@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Loader2, Radio } from 'lucide-react';
+import { Loader2, Radio, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
@@ -116,7 +116,7 @@ export default function StallsFeedPage() {
           className="hidden lg:flex lg:flex-col lg:w-[220px] lg:shrink-0 lg:border-r lg:border-amber-500/15"
         />
 
-        <div className="flex-1 min-h-0 flex flex-col lg:relative lg:bg-[#140c06]">
+        <div className="flex-1 min-h-0 min-w-0 flex flex-col lg:relative lg:bg-[#140c06]">
           {/* Chips: in-flow, horizontal-scroll on mobile (unchanged). On
               desktop they still float over the top of the image (so the
               image below keeps the full column height -- same
@@ -125,22 +125,48 @@ export default function StallsFeedPage() {
               are restyled gold-on-dark-wood -- solid enough pills to stay
               readable over any photo, and belonging to the same "the stall
               is the frame" language as StallSideNav/StallTodayPanel,
-              instead of a heavy black scrim. */}
-          <div className="shrink-0 flex gap-2 overflow-x-auto px-4 py-3 lg:absolute lg:top-0 lg:left-0 lg:right-0 lg:z-10 lg:flex-wrap lg:overflow-visible lg:bg-[#140c06]/70 lg:backdrop-blur-sm lg:border-b lg:border-amber-500/15 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {CHIPS.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setChip(c.id)}
-                className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors ${
-                  chip === c.id
-                    ? 'bg-primary text-primary-foreground lg:bg-amber-500 lg:text-amber-950'
-                    : 'bg-muted text-muted-foreground hover:bg-accent lg:bg-amber-500/10 lg:text-amber-200 lg:border lg:border-amber-500/25 lg:hover:bg-amber-500/20'
-                }`}
-              >
-                {c.label}
-              </button>
-            ))}
+              instead of a heavy black scrim. The ✕ (same close affordance
+              StallInteriorView's header has, here going straight to
+              /cockpit since there's no "interior" to close first) is a
+              shrink-0 sibling of the chip strip rather than an absolutely-
+              positioned corner overlay -- the chip strip can grow to two
+              lines now, and a fixed top-right overlay would sit on top of
+              wrapped chips at that point; living in the same row instead
+              keeps it clear at every width, mobile included (StallSideNav's
+              own new "My Stall / Cockpit" entry is the desktop/drawer path
+              back; this is the same destination for whoever's looking at
+              the top-right corner instead). min-w-0 on this row AND the
+              middle column above it -- without both, the nested flex
+              chain refuses to shrink the chip strip below its own
+              min-content width (the classic flexbox overflow bug), which
+              on mobile pushed the ✕ button off the right edge of the
+              viewport entirely; caught via Playwright measurement. */}
+          <div className="shrink-0 min-w-0 flex items-center gap-2 px-4 py-3 lg:absolute lg:top-0 lg:left-0 lg:right-0 lg:z-10 lg:bg-[#140c06]/70 lg:backdrop-blur-sm lg:border-b lg:border-amber-500/15">
+            <div className="flex-1 min-w-0 flex gap-2 overflow-x-auto lg:flex-wrap lg:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {CHIPS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setChip(c.id)}
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors ${
+                    chip === c.id
+                      ? 'bg-primary text-primary-foreground lg:bg-amber-500 lg:text-amber-950'
+                      : 'bg-muted text-muted-foreground hover:bg-accent lg:bg-amber-500/10 lg:text-amber-200 lg:border lg:border-amber-500/25 lg:hover:bg-amber-500/20'
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/cockpit')}
+              aria-label="Close"
+              title="Back to Cockpit"
+              className="shrink-0 flex items-center justify-center rounded-full bg-black/50 p-2 text-white hover:bg-black/70 lg:bg-amber-500/10 lg:text-amber-300 lg:border lg:border-amber-500/25 lg:hover:bg-amber-500/20 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
           {cards === null ? (
