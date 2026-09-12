@@ -20,16 +20,34 @@ const STALLS_BASE = "https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/
 const DAVISON = { id: "04754d57-d41d-4ea7-93df-542047a6785b", username: "davison.taljaard" };
 const AMBER = { id: "c34c0eba-0010-480b-8326-7063cd7221ae", username: "amberswheeles" };
 const ED = { id: "110b5a23-ce07-45c8-a432-086550aa78b5", username: "primitivevsns" };
-// Davison's own real music product (products.sower_id -> sowers.id ->
-// sowers.user_id = DAVISON.id) -- a real row, not a mock, per the task's
-// own "a real SeedCard from Davison's music" ask.
+const CLAYROSES = { id: "b0e9cd73-56a1-48ef-b0f1-3b68ee09d8b1", username: "infoclayroses" };
+// Last-resort fallback only -- used when BOTH the ClayRoses "The
+// Journey" lookup and the Davison-newest-cover fallback query fail
+// (network/RLS error, not just "row not found", which its own query
+// already falls through past). Davison's own real music product, not a
+// mock -- see the runtime query effect below for why this is the
+// fallback of last resort rather than the default.
 const DAVISON_SEED = {
   id: "9af96ac8-9029-43db-8a5b-78ba1369915c",
   title: "the true fast",
   subtitle: "lyricist: davison",
   cover: "/__l5e/assets-v1/79a8b712-6713-4560-bafb-8ed3278973d7/7fe0fb45-316d-46dd-b83c-e135c1162498.png",
   price: 2,
+  ownerId: DAVISON.id,
+  ownerName: "Davison",
+  openPath: `/stall/${DAVISON.username}`,
 };
+
+interface FeaturedSeed {
+  id: string;
+  title: string;
+  subtitle: string;
+  cover: string | null;
+  price: number;
+  ownerId: string;
+  ownerName: string;
+  openPath: string;
+}
 
 interface GardenCard {
   user_id: string;
@@ -231,10 +249,98 @@ function IndexContent() {
   const [gardenCards, setGardenCards] = useState<GardenCard[] | null>(null);
   const [showDemoInterior, setShowDemoInterior] = useState(false);
   const [showJoinSheet, setShowJoinSheet] = useState(false);
+  const [featuredSeed, setFeaturedSeed] = useState<FeaturedSeed | null>(null);
 
   useEffect(() => {
     if (!loading && isAuthenticated) navigate("/cockpit", { replace: true });
   }, [isAuthenticated, loading, navigate]);
+
+  // "sow your seeds": ClayRoses' "The Journey" (products.sower_id ->
+  // sowers.id -> sowers.user_id = CLAYROSES.id, title exact match) --
+  // queried at runtime, not hardcoded, so it stays correct as the real
+  // row changes (title/cover/price) without a code edit. Falls back to
+  // Davison's own music product with the newest updated_at (his most
+  // recently touched cover) if "The Journey" isn't found, and to the
+  // fully hardcoded DAVISON_SEED only if BOTH queries themselves fail
+  // (network/RLS error -- sowers/products are both anon-readable, same
+  // as StallHotspotSheet's own guest-facing lookups, so this page works
+  // signed out).
+  useEffect(() => {
+    let alive = true;
+    const applyDavisonFallback = () => {
+      if (!alive) return;
+      const { id, title, subtitle, cover, price, ownerId, ownerName, openPath } = DAVISON_SEED;
+      setFeaturedSeed({ id, title, subtitle, cover, price, ownerId, ownerName, openPath });
+    };
+
+    (async () => {
+      try {
+        const { data: clayRosesSower } = await supabase
+          .from("sowers")
+          .select("id")
+          .eq("user_id", CLAYROSES.id)
+          .maybeSingle();
+        if (clayRosesSower?.id) {
+          const { data: journeyRows } = await supabase
+            .from("products")
+            .select("id, title, cover_image_url, price")
+            .eq("sower_id", clayRosesSower.id)
+            .eq("title", "The Journey")
+            .limit(1);
+          const journey = (journeyRows ?? [])[0] as { id: string; title: string; cover_image_url: string | null; price: number | null } | undefined;
+          if (journey) {
+            if (alive) setFeaturedSeed({
+              id: journey.id,
+              title: journey.title,
+              subtitle: "ClayRoses",
+              cover: journey.cover_image_url,
+              price: Number(journey.price || 0),
+              ownerId: CLAYROSES.id,
+              ownerName: "ClayRoses",
+              openPath: `/stall/${CLAYROSES.username}#stall-kind=music`,
+            });
+            return;
+          }
+        }
+
+        // "The Journey" not found -- fall back to Davison's own music,
+        // newest cover (updated_at) first.
+        const { data: davisonSower } = await supabase
+          .from("sowers")
+          .select("id")
+          .eq("user_id", DAVISON.id)
+          .maybeSingle();
+        if (davisonSower?.id) {
+          const { data: davisonRows } = await supabase
+            .from("products")
+            .select("id, title, cover_image_url, price")
+            .eq("sower_id", davisonSower.id)
+            .eq("type", "music")
+            .order("updated_at", { ascending: false })
+            .limit(1);
+          const track = (davisonRows ?? [])[0] as { id: string; title: string; cover_image_url: string | null; price: number | null } | undefined;
+          if (track) {
+            if (alive) setFeaturedSeed({
+              id: track.id,
+              title: track.title,
+              subtitle: "lyricist: davison",
+              cover: track.cover_image_url,
+              price: Number(track.price || 0),
+              ownerId: DAVISON.id,
+              ownerName: "Davison",
+              openPath: `/stall/${DAVISON.username}`,
+            });
+            return;
+          }
+        }
+
+        applyDavisonFallback();
+      } catch {
+        applyDavisonFallback();
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
 
   // "walk the gardens": same card list StallsFeedPage's own "For You"
   // query uses (published, has a front image, newest first), just
@@ -366,21 +472,25 @@ function IndexContent() {
                 interaction -- SeedCard already renders the rail greyed
                 (not hidden) for the "owner viewing their own card" case,
                 exactly the look a pure illustration wants here. */}
-            <Suspense fallback={<div className="aspect-square rounded-xl bg-black/40 animate-pulse" />}>
-              <SeedCard
-                id={DAVISON_SEED.id}
-                kind="music"
-                title={DAVISON_SEED.title}
-                subtitle={DAVISON_SEED.subtitle}
-                cover={DAVISON_SEED.cover}
-                ownerId={DAVISON.id}
-                ownerName="Davison"
-                price={DAVISON_SEED.price}
-                openPath={`/stall/${DAVISON.username}`}
-                forceViewerIsOwner
-                hideSowerLine
-              />
-            </Suspense>
+            {featuredSeed ? (
+              <Suspense fallback={<div className="aspect-square rounded-xl bg-black/40 animate-pulse" />}>
+                <SeedCard
+                  id={featuredSeed.id}
+                  kind="music"
+                  title={featuredSeed.title}
+                  subtitle={featuredSeed.subtitle}
+                  cover={featuredSeed.cover}
+                  ownerId={featuredSeed.ownerId}
+                  ownerName={featuredSeed.ownerName}
+                  price={featuredSeed.price}
+                  openPath={featuredSeed.openPath}
+                  forceViewerIsOwner
+                  hideSowerLine
+                />
+              </Suspense>
+            ) : (
+              <div className="aspect-square rounded-xl bg-black/40 animate-pulse" />
+            )}
           </div>
         </div>
       </section>
