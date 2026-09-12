@@ -4,10 +4,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Bell, X } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppContext } from '@/contexts/AppContext';
 
 export const NotificationBanner = () => {
   const { user } = useAuth();
   const { isEnabled, isInitializing, initializeNotifications } = useNotifications();
+  const { wizardOpen } = useAppContext();
   const [dismissed, setDismissed] = useState(false);
 
   // Check if user has dismissed the banner
@@ -26,13 +28,15 @@ export const NotificationBanner = () => {
     handleDismiss();
   };
 
-  // Don't show if user is not logged in, notifications are already enabled, or banner was dismissed
-  if (!user || isEnabled || dismissed) {
+  // Don't show if user is not logged in, notifications are already enabled, banner was
+  // dismissed, or a WizardContainer flow (its own Back/Next/Submit bar sits in this same
+  // bottom-right corner on mobile) is on screen.
+  if (!user || isEnabled || dismissed || wizardOpen) {
     return null;
   }
 
   return (
-    <Card className="fixed bottom-20 right-4 z-50 max-w-md shadow-lg border-primary/20">
+    <Card className="fixed bottom-20 right-4 z-50 w-[calc(100vw-2rem)] max-w-md shadow-lg border-primary/20">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">

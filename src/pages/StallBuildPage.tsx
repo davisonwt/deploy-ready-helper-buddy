@@ -195,7 +195,13 @@ export default function StallBuildPage() {
                   type="button"
                   variant={category === c.id ? 'default' : 'outline'}
                   size="sm"
+                  aria-pressed={category === c.id}
                   onClick={() => setCategory(c.id)}
+                  className={
+                    category === c.id
+                      ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
+                      : ''
+                  }
                 >
                   {c.label}
                 </Button>
@@ -285,7 +291,13 @@ export default function StallBuildPage() {
                       type="button"
                       size="sm"
                       variant={tile.kind === k.id ? 'default' : 'outline'}
+                      aria-pressed={tile.kind === k.id}
                       onClick={() => updateTile(i, { kind: k.id })}
+                      className={
+                        tile.kind === k.id
+                          ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
+                          : ''
+                      }
                     >
                       {k.label}
                     </Button>

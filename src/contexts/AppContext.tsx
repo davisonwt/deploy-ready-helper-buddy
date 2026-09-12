@@ -18,6 +18,18 @@ interface AppContextType {
    */
   stallInteriorOpen: boolean
   setStallInteriorOpen: (open: boolean) => void
+  /**
+   * True while a WizardContainer-based flow (StallBuildPage's "Edit your
+   * stall", /sow/* etc.) is on screen -- its own Back/Next/Submit bar sits
+   * at the bottom of a short, single-column page, exactly where
+   * NotificationBanner/PayoutSetupBanner's fixed bottom-right corner nudge
+   * lands, so first-time users could get their wizard-navigation taps
+   * swallowed by an unrelated "Enable Notifications" card. Those banners
+   * hide themselves while this is true, matching stallInteriorOpen's
+   * precedent above.
+   */
+  wizardOpen: boolean
+  setWizardOpen: (open: boolean) => void
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -28,6 +40,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
   const [voiceCommandsEnabled, setVoiceCommandsEnabled] = useState(false)
   const [isFirstVisit, setIsFirstVisit] = useState(false)
   const [stallInteriorOpen, setStallInteriorOpen] = useState(false)
+  const [wizardOpen, setWizardOpen] = useState(false)
 
   useEffect(() => {
     // Check if this is the user's first visit
@@ -58,7 +71,9 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     isFirstVisit,
     setIsFirstVisit,
     stallInteriorOpen,
-    setStallInteriorOpen
+    setStallInteriorOpen,
+    wizardOpen,
+    setWizardOpen
   }
 
   return (

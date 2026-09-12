@@ -772,10 +772,18 @@ input::placeholder, textarea::placeholder, select::placeholder {
       @apply flex-col !important;
     }
 
-    /* Collapse grids to single column */
-    .grid {
-      @apply grid-cols-1 !important;
-    }
+    /* NOTE: a blanket ".grid { grid-cols-1 !important }" rule used to live
+       here, collapsing EVERY grid on the site to one column below 768px
+       regardless of its own responsive classes. That silently broke any
+       component that deliberately wants more than one column on mobile
+       (e.g. StallBuildPage's Category picker, "grid-cols-2 sm:grid-cols-4"
+       -- collapsed to 1 column, which stacked 8 buttons tall enough to
+       reach into NotificationBanner's fixed bottom-right band and swallow
+       taps on the last few). Components that truly want to stack on mobile
+       already do it themselves via a responsive class (grid-cols-1
+       sm:grid-cols-2 etc.) -- removed rather than re-added, so this stays
+       fixed everywhere instead of just here.
+    */
 
     /* Make tables scrollable horizontally */
     table {

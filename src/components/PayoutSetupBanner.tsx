@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppContext } from '@/contexts/AppContext';
 
 /**
  * Visible nudge for existing users who signed up before payout setup existed.
@@ -14,6 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
  */
 export const PayoutSetupBanner = () => {
   const { user } = useAuth() as any;
+  const { wizardOpen } = useAppContext();
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -28,12 +30,14 @@ export const PayoutSetupBanner = () => {
 
   // Only show for signed-in users whose profile says payout setup is incomplete.
   // We read straight from the user object (profile fields are merged in useAuth).
-  if (!user || user.payout_setup_complete === true || dismissed) {
+  // Also hidden while a WizardContainer flow is on screen -- see NotificationBanner
+  // for why (same fixed bottom-right corner, same collision with the wizard's own nav bar).
+  if (!user || user.payout_setup_complete === true || dismissed || wizardOpen) {
     return null;
   }
 
   return (
-    <Card className="fixed bottom-4 right-4 z-50 max-w-md shadow-lg border-primary/20">
+    <Card className="fixed bottom-4 right-4 z-50 w-[calc(100vw-2rem)] max-w-md shadow-lg border-primary/20">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">

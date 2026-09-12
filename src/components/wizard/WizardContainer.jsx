@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Check, ArrowLeft, ArrowRight } from 'lucide-react';
+import { useAppContext } from '@/contexts/AppContext';
 
 export function WizardContainer({ 
   steps, 
@@ -22,6 +23,12 @@ export function WizardContainer({
 }) {
   const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
+
+  const { setWizardOpen } = useAppContext();
+  useEffect(() => {
+    setWizardOpen(true);
+    return () => setWizardOpen(false);
+  }, [setWizardOpen]);
 
   const handleNext = () => {
     if (isLastStep) {
