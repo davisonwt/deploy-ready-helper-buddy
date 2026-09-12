@@ -34,7 +34,6 @@ import {
   FactoryDetailPage,
   TierSeedFlowPage,
   StatsPage,
-  ProfilePage,
   MemberProfilePage,
   BrowseOrchardsPage,
   TribalAliveFeedPage,
@@ -115,10 +114,7 @@ import {
   CreateLiveRoomPage,
   SupportUsPage,
   ProductsPage,
-  MyProductsPage,
   UploadForm,
-  SellerCredentialsPage,
-  SellerBusinessSettingsPage,
   TribalHeartsPage,
   AdminCredentialsPage,
   AdminPayoutConfirmationsPage,
@@ -129,7 +125,6 @@ import {
   MusicLibraryPage,
   MusicTrackDetailPage,
   MyRadioOptInPage,
-  MyS2GLibraryPage,
   SowerLibraryPage,
   S2GCommunityLibraryPage,
   S2GCommunityMusicPage,
@@ -581,9 +576,8 @@ const AppRoutes = () => (
     <Route path="/app-flow" element={
       <ProtectedRoute><Layout><BrowseOrchardsPage /></Layout></ProtectedRoute>
     } />
-    <Route path="/profile" element={
-      <ProtectedRoute><ProfilePage /></ProtectedRoute>
-    } />
+    {/* Flow v2 step 10: absorbed into /stall/build's Profile tab (step 9). */}
+    <Route path="/profile" element={<Navigate to="/stall/build?tab=profile" replace />} />
     <Route path="/profile/:userId" element={
       <ProtectedRoute><MemberProfilePage /></ProtectedRoute>
     } />
@@ -726,18 +720,22 @@ const AppRoutes = () => (
     <Route path="/products" element={
       <Layout><Suspense fallback={<LoadingFallback />}><ProductsPage /></Suspense></Layout>
     } />
-    <Route path="/my-products" element={
-      <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><MyProductsPage /></Suspense></Layout></ProtectedRoute>
-    } />
+    {/* Flow v2 step 10: absorbed into /stall/build's Products tab (step
+        9). /products/upload and /products/edit/:id stay real routes,
+        deliberately NOT redirected -- MyProductsPage's own "Add"/"Edit"
+        actions navigate to them directly (its own dedicated forms, never
+        embedded inline), so redirecting them to the tab-view-only
+        Products tab would drop the actual add/edit target and break
+        those flows. Today's build (the tab embeds the list, not a
+        rebuilt inline form) wins over the doc's "redirect all 7" here. */}
+    <Route path="/my-products" element={<Navigate to="/stall/build?tab=products" replace />} />
     <Route path="/products/upload" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><UploadForm /></Suspense></Layout></ProtectedRoute>
     } />
-    <Route path="/seller/credentials" element={
-      <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><SellerCredentialsPage /></Suspense></Layout></ProtectedRoute>
-    } />
-    <Route path="/seller/business-settings" element={
-      <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><SellerBusinessSettingsPage /></Suspense></Layout></ProtectedRoute>
-    } />
+    {/* Flow v2 step 10: absorbed into /stall/build's own Credentials/
+        Business tabs (added in this step, alongside the redirect). */}
+    <Route path="/seller/credentials" element={<Navigate to="/stall/build?tab=credentials" replace />} />
+    <Route path="/seller/business-settings" element={<Navigate to="/stall/build?tab=business" replace />} />
     <Route path="/prescription/submit/:sowerId" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><PrescriptionSubmitPage /></Suspense></Layout></ProtectedRoute>
     } />
@@ -765,9 +763,11 @@ const AppRoutes = () => (
     <Route path="/sower-library/:mode" element={
       <Layout><Suspense fallback={<LoadingFallback />}><SowerLibraryPage /></Suspense></Layout>
     } />
-    <Route path="/my-s2g-library" element={
-      <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><MyS2GLibraryPage /></Suspense></Layout></ProtectedRoute>
-    } />
+    {/* Flow v2 step 10: absorbed into /stall/build's Library tab (step
+        9). /my-s2g-library/upload and /my-s2g-library/edit/:id stay real
+        routes, same reasoning as /products/upload above -- their own
+        dedicated forms, not redirected. */}
+    <Route path="/my-s2g-library" element={<Navigate to="/stall/build?tab=library" replace />} />
     <Route path="/my-s2g-library/upload" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><LibraryUploadForm /></Suspense></Layout></ProtectedRoute>
     } />

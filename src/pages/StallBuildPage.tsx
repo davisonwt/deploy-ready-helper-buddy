@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { WizardContainer } from '@/components/wizard/WizardContainer';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,11 @@ import StallPdfUpload, { type StallPdfResult } from '@/components/stalls/StallPd
 import MyProductsPage from '@/pages/MyProductsPage';
 import MyS2GLibraryPage from '@/pages/MyS2GLibraryPage';
 import ProfilePage from '@/pages/ProfilePage';
+import SellerCredentialsPage from '@/pages/SellerCredentialsPage';
+import SellerBusinessSettingsPage from '@/pages/SellerBusinessSettingsPage';
+
+const BUILD_TABS = ['setup', 'products', 'library', 'profile', 'credentials', 'business'] as const;
+type BuildTab = (typeof BUILD_TABS)[number];
 import {
   STALL_CATEGORIES,
   TILE_KINDS,
@@ -52,6 +57,14 @@ function tileTarget(t: TileDraft): string {
 export default function StallBuildPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  // Flow v2 step 10: /my-products, /my-s2g-library, /profile, /seller/
+  // credentials and /seller/business-settings redirect here with `?tab=`
+  // so they land on the matching tab instead of always defaulting to Setup.
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<BuildTab>(() => {
+    const requested = searchParams.get('tab');
+    return (BUILD_TABS as readonly string[]).includes(requested ?? '') ? (requested as BuildTab) : 'setup';
+  });
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -189,19 +202,24 @@ export default function StallBuildPage() {
   ];
 
   return (
-    <Tabs defaultValue="setup" className="max-w-4xl mx-auto px-4 py-6">
+    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as BuildTab)} className="max-w-4xl mx-auto px-4 py-6">
       {/* Flow v2 step 9: /stall/build absorbs the actual /my-products,
           /my-s2g-library and /profile CRUD UI (embedded wholesale below,
           not rebuilt) as sibling tabs alongside the existing 5-step
           wizard -- they're always-editable management panels, not
           sequential publish steps, so they sit outside WizardContainer's
           own step/Next/Back model rather than inside it. Orchards stay
-          OUT of this (Owner Menu's own "My orchards" item, step 5). */}
+          OUT of this (Owner Menu's own "My orchards" item, step 5).
+          Step 10 adds Credentials/Business (seller settings) the same
+          way and makes the whole thing `?tab=`-addressable for the
+          redirects that now point here. */}
       <TabsList className="mb-4 flex-wrap h-auto">
         <TabsTrigger value="setup">Stall Setup</TabsTrigger>
         <TabsTrigger value="products">Products</TabsTrigger>
         <TabsTrigger value="library">Library</TabsTrigger>
         <TabsTrigger value="profile">Profile</TabsTrigger>
+        <TabsTrigger value="credentials">Credentials</TabsTrigger>
+        <TabsTrigger value="business">Business</TabsTrigger>
       </TabsList>
 
       <TabsContent value="setup">
@@ -409,6 +427,12 @@ export default function StallBuildPage() {
       </TabsContent>
       <TabsContent value="profile" className="relative [contain:layout]">
         <ProfilePage />
+      </TabsContent>
+      <TabsContent value="credentials" className="relative [contain:layout]">
+        <SellerCredentialsPage />
+      </TabsContent>
+      <TabsContent value="business" className="relative [contain:layout]">
+        <SellerBusinessSettingsPage />
       </TabsContent>
     </Tabs>
   );
