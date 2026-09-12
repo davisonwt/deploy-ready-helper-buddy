@@ -8,13 +8,24 @@ export default function ProductBasketPage() {
   // handleBestowClick) -- when it does, it carries where to go back to (the
   // same stall sheet, not a generic Products listing) as router state.
   const location = useLocation();
-  const returnTo = (location.state as { returnTo?: { pathname: string; label?: string } } | null)?.returnTo;
+  const returnTo = (location.state as { returnTo?: { pathname: string; label?: string; from?: string } } | null)?.returnTo;
 
   return (
     <div className="container max-w-4xl mx-auto px-4 py-8">
       <div className="mb-6">
         <div className="flex flex-wrap gap-3 mb-6">
-          <Link to={returnTo?.pathname ?? '/products'}>
+          {/* replace: true -- a genuine "go back" hop, not a forward step,
+              so it must replace this basket entry rather than push another
+              one on top (same navigation-loop cause as ChatApp.tsx's
+              handleBackToList: a pushed entry means the stall interior's
+              own close lands back on THIS basket page instead of wherever
+              the visitor actually came from). `from` carries the stall's
+              own origin through too. */}
+          <Link
+            to={returnTo?.pathname ?? '/products'}
+            replace={Boolean(returnTo)}
+            state={returnTo?.from ? { from: returnTo.from } : undefined}
+          >
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
               {returnTo?.label ?? 'Products'}

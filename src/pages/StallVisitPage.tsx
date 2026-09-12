@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Loader2, Store, UserX } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
@@ -37,6 +37,7 @@ interface StallRow {
 export default function StallVisitPage() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const templates = useStallTemplates();
 
@@ -80,12 +81,19 @@ export default function StallVisitPage() {
 
   const isOwner = !!user && !!stall && user.id === stall.user_id;
 
-  // Same "no history to go back to" fallback used elsewhere in the app
-  // (e.g. ProductsPage) -- a direct/shared link into a stall has nothing
-  // to pop back to, so land on the dashboard instead of a blank tab.
+  // Never a blind history.back() -- with the returnTo/chatReturnTo dance
+  // (SeedCard.tsx's Message/Bestow actions, ChatApp.tsx, ProductBasketPage.tsx)
+  // now replacing entries instead of pushing, back() here could still
+  // land on a stale intermediate entry depending on exactly how the
+  // visitor arrived, and a wrong hop there is how the "close -> lands
+  // back on the chat -> Back -> stall -> forever" loop happened. Track
+  // the real origin explicitly instead: whoever navigated here passes
+  // state.from (StallsFeedPage, TribalAliveFeedPage's SeedCard sower
+  // link, MemberProfilePage); no state means a direct/shared link, so
+  // there's nothing meaningful to go back to -- land on the stalls feed.
   const handleClose = () => {
-    if (window.history.length > 1) navigate(-1);
-    else navigate('/dashboard');
+    const from = (location.state as { from?: string } | null)?.from;
+    navigate(from || '/stalls-feed', { replace: true });
   };
 
   if (stall === undefined) {

@@ -70,7 +70,7 @@ const ChatApp = () => {
   // SeedCard.tsx's captureStallReturn(). Back returns to that exact stall
   // sheet instead of the chat list ("Community Chats") it always fell
   // back to before.
-  const chatReturnTo = (location.state as { returnTo?: { pathname: string; label?: string } } | null)?.returnTo;
+  const chatReturnTo = (location.state as { returnTo?: { pathname: string; label?: string; from?: string } } | null)?.returnTo;
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newChatName, setNewChatName] = useState('');
@@ -486,7 +486,22 @@ const ChatApp = () => {
   };
 
   const handleBackToList = () => {
-    if (chatReturnTo?.pathname) { navigate(chatReturnTo.pathname); return; }
+    // { replace: true } -- this is a genuine "go back" action, not a new
+    // step forward, so it must replace this chat entry rather than push
+    // another one on top. Pushing here was the actual cause of the
+    // stall-sheet <-> chat navigation loop: a pushed entry means the
+    // interior's own close (StallVisitPage's handleClose) lands back on
+    // THIS chat entry instead of wherever the visitor actually came from.
+    // The origin (from) is threaded through too, so closing the interior
+    // from here still knows where it originally came from (e.g. the
+    // stalls feed), not just "some stall".
+    if (chatReturnTo?.pathname) {
+      navigate(chatReturnTo.pathname, {
+        replace: true,
+        state: chatReturnTo.from ? { from: chatReturnTo.from } : undefined,
+      });
+      return;
+    }
     try {
       sessionStorage.setItem('chat:listPref', 'list');
     } catch {

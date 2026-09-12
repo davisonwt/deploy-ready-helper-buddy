@@ -81,7 +81,10 @@ export default function StallsFeedPage() {
   }, [chip]);
 
   const openStall = (card: StallCard) => {
-    if (card.username) navigate(`/stall/${card.username}#open`);
+    // { from } lets StallVisitPage's close button come straight back
+    // here instead of guessing (or, before this, blindly history.back()-ing
+    // into whatever the visitor did inside the stall in the meantime).
+    if (card.username) navigate(`/stall/${card.username}#open`, { state: { from: '/stalls-feed' } });
   };
 
   return (

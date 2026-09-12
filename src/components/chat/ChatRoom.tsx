@@ -66,6 +66,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
     display_name: user.display_name,
     first_name: user.first_name,
     last_name: user.last_name,
+    username: user.username,
+    // Only meaningful for my OWN optimistic append -- ChatMessage.jsx's
+    // name fallback chain uses it as a last resort before giving up, and
+    // this is the one case where we're allowed to know the sender's
+    // email (it's our own). A loaded/realtime message's profiles_public
+    // join never carries email (deliberately not exposed for anyone
+    // else, see 20260905160000_profiles_public_view.sql).
+    email: user.email,
     avatar_url: user.avatar_url,
   } : null), [user]);
   const [message, setMessage] = useState('');
@@ -232,7 +240,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
       if (senderIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles_public')
-          .select('user_id, display_name, first_name, last_name, avatar_url')
+          .select('user_id, display_name, first_name, last_name, username, avatar_url')
           .in('user_id', senderIds);
         
         const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
@@ -428,7 +436,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
         if (msg) {
           const { data: profile } = await supabase
             .from('profiles_public')
-            .select('user_id, display_name, first_name, last_name, avatar_url')
+            .select('user_id, display_name, first_name, last_name, username, avatar_url')
             .eq('user_id', msg.sender_id)
             .maybeSingle();
 

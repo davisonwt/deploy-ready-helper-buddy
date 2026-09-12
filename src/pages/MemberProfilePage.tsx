@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useParams, useNavigate, Navigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -31,6 +31,7 @@ interface PublicProfile {
 export default function MemberProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
 
   const { data: profile, isLoading, isError } = useQuery({
@@ -111,7 +112,7 @@ export default function MemberProfilePage() {
                 </p>
                 {profile.username && (
                   <Button asChild variant="outline" className="bg-white/5 border-white/20 text-white hover:bg-white/10 gap-2">
-                    <Link to={`/stall/${profile.username}`}>
+                    <Link to={`/stall/${profile.username}`} state={{ from: location.pathname }}>
                       <Store className="h-4 w-4" /> Visit their stall
                     </Link>
                   </Button>

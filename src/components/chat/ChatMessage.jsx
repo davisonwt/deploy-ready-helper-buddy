@@ -142,11 +142,21 @@ const ChatMessage = ({ message, isOwn = false, onDelete, isInstructor, instructo
 
   const userColor = getPastelColor(message.sender_id);
   
+  // Never "Unknown User" -- display_name -> first/last name -> username
+  // (profiles_public exposes all three) -> email prefix (only ever
+  // present on the sender's OWN optimistic append, see ChatRoom.tsx's
+  // mySenderProfile -- a loaded/realtime message's profile join never
+  // carries another member's email) -> a plain, honest "Member" as the
+  // true last resort when literally nothing came back from the join
+  // (no profiles_public row for that sender_id at all -- a real data
+  // gap, not something this fallback chain can conjure a name out of).
   const getSenderName = () => {
-    if (!sender) return 'Unknown User';
-    return sender.display_name || 
-           `${sender.first_name || ''} ${sender.last_name || ''}`.trim() || 
-           'Anonymous User';
+    if (!sender) return 'Member';
+    return sender.display_name ||
+           `${sender.first_name || ''} ${sender.last_name || ''}`.trim() ||
+           sender.username ||
+           (sender.email ? sender.email.split('@')[0] : '') ||
+           'Member';
   };
 
   return (

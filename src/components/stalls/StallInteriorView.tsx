@@ -188,10 +188,19 @@ export default function StallInteriorView({ ownerId, interiorImageUrl, stallName
   // (StallHotspotSheet's openItemDetail) pushes history. Browser Back from
   // there lands on this same URL+hash, and this component's initial state
   // (readKindFromHash) re-opens the same sheet on remount.
+  //
+  // Passes window.history.state through as the new entry's state (instead
+  // of null) -- this is a raw History API call bypassing React Router's
+  // own history object, so it never touches location.state as React
+  // Router tracks it, but it DOES overwrite the underlying browser entry's
+  // state if given null, which would silently erase the { from } origin
+  // state this same entry was navigated to with (StallVisitPage's
+  // handleClose reads it). Losing that here reintroduced the navigation
+  // loop this hash-sync was itself blamed for.
   useEffect(() => {
     const base = window.location.pathname + window.location.search;
     const next = openKind ? `${base}#stall-kind=${openKind}` : base;
-    window.history.replaceState(null, '', next);
+    window.history.replaceState(window.history.state, '', next);
   }, [openKind]);
 
   const activeHotspot = openKind ? hotspots.find((h) => h.kind === openKind) ?? null : null;

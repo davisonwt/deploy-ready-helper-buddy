@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Heart, MessageCircle, Phone, Video as VideoIcon, Share2, BookOpen, X, UserPlus, UserCheck, Radio, ChevronLeft, ChevronRight, Volume2, VolumeX, Gift, Play, Pause, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -213,6 +213,7 @@ export default function SeedCard({
 }: SeedCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { followUser, unfollowUser, shareContent } = useSocialActions();
   const { send: sendGift, loading: bestowing } = useGiftBestowal();
   const { liveSeeds, goLive, endLive } = useTribalLiveOrchard();
@@ -246,6 +247,20 @@ export default function SeedCard({
   const displayCover = gallery[imgIdx] ?? gallery[0] ?? null;
 
   useEffect(() => { setImgIdx(0); }, [id]);
+
+  // useSignedImages (src/lib/storage/signedImage.ts) returns the raw,
+  // unsigned URLs synchronously on first render, then replaces them with
+  // real signed ones once its async signing effect resolves. A private
+  // bucket's raw URL (formatted as if public) 400s immediately, so the
+  // <img> below's onError can fire and set imageFailed=true BEFORE the
+  // signed URL ever arrives -- a pure timing race, not a per-item data
+  // problem (confirmed live: the covers that showed this were real,
+  // existing storage objects). Once imageFailed flips true nothing ever
+  // reset it, so the placeholder stuck around forever even after
+  // displayCover was updated to a real, working signed URL. Reset it
+  // whenever the URL actually changes so a freshly-resolved one gets its
+  // own attempt.
+  useEffect(() => { setImageFailed(false); }, [displayCover]);
 
   // One shared player instance for the whole card -- music kind only.
   // Rendered inline (not via the separate PreviewPlayer component) so a
@@ -448,7 +463,7 @@ export default function SeedCard({
   // meaningful for a genuine in-app SPA navigate (Message); Voice/Video
   // open the call in a new tab, where the original tab -- stall sheet and
   // all -- is untouched, so there's no "back" state to capture there.
-  const captureStallReturn = (): { pathname: string; label?: string } | null => {
+  const captureStallReturn = (): { pathname: string; label?: string; from?: string } | null => {
     if (typeof window === 'undefined') return null;
     const { pathname, hash } = window.location;
     if (!pathname.startsWith('/stall/')) return null;
@@ -457,7 +472,13 @@ export default function SeedCard({
     // back out by StallInteriorView's own hash-sync effect right after, so
     // it never lingers if the page is later reloaded/shared.
     const withSeed = hash ? `${hash}&seed=${id}` : hash;
-    return { pathname: `${pathname}${withSeed}`, label: ownerName ? `Back to ${ownerName}'s stall` : undefined };
+    // Carries the CURRENT page's own origin (StallVisitPage's { from },
+    // e.g. the stalls feed) forward -- otherwise the replace-navigate back
+    // from chat/basket lands on this stall with no origin state at all,
+    // and closing the interior from there would have nothing to fall back
+    // to but the generic default.
+    const from = (location.state as { from?: string } | null)?.from;
+    return { pathname: `${pathname}${withSeed}`, label: ownerName ? `Back to ${ownerName}'s stall` : undefined, from };
   };
 
   // Attaches this seed's context (title, cover, a link back to this exact
@@ -816,7 +837,7 @@ export default function SeedCard({
             {!hideSowerLine && (
               <div className="flex max-w-md items-center gap-2 rounded-xl bg-black/55 p-2.5 backdrop-blur-md ring-1 ring-white/15 text-white">
                 {ownerUsername ? (
-                  <Link to={`/stall/${ownerUsername}`} className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/10">
+                  <Link to={`/stall/${ownerUsername}`} state={{ from: location.pathname }} className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/10">
                     {ownerAvatar ? <img src={ownerAvatar} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-sm font-semibold">{(ownerName ?? '?')[0]}</div>}
                   </Link>
                 ) : (
@@ -826,7 +847,7 @@ export default function SeedCard({
                 )}
                 <div className="min-w-0 flex-1">
                   {ownerUsername ? (
-                    <Link to={`/stall/${ownerUsername}`} className="block truncate text-base font-bold leading-tight hover:underline">{ownerName}</Link>
+                    <Link to={`/stall/${ownerUsername}`} state={{ from: location.pathname }} className="block truncate text-base font-bold leading-tight hover:underline">{ownerName}</Link>
                   ) : (
                     <div className="truncate text-base font-bold leading-tight">{ownerName}</div>
                   )}
