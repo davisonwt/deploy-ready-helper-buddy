@@ -97,6 +97,13 @@ export default function StallsFeedPage() {
     const requested = searchParams.get('chip');
     return CHIPS.some((c) => c.id === requested) ? (requested as Chip) : 'for_you';
   });
+  // My Tribe's "My village" hotspot (src/pages/MyTribePage.tsx) opens
+  // here with ?tribe=mine -- narrows to stalls of members the viewer
+  // invited (profiles.referred_by) or follows (public.followers), chips
+  // still apply on top. Read once like chip/q above; `tribeMine` set to
+  // false clears it locally without touching the URL.
+  const [tribeMine, setTribeMine] = useState(() => searchParams.get('tribe') === 'mine');
+  const [tribeUserIds, setTribeUserIds] = useState<string[] | null>(null);
   const [cards, setCards] = useState<StallCard[] | null>(null);
   const [orchardCards, setOrchardCards] = useState<OrchardCard[] | null>(null);
   // "‹ pan ›" hint on the portrait-pannable front image -- one shared flag
@@ -175,6 +182,24 @@ export default function StallsFeedPage() {
     return () => { alive = false; };
   }, []);
 
+  // "My village": union of who the viewer invited (referred_by) and who
+  // they follow (public.followers) -- only computed when tribeMine is on.
+  useEffect(() => {
+    if (!tribeMine || !user) { setTribeUserIds(tribeMine ? [] : null); return; }
+    let alive = true;
+    (async () => {
+      const [{ data: referredRows }, { data: followRows }] = await Promise.all([
+        supabase.from('profiles').select('user_id').eq('referred_by', user.id),
+        supabase.from('followers').select('following_id').eq('follower_id', user.id),
+      ]);
+      const ids = new Set<string>();
+      for (const r of (referredRows ?? []) as { user_id: string }[]) ids.add(r.user_id);
+      for (const r of (followRows ?? []) as { following_id: string }[]) ids.add(r.following_id);
+      if (alive) setTribeUserIds(Array.from(ids));
+    })();
+    return () => { alive = false; };
+  }, [tribeMine, user]);
+
   const filteredCards = useMemo(() => {
     if (!cards) return cards;
     const q = search.trim().toLowerCase();
@@ -226,11 +251,11 @@ export default function StallsFeedPage() {
   // happens to match the search), it isn't listed twice.
   const pinnedOrderedCards = useMemo(() => {
     if (!orderedCards) return orderedCards;
-    if (search.trim() || pinnedCards.length === 0) return orderedCards;
+    if (search.trim() || tribeMine || pinnedCards.length === 0) return orderedCards;
     const pinnedIds = new Set(pinnedCards.map((c) => c.user_id));
     const rest = orderedCards.filter((c) => !pinnedIds.has(c.user_id));
     return [...pinnedCards, ...rest];
-  }, [orderedCards, pinnedCards, search]);
+  }, [orderedCards, pinnedCards, search, tribeMine]);
 
   useEffect(() => {
     if (!showPanHint) return;
@@ -249,6 +274,10 @@ export default function StallsFeedPage() {
       })();
       return () => { alive = false; };
     }
+    // tribeMine's own id list isn't ready yet -- wait rather than run an
+    // unfiltered query first and flash the wrong stalls.
+    if (tribeMine && tribeUserIds === null) return;
+    if (tribeMine && tribeUserIds!.length === 0) { setCards([]); return; }
     (async () => {
       let q = supabase
         .from('stalls')
@@ -259,6 +288,9 @@ export default function StallsFeedPage() {
         .limit(50);
       if (chip !== 'for_you' && chip !== 'new') {
         q = q.eq('category', chip);
+      }
+      if (tribeMine) {
+        q = q.in('user_id', tribeUserIds!);
       }
       const { data: stallRows } = await q;
       const rows = (stallRows ?? []) as Omit<StallCard, 'username'>[];
@@ -285,7 +317,7 @@ export default function StallsFeedPage() {
       }
     })();
     return () => { alive = false; };
-  }, [chip]);
+  }, [chip, tribeMine, tribeUserIds]);
 
   const openStall = (card: StallCard) => {
     // { from } lets StallVisitPage's close button come straight back
@@ -309,6 +341,20 @@ export default function StallsFeedPage() {
         />
 
         <div className="flex-1 min-h-0 min-w-0 flex flex-col lg:bg-[#140c06]">
+          {/* My Tribe's "My village" hotspot arrives with ?tribe=mine --
+              shown as a dismissible badge rather than silently narrowing
+              the feed with no indication why, or trapping the visitor in
+              a filtered view they can't back out of without reloading. */}
+          {tribeMine && (
+            <div className="shrink-0 flex items-center gap-2 px-4 pt-3 lg:bg-[#140c06]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-3 py-1 text-xs font-semibold text-amber-200">
+                My village
+                <button type="button" onClick={() => setTribeMine(false)} aria-label="Clear My village filter" className="hover:text-amber-50">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            </div>
+          )}
           {/* Chips + search + ✕: in flow ABOVE the image at every size now
               (was lg:absolute over the image -- wrapping to two rows there
               was covering the top of the stall sign, the actual photo
@@ -441,6 +487,8 @@ export default function StallsFeedPage() {
             <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm px-6 text-center">
               {search.trim() ? (
                 <>No stalls match "{search.trim()}".</>
+              ) : tribeMine ? (
+                <>No one in your village has a stall yet — invite someone or follow a member to grow it.</>
               ) : (
                 <>No stalls here yet — check back soon, or{' '}
                   {user && <Link to="/stall/build" className="underline ml-1">build your own</Link>}
