@@ -7,6 +7,34 @@ const SUPABASE_ANON_KEY =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
   'sb_publishable_Z8-I1gu2Q1yid1Q4jKRf7Q_jSGcsVpa';
 
+// getSession() only recovers/refreshes an expired session as part of the
+// Supabase client's own construction-time initialize() -- a call made
+// later, against an in-memory session that's since expired (the
+// background auto-refresh timer only runs while a tab has focus/is
+// alive), returns that stale session as-is. A brand-new tab/window
+// opened via window.open() used to hit exactly this: its own fresh
+// client initializes fine, but if the token it recovered from
+// localStorage was already past (or very near) expiry, getSession()
+// alone handed back a token the server would reject as unauthorized --
+// this is what "Call failed: unauthorized" traced back to (SeedCard's
+// Voice/Video button, which used to open the call in a new tab).
+// Explicitly checking expiry and calling refreshSession() here closes
+// that gap for every caller of this helper, not just the one that
+// surfaced it.
+const SESSION_EXPIRY_BUFFER_SECONDS = 30;
+
+async function getFreshAccessToken(): Promise<string | null> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  let session = sessionData?.session ?? null;
+  const nowSeconds = Date.now() / 1000;
+  const isStale = !session || !session.expires_at || session.expires_at <= nowSeconds + SESSION_EXPIRY_BUFFER_SECONDS;
+  if (isStale) {
+    const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+    if (!refreshErr && refreshed?.session) session = refreshed.session;
+  }
+  return session?.access_token ?? null;
+}
+
 /**
  * Call a payment edge function reliably.
  *
@@ -27,8 +55,7 @@ export async function invokePaymentFunction<T = any>(
   options: { method?: 'GET' | 'POST' } = {},
 ): Promise<T> {
   const method = options.method ?? 'POST';
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
+  const token = await getFreshAccessToken();
   if (!token) {
     throw new Error('Your session expired — please sign in again and retry.');
   }

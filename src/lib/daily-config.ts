@@ -139,7 +139,8 @@ export type CallEventType =
   | 'answered_sent'  // callee's answer DB update + broadcast back to the caller
   | 'answered_seen'  // caller's client actually processes it (handleCallAnswered)
   | 'daily_joined'   // this client's own 'joined-meeting' fired for the Daily room
-  | 'leave';         // this client's own 'left-meeting' fired
+  | 'leave'          // this client's own 'left-meeting' fired
+  | 'call_failed';   // fetchDailyMeetingToken (or the join itself) threw -- see `reason`
 
 /**
  * One row per call-signaling hop in public.call_events -- "who was in
@@ -152,8 +153,14 @@ export type CallEventType =
  * signaling hops (before a Daily room is resolved) it's the
  * call_sessions id, which still keys all of one call's hops together.
  * Fire-and-forget: a logging failure must never block or fail a call.
+ *
+ * `reason` is only meaningful (and only sent) for 'call_failed' -- the
+ * thrown error's own message (the edge function's error string, e.g.
+ * "unauthorized"/"forbidden"/"daily_token_failed", or a client-side one
+ * like "Your session expired…"), truncated so a verbose message can't
+ * blow past the column's practical size.
  */
-export async function logCallEvent(roomName: string, eventType: CallEventType): Promise<void> {
+export async function logCallEvent(roomName: string, eventType: CallEventType, reason?: string): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -161,6 +168,7 @@ export async function logCallEvent(roomName: string, eventType: CallEventType): 
       room_name: roomName,
       user_id: user.id,
       event_type: eventType,
+      reason: reason ? reason.slice(0, 300) : null,
     });
     if (error) console.error('logCallEvent: insert failed', error);
   } catch (err) {

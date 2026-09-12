@@ -133,6 +133,10 @@ export function JitsiCall({ roomName, roomKind = 'custom', onLeave, userInfo, is
         if (joinedRef.current) return; // joined for real despite the rejection -- nothing to tear down or report
         console.error('Failed to start Daily call', error);
         toast({ title: 'Call failed', description: error?.message || 'Could not start the call.', variant: 'destructive' });
+        // roomName (the input prop, e.g. the chat room id), not room_name --
+        // the latter only exists once fetchDailyMeetingToken has already
+        // succeeded, which is exactly what didn't happen here.
+        void logCallEvent(roomName, 'call_failed', error?.message);
         setIsLoading(false);
       }
     };

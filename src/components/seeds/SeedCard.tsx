@@ -461,10 +461,8 @@ export default function SeedCard({
   // history.replaceState (#stall-kind=<kind>, src/components/stalls/
   // StallInteriorView.tsx), so a plain window.location read here already
   // has the right "come back to this exact sheet" address, no extra
-  // plumbing through StallHotspotSheet/StallInteriorView needed. Only
-  // meaningful for a genuine in-app SPA navigate (Message); Voice/Video
-  // open the call in a new tab, where the original tab -- stall sheet and
-  // all -- is untouched, so there's no "back" state to capture there.
+  // plumbing through StallHotspotSheet/StallInteriorView needed. Used by
+  // both Message and Voice/Video -- both navigate in this same tab now.
   const captureStallReturn = (): { pathname: string; label?: string; from?: string } | null => {
     if (typeof window === 'undefined') return null;
     const { pathname, hash } = window.location;
@@ -540,7 +538,20 @@ export default function SeedCard({
     setStarting(which);
     const roomId = await startDirectRoom();
     setStarting(null);
-    if (roomId) window.open(`/call/chat_room/${roomId}`, '_blank', 'noopener,noreferrer');
+    // Same tab, not window.open('_blank') -- a new tab boots a brand-new
+    // React app + Supabase client from scratch, and if the persisted
+    // session it recovers from localStorage happened to be past (or very
+    // near) expiry, the call's token-fetch could reach
+    // create-daily-meeting-token before that session was refreshed,
+    // surfacing as "Call failed: unauthorized" (2026-09-12 bug report).
+    // Navigating in this same, already-authenticated tab removes that
+    // race by construction. Mirrors handleMessage's captureStallReturn
+    // pattern just above, so "leave call" can return to this exact stall
+    // sheet (CallPage reads the same returnTo state).
+    if (roomId) {
+      const returnTo = captureStallReturn();
+      navigate(`/call/chat_room/${roomId}`, returnTo ? { state: { returnTo } } : undefined);
+    }
   };
 
   const effectiveBestowAmount = bestowAmount ?? (price && price > 0 ? price : 5);
