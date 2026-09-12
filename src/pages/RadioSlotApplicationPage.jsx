@@ -13,7 +13,7 @@ const RadioSlotApplicationPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 py-8">
-      <RadioSlotApplicationWizard onClose={() => navigate('/radio-management')} />
+      <RadioSlotApplicationWizard onClose={() => navigate('/grove-station?tab=management')} />
     </div>
   );
 };

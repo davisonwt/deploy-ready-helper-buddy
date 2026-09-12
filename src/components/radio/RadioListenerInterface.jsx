@@ -42,11 +42,22 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
   const [showTrackPurchase, setShowTrackPurchase] = useState(false)
 
   useEffect(() => {
+    // setupRealtimeSubscriptions() returns its own unsubscribe closure --
+    // previously discarded here, so a re-run of this effect for the same
+    // liveSession (e.g. a parent re-render handing down a new prop
+    // reference for the same session) re-subscribed the same channel
+    // names without tearing down the old ones, and Supabase's client
+    // throws "cannot add postgres_changes callbacks after subscribe()"
+    // on the second subscribe. Confirmed via a live repro, not assumed.
+    let unsubscribeRealtime = null
     if (liveSession && user) {
       checkCallQueueStatus()
       fetchViewerCount()
       fetchCurrentPlaylist()
-      setupRealtimeSubscriptions()
+      unsubscribeRealtime = setupRealtimeSubscriptions()
+    }
+    return () => {
+      if (unsubscribeRealtime) unsubscribeRealtime()
     }
   }, [liveSession, user])
 

@@ -1,9 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useId } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
 
 export function useGroveStation() {
+  // Flow v2 step 11: multiple components independently call this hook
+  // (GroveStationPage itself, RadioSlotApplicationWizard, CreateDJProfileForm,
+  // etc.) and several of those now mount concurrently as sibling tabs
+  // inside GroveStationPage where they never coexisted before (each was
+  // its own route). The two channels below used hardcoded, non-unique
+  // names -- a second concurrent hook instance subscribing to the same
+  // name hit Supabase's "cannot add postgres_changes callbacks after
+  // subscribe()" guard and crashed the page. Confirmed via a live repro,
+  // not assumed.
+  const channelKey = useId().replace(/:/g, '')
   const [stationConfig, setStationConfig] = useState(null)
   const [currentShow, setCurrentShow] = useState(null)
   const [schedule, setSchedule] = useState([])
@@ -524,8 +534,8 @@ export function useGroveStation() {
   useEffect(() => {
     // Subscribe to station config changes
     const configSubscription = supabase
-      .channel('station-config')
-      .on('postgres_changes', 
+      .channel(`station-config-${channelKey}`)
+      .on('postgres_changes',
         { event: '*', schema: 'public', table: 'radio_station_config' },
         () => fetchStationConfig()
       )
@@ -533,7 +543,7 @@ export function useGroveStation() {
 
     // Subscribe to schedule changes
     const scheduleSubscription = supabase
-      .channel('schedule-changes')
+      .channel(`schedule-changes-${channelKey}`)
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'radio_schedule' },
         () => {

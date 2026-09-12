@@ -57,18 +57,15 @@ import {
   SeedSubmissionPage,
   YhvhOrchardsPage,
   Yhvh364Page,
-  RadioSlotApplicationPage,
   CommunityVideosPage,
   MarketingVideosGallery,
   CompanionsHubPage,
   CommunityOfferingPage,
   TestBasketPage,
   GroveStationPage,
-  RadioManagementPage,
   ClubhousePage,
   VideoPage,
   
-  RadioPage,
   CreatePremiumRoomPage,
   PayoutSettingsPage,
   PaypalConnectedPage,
@@ -107,9 +104,7 @@ import {
   NowPaymentsTestPage,
   PaypalTestPage,
   SowerProfile,
-  RadioSessions,
   
-  RadioGenerator,
   LiveRoomsPage,
   CreateLiveRoomPage,
   SupportUsPage,
@@ -138,7 +133,6 @@ import {
   EternalForestPage,
   AdminAnalyticsPage,
   AdminDashboardPage,
-  AdminRadioPage,
   AdminSeedsPage,
   AdminSettlementConsentsPage,
   
@@ -481,9 +475,8 @@ const AppRoutes = () => (
       </ProtectedRoute>
     } />
     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-    <Route path="/radio-slot-application" element={
-      <ProtectedRoute><Layout><RadioSlotApplicationPage /></Layout></ProtectedRoute>
-    } />
+    {/* Flow v2 step 11: consolidated into /grove-station's tabs. */}
+    <Route path="/radio-slot-application" element={<Navigate to="/grove-station?tab=apply" replace />} />
     <Route path="/premium-rooms" element={
       <ProtectedRoute><Layout><PremiumRoomsLanding /></Layout></ProtectedRoute>
     } />
@@ -502,11 +495,7 @@ const AppRoutes = () => (
     <Route path="/grove-station" element={
       <ProtectedRoute><Layout><GroveStationPage /></Layout></ProtectedRoute>
     } />
-    <Route path="/radio-management" element={
-      <ProtectedRoute allowedRoles={['radio_admin', 'admin', 'gosat']}>
-        <Layout><RadioManagementPage /></Layout>
-      </ProtectedRoute>
-    } />
+    <Route path="/radio-management" element={<Navigate to="/grove-station?tab=management" replace />} />
     <Route path="/music-library" element={
       <Layout><Suspense fallback={<LoadingFallback />}><MusicLibraryPage /></Suspense></Layout>
     } />
@@ -516,24 +505,20 @@ const AppRoutes = () => (
     <Route path="/my-radio-opt-in" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><MyRadioOptInPage /></Suspense></Layout></ProtectedRoute>
     } />
-    <Route path="/apply-radio-slot" element={
-      <ProtectedRoute><Layout><RadioSlotApplicationPage /></Layout></ProtectedRoute>
-    } />
+    {/* Duplicate of /radio-slot-application, same component -- same target. */}
+    <Route path="/apply-radio-slot" element={<Navigate to="/grove-station?tab=apply" replace />} />
     <Route path="/create-premium-room" element={
       <ProtectedRoute><Layout><CreatePremiumRoomPage /></Layout></ProtectedRoute>
     } />
-    <Route path="/radio" element={
-      <ProtectedRoute><Layout><RadioPage /></Layout></ProtectedRoute>
-    } />
+    {/* /radio's own component (src/components/radio/RadioPage.tsx) duplicated
+        Grove Station's own "Listen Now" tab -- redirect to the plain
+        default rather than embed a second listening UI. */}
+    <Route path="/radio" element={<Navigate to="/grove-station" replace />} />
     <Route path="/sower/:id" element={
       <ProtectedRoute><Layout><SowerProfile /></Layout></ProtectedRoute>
     } />
-    <Route path="/radio-sessions" element={
-      <ProtectedRoute><Layout><RadioSessions /></Layout></ProtectedRoute>
-    } />
-    <Route path="/radio-generator" element={
-      <ProtectedRoute><Layout><RadioGenerator /></Layout></ProtectedRoute>
-    } />
+    <Route path="/radio-sessions" element={<Navigate to="/grove-station?tab=sessions" replace />} />
+    <Route path="/radio-generator" element={<Navigate to="/grove-station?tab=generator" replace />} />
     <Route path="/clubhouse" element={
       <ProtectedRoute><ClubhousePage /></ProtectedRoute>
     } />
@@ -676,11 +661,7 @@ const AppRoutes = () => (
     <Route path="/admin/moderation" element={<Navigate to="/admin/dashboard" replace />} />
     {/* Flow v2 step 1: duplicate route, same component as /admin/dashboard */}
     <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-    <Route path="/admin/radio" element={
-      <ProtectedRoute allowedRoles={['admin', 'gosat']}>
-        <Layout><Suspense fallback={<LoadingFallback />}><AdminRadioPage /></Suspense></Layout>
-      </ProtectedRoute>
-    } />
+    <Route path="/admin/radio" element={<Navigate to="/grove-station?tab=admin" replace />} />
     <Route path="/admin/seeds" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}>
         <Layout><Suspense fallback={<LoadingFallback />}><AdminSeedsPage /></Suspense></Layout>

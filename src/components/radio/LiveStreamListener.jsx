@@ -115,18 +115,27 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   }
 
   useEffect(() => {
+    // setupRealtimeSubscriptions() returns its own unsubscribe closure --
+    // previously discarded here, so a re-run of this effect for the same
+    // liveSession (e.g. a parent re-render that hands down a new prop
+    // reference for the same session) re-subscribed the same channel
+    // name without ever tearing down the old one, and Supabase's client
+    // throws "cannot add postgres_changes callbacks after subscribe()"
+    // on the second subscribe. Confirmed via a live repro, not assumed.
+    let unsubscribeRealtime = null
     if (liveSession) {
       fetchActiveHosts()
-      setupRealtimeSubscriptions()
+      unsubscribeRealtime = setupRealtimeSubscriptions()
       setViewerCount(liveSession.viewer_count || 0)
     }
-    
+
     // Always try to load playlist for current show
     if (currentShow) {
       fetchPlaylistForCurrentShow()
     }
 
     return () => {
+      if (unsubscribeRealtime) unsubscribeRealtime()
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close()
       }

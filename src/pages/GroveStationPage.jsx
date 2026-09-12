@@ -1,5 +1,12 @@
 import React, { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useGroveStation } from '@/hooks/useGroveStation'
+import { useRoles } from '@/hooks/useRoles'
+import RadioSlotApplicationPage from '@/pages/RadioSlotApplicationPage'
+import RadioSessions from '@/pages/RadioSessions'
+import RadioGenerator from '@/pages/RadioGenerator'
+import RadioManagementPage from '@/pages/RadioManagementPage'
+import AdminRadioPage from '@/pages/AdminRadioPage'
 import RadioListenerInterface from '@/components/radio/RadioListenerInterface'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -53,6 +60,17 @@ export default function GroveStationPage() {
     updateShowStatus,
     submitFeedback
   } = useGroveStation()
+  const { isAdminOrGosat, hasRole } = useRoles()
+  const canManageRadio = isAdminOrGosat || hasRole('radio_admin')
+  // Flow v2 step 11: the 7 radio routes consolidate into tabs here --
+  // `?tab=` lets the redirects from those old paths land on the right
+  // one (StallBuildPage/StallsFeedPage already use this same pattern).
+  const [searchParams] = useSearchParams()
+  const GROVE_TABS = ['listen', 'schedule', 'djs', 'broadcast', 'stats', 'apply', 'sessions', 'generator', 'management', 'admin']
+  const [activeTab, setActiveTab] = useState(() => {
+    const requested = searchParams.get('tab')
+    return GROVE_TABS.includes(requested) ? requested : 'listen'
+  })
 
   const [isPlaying, setIsPlaying] = useState(false)
   const [showCreateDJ, setShowCreateDJ] = useState(false)
@@ -126,48 +144,85 @@ export default function GroveStationPage() {
 
         {/* Prominent Tab Navigation */}
         <Card className="border-2 shadow-xl">
-          <Tabs defaultValue="listen" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="p-6">
-              <TabsList className="w-full h-auto bg-transparent grid gap-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                {/* First Row - 3 buttons */}
-                <TabsTrigger 
-                  value="listen" 
+              <TabsList className="w-full h-auto bg-transparent flex flex-wrap gap-3">
+                <TabsTrigger
+                  value="listen"
                   className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200"
                 >
                   <Headphones className="h-5 w-5" />
                   <span>Listen Now</span>
                 </TabsTrigger>
-                <TabsTrigger 
+                <TabsTrigger
                   value="schedule"
                   className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200"
                 >
                   <Calendar className="h-5 w-5" />
                   <span>Schedule</span>
                 </TabsTrigger>
-                <TabsTrigger 
+                <TabsTrigger
                   value="djs"
                   className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200"
                 >
                   <Users className="h-5 w-5" />
                   <span>Our DJs</span>
                 </TabsTrigger>
-                
-                {/* Second Row - 2 buttons centered */}
-                <TabsTrigger 
-                  value="broadcast" 
+                <TabsTrigger
+                  value="broadcast"
                   disabled={!isDJ}
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-800 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200 disabled:opacity-40 disabled:hover:scale-100 col-start-1 col-end-2"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-800 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200 disabled:opacity-40 disabled:hover:scale-100"
                 >
                   <Mic className="h-5 w-5" />
                   <span>Go Live</span>
                 </TabsTrigger>
-                <TabsTrigger 
+                <TabsTrigger
                   value="stats"
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-900 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200 col-start-2 col-end-3"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-900 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200"
                 >
                   <TrendingUp className="h-5 w-5" />
                   <span>Stats</span>
                 </TabsTrigger>
+                {/* Flow v2 step 11: consolidated radio routes */}
+                <TabsTrigger
+                  value="apply"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg bg-emerald-100 hover:bg-emerald-200"
+                >
+                  <Zap className="h-5 w-5" />
+                  <span>Apply for a Slot</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="sessions"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-emerald-700 data-[state=active]:text-white data-[state=active]:shadow-lg bg-emerald-100 hover:bg-emerald-200"
+                >
+                  <Clock className="h-5 w-5" />
+                  <span>Sessions</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="generator"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-emerald-800 data-[state=active]:text-white data-[state=active]:shadow-lg bg-emerald-100 hover:bg-emerald-200"
+                >
+                  <ListMusic className="h-5 w-5" />
+                  <span>Generator</span>
+                </TabsTrigger>
+                {canManageRadio && (
+                  <TabsTrigger
+                    value="management"
+                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-amber-700 data-[state=active]:text-white data-[state=active]:shadow-lg bg-amber-100 hover:bg-amber-200"
+                  >
+                    <Radio className="h-5 w-5" />
+                    <span>DJ Management</span>
+                  </TabsTrigger>
+                )}
+                {isAdminOrGosat && (
+                  <TabsTrigger
+                    value="admin"
+                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-amber-900 data-[state=active]:text-white data-[state=active]:shadow-lg bg-amber-100 hover:bg-amber-200"
+                  >
+                    <Globe className="h-5 w-5" />
+                    <span>Station Admin</span>
+                  </TabsTrigger>
+                )}
               </TabsList>
             </div>
 
@@ -526,6 +581,37 @@ export default function GroveStationPage() {
           <TabsContent value="stats" className="space-y-6 p-6 bg-card">
             <StationStats stats={stats} />
           </TabsContent>
+
+          {/* Flow v2 step 11: consolidated radio routes. [contain:layout]
+              same as StallBuildPage's step 9 embeds, defensively, since
+              these were all built as standalone pages too. Children are
+              rendered only while their own tab is active (Radix mounts
+              every TabsContent up front otherwise) -- with all 5 mounted
+              at once alongside this page's own useGroveStation() realtime
+              subscriptions, a live-session listener inside one of them
+              (UniversalLiveSessionInterface, used by the pre-existing
+              Broadcast tab) hit Supabase's own "cannot add
+              postgres_changes callbacks after subscribe()" guard, a real
+              crash confirmed via a live repro, not assumed. */}
+          <TabsContent value="apply" className="relative [contain:layout] p-6 bg-card">
+            {activeTab === 'apply' && <RadioSlotApplicationPage />}
+          </TabsContent>
+          <TabsContent value="sessions" className="relative [contain:layout] p-6 bg-card">
+            {activeTab === 'sessions' && <RadioSessions />}
+          </TabsContent>
+          <TabsContent value="generator" className="relative [contain:layout] p-6 bg-card">
+            {activeTab === 'generator' && <RadioGenerator />}
+          </TabsContent>
+          {canManageRadio && (
+            <TabsContent value="management" className="relative [contain:layout] p-6 bg-card">
+              {activeTab === 'management' && <RadioManagementPage />}
+            </TabsContent>
+          )}
+          {isAdminOrGosat && (
+            <TabsContent value="admin" className="relative [contain:layout] p-6 bg-card">
+              {activeTab === 'admin' && <AdminRadioPage />}
+            </TabsContent>
+          )}
         </Tabs>
       </Card>
 
