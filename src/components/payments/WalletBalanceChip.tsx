@@ -36,6 +36,14 @@ export default function WalletBalanceChip() {
   const hideForChatOrCall = CHAT_OR_CALL_ROUTES.some((p) => location.pathname.startsWith(p));
   if (!user || location.pathname === '/settings/payouts' || hideForChatOrCall) return null;
 
+  // Farm-Stalls' desktop 3-column frame (StallsFeedPage, StallVisitPage's
+  // StallInteriorView) already shows the wallet balance in StallTodayPanel,
+  // the permanent right column -- this chip on top of it there is a
+  // duplicate. Below 1024px neither page has that column (it's a drawer,
+  // not shown by default), so the chip stays useful there -- hide with a
+  // CSS breakpoint (lg:hidden) rather than unmounting outright.
+  const desktopDuplicatesWalletPanel = location.pathname === '/stalls-feed' || location.pathname.startsWith('/stall/');
+
   const low = !!address && balance !== null && balance < LOW_BALANCE_THRESHOLD;
 
   return (
@@ -43,6 +51,7 @@ export default function WalletBalanceChip() {
       to="/settings/payouts"
       className={cn(
         'fixed bottom-6 right-24 z-50 flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-semibold shadow-lg backdrop-blur transition-colors',
+        desktopDuplicatesWalletPanel && 'lg:hidden',
         !address
           ? 'border-border bg-background/90 text-muted-foreground hover:text-foreground'
           : low

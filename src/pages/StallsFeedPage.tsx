@@ -106,18 +106,25 @@ export default function StallsFeedPage() {
         />
 
         <div className="flex-1 min-h-0 flex flex-col lg:relative lg:bg-[#140c06]">
-          {/* Chips: in-flow on mobile (unchanged). On desktop they float
-              over the top of the image instead of eating into the
-              container's height, so the image below still gets the full
-              column height -- same zero-extra-chrome frame as the interior. */}
-          <div className="shrink-0 flex gap-2 overflow-x-auto px-4 py-3 lg:absolute lg:top-0 lg:left-0 lg:right-0 lg:z-10 lg:bg-gradient-to-b lg:from-black/70 lg:to-transparent [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {/* Chips: in-flow, horizontal-scroll on mobile (unchanged). On
+              desktop they still float over the top of the image (so the
+              image below keeps the full column height -- same
+              zero-extra-chrome frame as the interior) but wrap onto a
+              second line instead of overflowing off the right edge, and
+              are restyled gold-on-dark-wood -- solid enough pills to stay
+              readable over any photo, and belonging to the same "the stall
+              is the frame" language as StallSideNav/StallTodayPanel,
+              instead of a heavy black scrim. */}
+          <div className="shrink-0 flex gap-2 overflow-x-auto px-4 py-3 lg:absolute lg:top-0 lg:left-0 lg:right-0 lg:z-10 lg:flex-wrap lg:overflow-visible lg:bg-[#140c06]/70 lg:backdrop-blur-sm lg:border-b lg:border-amber-500/15 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {CHIPS.map((c) => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => setChip(c.id)}
                 className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors ${
-                  chip === c.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+                  chip === c.id
+                    ? 'bg-primary text-primary-foreground lg:bg-amber-500 lg:text-amber-950'
+                    : 'bg-muted text-muted-foreground hover:bg-accent lg:bg-amber-500/10 lg:text-amber-200 lg:border lg:border-amber-500/25 lg:hover:bg-amber-500/20'
                 }`}
               >
                 {c.label}
