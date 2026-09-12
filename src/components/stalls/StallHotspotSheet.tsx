@@ -10,6 +10,8 @@ interface Props {
   ownerId: string;
   ownerName: string;
   kind: TileKind;
+  /** The hotspot's own painted label (e.g. "Our Recipes", "Bee Facts") -- shown in the header/empty-state instead of the generic kind label, which is a fallback for when a hotspot has no label of its own. */
+  label?: string;
   isOwner?: boolean;
   onClose: () => void;
   /** Scrolls this item into view once its card mounts -- arriving back from a SeedCard Message action via the URL's one-time &seed=<id> (see StallInteriorView.tsx's readSeedIdFromHash). */
@@ -145,7 +147,8 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
  *     painted with either kind before this fell through to the generic
  *     else branch below and silently showed books/ebooks instead.
  */
-export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, onClose, scrollToItemId, viewerCutoff }: Props) {
+export default function StallHotspotSheet({ ownerId, ownerName, kind, label, isOwner, onClose, scrollToItemId, viewerCutoff }: Props) {
+  const displayLabel = label?.trim() || KIND_LABEL[kind] || kind;
   const [items, setItems] = useState<Item[] | null>(null);
   // undefined = still loading; null = loaded, nothing there; string = loaded, has content.
   const [bio, setBio] = useState<string | null | undefined>(undefined);
@@ -355,7 +358,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
           <div className="h-1 w-10 rounded-full bg-amber-100/25" />
         </div>
         <div className="shrink-0 flex items-center justify-between px-5 pb-3 border-b border-amber-500/15">
-          <h2 className="font-serif text-xl text-amber-200 tracking-wide">{KIND_LABEL[kind] ?? kind}</h2>
+          <h2 className="font-serif text-xl text-amber-200 tracking-wide">{displayLabel}</h2>
           <button type="button" onClick={handleClose} aria-label="Close" className="text-amber-100/60 hover:text-amber-100 transition-colors">
             <X className="h-5 w-5" />
           </button>
@@ -375,7 +378,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, isOwner, o
           ) : items === null ? (
             <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-amber-100/40" /></div>
           ) : items.length === 0 ? (
-            <EmptyState text={EMPTY_TEXT[kind] ?? 'Nothing here yet'} isOwner={isOwner} addOnePath={ADD_ONE_PATH[kind]} addOneLabel="Add one" />
+            <EmptyState text={`Nothing in ${displayLabel} yet`} isOwner={isOwner} addOnePath={ADD_ONE_PATH[kind]} addOneLabel={`Add to ${displayLabel}`} />
           ) : (
             // Horizontal swipeable row of SeedCards (Flow v2 step 2) --
             // snap-x, ~80% width per card on phone, capped at 300px on

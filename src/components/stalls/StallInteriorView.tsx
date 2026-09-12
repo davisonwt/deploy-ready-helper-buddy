@@ -636,6 +636,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           ownerId={ownerId}
           ownerName={stallName}
           kind={activeHotspot.kind}
+          label={activeHotspot.label}
           isOwner={effectiveIsOwner}
           onClose={() => setOpenKind(null)}
           scrollToItemId={initialScrollSeedId}
