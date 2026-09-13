@@ -34,6 +34,26 @@ interface Props {
    * only screen an owner lands on with no other way to sign out.
    */
   hideClose?: boolean;
+  /**
+   * Pre-flight fix (2026-09-13, Davison): DashboardPage.tsx's own bottom
+   * bar and settlement-consent banner used to render as SIBLINGS of this
+   * component with a higher raw z-index (10000/10001) than any sheet/
+   * overlay THIS component opens (StallHotspotSheet, LiveStageOverlay,
+   * StallJoinSheet). That doesn't work: this root div's own `z-[9999]` +
+   * `position: fixed` makes it a stacking context, so every descendant's
+   * z-index (however high) is compared to outside siblings as a single
+   * unit at that level -- an external sibling at z-10000 always paints
+   * over the WHOLE subtree, including its own internal 10000+/1000
+   * overlays. Real, reproduced impact: going live from the owner's own
+   * /cockpit hid LiveStage's hand-raise tray and spotlight requests
+   * entirely behind the bottom bar, with no visible error -- a host could
+   * never actually approve a guest. Accepting these as slots rendered
+   * INSIDE this same stacking context (below, via z-[500]) lets
+   * LiveStageOverlay/StallHotspotSheet/StallJoinSheet's own z-index
+   * naturally cover them again, same as any other page's chrome.
+   */
+  bottomBar?: ReactNode;
+  topBanner?: ReactNode;
 }
 
 /**
@@ -119,7 +139,7 @@ function StallDrawer({ side, open, onClose, children }: { side: 'left' | 'right'
   );
 }
 
-export default function StallInteriorView({ ownerId, username, interiorImageUrl, stallName, hotspots, onClose, isOwner, hideClose }: Props) {
+export default function StallInteriorView({ ownerId, username, interiorImageUrl, stallName, hotspots, onClose, isOwner, hideClose, bottomBar, topBanner }: Props) {
   const { setStallInteriorOpen } = useAppContext();
   const { user, logout } = useAuth();
   // Pre-flight (2026-09-13, Davison): same "who's alive in the orchard
@@ -682,6 +702,13 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
       {showJoinSheet && (
         <StallJoinSheet stallName={stallName} onClose={() => setShowJoinSheet(false)} />
       )}
+
+      {/* z-[500]: below every sheet/overlay this component itself opens
+          (StallHotspotSheet/StallJoinSheet z-[10000]+, LiveStageOverlay
+          z-[1000]) so those naturally cover these instead of the reverse --
+          see the Props.bottomBar/topBanner doc comment above. */}
+      {topBanner && <div className="fixed inset-x-0 top-0 z-[500]">{topBanner}</div>}
+      {bottomBar && <div className="fixed inset-x-0 bottom-0 z-[500]">{bottomBar}</div>}
     </div>
   );
 }

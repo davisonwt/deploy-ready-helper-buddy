@@ -52,9 +52,18 @@ export default function CockpitPage() {
     return () => { alive = false }
   }, [user])
 
-  const bottomBar = (
+  // Bare content, no positioning of its own -- when a stall exists this
+  // gets embedded INSIDE StallInteriorView (its own bottomBar/topBanner
+  // props), sharing its z-[9999] stacking context so LiveStageOverlay/
+  // StallHotspotSheet/StallJoinSheet's own overlays naturally cover it
+  // instead of the reverse (see StallInteriorView.tsx's Props doc comment
+  // -- a real, reproduced bug: an owner going live from /cockpit couldn't
+  // reach LiveStage's hand-raise tray at all, hidden behind this bar,
+  // when it was a page-level sibling with its own higher raw z-index).
+  // The "no stall yet" branch below has no StallInteriorView to embed
+  // into, so it keeps its own fixed+z-index wrapper.
+  const bottomBarContent = (
     <div style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 10000,
       display: 'flex', gap: 8, padding: '10px 12px',
       paddingBottom: 'max(10px, env(safe-area-inset-bottom))',
       background: '#080d17',
@@ -93,8 +102,8 @@ export default function CockpitPage() {
   // hasn't accepted the payout terms yet. Self-gating (renders null for
   // everyone else); floats above the interior/CTA rather than living inside
   // either, since neither has a content column of its own to put it in.
-  const consentNag = (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10001, padding: '10px 12px 0' }}>
+  const consentNagContent = (
+    <div style={{ padding: '10px 12px 0' }}>
       <SettlementConsentBanner />
     </div>
   )
@@ -106,7 +115,7 @@ export default function CockpitPage() {
   if (!stall || !stall.published || !stall.interior_image_path) {
     return (
       <>
-        {consentNag}
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10001 }}>{consentNagContent}</div>
         <div style={{
           position: 'fixed', inset: 0, background: '#060a12',
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
@@ -129,18 +138,16 @@ export default function CockpitPage() {
   }
 
   return (
-    <>
-      {consentNag}
-      <StallInteriorView
-        ownerId={user.id}
-        interiorImageUrl={stall.interior_image_path}
-        stallName={stall.name}
-        hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
-        isOwner
-        hideClose
-        onClose={() => {}}
-      />
-      {bottomBar}
-    </>
+    <StallInteriorView
+      ownerId={user.id}
+      interiorImageUrl={stall.interior_image_path}
+      stallName={stall.name}
+      hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
+      isOwner
+      hideClose
+      onClose={() => {}}
+      topBanner={consentNagContent}
+      bottomBar={bottomBarContent}
+    />
   )
 }

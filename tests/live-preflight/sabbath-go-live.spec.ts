@@ -150,10 +150,17 @@ test.describe('Sabbath scripture study pre-flight -- public Go Live path', () =>
 
     await test.step('LIVE badge appears on the stall front and the Tribal Gardens card', async () => {
       await guestPage.goto(`/stall/davisontest1`, { waitUntil: 'networkidle' });
-      await expect(guestPage.getByText('LIVE', { exact: true }).first()).toBeVisible({ timeout: 20_000 });
+      // StallInteriorView renders this badge twice (a mobile-portrait header
+      // copy, hidden outside that layout, and a desktop copy) -- filter to
+      // the one actually visible at this suite's viewport instead of
+      // .first(), which follows DOM order (mobile-portrait is first) rather
+      // than visibility.
+      await expect(guestPage.getByText('LIVE', { exact: true }).filter({ visible: true }).first()).toBeVisible({ timeout: 20_000 });
 
       await guestPage.goto('/stalls-feed', { waitUntil: 'networkidle' });
-      const feedCard = guestPage.locator('article, div').filter({ hasText: stallName }).filter({ hasText: 'LIVE' });
+      // StallsFeedPage.tsx also renders this badge twice (mobile-portrait /
+      // desktop) -- same visibility filter as the stall-front check above.
+      const feedCard = guestPage.locator('article, div').filter({ hasText: stallName }).filter({ hasText: 'LIVE' }).filter({ visible: true });
       await expect(feedCard.first()).toBeVisible({ timeout: 20_000 });
     });
 
@@ -171,13 +178,18 @@ test.describe('Sabbath scripture study pre-flight -- public Go Live path', () =>
 
       await expect(hostPage.getByText(/Hand raises \(1\)/)).toBeVisible({ timeout: 15_000 });
       await hostPage.getByRole('button', { name: 'Approve' }).click();
+      await expect(hostPage.getByText(/Hand raises \(1\)/)).toHaveCount(0, { timeout: 10_000 });
     });
 
     await test.step('both sides get a real Daily.co video tile', async () => {
       const hostFrame = hostPage.frameLocator(`iframe[title="${SEED_TITLE}"]`);
       const guestFrame = guestPage.frameLocator(`iframe[title="${SEED_TITLE}"]`);
       await expect(hostPage.locator(`iframe[title="${SEED_TITLE}"]`)).toBeVisible({ timeout: 20_000 });
-      await expect(guestPage.locator(`iframe[title="${SEED_TITLE}"]`)).toBeVisible({ timeout: 20_000 });
+      // Guest's own Daily token fetch only starts once `inCall` flips true
+      // right after approval -- a fresh fetchDailyMeetingToken round-trip
+      // (edge function + Daily API), not an already-warm one like the
+      // host's -- give it more room before concluding it's stuck.
+      await expect(guestPage.locator(`iframe[title="${SEED_TITLE}"]`)).toBeVisible({ timeout: 45_000 });
       // Daily's own prebuilt UI is the whole UI here (LiveStage.tsx: raw
       // iframe, no custom mic button of ours) -- best-effort look inside
       // for its own video tiles/mic control; cross-origin DOM we don't own,
