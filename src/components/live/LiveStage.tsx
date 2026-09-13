@@ -656,13 +656,19 @@ export default function LiveStage({
                   try {
                     const blob = await noteRecorder.start('audio', VOICE_NOTE_MAX_SECONDS);
                     setRecordingNote(false);
-                    if (!blob || blob.size === 0 || !user) return;
+                    if (!blob || blob.size === 0 || !user) {
+                      console.warn('voice note: no blob captured', { hasBlob: !!blob, size: blob?.size, hasUser: !!user });
+                      return;
+                    }
                     setNoteBusy(true);
                     const url = await uploadVoiceNote(user.id, blob);
                     setNoteBusy(false);
                     if (url) raiseHand('voice', url);
-                  } catch {
+                    else console.warn('voice note: upload/moderation failed, no url');
+                  } catch (err) {
+                    console.error('voice note recording failed', err);
                     setRecordingNote(false);
+                    setNoteBusy(false);
                   }
                 }}
                 className="flex items-center gap-1 rounded-md border border-purple-400/40 bg-purple-500/10 px-2 py-1 text-xs font-bold hover:bg-purple-500/20 disabled:opacity-50"
