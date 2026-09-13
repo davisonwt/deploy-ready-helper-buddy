@@ -16,6 +16,7 @@ export interface StallImageResult {
 
 const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
 const MIME_REJECTION_MESSAGE = "That file type isn't supported — use JPG, PNG, GIF or WEBP.";
+const MIN_WIDTH_PX = 800;
 
 interface Props {
   pathPrefix: string;
@@ -67,6 +68,15 @@ export default function StallImageUpload({
     setBusy(true);
     try {
       const resized = await resizeImage(file, mode, maxSize);
+
+      // resizeImage never upscales -- a source narrower than this comes
+      // out exactly as narrow, then gets stretched to the stall's full
+      // display width live, which is what actually reads as "blurry".
+      // Reject it here instead, before it ever reaches storage.
+      if (resized.width < MIN_WIDTH_PX) {
+        setError(`This image is only ${resized.width}px wide — please use one at least ${MIN_WIDTH_PX}px wide so it doesn't look blurry once it's live.`);
+        return;
+      }
 
       if (resized.blob.size > MAX_UPLOAD_SIZE_BYTES) {
         setError(formatSizeMessage(resized.blob, MAX_UPLOAD_SIZE_BYTES));
