@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { Loader2, Upload, ChevronLeft, ChevronRight, Play, Pause, ZoomIn, ZoomOut, Pin } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
@@ -72,21 +73,35 @@ function ZoomControls({ scale, setScale }: { scale: number; setScale: (s: number
 
 // ── PDF board ────────────────────────────────────────────────────────────
 
-async function uploadBoardFile(userId: string, file: File, kind: 'pdf' | 'clip'): Promise<string | null> {
-  const ext = kind === 'pdf' ? 'pdf' : (file.name.split('.').pop() || 'mp4');
-  const path = `${userId}/gathering/${Date.now()}.${ext}`;
-  const { error: uploadErr } = await supabase.storage.from('stalls').upload(path, file, {
-    cacheControl: '3600', contentType: file.type || undefined, upsert: false,
-  });
-  if (uploadErr) return null;
-  const { verdict, reason } = await moderateStorageUpload('stalls', path, kind === 'pdf' ? 'image' : 'video');
-  if (verdict !== 'allow') {
-    await supabase.storage.from('stalls').remove([path]);
-    console.warn('board upload rejected:', moderationRejectionMessage(reason));
-    return null;
+type BoardUploadResult = { url: string } | { error: string };
+
+/**
+ * Never throws -- every failure path (storage error, moderation
+ * reject/scanner-error, an unexpected exception) resolves to `{error}`
+ * with a message fit to show the host directly, so a failed upload is
+ * never silent. Previously returned `string | null` and only
+ * console.warn'd the reason -- a host with devtools closed saw nothing at
+ * all, which is indistinguishable from the click itself not working.
+ */
+async function uploadBoardFile(userId: string, file: File, kind: 'pdf' | 'clip'): Promise<BoardUploadResult> {
+  try {
+    const ext = kind === 'pdf' ? 'pdf' : (file.name.split('.').pop() || 'mp4');
+    const path = `${userId}/gathering/${Date.now()}.${ext}`;
+    const { error: uploadErr } = await supabase.storage.from('stalls').upload(path, file, {
+      cacheControl: '3600', contentType: file.type || undefined, upsert: false,
+    });
+    if (uploadErr) return { error: uploadErr.message || 'Upload failed.' };
+    const { verdict, reason } = await moderateStorageUpload('stalls', path, kind === 'pdf' ? 'image' : 'video');
+    if (verdict !== 'allow') {
+      await supabase.storage.from('stalls').remove([path]);
+      return { error: moderationRejectionMessage(reason, kind === 'pdf' ? 'file' : 'video') };
+    }
+    const { data: pub } = supabase.storage.from('stalls').getPublicUrl(path);
+    return { url: pub.publicUrl };
+  } catch (e) {
+    console.error('board upload failed', e);
+    return { error: e instanceof Error ? e.message : 'Upload failed.' };
   }
-  const { data: pub } = supabase.storage.from('stalls').getPublicUrl(path);
-  return pub.publicUrl;
 }
 
 function BoardUploadPrompt({ label, accept, busy, onFile }: { label: string; accept: string; busy: boolean; onFile: (f: File) => void }) {
@@ -149,9 +164,16 @@ export function PdfBoard({ isHost, stage, setStageMode }: BoardProps) {
   const handleFile = async (file: File) => {
     if (!user) return;
     setBusy(true);
-    const url = await uploadBoardFile(user.id, file, 'pdf');
-    setBusy(false);
-    if (url) setStageMode({ ...stage, pdfUrl: url, pdfPage: 1, pdfPageCount: undefined });
+    try {
+      const result = await uploadBoardFile(user.id, file, 'pdf');
+      if ('url' in result) {
+        setStageMode({ ...stage, pdfUrl: result.url, pdfPage: 1, pdfPageCount: undefined });
+      } else {
+        toast.error(result.error);
+      }
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (!stage.pdfUrl) {
@@ -208,9 +230,16 @@ export function ClipBoard({ isHost, stage, setStageMode }: BoardProps) {
   const handleFile = async (file: File) => {
     if (!user) return;
     setBusy(true);
-    const url = await uploadBoardFile(user.id, file, 'clip');
-    setBusy(false);
-    if (url) setStageMode({ ...stage, clipUrl: url, clipPlaying: false, clipTime: 0 });
+    try {
+      const result = await uploadBoardFile(user.id, file, 'clip');
+      if ('url' in result) {
+        setStageMode({ ...stage, clipUrl: result.url, clipPlaying: false, clipTime: 0 });
+      } else {
+        toast.error(result.error);
+      }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const broadcastState = () => {
