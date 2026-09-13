@@ -31,10 +31,16 @@ export default function ProductBasketPage() {
               {returnTo?.label ?? 'Products'}
             </Button>
           </Link>
-          <Link to="/dashboard">
+          {/* Flow v2 step 14: /dashboard already redirects to /cockpit, but
+              /cockpit is now specifically the buyer's OWN stall -- link
+              there directly rather than through the legacy alias. The
+              "Products"/returnTo button above already covers "back to the
+              specific stall I bought from" when that context exists; this
+              one is always "go to my own home" regardless. */}
+          <Link to="/cockpit">
             <Button variant="outline" size="sm">
               <LayoutDashboard className="w-4 h-4 mr-2" />
-              Dashboard
+              My Stall
             </Button>
           </Link>
         </div>

@@ -126,6 +126,21 @@ render site anywhere in the app. Newly orphaned as a direct result:
 | `src/components/dashboard/DashboardTribeStats.tsx` | Was one of the explicitly-named "stats" sections step 13 removes; no other caller |
 | `src/components/dashboard/TribalTiersCard.tsx` | Unmounted in step 12 (nav-link cleanup), now also literally deleted from the page it lived on -- still no other caller |
 
+## Step 14 update (checkout return-link targets)
+
+Of the 5 routes FLOW-V2-MAP.md's step 14 names, only 3 actually contained a
+literal `/dashboard` target in the current build:
+
+| Page | Fix |
+|---|---|
+| `ProductBasketPage.tsx` (`/products/basket`) | "Dashboard" button -> `/cockpit`, relabeled "My Stall". The other button (`returnTo?.pathname ?? '/products'`) already carries the real originating stall when a SeedCard's Bestow sent the buyer here -- untouched. |
+| `BasketPage.jsx` (`/basket`) | Both the post-checkout auto-navigate and its "Dashboard" button -> `/cockpit`. This basket can queue orchards from different sowers in one checkout with no per-item stall-return context wired -- `/cockpit` is the correct fallback the map itself allows, not a specific `/stall/:username` (resolving one would mean adding new async owner/username lookups into checkout-completion code, out of proportion for a link-target fix on payment-adjacent code). |
+| `PaymentSuccessPage.tsx` (`/payment-success`) | Only the `topup` kind's button used `/dashboard` -- a wallet top-up isn't a purchase from any stall, so `/cockpit` is correct outright. Also fixed, while in this file: the "Browse More" button's `/wandering-directory` (DELETE-marked, MERGE INTO `/tribal-hearts`) -- missed in the original step 12 sweep. |
+
+**Conflicts with the map, noted per instructions** -- the other 2 named routes have no `/dashboard` reference in the current build at all, so there was nothing to change:
+- `/pay/paystack/return` (`PaystackReturnPage.tsx`) -- its only link is `/` (the logged-out landing page). This page is explicitly public/no-session (guest invoice payers), serving Paystack transactions generally (not only stall bestowals), so a stall/`/cockpit` target isn't always reachable or even meaningful here. Left as-is.
+- `/payment-cancelled` (`PaymentCancelledPage.jsx`) -- uses `navigate(-1)`/`navigate(-2)` (browser back) and a link to `/stalls-feed?chip=orchard`, never `/dashboard`. Browser-back already tends to land wherever the buyer actually was (which may already be the stall itself). Left as-is.
+
 ## Orphaned source files (additional, found during step 12)
 
 | File | Why orphaned |

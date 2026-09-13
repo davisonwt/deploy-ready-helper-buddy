@@ -93,7 +93,10 @@ export default function BasketPage() {
       title: "Payment started 🌱",
       description: "Thank you for your bestowal. Paid items have been cleared from your basket.",
     })
-    navigate('/dashboard')
+    // Flow v2 step 14: a basket can queue orchards from different sowers,
+    // so there's no single "originating stall" to land back on here --
+    // /cockpit (the buyer's own home) instead of the legacy /dashboard alias.
+    navigate('/cockpit')
   }
 
   const handleModalClose = () => {
@@ -152,9 +155,9 @@ export default function BasketPage() {
     <div className="min-h-screen bg-background p-4 sm:p-6">
       <div className="container mx-auto max-w-5xl animate-fade-in">
         <div className="flex gap-3 mb-6">
-          <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+          <Button variant="outline" size="sm" onClick={() => navigate("/cockpit")}>
             <LayoutDashboard className="w-4 h-4 mr-2" />
-            Dashboard
+            My Stall
           </Button>
           <Button variant="outline" size="sm" onClick={() => navigate('/stalls-feed?chip=orchard')}>
             <ArrowLeft className="w-4 h-4 mr-2" />

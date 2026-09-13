@@ -228,9 +228,12 @@ export default function PaymentSuccessPage() {
 
           <div className="flex flex-col gap-3">
             {active?.kind === 'topup' ? (
-              <Button onClick={() => navigate('/dashboard')} className="w-full">
+              // Flow v2 step 14: a wallet top-up isn't a purchase from any
+              // stall -- /cockpit (the buyer's own home) instead of the
+              // legacy /dashboard alias.
+              <Button onClick={() => navigate('/cockpit')} className="w-full">
                 <ArrowRight className="mr-2 h-4 w-4" />
-                Go to Dashboard
+                Go to My Stall
               </Button>
             ) : active?.kind === 'booking' ? (
               <Button onClick={() => navigate('/chatapp')} className="w-full">
@@ -243,7 +246,10 @@ export default function PaymentSuccessPage() {
                 See what you bestowed to
               </Button>
             )}
-            <Button onClick={() => navigate('/wandering-directory')} variant="outline" className="w-full">
+            {/* Flow v2 step 12: /wandering-directory is DELETE-marked
+                (MERGE INTO /tribal-hearts) -- repointed, missed in the
+                original step 12 sweep. */}
+            <Button onClick={() => navigate('/tribal-hearts')} variant="outline" className="w-full">
               Browse More
             </Button>
           </div>
