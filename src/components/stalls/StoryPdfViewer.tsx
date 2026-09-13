@@ -110,7 +110,7 @@ export default function StoryPdfViewer({ url, maxPages }: Props) {
     let doc: PDFDocumentProxy | null = null;
     pdfjsLib.getDocument({ url }).promise
       .then((d) => {
-        if (!alive) { d.destroy(); return; }
+        if (!alive) { d?.destroy?.(); return; }
         doc = d;
         setPdf(d);
       })
