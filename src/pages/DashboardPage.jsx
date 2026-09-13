@@ -15,7 +15,6 @@ import {
 import { toast } from 'sonner'
 import DashboardTribeStats from '../components/dashboard/DashboardTribeStats'
 import { useMyContent } from '@/api/sowerContent'
-import TribalTiersCard from '../components/dashboard/TribalTiersCard'
 import MyStallCard from '@/components/stalls/MyStallCard'
 import LiveNowStrip from '@/components/live/LiveNowStrip'
 import SacredDayBanner from '@/components/SacredDayBanner'
@@ -447,13 +446,12 @@ export default function SeedFlowDashboard() {
       window.removeEventListener('resize', close)
     }
   }, [tribalFeedsOpen])
+  // Flow v2 step 12: the 5 tier entries (homestead/grove/orchard/estate/
+  // harvest_works) fell back to /orchard-alive?tier=<x>, a DELETE-marked
+  // route with no v2 destination -- dropped from this menu rather than
+  // left pointing at a dead end. Their pages still resolve directly.
   const TRIBAL_FEED_TIERS = [
     { tier: 'stalls', label: 'Stalls', emoji: '🏪', to: '/stalls-feed' },
-    { tier: 'homestead', label: 'Homestead', emoji: '🏡' },
-    { tier: 'grove', label: 'Grove', emoji: '🌳' },
-    { tier: 'orchard', label: 'Orchard', emoji: '🍎' },
-    { tier: 'estate', label: 'Estate', emoji: '🏛️' },
-    { tier: 'harvest_works', label: 'Harvest Works', emoji: '🏭' },
     { tier: 'whisperers', label: 'Whisperers', emoji: '🌬️', to: '/whisperers' },
   ]
   const intervalRef = useRef(null)
@@ -1255,8 +1253,10 @@ export default function SeedFlowDashboard() {
             {/* ── Tribe size · Bestowals · Unread messages · Wallet ── */}
             <TileErrorBoundary name="dashboard stats"><DashboardTribeStats /></TileErrorBoundary>
 
-            {/* ── Tribal Tiers — jump to each SeedFlow by business scale ── */}
-            <TribalTiersCard />
+            {/* Flow v2 step 12: TribalTiersCard removed -- its only links
+                were /factories and the 5 tier SeedFlow pages, all
+                DELETE-marked with no v2 destination. Pages still resolve
+                directly; this just stops linking to them. */}
 
             {/* ── Day's Beads — current week strand ── */}
             <div style={styles.sectionLabel}>

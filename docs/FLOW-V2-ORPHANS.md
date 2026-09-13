@@ -94,6 +94,31 @@ the map's own call unless noted.
 | `/trust` | DELETE | Uncertain |
 | `/homestead`, `/grove`, `/orchard`, `/estate`, `/harvest-works` (TierSeedFlowPage x5) | DELETE | Uncertain -- `stalls.tier` still a real schema column; confirm tiers mean nothing in v2 before deleting |
 
+## Step 12 update (nav-surface links to DELETE-marked routes, hidden)
+
+Live nav surfaces (not just already-orphaned pages) found still linking to
+DELETE-marked routes -- hidden per step 12, routes themselves untouched:
+
+| Surface | Was linking to | Fix |
+|---|---|---|
+| `DashboardPage.jsx`'s `TribalTiersCard` render | `/factories` + 5 tier pages | Card no longer rendered (file untouched, unmounted) |
+| `DashboardPage.jsx`'s "Feeds ▾" dropdown (`TRIBAL_FEED_TIERS`) | `/orchard-alive?tier=<x>` (5 entries with no `to`) | Those 5 entries dropped; `stalls`/`whisperers` kept |
+| `CommunityVideosPage.jsx`'s "AI Marketing Assistant" card | `/ai-assistant` | Card removed (no v2 replacement) |
+| `MyOrchardsPage.jsx`'s "AI Offering Generator" button | `/community-offering` | Button removed (page's own "New Orchard" flow supersedes it) |
+| `CommunicationsHub.tsx`'s "Community Chat" tile | `/community-chats` | Repointed at `/chatapp` (the map's own MERGE target) |
+
+**Correction to this doc's earlier claim**: the "Orphaned live routes" table above listed `/community-chats` and (implicitly) `/communications-hub` as unreached by any nav link as of step 11. That was wrong -- `/communications-hub` was already reachable from `DashboardPage.jsx`'s bottom-bar "Go Live" button, and its own "Community Chat" tile linked to `/community-chats`. Fixed above, not just noted.
+
+**Conflict, not fixed** -- `/live-rooms` is DELETE-marked in FLOW-V2-MAP.md, but it's the real, load-bearing landing/cancel target for the Go-Live 1-on-1 video flow: `ChatApp.tsx`'s "Start a 1-on-1" button, `CreateLiveRoomPage.tsx`'s Back and Cancel buttons, and `CommunicationsHub.tsx`'s "1-on-1 Live" tile all navigate there, with no other browse/landing page for that flow (`/live/:seedId/room` is a detail page, not a list). Left live and linked -- today's build wins over the map's DELETE call here, matching the map's own "Uncertain" note on this exact route.
+
+## Orphaned source files (additional, found during step 12)
+
+| File | Why orphaned |
+|---|---|
+| `src/components/dashboard/StatsFloatingButton.tsx` | Not imported/rendered anywhere in `src/` -- dead code, not reachable by any path (its one action navigated to `/stats`, DELETE-marked) |
+| `src/components/dashboard/TopSowersTeaser.tsx` | Same -- not imported/rendered anywhere; its link targeted `/stats?tab=leaderboard` |
+| `src/components/MyGardenPanel.tsx` | Mounted in `Layout.jsx`, but its only open trigger is a `window` event (`s2g-open-my-garden`) that nothing in `src/` ever dispatches -- functionally unreachable despite being in the render tree. Carries several more DELETE-marked links (`/eternal-forest`, `/364yhvh-orchards`, the same 5 tier pages) that don't need hiding since no user can ever open the panel to see them. |
+
 ## Not orphaned (checked, still reachable -- listed so they aren't re-flagged)
 
 - `/music-library` -- still linked from `MyGardenPanel.tsx`; doc's own "MERGE INTO /stalls-feed" hasn't been executed yet (not part of steps 1-11).
