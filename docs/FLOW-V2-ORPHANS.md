@@ -111,6 +111,21 @@ DELETE-marked routes -- hidden per step 12, routes themselves untouched:
 
 **Conflict, not fixed** -- `/live-rooms` is DELETE-marked in FLOW-V2-MAP.md, but it's the real, load-bearing landing/cancel target for the Go-Live 1-on-1 video flow: `ChatApp.tsx`'s "Start a 1-on-1" button, `CreateLiveRoomPage.tsx`'s Back and Cancel buttons, and `CommunicationsHub.tsx`'s "1-on-1 Live" tile all navigate there, with no other browse/landing page for that flow (`/live/:seedId/room` is a detail page, not a list). Left live and linked -- today's build wins over the map's DELETE call here, matching the map's own "Uncertain" note on this exact route.
 
+## Step 13 update (DashboardPage.jsx -> .tsx rewrite)
+
+`/cockpit` now renders the owner's own `StallInteriorView` directly (plus
+the Plant Seed/Go Live/Chat bottom bar) instead of the old dashboard.
+`SettlementConsentBanner` (a legal settlement-consent nag, not a
+"dashboard section" -- see spec-payments.md) was carried forward as a
+floating strip rather than dropped with the rest, since it had no other
+render site anywhere in the app. Newly orphaned as a direct result:
+
+| File | Why orphaned |
+|---|---|
+| `src/components/stalls/MyStallCard.tsx` | Its own-stall fetch + "tap to walk in" / "Build your stall" CTA logic is now inlined directly in `DashboardPage.tsx` (the CTA needs to fill the whole page, not a dashboard tile) -- no remaining caller |
+| `src/components/dashboard/DashboardTribeStats.tsx` | Was one of the explicitly-named "stats" sections step 13 removes; no other caller |
+| `src/components/dashboard/TribalTiersCard.tsx` | Unmounted in step 12 (nav-link cleanup), now also literally deleted from the page it lived on -- still no other caller |
+
 ## Orphaned source files (additional, found during step 12)
 
 | File | Why orphaned |

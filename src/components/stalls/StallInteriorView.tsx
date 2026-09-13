@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
@@ -24,6 +25,14 @@ interface Props {
   onClose: () => void;
   /** True for the owner previewing their own stall -- shows the Owner Menu trigger top-left instead of nothing (batch 2b, task 4: otherwise identical to the visitor view). */
   isOwner?: boolean;
+  /**
+   * Flow v2 step 13: DashboardPage.jsx now renders this directly as
+   * /cockpit's entire content -- there's no dashboard underneath to close
+   * back to. Swaps the close (X) button for a Log out button in the same
+   * corner slot instead of just hiding it, since this is otherwise the
+   * only screen an owner lands on with no other way to sign out.
+   */
+  hideClose?: boolean;
 }
 
 /**
@@ -109,9 +118,14 @@ function StallDrawer({ side, open, onClose, children }: { side: 'left' | 'right'
   );
 }
 
-export default function StallInteriorView({ ownerId, username, interiorImageUrl, stallName, hotspots, onClose, isOwner }: Props) {
+export default function StallInteriorView({ ownerId, username, interiorImageUrl, stallName, hotspots, onClose, isOwner, hideClose }: Props) {
   const { setStallInteriorOpen } = useAppContext();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const handleLogout = async () => {
+    try { await logout(); } catch { /* ignore -- navigate away regardless */ }
+    navigate('/login');
+  };
   const [openKind, setOpenKind] = useState<StallHotspot['kind'] | null>(() => readKindFromHash() as StallHotspot['kind'] | null);
   // One-time: which card (if any) to scroll into view when the sheet
   // above opens on mount, arriving from a SeedCard Message action.
@@ -421,11 +435,12 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
             type="button"
             variant="ghost"
             size="icon"
-            onClick={onClose}
+            onClick={hideClose ? handleLogout : onClose}
             className="shrink-0 text-white hover:bg-white/20 rounded-full"
-            aria-label="Close"
+            aria-label={hideClose ? 'Log out' : 'Close'}
+            title={hideClose ? 'Log out' : undefined}
           >
-            <X className="h-6 w-6" />
+            {hideClose ? <LogOut className="h-4 w-4" /> : <X className="h-6 w-6" />}
           </Button>
         </div>
 
@@ -547,11 +562,12 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
               type="button"
               variant="ghost"
               size="icon"
-              onClick={onClose}
+              onClick={hideClose ? handleLogout : onClose}
               className="text-white hover:bg-white/20 rounded-full"
-              aria-label="Close"
+              aria-label={hideClose ? 'Log out' : 'Close'}
+              title={hideClose ? 'Log out' : undefined}
             >
-              <X className="h-6 w-6" />
+              {hideClose ? <LogOut className="h-4 w-4" /> : <X className="h-6 w-6" />}
             </Button>
           </div>
 
