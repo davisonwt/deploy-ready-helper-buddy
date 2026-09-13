@@ -43,9 +43,9 @@ async function uploadVoiceNote(userId: string, blob: Blob): Promise<string | nul
   const { error: uploadErr } = await supabase.storage.from('stalls').upload(path, blob, {
     cacheControl: '3600', contentType: blob.type || undefined, upsert: false,
   });
-  if (uploadErr) return null;
-  const { verdict } = await moderateStorageUpload('stalls', path, 'video');
-  if (verdict !== 'allow') { await supabase.storage.from('stalls').remove([path]); return null; }
+  if (uploadErr) { console.error('voice note upload failed', { message: uploadErr.message, path, blobType: blob.type, blobSize: blob.size }); return null; }
+  const { verdict, reason } = await moderateStorageUpload('stalls', path, 'video');
+  if (verdict !== 'allow') { console.error('voice note moderation rejected', { verdict, reason, path }); await supabase.storage.from('stalls').remove([path]); return null; }
   const { data: pub } = supabase.storage.from('stalls').getPublicUrl(path);
   return pub.publicUrl;
 }
