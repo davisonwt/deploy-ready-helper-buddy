@@ -93,8 +93,17 @@ export function WizardContainer({
         <p className={t.description}>{description}</p>
       </div>
 
-      {/* Progress Steps */}
-      <div className="flex items-center justify-center gap-2">
+      {/* Progress Steps. items-start (not items-center) on the row: a
+          label that wraps to two lines makes its own column taller, and
+          items-center was vertically centering each column against the
+          row's tallest one -- any step whose title happened to fit on
+          one line (e.g. "Interior" next to "Mark your shelves") had its
+          circle pulled down out of line with the rest. Aligning columns
+          to the top keeps every circle at the same y regardless of label
+          length; the connector gets its own mt-5 to land across the
+          circles' own vertical center (h-10 circle => 20px) instead of
+          the row's top edge. */}
+      <div className="flex items-start justify-center gap-2">
         {steps.map((step, index) => (
           <React.Fragment key={index}>
             <div className="flex flex-col items-center gap-2">
@@ -119,7 +128,7 @@ export function WizardContainer({
             </div>
             {index < steps.length - 1 && (
               <div
-                className={`h-0.5 w-12 sm:w-20 transition-all ${
+                className={`mt-5 h-0.5 w-12 sm:w-20 transition-all ${
                   index < currentStep ? t.connectorDone : t.connectorFuture
                 }`}
               />
