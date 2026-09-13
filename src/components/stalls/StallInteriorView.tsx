@@ -102,7 +102,10 @@ const CAPTION_PREVIEW_MS = 800;
  * backdrop pattern as StallHotspotSheet (mount immediately, animate in on
  * the next frame, animate out then unmount on close).
  */
-function StallDrawer({ side, open, onClose, children }: { side: 'left' | 'right'; open: boolean; onClose: () => void; children: ReactNode }) {
+/** Exported for EmptyPlotView.tsx (the no-stall-yet /cockpit page) -- same
+ * slide-in-drawer chrome for its own StallSideNav/StallTodayPanel, not
+ * worth a second copy of this animation. */
+export function StallDrawer({ side, open, onClose, children }: { side: 'left' | 'right'; open: boolean; onClose: () => void; children: ReactNode }) {
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(false);
 

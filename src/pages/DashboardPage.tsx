@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Store, Plus } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from "@/integrations/supabase/client"
 import LivingButton from '../components/LivingButton'
 import StallInteriorView from '@/components/stalls/StallInteriorView'
+import EmptyPlotView from '@/components/stalls/EmptyPlotView'
 import { useStallTemplates } from '@/hooks/useStallTemplates'
 import { resolveStallHotspots } from '@/lib/stalls/stallTypes'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -116,23 +116,7 @@ export default function CockpitPage() {
     return (
       <>
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10001 }}>{consentNagContent}</div>
-        <div style={{
-          position: 'fixed', inset: 0, background: '#060a12',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-        }}>
-          <Link to="/stall/build" style={{ textDecoration: 'none', maxWidth: 360, width: '100%' }}>
-            <div style={{
-              border: '2px dashed rgba(255,255,255,0.25)', borderRadius: 16,
-              padding: '32px 24px', textAlign: 'center', color: '#e2e8f0',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
-            }}>
-              <Store size={36} />
-              <div style={{ fontWeight: 800, fontSize: 18 }}>Build your stall</div>
-              <div style={{ fontSize: 13, color: '#94a3b8' }}>A shop-front for your seeds, sower, or whisperer work.</div>
-              <Plus size={18} />
-            </div>
-          </Link>
-        </div>
+        <EmptyPlotView />
       </>
     )
   }

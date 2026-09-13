@@ -5,10 +5,47 @@ import { Button } from '@/components/ui/button';
 import { Check, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
-export function WizardContainer({ 
-  steps, 
-  currentStep, 
-  onStepChange, 
+// Opt-in only -- every existing caller (RadioSlotApplicationWizard,
+// PremiumRoomCreationWizard, etc.) keeps today's exact look by simply not
+// passing `theme`. 'stall' is the gold-on-dark-wood frame StallInteriorView
+// uses, for StallBuildPage's own restyle.
+const THEMES = {
+  default: {
+    root: '',
+    title: 'text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent',
+    description: 'text-muted-foreground',
+    stepDone: 'bg-primary text-primary-foreground',
+    stepCurrent: 'bg-primary/20 text-primary border-2 border-primary',
+    stepFuture: 'bg-muted text-muted-foreground',
+    stepLabelCurrent: 'text-primary',
+    stepLabelOther: 'text-muted-foreground',
+    connectorDone: 'bg-primary',
+    connectorFuture: 'bg-muted',
+    card: '',
+    cardHeader: '',
+    submitButton: 'bg-blue-600 hover:bg-blue-700',
+  },
+  stall: {
+    root: 'text-amber-50',
+    title: 'font-serif text-3xl font-bold text-amber-50',
+    description: 'text-amber-100/60',
+    stepDone: 'bg-amber-500 text-amber-950',
+    stepCurrent: 'bg-amber-500/20 text-amber-300 border-2 border-amber-400',
+    stepFuture: 'bg-black/40 text-amber-100/40 border border-amber-500/15',
+    stepLabelCurrent: 'text-amber-300',
+    stepLabelOther: 'text-amber-100/40',
+    connectorDone: 'bg-amber-500',
+    connectorFuture: 'bg-amber-500/15',
+    card: 'bg-[#140c06] border-amber-500/20',
+    cardHeader: 'border-b border-amber-500/10',
+    submitButton: 'bg-amber-500 hover:bg-amber-400 text-amber-950',
+  },
+};
+
+export function WizardContainer({
+  steps,
+  currentStep,
+  onStepChange,
   children,
   title,
   description,
@@ -19,10 +56,12 @@ export function WizardContainer({
   canGoBack = true,
   nextLabel = "Next",
   backLabel = "Back",
-  submitLabel = "Submit"
+  submitLabel = "Submit",
+  theme = "default",
 }) {
   const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
+  const t = THEMES[theme] ?? THEMES.default;
 
   const { setWizardOpen } = useAppContext();
   useEffect(() => {
@@ -45,13 +84,13 @@ export function WizardContainer({
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-6">
+    <div className={`max-w-4xl mx-auto p-4 space-y-6 ${t.root}`}>
       {/* Header */}
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+        <h1 className={t.title}>
           {title}
         </h1>
-        <p className="text-muted-foreground">{description}</p>
+        <p className={t.description}>{description}</p>
       </div>
 
       {/* Progress Steps */}
@@ -61,11 +100,7 @@ export function WizardContainer({
             <div className="flex flex-col items-center gap-2">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
-                  index < currentStep
-                    ? 'bg-primary text-primary-foreground'
-                    : index === currentStep
-                    ? 'bg-primary/20 text-primary border-2 border-primary'
-                    : 'bg-muted text-muted-foreground'
+                  index < currentStep ? t.stepDone : index === currentStep ? t.stepCurrent : t.stepFuture
                 }`}
               >
                 {index < currentStep ? (
@@ -76,7 +111,7 @@ export function WizardContainer({
               </div>
               <div className="text-center hidden sm:block">
                 <div className={`text-sm font-medium ${
-                  index === currentStep ? 'text-primary' : 'text-muted-foreground'
+                  index === currentStep ? t.stepLabelCurrent : t.stepLabelOther
                 }`}>
                   {step.title}
                 </div>
@@ -85,7 +120,7 @@ export function WizardContainer({
             {index < steps.length - 1 && (
               <div
                 className={`h-0.5 w-12 sm:w-20 transition-all ${
-                  index < currentStep ? 'bg-primary' : 'bg-muted'
+                  index < currentStep ? t.connectorDone : t.connectorFuture
                 }`}
               />
             )}
@@ -94,19 +129,19 @@ export function WizardContainer({
       </div>
 
       {/* Main Content Card */}
-      <Card>
-        <CardHeader>
+      <Card className={t.card}>
+        <CardHeader className={t.cardHeader}>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className={`flex items-center gap-2 ${theme === 'stall' ? 'font-serif text-amber-100' : ''}`}>
                 {steps[currentStep].icon}
                 {steps[currentStep].title}
               </CardTitle>
-              <CardDescription className="mt-2">
+              <CardDescription className={`mt-2 ${theme === 'stall' ? 'text-amber-100/60' : ''}`}>
                 {steps[currentStep].description}
               </CardDescription>
             </div>
-            <Badge variant="outline">
+            <Badge variant="outline" className={theme === 'stall' ? 'border-amber-500/30 text-amber-300' : ''}>
               Step {currentStep + 1} of {steps.length}
             </Badge>
           </div>
@@ -115,7 +150,7 @@ export function WizardContainer({
           {children}
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between pt-6 border-t">
+          <div className={`flex justify-between pt-6 border-t ${theme === 'stall' ? 'border-amber-500/10' : ''}`}>
             <div>
               {!isFirstStep ? (
                 <Button
@@ -123,6 +158,7 @@ export function WizardContainer({
                   variant="outline"
                   onClick={handleBack}
                   disabled={isSubmitting || !canGoBack}
+                  className={theme === 'stall' ? 'border-amber-500/30 text-amber-100 hover:bg-amber-500/10' : ''}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   {backLabel}
@@ -133,6 +169,7 @@ export function WizardContainer({
                   variant="ghost"
                   onClick={onCancel}
                   disabled={isSubmitting}
+                  className={theme === 'stall' ? 'text-amber-100/70 hover:bg-amber-500/10 hover:text-amber-100' : ''}
                 >
                   Cancel
                 </Button>
@@ -142,7 +179,7 @@ export function WizardContainer({
               type="button"
               onClick={handleNext}
               disabled={isSubmitting || !canGoNext}
-              className="bg-blue-600 hover:bg-blue-700"
+              className={t.submitButton}
             >
               {isSubmitting ? (
                 "Processing..."

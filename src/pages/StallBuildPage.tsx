@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { WizardContainer } from '@/components/wizard/WizardContainer';
@@ -7,9 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, Plus, Store } from 'lucide-react';
+import { Trash2, Plus, Store, ClipboardList, ImageIcon, DoorOpen, LayoutGrid, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useContainImageRect } from '@/hooks/useContainImageRect';
+import { shareStallLink } from '@/lib/referral';
 import StallImageUpload, { type StallImageResult } from '@/components/stalls/StallImageUpload';
 import StallPdfUpload, { type StallPdfResult } from '@/components/stalls/StallPdfUpload';
 import MyProductsPage from '@/pages/MyProductsPage';
@@ -26,6 +28,7 @@ import {
   TILE_KIND_DEFAULT_TARGET,
   MIN_TILES,
   MAX_TILES,
+  resolveStallHotspots,
   type StallCategory,
   type StallTile,
   type StallTemplate,
@@ -45,6 +48,56 @@ function emptyTile(): TileDraft {
 
 function tileTarget(t: TileDraft): string {
   return t.kind === 'custom' ? t.customTarget.trim() : TILE_KIND_DEFAULT_TARGET[t.kind];
+}
+
+/** Live "how it'll actually look" preview for the shop-front step -- same
+ * blurred-backdrop + object-contain + bottom name-bar treatment
+ * StallsFeedPage's real feed cards use, not a plain thumbnail. */
+function FrontCardPreview({ url, name }: { url: string; name: string }) {
+  return (
+    <div className="relative aspect-[4/3] w-full max-w-sm mx-auto overflow-hidden rounded-2xl border border-amber-500/25 bg-black shadow-lg">
+      <img src={url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-60" />
+      <div className="absolute inset-0 bg-black/20" />
+      <img src={url} alt={name || 'Your stall'} className="absolute inset-0 w-full h-full object-contain" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-3">
+        <p className="truncate text-sm font-semibold text-amber-50">{name || 'Your stall'}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Live "where the painted buttons will land" preview for the interior
+ * step -- same resolveStallHotspots() + useContainImageRect() positioning
+ * StallInteriorView itself uses at render time, so what the sower sees
+ * here is exactly what a visitor will see, template pick or fresh upload
+ * alike. */
+function InteriorHotspotPreview({ url, templates }: { url: string; templates: StallTemplatesByCategory | null }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const rect = useContainImageRect(containerRef, imgRef);
+  const hotspots = resolveStallHotspots(url, null, templates);
+
+  return (
+    <div ref={containerRef} className="relative aspect-video w-full overflow-hidden rounded-2xl border border-amber-500/25 bg-black shadow-lg">
+      <img ref={imgRef} src={url} alt="Your stall interior" className="absolute inset-0 w-full h-full object-contain" />
+      {rect && hotspots.map((h) => (
+        <div
+          key={h.kind}
+          className="absolute rounded-lg border-2 border-amber-400/80 bg-amber-400/15 flex items-center justify-center"
+          style={{
+            left: rect.offsetX + (h.x / 100) * rect.width,
+            top: rect.offsetY + (h.y / 100) * rect.height,
+            width: (h.w / 100) * rect.width,
+            height: (h.h / 100) * rect.height,
+          }}
+        >
+          <span className="rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-200">
+            {h.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 /**
@@ -155,6 +208,13 @@ export default function StallBuildPage() {
     if (!front || !interior) { toast.error('Add both a front and interior image first.'); return; }
     if (validTiles.length < MIN_TILES) { toast.error(`Add at least ${MIN_TILES} tiles.`); return; }
 
+    // Captured before the upsert below sets stallId for good -- this is
+    // the one moment "did a stall already exist when this page loaded"
+    // is knowable, which is exactly "first time ever" (once set, every
+    // future load of this page has a stallId, so the one-time toast
+    // below can structurally never fire again for this account).
+    const isFirstPublish = !stallId;
+
     setSubmitting(true);
     try {
       const tilesPayload: StallTile[] = validTiles.map((t) => ({
@@ -181,7 +241,16 @@ export default function StallBuildPage() {
       );
       if (error) throw error;
 
-      toast.success('Your stall is open for business!');
+      if (isFirstPublish) {
+        const { data: profile } = await supabase.from('profiles').select('username').eq('user_id', user.id).maybeSingle();
+        const username = (profile as { username?: string } | null)?.username;
+        toast.success('your stall is open — share it', username ? {
+          action: { label: 'Share my stall', onClick: () => { void shareStallLink(username, name.trim(), user.id); } },
+          duration: 10_000,
+        } : undefined);
+      } else {
+        toast.success('Your stall is open for business!');
+      }
       navigate('/cockpit');
     } catch (err) {
       console.error('stall publish failed', err);
@@ -194,11 +263,11 @@ export default function StallBuildPage() {
   if (loading) return null;
 
   const steps = [
-    { title: 'Your stall', description: 'What kind of stall is this?' },
-    { title: 'Shop front', description: 'The image visitors tap to walk in.' },
-    { title: 'Interior', description: 'What they see once inside.' },
-    { title: 'Tiles', description: `3-${MAX_TILES} buttons leading to your products.` },
-    { title: 'Preview & publish', description: 'One last look before it goes live.' },
+    { title: 'Your stall', description: 'What kind of stall is this?', icon: <ClipboardList className="h-4 w-4" /> },
+    { title: 'Shop front', description: 'The image visitors tap to walk in.', icon: <DoorOpen className="h-4 w-4" /> },
+    { title: 'Interior', description: 'What they see once inside.', icon: <ImageIcon className="h-4 w-4" /> },
+    { title: 'Tiles', description: `3-${MAX_TILES} buttons leading to your products.`, icon: <LayoutGrid className="h-4 w-4" /> },
+    { title: 'Preview & publish', description: 'One last look before it goes live.', icon: <Eye className="h-4 w-4" /> },
   ];
 
   return (
@@ -222,8 +291,9 @@ export default function StallBuildPage() {
         <TabsTrigger value="business">Business</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="setup">
+      <TabsContent value="setup" className="rounded-3xl border border-amber-500/20 bg-[#140c06] p-4 sm:p-6">
         <WizardContainer
+          theme="stall"
           steps={steps}
           currentStep={step}
           onStepChange={setStep}
@@ -238,7 +308,7 @@ export default function StallBuildPage() {
       {step === 0 && (
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium mb-2 block">Category</label>
+            <label className="text-sm font-medium mb-2 block text-amber-100/80">Category</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {STALL_CATEGORIES.map((c) => (
                 <Button
@@ -250,8 +320,8 @@ export default function StallBuildPage() {
                   onClick={() => setCategory(c.id)}
                   className={
                     category === c.id
-                      ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
-                      : ''
+                      ? 'bg-amber-500 text-amber-950 border-amber-500 hover:bg-amber-400'
+                      : 'border-amber-500/25 text-amber-100/70 hover:bg-amber-500/10'
                   }
                 >
                   {c.label}
@@ -260,16 +330,16 @@ export default function StallBuildPage() {
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium mb-2 block">Stall name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="e.g. Davison — Lyricist and Writer" />
+            <label className="text-sm font-medium mb-2 block text-amber-100/80">Stall name</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="e.g. Davison — Lyricist and Writer" className="bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30" />
           </div>
           <div>
-            <label className="text-sm font-medium mb-2 block">Tagline (optional)</label>
-            <Textarea value={tagline} onChange={(e) => setTagline(e.target.value)} maxLength={160} rows={2} placeholder="Words that heal, songs that awaken." />
+            <label className="text-sm font-medium mb-2 block text-amber-100/80">Tagline (optional)</label>
+            <Textarea value={tagline} onChange={(e) => setTagline(e.target.value)} maxLength={160} rows={2} placeholder="Words that heal, songs that awaken." className="bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30" />
           </div>
           <div>
-            <label className="text-sm font-medium mb-2 block">My Story (optional)</label>
-            <p className="text-xs text-muted-foreground mb-1.5">
+            <label className="text-sm font-medium mb-2 block text-amber-100/80">My Story (optional)</label>
+            <p className="text-xs text-amber-100/50 mb-1.5">
               Shown under the MY STORY button inside your stall. Blank lines start a new paragraph.
               Type a line in ALL CAPS to make it a heading — everything renders exactly as typed, so write it the way you want it read.
             </p>
@@ -279,8 +349,9 @@ export default function StallBuildPage() {
               maxLength={4000}
               rows={8}
               placeholder={"MY JOURNEY\n\nit started with a single song..."}
+              className="bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30"
             />
-            <p className="text-xs text-muted-foreground mt-3 mb-1.5">
+            <p className="text-xs text-amber-100/50 mt-3 mb-1.5">
               Prefer a PDF instead? Upload one and it replaces the text above inside your stall.
             </p>
             <StallPdfUpload pathPrefix={pathPrefix} value={storyPdf} onChange={setStoryPdf} />
@@ -289,40 +360,56 @@ export default function StallBuildPage() {
       )}
 
       {step === 1 && (
-        <StallImageUpload
-          pathPrefix={pathPrefix}
-          mode="width"
-          maxSize={1200}
-          value={front}
-          onChange={setFront}
-          templates={categoryTemplates}
-          templateField="front"
-          label="Shop-front image"
-          aspectClassName="aspect-square max-w-sm mx-auto"
-        />
+        <div className="space-y-5">
+          <StallImageUpload
+            pathPrefix={pathPrefix}
+            mode="width"
+            maxSize={1200}
+            value={front}
+            onChange={setFront}
+            templates={categoryTemplates}
+            templateField="front"
+            label="Shop-front image"
+            aspectClassName="aspect-square max-w-sm mx-auto"
+          />
+          {front && (
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-amber-100/50">How it looks on a feed card</p>
+              <FrontCardPreview url={front.url} name={name} />
+            </div>
+          )}
+        </div>
       )}
 
       {step === 2 && (
-        <StallImageUpload
-          pathPrefix={pathPrefix}
-          mode="width"
-          maxSize={1920}
-          value={interior}
-          onChange={setInterior}
-          templates={categoryTemplates}
-          templateField="interior"
-          label="Interior image"
-          aspectClassName="aspect-video"
-        />
+        <div className="space-y-5">
+          <StallImageUpload
+            pathPrefix={pathPrefix}
+            mode="width"
+            maxSize={1920}
+            value={interior}
+            onChange={setInterior}
+            templates={categoryTemplates}
+            templateField="interior"
+            label="Interior image"
+            aspectClassName="aspect-video"
+          />
+          {interior && (
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-amber-100/50">Where the painted buttons will land</p>
+              <InteriorHotspotPreview url={interior.url} templates={templates} />
+            </div>
+          )}
+        </div>
       )}
 
       {step === 3 && (
         <div className="space-y-4">
           {tiles.map((tile, i) => (
-            <Card key={i}>
+            <Card key={i} className="bg-black/30 border-amber-500/20">
               <CardContent className="pt-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">Tile {i + 1}</span>
+                  <span className="text-sm font-medium text-amber-100/60">Tile {i + 1}</span>
                   {tiles.length > MIN_TILES && (
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeTile(i)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -334,6 +421,7 @@ export default function StallBuildPage() {
                   value={tile.label}
                   onChange={(e) => updateTile(i, { label: e.target.value })}
                   maxLength={40}
+                  className="bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30"
                 />
                 <div className="flex flex-wrap gap-2">
                   {TILE_KINDS.map((k) => (
@@ -346,8 +434,8 @@ export default function StallBuildPage() {
                       onClick={() => updateTile(i, { kind: k.id })}
                       className={
                         tile.kind === k.id
-                          ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
-                          : ''
+                          ? 'bg-amber-500 text-amber-950 border-amber-500 hover:bg-amber-400'
+                          : 'border-amber-500/25 text-amber-100/70 hover:bg-amber-500/10'
                       }
                     >
                       {k.label}
@@ -359,6 +447,7 @@ export default function StallBuildPage() {
                     placeholder="/some/in-app/path"
                     value={tile.customTarget}
                     onChange={(e) => updateTile(i, { customTarget: e.target.value })}
+                    className="bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30"
                   />
                 )}
                 <StallImageUpload
@@ -375,7 +464,7 @@ export default function StallBuildPage() {
             </Card>
           ))}
           {tiles.length < MAX_TILES && (
-            <Button type="button" variant="outline" onClick={addTile} className="w-full gap-2">
+            <Button type="button" variant="outline" onClick={addTile} className="w-full gap-2 border-amber-500/25 text-amber-100/80 hover:bg-amber-500/10">
               <Plus className="h-4 w-4" /> Add another tile
             </Button>
           )}
@@ -383,25 +472,26 @@ export default function StallBuildPage() {
       )}
 
       {step === 4 && (
-        <div className="space-y-4">
-          <div className="rounded-xl border overflow-hidden">
-            {front && (
-              <div className="relative w-full aspect-[4/3] bg-muted">
-                <img src={front.url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70" />
-                <div className="absolute inset-0 bg-black/10" />
-                <img src={front.url} alt={name} className="absolute inset-0 w-full h-full object-contain" />
-              </div>
-            )}
-            <div className="p-4">
-              <h3 className="font-bold text-lg flex items-center gap-2"><Store className="h-4 w-4" />{name}</h3>
-              {tagline && <p className="text-sm text-muted-foreground mt-1">{tagline}</p>}
+        <div className="space-y-5">
+          <div>
+            <h3 className="font-serif text-lg font-semibold flex items-center gap-2 text-amber-100"><Store className="h-4 w-4" />{name}</h3>
+            {tagline && <p className="text-sm text-amber-100/60 mt-1">{tagline}</p>}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-amber-100/50">Front</p>
+              {front && <FrontCardPreview url={front.url} name={name} />}
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-amber-100/50">Interior</p>
+              {interior && <InteriorHotspotPreview url={interior.url} templates={templates} />}
             </div>
           </div>
           <div>
-            <p className="text-sm font-medium mb-2">Tiles ({validTiles.length})</p>
+            <p className="text-sm font-medium mb-2 text-amber-100/80">Tiles ({validTiles.length})</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {validTiles.map((t, i) => (
-                <div key={i} className="rounded-lg border p-2 text-center text-sm">{t.label}</div>
+                <div key={i} className="rounded-lg border border-amber-500/20 bg-black/30 p-2 text-center text-sm text-amber-100/80">{t.label}</div>
               ))}
             </div>
           </div>
