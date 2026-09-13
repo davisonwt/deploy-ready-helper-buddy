@@ -399,12 +399,24 @@ export default function SeedCard({
   // visitor can always join a session already underway. A caller with its
   // own richer Go Live handling (onGoLiveExtra, e.g. TribalAliveFeedPage)
   // is unchanged -- always "Go Live", always enabled, its own logic.
+  //
+  // Pre-flight fix (2026-09-13, Davison): Go Live is the one rail action
+  // that MUST stay live for the owner viewing their own card -- starting
+  // your own broadcast is the core use case, unlike Message/Voice/Video/
+  // Heart/Share/Report, which genuinely don't apply to yourself. It used
+  // to fall under the same blanket `railDisabled` (=viewerIsOwner) greying
+  // as every other rail button, which made it impossible for an owner to
+  // go live at all without first flipping "View as visitor" -- a hidden,
+  // two-step path for the single most load-bearing action on the card.
+  // `viewerIsOwner` is now its own allow-condition here, independent of
+  // `railDisabled`; toggling "View as visitor" (forceViewerIsOwner=false)
+  // still correctly previews it as disabled, same as a real visitor would see.
   const hasWhispererCommission = badgePct != null || (sowerCommissionPct ?? 0) > 0;
   const goLiveLabel = !onGoLiveExtra && isLiveHere ? 'Step In' : 'Go Live';
   const goLiveTone: 'accent' | 'gold' | undefined =
-    onGoLiveExtra || isLiveHere ? 'accent' : hasWhispererCommission ? 'gold' : undefined;
-  const goLiveDisabled = railDisabled || (!onGoLiveExtra && !isLiveHere && !hasWhispererCommission);
-  const goLiveTitle = !onGoLiveExtra && !isLiveHere && !hasWhispererCommission
+    onGoLiveExtra || isLiveHere || viewerIsOwner ? 'accent' : hasWhispererCommission ? 'gold' : undefined;
+  const goLiveDisabled = !onGoLiveExtra && !isLiveHere && !viewerIsOwner && !hasWhispererCommission;
+  const goLiveTitle = !onGoLiveExtra && !isLiveHere && !viewerIsOwner && !hasWhispererCommission
     ? 'No whisperer commission on this seed'
     : goLiveLabel;
 
@@ -623,7 +635,7 @@ export default function SeedCard({
     if (onGoLiveExtra) { onGoLiveExtra(); return; }
     if (!user) { navigate('/login'); return; }
     if (isLiveHere) { setActiveRoom(liveHere[0].jitsi_room); return; }
-    if (!hasWhispererCommission) return;
+    if (!viewerIsOwner && !hasWhispererCommission) return;
     const presence = await goLive({ id, title, image: cover ?? undefined });
     if (presence) setActiveRoom(presence.jitsi_room);
   };

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { Loader2, Store, UserX } from 'lucide-react';
+import { Loader2, Store, UserX, Radio } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useStallTemplates } from '@/hooks/useStallTemplates';
+import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import StallInteriorView from '@/components/stalls/StallInteriorView';
 import { readAndClearPendingWelcomeInviter } from '@/lib/referral';
 import { STALL_TIER_LABEL, resolveStallHotspots, type StallHotspot, type StallTier } from '@/lib/stalls/stallTypes';
@@ -82,6 +83,11 @@ export default function StallVisitPage() {
   }, [stall?.interior_image_path, retryNonce]);
 
   const isOwner = !!user && !!stall && user.id === stall.user_id;
+  // Pre-flight (2026-09-13, Davison): only reachable for the broken-image
+  // fallback card below -- the normal path renders StallInteriorView
+  // directly, which carries this same badge itself.
+  const { liveSeeds } = useTribalLiveOrchard();
+  const ownerIsLive = !!stall && liveSeeds.some((p) => p.user_id === stall.user_id);
 
   // Stall invite links ("come see my shop"): a referred signup queues the
   // inviter's display name (useAuth.jsx's register(), src/lib/referral.ts)
@@ -189,6 +195,11 @@ export default function StallVisitPage() {
             <img src={stall.front_image_path} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70" />
             <div className="absolute inset-0 bg-black/20" />
             <img src={stall.front_image_path} alt={stall.name} className="absolute inset-0 w-full h-full object-contain" />
+            {ownerIsLive && (
+              <span className="absolute top-4 left-4 flex items-center gap-1 rounded-full bg-rose-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
+                <Radio className="h-3 w-3" /> LIVE
+              </span>
+            )}
           </div>
           <div className="flex items-end justify-between gap-3 p-4">
             <div>

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2 } from 'lucide-react';
+import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
+import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { shareStallLink } from '@/lib/referral';
 import StallHotspotSheet from './StallHotspotSheet';
 import StallSideNav from './StallSideNav';
@@ -121,6 +122,14 @@ function StallDrawer({ side, open, onClose, children }: { side: 'left' | 'right'
 export default function StallInteriorView({ ownerId, username, interiorImageUrl, stallName, hotspots, onClose, isOwner, hideClose }: Props) {
   const { setStallInteriorOpen } = useAppContext();
   const { user, logout } = useAuth();
+  // Pre-flight (2026-09-13, Davison): same "who's alive in the orchard
+  // right now" presence used for the Tribal Gardens feed's LIVE badge
+  // (StallsFeedPage.tsx's liveOwnerIds) -- this stall's own front/interior
+  // had no equivalent indicator at all. A visitor landing directly on
+  // /stall/:username via a shared link never saw the feed card, so this
+  // was the one place a live class/broadcast gave no visible sign at all.
+  const { liveSeeds } = useTribalLiveOrchard();
+  const ownerIsLive = liveSeeds.some((p) => p.user_id === ownerId);
   const navigate = useNavigate();
   const handleLogout = async () => {
     try { await logout(); } catch { /* ignore -- navigate away regardless */ }
@@ -350,6 +359,11 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
             <Menu className="h-4 w-4" />
           </button>
           <p className="min-w-0 flex-1 truncate text-center text-xs font-semibold uppercase tracking-wide text-white/70">
+            {ownerIsLive && (
+              <span className="mr-1.5 inline-flex items-center gap-1 rounded-full bg-rose-500 px-1.5 py-0.5 align-middle text-[9px] font-extrabold text-white">
+                <Radio className="h-2.5 w-2.5" /> LIVE
+              </span>
+            )}
             {stallName}
           </p>
           {/* Owner-only: pencil opens the same Edit-stall menu (OwnerMenuItems
@@ -631,7 +645,12 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
             )}
           </div>
 
-          <p className="absolute bottom-3 left-4 text-xs font-semibold uppercase tracking-wide text-white/80 drop-shadow">
+          <p className="absolute bottom-3 left-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/80 drop-shadow">
+            {ownerIsLive && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-lg">
+                <Radio className="h-3 w-3" /> LIVE
+              </span>
+            )}
             {stallName}
           </p>
         </div>
