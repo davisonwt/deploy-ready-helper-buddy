@@ -16,6 +16,11 @@ const EMPTY_PLOT_IMG = `${STALLS_BASE}/landing/empty-plot.webp`;
 // page) already uses for its own "three steps" cards -- not mock data.
 const AMBER = { id: 'c34c0eba-0010-480b-8326-7063cd7221ae', username: 'amberswheeles' };
 const ED = { id: '110b5a23-ce07-45c8-a432-086550aa78b5', username: 'primitivevsns' };
+// 2026-09-13: this exact URL was showing Ed's OLD portrait interior --
+// the object at this path has since been replaced, but browsers/CDN had
+// the stale bytes cached against the bare URL. Cache-busting query param
+// forces a fresh fetch without touching the (already-correct) path.
+const ED_INTERIOR_IMG = `${STALLS_BASE}/${ED.id}/interior.webp?v=20260913`;
 const CLAYROSES_USER_ID = 'b0e9cd73-56a1-48ef-b0f1-3b68ee09d8b1';
 const DAVISON_SEED = {
   id: '9af96ac8-9029-43db-8a5b-78ba1369915c',
@@ -113,7 +118,7 @@ export default function EmptyPlotView() {
   const stepCards = (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
       <StepCard image={`${STALLS_BASE}/${AMBER.id}/front.webp`} title="paint your front" line="pick a photo, give it a sign." />
-      <StepCard image={`${STALLS_BASE}/${ED.id}/interior.webp`} title="paint your inside" line="a room for your books, music and more." />
+      <StepCard image={ED_INTERIOR_IMG} title="paint your inside" line="a room for your books, music and more." />
       <StepCard title="sow your seeds" line="list what you're offering — a book, a song, a service.">
         {featuredSeed ? (
           <Suspense fallback={<div className="absolute inset-0 bg-black/40 animate-pulse" />}>
@@ -138,17 +143,37 @@ export default function EmptyPlotView() {
     </div>
   );
 
-  const heroText = (
-    <div className="space-y-4">
-      <h1 className="font-serif text-2xl sm:text-4xl font-bold text-amber-50 drop-shadow">your plot is ready</h1>
-      <p className="text-sm sm:text-base text-amber-100/70">three steps and your shop is open</p>
-      {stepCards}
-      <Link
-        to="/stall/build"
-        className="inline-block rounded-full bg-amber-500 px-8 py-3 text-base font-semibold text-amber-950 hover:bg-amber-400 transition-colors"
-      >
-        start building
-      </Link>
+  const StartBuildingButton = () => (
+    <Link
+      to="/stall/build"
+      className="inline-block rounded-full bg-amber-500 px-8 py-3 text-base font-semibold text-amber-950 hover:bg-amber-400 transition-colors"
+    >
+      start building
+    </Link>
+  );
+
+  // The hero *is* the first screen: just the headline, sub line and button,
+  // overlaid bottom-left over the full-height plot image on a soft dark
+  // gradient -- nothing else competes for that first look.
+  const heroOverlay = (
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0d0805] via-[#0d0805]/75 to-transparent px-5 pb-8 pt-24 sm:px-10 sm:pb-12">
+      <div className="pointer-events-auto max-w-xl space-y-3">
+        <h1 className="font-serif text-2xl sm:text-4xl font-bold text-amber-50 drop-shadow">your plot is ready</h1>
+        <p className="text-sm sm:text-base text-amber-100/70">three steps and your shop is open</p>
+        <StartBuildingButton />
+      </div>
+    </div>
+  );
+
+  // Below the fold, on the same dark-wood tone the rest of this frame
+  // uses (#0d0805) -- the three step cards plus a second way to start,
+  // reached by scrolling down from the hero.
+  const belowFold = (
+    <div className="bg-[#0d0805] px-5 py-10 sm:px-10">
+      <div className="mx-auto max-w-3xl space-y-6">
+        {stepCards}
+        <StartBuildingButton />
+      </div>
     </div>
   );
 
@@ -179,7 +204,11 @@ export default function EmptyPlotView() {
           </button>
         </div>
 
-        <div className="relative w-full h-[38vh] shrink-0">
+        {/* Hero: the whole first screen (viewport height minus the 48px
+            sticky header above) -- pannable full-height image, headline/
+            sub/button overlaid at the bottom. Step cards live below the
+            fold, reached by scrolling down past this. */}
+        <div className="relative w-full h-[calc(100dvh-48px)] shrink-0">
           <div
             ref={panScrollRef}
             className="relative w-full h-full overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -189,10 +218,10 @@ export default function EmptyPlotView() {
               <img src={EMPTY_PLOT_IMG} alt="" className="block h-full w-auto max-w-none" />
             </div>
           </div>
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0d0805] via-transparent to-transparent" />
+          {heroOverlay}
         </div>
 
-        <div className="px-4 py-5">{heroText}</div>
+        {belowFold}
       </div>
 
       {/* Landscape phone/tablet + desktop: StallInteriorView's own
@@ -204,34 +233,38 @@ export default function EmptyPlotView() {
         />
 
         <div className="relative flex-1 min-h-0 overflow-y-auto">
-          <img src={EMPTY_PLOT_IMG} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover opacity-50" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0d0805]/60 via-[#0d0805]/80 to-[#0d0805]" />
-
-          <div className="relative">
-            <div className="flex items-center gap-2 p-6">
-              <img src="/s2g-logo.webp" alt="sow2grow" className="h-8 w-8 object-contain" />
-              <span className="font-serif text-sm font-semibold text-amber-100">sow2grow</span>
-            </div>
-            <div className="px-6 pb-10 max-w-3xl">{heroText}</div>
+          {/* Hero: the whole first screen (100% of this column's own
+              height, which is already the full viewport in this frame) --
+              image object-contain, headline/sub/button overlaid at the
+              bottom-left. Step cards are in belowFold, reached by
+              scrolling down. */}
+          <div className="relative h-full w-full bg-black">
+            <img src={EMPTY_PLOT_IMG} alt="" className="absolute inset-0 w-full h-full object-contain" />
+            {heroOverlay}
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsTodayDrawerOpen(true)}
-            aria-label="Open Today, Omer & Growth"
-            className="lg:hidden absolute top-4 right-4 flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
-          >
-            <CalendarDays className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsNavDrawerOpen(true)}
-            aria-label="Open menu"
-            className="lg:hidden absolute top-4 left-4 flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
-          >
-            <Menu className="h-4 w-4" />
-          </button>
+          {belowFold}
         </div>
+
+        {/* Nav/Today toggles -- siblings of the scrolling column above
+            (not inside it), so they stay put on screen as the hero and
+            step cards scroll past underneath. */}
+        <button
+          type="button"
+          onClick={() => setIsTodayDrawerOpen(true)}
+          aria-label="Open Today, Omer & Growth"
+          className="lg:hidden absolute top-4 right-4 flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
+        >
+          <CalendarDays className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsNavDrawerOpen(true)}
+          aria-label="Open menu"
+          className="lg:hidden absolute top-4 left-4 flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
+        >
+          <Menu className="h-4 w-4" />
+        </button>
 
         <StallTodayPanel className="hidden lg:flex lg:flex-col lg:w-[220px] lg:shrink-0 lg:border-l lg:border-amber-500/15" />
       </div>
