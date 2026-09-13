@@ -221,7 +221,13 @@ export default function LiveStage({
             return (
               <button
                 key={t.mode}
-                onClick={() => setStageMode({ mode: t.mode, imageUrl: t.mode === 'image' ? imgList[0] : null, imageIdx: 0 })}
+                // Merge onto the existing stage, not replace it -- a bare
+                // {mode, imageUrl, imageIdx} discarded pdfUrl/pdfPage/
+                // clipUrl/etc. every time, so switching away from PDF and
+                // back (even re-clicking the same already-active tab)
+                // silently lost the host's own uploaded PDF/clip, forcing
+                // a re-upload. Found while testing the zoom/scroll fix.
+                onClick={() => setStageMode({ ...stage, mode: t.mode, imageUrl: t.mode === 'image' ? imgList[0] : null, imageIdx: 0 })}
                 className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold uppercase tracking-wider transition ${
                   active ? 'bg-emerald-500 text-black' : 'text-white/70 hover:bg-white/10'
                 }`}
