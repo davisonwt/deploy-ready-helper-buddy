@@ -1,0 +1,344 @@
+/**
+ * GatheringBoard — Gathering Room batch 1's board content: host-typed text
+ * (LiveStage.tsx's own existing 'whiteboard' mode, untouched), PDF with a
+ * host-synced page, a short video clip with synced playback, and a pinned
+ * seed with real Bestow. Rendered inside LiveStage's existing big-stage
+ * area for the 'pdf' | 'clip' | 'seed' modes; camera/image/whiteboard/video
+ * stay exactly as LiveStage.tsx already renders them.
+ */
+import { useCallback, useEffect, useRef, useState } from 'react';
+import * as pdfjsLib from 'pdfjs-dist';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
+import { Loader2, Upload, ChevronLeft, ChevronRight, Play, Pause, ZoomIn, ZoomOut, Pin } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
+import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
+import type { StagePayload, PinnedSeed } from '@/hooks/useLiveStage';
+
+// Same worker setup StoryPdfViewer.tsx uses -- idempotent to re-assign.
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.mjs';
+
+/** "Now: <title>" label -- shown regardless of which board mode is active. */
+export function NowLabel({ title }: { title: string }) {
+  return (
+    <div className="absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-amber-200 backdrop-blur">
+      Now: {title}
+    </div>
+  );
+}
+
+/** Pinch (touch) / ctrl-wheel (trackpad) / +/- buttons zoom, pure client-side -- no server involvement, per docs/GATHERING-ROOM.md #2. */
+function useZoom() {
+  const [scale, setScale] = useState(1);
+  const pinchStartDist = useRef<number | null>(null);
+  const pinchStartScale = useRef(1);
+
+  const onWheel = useCallback((e: React.WheelEvent) => {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    setScale((s) => Math.min(3, Math.max(1, s - e.deltaY * 0.01)));
+  }, []);
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length !== 2) return;
+    const [a, b] = [e.touches[0], e.touches[1]];
+    pinchStartDist.current = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    pinchStartScale.current = scale;
+  }, [scale]);
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length !== 2 || pinchStartDist.current == null) return;
+    const [a, b] = [e.touches[0], e.touches[1]];
+    const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    setScale(Math.min(3, Math.max(1, pinchStartScale.current * (dist / pinchStartDist.current))));
+  }, []);
+  const onTouchEnd = useCallback(() => { pinchStartDist.current = null; }, []);
+
+  return { scale, setScale, onWheel, onTouchStart, onTouchMove, onTouchEnd };
+}
+
+function ZoomControls({ scale, setScale }: { scale: number; setScale: (s: number) => void }) {
+  return (
+    <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1 rounded-full bg-black/60 p-1 backdrop-blur">
+      <button type="button" onClick={() => setScale(Math.max(1, scale - 0.5))} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10" aria-label="Zoom out">
+        <ZoomOut className="h-3.5 w-3.5" />
+      </button>
+      <span className="w-9 text-center text-[10px] font-bold text-white/70">{Math.round(scale * 100)}%</span>
+      <button type="button" onClick={() => setScale(Math.min(3, scale + 0.5))} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10" aria-label="Zoom in">
+        <ZoomIn className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+// ── PDF board ────────────────────────────────────────────────────────────
+
+async function uploadBoardFile(userId: string, file: File, kind: 'pdf' | 'clip'): Promise<string | null> {
+  const ext = kind === 'pdf' ? 'pdf' : (file.name.split('.').pop() || 'mp4');
+  const path = `${userId}/gathering/${Date.now()}.${ext}`;
+  const { error: uploadErr } = await supabase.storage.from('stalls').upload(path, file, {
+    cacheControl: '3600', contentType: file.type || undefined, upsert: false,
+  });
+  if (uploadErr) return null;
+  const { verdict, reason } = await moderateStorageUpload('stalls', path, kind === 'pdf' ? 'image' : 'video');
+  if (verdict !== 'allow') {
+    await supabase.storage.from('stalls').remove([path]);
+    console.warn('board upload rejected:', moderationRejectionMessage(reason));
+    return null;
+  }
+  const { data: pub } = supabase.storage.from('stalls').getPublicUrl(path);
+  return pub.publicUrl;
+}
+
+function BoardUploadPrompt({ label, accept, busy, onFile }: { label: string; accept: string; busy: boolean; onFile: (f: File) => void }) {
+  return (
+    <label className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-2 text-white/50">
+      {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <Upload className="h-6 w-6" />}
+      <span className="text-sm">{busy ? 'Uploading…' : label}</span>
+      <input type="file" accept={accept} className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+    </label>
+  );
+}
+
+interface BoardProps {
+  isHost: boolean;
+  stage: StagePayload;
+  setStageMode: (p: Omit<StagePayload, 'at'>) => void;
+}
+
+export function PdfBoard({ isHost, stage, setStageMode }: BoardProps) {
+  const { user } = useAuth();
+  const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
+  const [busy, setBusy] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const zoom = useZoom();
+  const page = stage.pdfPage ?? 1;
+
+  useEffect(() => {
+    if (!stage.pdfUrl) { setPdf(null); return; }
+    let alive = true;
+    pdfjsLib.getDocument({ url: stage.pdfUrl }).promise.then((doc) => {
+      if (!alive) { doc.destroy(); return; }
+      setPdf(doc);
+      if (isHost && !stage.pdfPageCount) setStageMode({ ...stage, pdfPageCount: doc.numPages });
+    }).catch((e) => console.error('board pdf load failed', e));
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage.pdfUrl]);
+
+  useEffect(() => {
+    if (!pdf || !containerRef.current || !canvasRef.current) return;
+    let cancelled = false;
+    (async () => {
+      const p = await pdf.getPage(Math.min(page, pdf.numPages));
+      if (cancelled) return;
+      const width = containerRef.current!.clientWidth;
+      const base = p.getViewport({ scale: 1 });
+      const dpr = window.devicePixelRatio || 1;
+      const viewport = p.getViewport({ scale: (width / base.width) * dpr });
+      const canvas = canvasRef.current!;
+      canvas.width = Math.max(1, Math.round(viewport.width));
+      canvas.height = Math.max(1, Math.round(viewport.height));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      await p.render({ canvasContext: ctx, viewport, canvas }).promise;
+    })();
+    return () => { cancelled = true; };
+  }, [pdf, page]);
+
+  const handleFile = async (file: File) => {
+    if (!user) return;
+    setBusy(true);
+    const url = await uploadBoardFile(user.id, file, 'pdf');
+    setBusy(false);
+    if (url) setStageMode({ ...stage, pdfUrl: url, pdfPage: 1, pdfPageCount: undefined });
+  };
+
+  if (!stage.pdfUrl) {
+    return isHost
+      ? <BoardUploadPrompt label="Upload a PDF" accept="application/pdf" busy={busy} onFile={handleFile} />
+      : <div className="flex h-full items-center justify-center text-sm text-white/40">Host hasn't uploaded a PDF yet.</div>;
+  }
+
+  return (
+    <div ref={containerRef} className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#0d0805]" onWheel={zoom.onWheel} onTouchStart={zoom.onTouchStart} onTouchMove={zoom.onTouchMove} onTouchEnd={zoom.onTouchEnd}>
+      {!pdf ? <Loader2 className="h-6 w-6 animate-spin text-white/40" /> : (
+        <canvas ref={canvasRef} className="max-h-full max-w-full object-contain transition-transform" style={{ transform: `scale(${zoom.scale})` }} />
+      )}
+      <ZoomControls scale={zoom.scale} setScale={zoom.setScale} />
+      {isHost && pdf && (
+        <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/60 px-2 py-1 backdrop-blur">
+          <button type="button" disabled={page <= 1} onClick={() => setStageMode({ ...stage, pdfPage: page - 1 })} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10 disabled:opacity-30" aria-label="Previous page">
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="text-xs font-bold text-white/80">Page {page} of {stage.pdfPageCount ?? pdf.numPages}</span>
+          <button type="button" disabled={page >= (stage.pdfPageCount ?? pdf.numPages)} onClick={() => setStageMode({ ...stage, pdfPage: page + 1 })} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10 disabled:opacity-30" aria-label="Next page">
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+      {!isHost && (
+        <span className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-white/70 backdrop-blur">
+          Page {page} of {stage.pdfPageCount ?? '…'}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ── Clip board ───────────────────────────────────────────────────────────
+
+export function ClipBoard({ isHost, stage, setStageMode }: BoardProps) {
+  const { user } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const zoom = useZoom();
+
+  // Viewers (and the host's own re-render) apply the synced play/pause/time
+  // -- correcting drift beyond 0.75s rather than fighting the video element
+  // on every render.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || isHost) return;
+    if (Math.abs(v.currentTime - (stage.clipTime ?? 0)) > 0.75) v.currentTime = stage.clipTime ?? 0;
+    if (stage.clipPlaying && v.paused) void v.play().catch(() => {});
+    if (!stage.clipPlaying && !v.paused) v.pause();
+  }, [stage.clipPlaying, stage.clipTime, isHost]);
+
+  const handleFile = async (file: File) => {
+    if (!user) return;
+    setBusy(true);
+    const url = await uploadBoardFile(user.id, file, 'clip');
+    setBusy(false);
+    if (url) setStageMode({ ...stage, clipUrl: url, clipPlaying: false, clipTime: 0 });
+  };
+
+  const broadcastState = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    setStageMode({ ...stage, clipPlaying: !v.paused, clipTime: v.currentTime });
+  };
+
+  if (!stage.clipUrl) {
+    return isHost
+      ? <BoardUploadPrompt label="Upload a short clip" accept="video/*" busy={busy} onFile={handleFile} />
+      : <div className="flex h-full items-center justify-center text-sm text-white/40">Host hasn't shared a clip yet.</div>;
+  }
+
+  return (
+    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black" onWheel={zoom.onWheel} onTouchStart={zoom.onTouchStart} onTouchMove={zoom.onTouchMove} onTouchEnd={zoom.onTouchEnd}>
+      <video
+        ref={videoRef}
+        src={stage.clipUrl}
+        playsInline
+        muted={!isHost}
+        controls={isHost}
+        onPlay={() => isHost && broadcastState()}
+        onPause={() => isHost && broadcastState()}
+        onSeeked={() => isHost && broadcastState()}
+        className="max-h-full max-w-full object-contain transition-transform"
+        style={{ transform: `scale(${zoom.scale})` }}
+      />
+      <ZoomControls scale={zoom.scale} setScale={zoom.setScale} />
+      {!isHost && (
+        <button
+          type="button"
+          onClick={() => { const v = videoRef.current; if (v) v.muted = !v.muted; }}
+          className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-bold text-white/80 backdrop-blur"
+        >
+          {stage.clipPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />} synced to host
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Seed-pin board ───────────────────────────────────────────────────────
+
+interface OwnSeedOption { id: string; title: string; cover_image_url: string | null; price: number | null; type: string | null; }
+
+function productTypeToKind(type: string | null): SeedCardKind {
+  if (type === 'music') return 'music';
+  if (type === 'ebook') return 'book';
+  if (type === 'video') return 'video';
+  return 'seed';
+}
+
+export function SeedPinBoard({ isHost, stage, setStageMode }: BoardProps) {
+  const { user } = useAuth();
+  const [options, setOptions] = useState<OwnSeedOption[] | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isHost || !pickerOpen || options || !user) return;
+    (async () => {
+      const { data: sower } = await supabase.from('sowers').select('id').eq('user_id', user.id).maybeSingle();
+      if (!sower) { setOptions([]); return; }
+      const { data } = await supabase
+        .from('products')
+        .select('id, title, cover_image_url, price, type')
+        .eq('sower_id', (sower as any).id)
+        .order('updated_at', { ascending: false })
+        .limit(20);
+      setOptions((data as OwnSeedOption[] | null) ?? []);
+    })();
+  }, [isHost, pickerOpen, options, user]);
+
+  const pin = (o: OwnSeedOption) => {
+    if (!user) return;
+    const displayName = (user as any)?.user_metadata?.display_name || user.email?.split('@')[0] || null;
+    const seed: PinnedSeed = {
+      id: o.id, kind: productTypeToKind(o.type), title: o.title, cover: o.cover_image_url,
+      price: Number(o.price || 0), ownerId: user.id, ownerName: displayName, openPath: `/stall/build?tab=products`,
+    };
+    setStageMode({ ...stage, pinnedSeed: seed });
+    setPickerOpen(false);
+  };
+
+  if (!stage.pinnedSeed) {
+    if (!isHost) return <div className="flex h-full items-center justify-center text-sm text-white/40">Host hasn't pinned a seed yet.</div>;
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
+        <button type="button" onClick={() => setPickerOpen((v) => !v)} className="flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-500/10 px-4 py-2 text-sm font-bold text-amber-200 hover:bg-amber-500/20">
+          <Pin className="h-4 w-4" /> Pin one of your seeds
+        </button>
+        {pickerOpen && (
+          <div className="max-h-64 w-full max-w-sm overflow-y-auto rounded-xl border border-white/10 bg-black/60">
+            {options === null && <div className="p-3 text-center text-xs text-white/40">Loading…</div>}
+            {options?.length === 0 && <div className="p-3 text-center text-xs text-white/40">No seeds found.</div>}
+            {options?.map((o) => (
+              <button key={o.id} type="button" onClick={() => pin(o)} className="flex w-full items-center gap-2 border-b border-white/5 p-2 text-left text-xs text-white/85 hover:bg-white/5">
+                {o.cover_image_url ? <img src={o.cover_image_url} alt="" className="h-8 w-8 rounded object-cover" /> : <div className="h-8 w-8 rounded bg-white/10" />}
+                <span className="flex-1 truncate">{o.title}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const seed = stage.pinnedSeed;
+  return (
+    <div className="flex h-full w-full items-center justify-center overflow-y-auto p-4">
+      <div className="w-full max-w-xs">
+        <SeedCard
+          id={seed.id}
+          kind={seed.kind}
+          title={seed.title}
+          subtitle={seed.subtitle}
+          cover={seed.cover}
+          ownerId={seed.ownerId}
+          ownerName={seed.ownerName}
+          price={seed.price}
+          openPath={seed.openPath}
+        />
+        {isHost && (
+          <button type="button" onClick={() => setStageMode({ ...stage, pinnedSeed: null })} className="mt-2 w-full rounded-full border border-white/15 py-1.5 text-xs text-white/60 hover:bg-white/5">
+            Unpin
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

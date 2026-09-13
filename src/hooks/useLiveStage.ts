@@ -1,15 +1,22 @@
 /**
  * useLiveStage — realtime "stage director" for any Go-Live surface.
  *
- * Manages the host-broadcast presentation mode (camera / image / whiteboard / video)
- * and the guest hand-raise queue, all over a single Supabase broadcast channel
- * `stage:${seedId}`. No DB tables — ephemeral for the duration of the live session.
+ * Manages the host-broadcast presentation mode (camera / image / whiteboard
+ * / video / pdf / clip / seed) and the guest hand-raise queue, over a single
+ * Supabase broadcast channel `stage:${seedId}` -- the low-latency path, as
+ * before. Gathering Room batch 1 adds one durable row (`gathering_sessions`)
+ * per live session: the host's own board changes write through to it
+ * (debounced-by-nature -- one write per host action, not a timer), and a
+ * late joiner (or a host who refreshes) reads it once on mount so they see
+ * the CURRENT board instead of nothing until the next broadcast. Everything
+ * else (hand-raise queue, spotlight) stays exactly as ephemeral as before --
+ * batch 2 is what persists the queue.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-export type StageMode = 'camera' | 'image' | 'whiteboard' | 'video';
+export type StageMode = 'camera' | 'image' | 'whiteboard' | 'video' | 'pdf' | 'clip' | 'seed';
 
 export interface NowPlaying {
   seed_id: string;
@@ -18,6 +25,18 @@ export interface NowPlaying {
   media_url?: string | null;
   media_kind?: 'audio' | 'video' | null;
   image?: string | null;
+}
+
+export interface PinnedSeed {
+  id: string;
+  kind: 'seed' | 'orchard' | 'music' | 'book' | 'video';
+  title: string;
+  subtitle?: string | null;
+  cover: string | null;
+  price: number;
+  ownerId: string;
+  ownerName?: string | null;
+  openPath: string;
 }
 
 export interface StagePayload {
@@ -32,6 +51,16 @@ export interface StagePayload {
   nowPlaying?: NowPlaying | null;
   /** user_id of the approved guest currently spotlighted on the big screen (null = host) */
   spotlightUserId?: string | null;
+  /** Gathering Room batch 1: host-synced PDF page. */
+  pdfUrl?: string | null;
+  pdfPage?: number;
+  pdfPageCount?: number;
+  /** Gathering Room batch 1: host-synced short video clip. */
+  clipUrl?: string | null;
+  clipPlaying?: boolean;
+  clipTime?: number;
+  /** Gathering Room batch 1: a seed pinned to the board, Bestow-able by any viewer. */
+  pinnedSeed?: PinnedSeed | null;
   at: number;
 }
 
@@ -47,6 +76,15 @@ export interface HandRaise {
   avatar?: string | null;
   want: 'voice' | 'video';
   at: number;
+  /** Gathering Room batch 2: recorded instead of waiting for a live camera/mic slot -- plays to the room when this hand reaches #1, then the queue advances. */
+  voiceNoteUrl?: string | null;
+}
+
+/** Gathering Room batch 2: what's currently auto-playing to the whole room (the #1 queue position's voice note). */
+export interface PlayingVoiceNote {
+  user_id: string;
+  name: string;
+  url: string;
 }
 
 export interface ApprovedGuest {
@@ -57,18 +95,33 @@ export interface ApprovedGuest {
   muted?: boolean;
 }
 
+const INITIAL_STAGE: StagePayload = { mode: 'camera', spotlightUserId: null, at: Date.now() };
+
 export function useLiveStage(seedId: string | null, opts: { isHost: boolean; enabled: boolean }) {
   const { user } = useAuth();
   const { isHost, enabled } = opts;
 
-  const [stage, setStage] = useState<StagePayload>({ mode: 'camera', spotlightUserId: null, at: Date.now() });
+  const [stage, setStage] = useState<StagePayload>(INITIAL_STAGE);
   const [hands, setHands] = useState<HandRaise[]>([]);
   const [approved, setApproved] = useState<ApprovedGuest[]>([]);
   const [spotlightRequests, setSpotlightRequests] = useState<SpotlightRequest[]>([]);
+  const [playingVoiceNote, setPlayingVoiceNote] = useState<PlayingVoiceNote | null>(null);
+  const playingVoiceNoteRef = useRef<PlayingVoiceNote | null>(null);
+  // Gathering Room batch 2: which #1-position user_ids the host has already
+  // triggered a play_voice_note for, so the same note doesn't fire twice
+  // while it's playing out (hands still contains the entry until playback
+  // finishes and the host removes it).
+  const triggeredVoiceNotesRef = useRef<Set<string>>(new Set());
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  // Gathering Room batch 1: this live's own gathering_sessions.id, once
+  // resolved (fetched for a viewer, fetched-or-created for the host).
+  // null until then -- board writes are broadcast-only (as always) before
+  // it resolves, same as they'd be with no persistence at all.
+  const sessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!enabled || !seedId) return;
+    let cancelled = false;
     const ch = supabase.channel(`stage:${seedId}`, { config: { broadcast: { self: false } } });
     chRef.current = ch;
 
@@ -78,6 +131,11 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     ch.on('broadcast', { event: 'raise_hand' }, ({ payload }) => {
       const h = payload as HandRaise;
       setHands(prev => prev.find(x => x.user_id === h.user_id) ? prev : [...prev, h]);
+    });
+    ch.on('broadcast', { event: 'play_voice_note' }, ({ payload }) => {
+      const p = payload as PlayingVoiceNote;
+      playingVoiceNoteRef.current = p;
+      setPlayingVoiceNote(p);
     });
     ch.on('broadcast', { event: 'cancel_hand' }, ({ payload }) => {
       setHands(prev => prev.filter(h => h.user_id !== (payload as any).user_id));
@@ -108,21 +166,80 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     });
 
     ch.subscribe();
-    return () => { supabase.removeChannel(ch); chRef.current = null; };
+
+    // Late-joiner hydration + session row lifecycle (Gathering Room batch 1).
+    (async () => {
+      const { data: existing } = await supabase
+        .from('gathering_sessions' as any)
+        .select('id, board_state')
+        .eq('seed_id', seedId)
+        .is('ended_at', null)
+        .maybeSingle();
+      if (cancelled) return;
+
+      if (existing) {
+        sessionIdRef.current = (existing as any).id;
+        const board = (existing as any).board_state as Partial<StagePayload> | null;
+        if (board && Object.keys(board).length > 0) {
+          setStage(prev => ({ ...prev, ...board }));
+        }
+        return;
+      }
+
+      if (!isHost || !user) return;
+      const { data: created, error } = await supabase
+        .from('gathering_sessions' as any)
+        .insert({ seed_id: seedId, host_id: user.id, board_state: INITIAL_STAGE })
+        .select('id')
+        .maybeSingle();
+      if (!cancelled && !error && created) sessionIdRef.current = (created as any).id;
+    })();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+      chRef.current = null;
+      // The host leaving/ending the live closes this session's board for
+      // good -- a viewer's own unmount (just navigating away, live carries
+      // on) must NOT do this.
+      if (isHost && sessionIdRef.current) {
+        void supabase.from('gathering_sessions' as any).update({ ended_at: new Date().toISOString() }).eq('id', sessionIdRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedId, enabled]);
 
   const send = useCallback((event: string, payload: any) => {
     chRef.current?.send({ type: 'broadcast', event, payload });
   }, []);
 
+  // Gathering Room batch 2: the host's own client is the one "director"
+  // that decides when the #1 queue position's voice note plays -- avoids
+  // every client racing to broadcast the same trigger. Re-checks whenever
+  // `hands` changes (a new #1, or the old #1 left the queue some other way).
+  useEffect(() => {
+    if (!isHost) return;
+    const top = hands[0];
+    if (!top?.voiceNoteUrl) return;
+    if (triggeredVoiceNotesRef.current.has(top.user_id)) return;
+    triggeredVoiceNotesRef.current.add(top.user_id);
+    const p: PlayingVoiceNote = { user_id: top.user_id, name: top.name, url: top.voiceNoteUrl };
+    playingVoiceNoteRef.current = p;
+    setPlayingVoiceNote(p);
+    send('play_voice_note', p);
+  }, [isHost, hands, send]);
+
   const setStageMode = useCallback((p: Omit<StagePayload, 'at'>) => {
     if (!isHost) return;
     const full: StagePayload = { ...p, at: Date.now() };
     setStage(full);
     send('stage_mode', full);
+    if (sessionIdRef.current) {
+      void supabase.from('gathering_sessions' as any).update({ board_state: full }).eq('id', sessionIdRef.current);
+    }
   }, [isHost, send]);
 
-  const raiseHand = useCallback((want: 'voice' | 'video') => {
+  const raiseHand = useCallback((want: 'voice' | 'video', voiceNoteUrl?: string) => {
     if (!user) return;
     const h: HandRaise = {
       user_id: user.id,
@@ -130,9 +247,24 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
       avatar: (user as any)?.user_metadata?.avatar_url || null,
       want,
       at: Date.now(),
+      voiceNoteUrl: voiceNoteUrl ?? null,
     };
     send('raise_hand', h);
   }, [user, send]);
+
+  // Gathering Room batch 2: called by every client's own <audio onEnded>
+  // once the currently-playing voice note finishes -- clears the local
+  // "now playing" banner everywhere, and (host only) actually removes that
+  // hand from the queue, advancing whoever's next to #1.
+  const finishVoiceNote = useCallback(() => {
+    const p = playingVoiceNoteRef.current;
+    playingVoiceNoteRef.current = null;
+    setPlayingVoiceNote(null);
+    if (isHost && p) {
+      setHands(prev => prev.filter(h => h.user_id !== p.user_id));
+      send('cancel_hand', { user_id: p.user_id });
+    }
+  }, [isHost, send]);
 
   const cancelHand = useCallback(() => {
     if (!user) return;
@@ -199,6 +331,7 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     hands, raiseHand, cancelHand, approveHand, denyHand,
     approved, removeGuest, toggleMute,
     spotlightRequests, setSpotlight, requestSpotlight, cancelSpotlightRequest, denySpotlight,
+    playingVoiceNote, finishVoiceNote,
     myHandRaised: !!user && hands.some(h => h.user_id === user.id),
     iAmApproved: !!user && approved.some(g => g.user_id === user.id),
     mySpotlightRequested: !!user && spotlightRequests.some(r => r.user_id === user.id),

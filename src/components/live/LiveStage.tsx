@@ -25,8 +25,30 @@ import {
 import { useDailyIframeSrc } from '@/lib/daily-config';
 import { useAuth } from '@/hooks/useAuth';
 import { useLiveStage, type StageMode, type NowPlaying } from '@/hooks/useLiveStage';
+import { useMediaRecorder } from '@/hooks/useMediaRecorder';
 import { supabase } from '@/integrations/supabase/client';
+import { moderateStorageUpload } from '@/lib/moderation/moderateUpload';
 import QuickBestowModal from '@/components/bestow/QuickBestowModal';
+import { PdfBoard, ClipBoard, SeedPinBoard, NowLabel } from './GatheringBoard';
+import { FileText, Clapperboard, Sprout } from 'lucide-react';
+
+const VOICE_NOTE_MAX_SECONDS = 45;
+
+/** Same upload-then-moderate-then-publicUrl shape as GatheringBoard's
+ * uploadBoardFile -- kept separate since this one is always audio, always
+ * capped, and lives on the guest side of the queue, not the host's board. */
+async function uploadVoiceNote(userId: string, blob: Blob): Promise<string | null> {
+  const ext = blob.type.includes('mp4') ? 'm4a' : 'webm';
+  const path = `${userId}/gathering/voicenote-${Date.now()}.${ext}`;
+  const { error: uploadErr } = await supabase.storage.from('stalls').upload(path, blob, {
+    cacheControl: '3600', contentType: blob.type || undefined, upsert: false,
+  });
+  if (uploadErr) return null;
+  const { verdict } = await moderateStorageUpload('stalls', path, 'video');
+  if (verdict !== 'allow') { await supabase.storage.from('stalls').remove([path]); return null; }
+  const { data: pub } = supabase.storage.from('stalls').getPublicUrl(path);
+  return pub.publicUrl;
+}
 
 export interface LiveStageProps {
   seedId: string;
@@ -48,7 +70,10 @@ export interface LiveStageProps {
 const TABS: { mode: StageMode; icon: typeof Camera; label: string; hostOnly?: boolean }[] = [
   { mode: 'camera',     icon: Camera,     label: 'Camera' },
   { mode: 'image',      icon: ImageIcon,  label: 'Image' },
-  { mode: 'whiteboard', icon: PencilLine, label: 'Board' },
+  { mode: 'whiteboard', icon: PencilLine, label: 'Text' },
+  { mode: 'pdf',        icon: FileText,   label: 'PDF' },
+  { mode: 'clip',       icon: Clapperboard, label: 'Clip' },
+  { mode: 'seed',       icon: Sprout,     label: 'Seed' },
   { mode: 'video',      icon: Film,       label: 'Media' },
 ];
 
@@ -74,7 +99,11 @@ export default function LiveStage({
     approved, removeGuest, toggleMute,
     spotlightRequests, setSpotlight, requestSpotlight, cancelSpotlightRequest, denySpotlight,
     myHandRaised, iAmApproved, mySpotlightRequested, iAmSpotlighted,
+    playingVoiceNote, finishVoiceNote,
   } = useLiveStage(seedId, { isHost, enabled: true });
+  const [recordingNote, setRecordingNote] = useState(false);
+  const [noteBusy, setNoteBusy] = useState(false);
+  const noteRecorder = useMediaRecorder();
 
   const spotlightUserId = stage.spotlightUserId ?? null;
   const spotlightedGuest = approved.find(g => g.user_id === spotlightUserId) ?? null;
@@ -258,6 +287,21 @@ export default function LiveStage({
 
       {/* Big stage area */}
       <div className="relative flex-1 min-h-0 bg-black">
+        {/* Gathering Room batch 1: "Now: <title>" label, every mode. */}
+        <NowLabel title={stage.mode === 'seed' && stage.pinnedSeed ? stage.pinnedSeed.title : title} />
+        {/* Gathering Room batch 2: the #1 queue position's voice note,
+            auto-playing to every participant -- each client plays its own
+            local copy (not mixed into the Daily media stream itself; that
+            needs the shared-audio-track work reserved for batch 4/Music)
+            and calls finishVoiceNote() on its own 'ended', which only
+            actually advances the queue on the host's copy. */}
+        {playingVoiceNote && (
+          <div className="absolute top-12 left-1/2 z-20 -translate-x-1/2 flex items-center gap-2 rounded-full border border-purple-400/50 bg-purple-950/70 px-3 py-1.5 text-xs font-bold text-purple-100 backdrop-blur">
+            <Mic className="h-3.5 w-3.5 text-purple-300 animate-pulse" />
+            {playingVoiceNote.name}'s voice note
+            <audio src={playingVoiceNote.url} autoPlay onEnded={finishVoiceNote} className="hidden" />
+          </div>
+        )}
         {/* Spotlight banner — who currently owns the big screen */}
         {spotlightedGuest && stage.mode === 'camera' && (
           <div className="absolute top-2 left-1/2 z-20 -translate-x-1/2 flex items-center gap-2 rounded-full border border-amber-400/60 bg-amber-500/20 px-3 py-1 text-xs font-bold text-amber-100 backdrop-blur">
@@ -344,6 +388,23 @@ export default function LiveStage({
                 {boardText || <span className="italic text-white/30">Host hasn't written anything yet…</span>}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Gathering Room batch 1 board modes */}
+        {stage.mode === 'pdf' && (
+          <div className="absolute inset-0">
+            <PdfBoard isHost={isHost} stage={stage} setStageMode={setStageMode} />
+          </div>
+        )}
+        {stage.mode === 'clip' && (
+          <div className="absolute inset-0">
+            <ClipBoard isHost={isHost} stage={stage} setStageMode={setStageMode} />
+          </div>
+        )}
+        {stage.mode === 'seed' && (
+          <div className="absolute inset-0 bg-[#0b1120]">
+            <SeedPinBoard isHost={isHost} stage={stage} setStageMode={setStageMode} />
           </div>
         )}
 
@@ -526,20 +587,24 @@ export default function LiveStage({
             🙋 Hand raises ({hands.length})
           </div>
           <div className="mt-1 flex flex-wrap gap-1.5">
-            {hands.map(h => (
+            {hands.map((h, i) => (
               <motion.div
                 key={h.user_id}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-black/40 px-2 py-1 text-xs"
               >
-                {h.want === 'video' ? <Video className="h-3 w-3 text-amber-300" /> : <Mic className="h-3 w-3 text-amber-300" />}
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-500/20 text-[9px] font-black text-amber-300">#{i + 1}</span>
+                {h.voiceNoteUrl ? <Mic className="h-3 w-3 text-emerald-300" /> : h.want === 'video' ? <Video className="h-3 w-3 text-amber-300" /> : <Mic className="h-3 w-3 text-amber-300" />}
                 <span className="font-bold">{h.name}</span>
-                <button
-                  onClick={() => approveHand(h)}
-                  className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-black hover:bg-emerald-400"
-                  title="Approve"
-                ><Check className="h-3 w-3" /></button>
+                {h.voiceNoteUrl && <span className="text-[9px] text-emerald-300">voice note — plays at #1</span>}
+                {!h.voiceNoteUrl && (
+                  <button
+                    onClick={() => approveHand(h)}
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-black hover:bg-emerald-400"
+                    title="Approve"
+                  ><Check className="h-3 w-3" /></button>
+                )}
                 <button
                   onClick={() => denyHand(h.user_id)}
                   className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-400"
@@ -553,7 +618,19 @@ export default function LiveStage({
 
       {/* Guest: request-to-join controls */}
       {!isHost && !iAmApproved && (
-        <div className="flex items-center justify-center gap-2 border-t border-white/10 bg-black/70 px-3 py-2">
+        <div className="flex flex-col items-center justify-center gap-2 border-t border-white/10 bg-black/70 px-3 py-2">
+          {recordingNote ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-rose-300 animate-pulse">● recording… {noteRecorder.elapsed}s</span>
+              <button
+                onClick={() => noteRecorder.cancel()}
+                className="flex items-center gap-1 rounded-md border border-white/20 bg-black/40 px-2 py-1 text-xs hover:bg-white/10"
+              >
+                <X className="h-3 w-3" /> Cancel
+              </button>
+            </div>
+          ) : (
+          <div className="flex items-center gap-2">
           <Hand className="h-4 w-4 text-amber-300" />
           {!myHandRaised ? (
             <>
@@ -572,6 +649,27 @@ export default function LiveStage({
               >
                 <Video className="h-3 w-3" /> Camera on
               </button>
+              <button
+                disabled={noteBusy}
+                onClick={async () => {
+                  setRecordingNote(true);
+                  try {
+                    const blob = await noteRecorder.start('audio', VOICE_NOTE_MAX_SECONDS);
+                    setRecordingNote(false);
+                    if (!blob || blob.size === 0 || !user) return;
+                    setNoteBusy(true);
+                    const url = await uploadVoiceNote(user.id, blob);
+                    setNoteBusy(false);
+                    if (url) raiseHand('voice', url);
+                  } catch {
+                    setRecordingNote(false);
+                  }
+                }}
+                className="flex items-center gap-1 rounded-md border border-purple-400/40 bg-purple-500/10 px-2 py-1 text-xs font-bold hover:bg-purple-500/20 disabled:opacity-50"
+                title="Record a short voice note instead of waiting for a live slot — it plays to everyone when your turn comes up"
+              >
+                {noteBusy ? '…' : <Mic className="h-3 w-3" />} Record a voice note instead
+              </button>
             </>
           ) : (
             <>
@@ -583,6 +681,8 @@ export default function LiveStage({
                 <X className="h-3 w-3" /> Cancel
               </button>
             </>
+          )}
+          </div>
           )}
         </div>
       )}
