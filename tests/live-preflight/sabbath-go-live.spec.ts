@@ -200,11 +200,11 @@ test.describe('Sabbath scripture study pre-flight -- public Go Live path', () =>
 
     await test.step('chat works both ways in the Go-Live overlay', async () => {
       await hostPage.getByPlaceholder('Ask the host…').fill('Shalom -- can everyone hear me?');
-      await hostPage.getByRole('button', { name: 'Send' }).click();
+      await hostPage.getByRole('button', { name: 'Send', exact: true }).click();
       await expect(guestPage.getByText('Shalom -- can everyone hear me?')).toBeVisible({ timeout: 10_000 });
 
       await guestPage.getByPlaceholder('Ask the host…').fill('Yes, loud and clear!');
-      await guestPage.getByRole('button', { name: 'Send' }).click();
+      await guestPage.getByRole('button', { name: 'Send', exact: true }).click();
       await expect(hostPage.getByText('Yes, loud and clear!')).toBeVisible({ timeout: 10_000 });
     });
 
