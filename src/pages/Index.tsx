@@ -7,6 +7,8 @@ import { AppContextProvider, useAppContext } from "../contexts/AppContext";
 import { VoiceCommands } from "../components/voice/VoiceCommands";
 import { useContainImageRect } from "@/hooks/useContainImageRect";
 import StallJoinSheet from "@/components/stalls/StallJoinSheet";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 // Index.tsx is imported eagerly (src/routes/AppRoutes.tsx's page barrel,
 // not behind React.lazy itself, unlike most other routes) -- a static
@@ -54,11 +56,24 @@ interface GardenCard {
   username: string | null;
   name: string;
   front_image_path: string;
+  pinned?: boolean;
 }
 
 const LANDING_HERO_FRONT = `${STALLS_BASE}/landing/hero-front.webp`;
 const LANDING_HERO_INTERIOR = `${STALLS_BASE}/landing/hero-interior.webp`;
 const LANDING_GARDENS_BG = `${STALLS_BASE}/landing/gardens.webp`;
+
+// "walk the gardens" always leads with the two official S2G stalls, then
+// fills in with real member/client stalls -- Grove Station and Wandering
+// Hearts by their known user_id (same ids DashboardPage/StallsFeedPage
+// already treat as the system stalls), not a name match.
+const PINNED_GARDEN_IDS = [
+  "e9758e23-fba4-4778-8e58-4fd8e5550a72", // Grove Station
+  "54ba45c3-382b-4cc2-9bb7-c1f895c3c119", // Wandering Hearts
+];
+// Pre-flight/QA accounts used throughout dev -- real published rows, but
+// not the "real members" this showcase is meant to represent.
+const GARDEN_USERNAME_BLOCKLIST = /^davisontest\d*$/i;
 
 // Measured directly off the real hero-interior photo's 4 blank plaques
 // (column/row brightness profiling -- max chord width at each plaque's
@@ -250,6 +265,7 @@ function IndexContent() {
   const [showDemoInterior, setShowDemoInterior] = useState(false);
   const [showJoinSheet, setShowJoinSheet] = useState(false);
   const [featuredSeed, setFeaturedSeed] = useState<FeaturedSeed | null>(null);
+  const gardenAutoplay = useRef(Autoplay({ delay: 3500, stopOnInteraction: false, stopOnMouseEnter: true }));
 
   useEffect(() => {
     if (!loading && isAuthenticated) navigate("/cockpit", { replace: true });
@@ -342,30 +358,43 @@ function IndexContent() {
     return () => { alive = false; };
   }, []);
 
-  // "walk the gardens": same card list StallsFeedPage's own "For You"
-  // query uses (published, has a front image, newest first), just
-  // capped to 6 and with no chip/search UI -- a guest tapping any card
-  // lands on the real /stall/:username (front + interior, read-only,
-  // any painted button prompts the join sheet).
+  // "walk the gardens": pinned S2G stalls (Grove Station, Wandering
+  // Hearts) first, then real member/client stalls -- same published+has-
+  // a-front-image shape StallsFeedPage's own "For You" query uses, minus
+  // known pre-flight/QA accounts. A guest tapping any card lands on the
+  // real /stall/:username (front + interior, read-only, any painted
+  // button prompts the join sheet). Pool is wider than what's shown at
+  // once (10, not 6) so the carousel below has something to rotate
+  // through, not just a static row.
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { data: stallRows } = await supabase
-        .from("stalls")
-        .select("user_id, name, front_image_path")
-        .eq("published", true)
-        .not("front_image_path", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(6);
-      const rows = (stallRows ?? []) as Omit<GardenCard, "username">[];
-      if (rows.length === 0) { if (alive) setGardenCards([]); return; }
+      const [{ data: pinnedRows }, { data: otherRows }] = await Promise.all([
+        supabase
+          .from("stalls")
+          .select("user_id, name, front_image_path")
+          .eq("published", true)
+          .not("front_image_path", "is", null)
+          .in("user_id", PINNED_GARDEN_IDS),
+        supabase
+          .from("stalls")
+          .select("user_id, name, front_image_path")
+          .eq("published", true)
+          .not("front_image_path", "is", null)
+          .not("user_id", "in", `(${PINNED_GARDEN_IDS.join(",")})`)
+          .order("created_at", { ascending: false })
+          .limit(16),
+      ]);
+      const pinned = (pinnedRows ?? []) as Omit<GardenCard, "username">[];
+      const others = (otherRows ?? []) as Omit<GardenCard, "username">[];
+      if (pinned.length === 0 && others.length === 0) { if (alive) setGardenCards([]); return; }
 
       // profiles_public (NOT public_profiles -- that view is granted to
       // `authenticated` only, confirmed live; this page is the one place
       // in the app a signed-OUT visitor needs a batch username lookup,
       // same anon-safe view StallVisitPage/api/stall.ts's single-row
       // lookups already rely on).
-      const ownerIds = Array.from(new Set(rows.map((r) => r.user_id)));
+      const ownerIds = Array.from(new Set([...pinned, ...others].map((r) => r.user_id)));
       const { data: profileRows } = await supabase
         .from("profiles_public" as any)
         .select("user_id, username")
@@ -373,7 +402,14 @@ function IndexContent() {
       const usernameByOwner = new Map<string, string | null>(
         ((profileRows ?? []) as { user_id: string; username: string | null }[]).map((p) => [p.user_id, p.username]),
       );
-      if (alive) setGardenCards(rows.map((r) => ({ ...r, username: usernameByOwner.get(r.user_id) ?? null })));
+      const withUsername = (r: Omit<GardenCard, "username">, pinnedFlag: boolean): GardenCard => ({
+        ...r, username: usernameByOwner.get(r.user_id) ?? null, pinned: pinnedFlag,
+      });
+      const realOthers = others
+        .map((r) => withUsername(r, false))
+        .filter((c) => c.username && !GARDEN_USERNAME_BLOCKLIST.test(c.username));
+      const combined = [...pinned.map((r) => withUsername(r, true)), ...realOthers].slice(0, 10);
+      if (alive) setGardenCards(combined);
     })();
     return () => { alive = false; };
   }, []);
@@ -504,20 +540,32 @@ function IndexContent() {
         <div className="relative">
           <h2 className="text-center font-serif text-2xl sm:text-3xl font-semibold text-amber-50">walk the gardens</h2>
           <p className="mt-2 text-center text-sm text-amber-100/60">real stalls, sown by real members.</p>
-          <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-5xl mx-auto">
-            {(gardenCards ?? []).filter((c) => c.username).map((c) => (
-              <Link
-                key={c.user_id}
-                to={`/stall/${c.username}`}
-                className="group relative aspect-square overflow-hidden rounded-xl border border-amber-500/25 bg-black"
-              >
-                <img src={c.front_image_path} alt={c.name} className="absolute inset-0 w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                  <p className="truncate text-xs font-medium text-amber-50">{c.name}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {(gardenCards ?? []).filter((c) => c.username).length > 0 && (
+            <Carousel
+              opts={{ align: "start", loop: true, dragFree: true }}
+              plugins={[gardenAutoplay.current]}
+              className="mt-8 max-w-5xl mx-auto"
+            >
+              <CarouselContent className="-ml-4">
+                {(gardenCards ?? []).filter((c) => c.username).map((c) => (
+                  <CarouselItem key={c.user_id} className="pl-4 basis-1/2 sm:basis-1/3">
+                    <Link
+                      to={`/stall/${c.username}`}
+                      className="group relative block aspect-square overflow-hidden rounded-xl border border-amber-500/25 bg-black"
+                    >
+                      <img src={c.front_image_path} alt={c.name} className="absolute inset-0 w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" />
+                      {c.pinned && (
+                        <span className="absolute top-2 left-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-950">s2g</span>
+                      )}
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                        <p className="truncate text-xs font-medium text-amber-50">{c.name}</p>
+                      </div>
+                    </Link>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+          )}
         </div>
       </section>
 
