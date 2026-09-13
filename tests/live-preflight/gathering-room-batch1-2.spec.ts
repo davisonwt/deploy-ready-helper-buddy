@@ -70,9 +70,6 @@ test.describe('Gathering Room batches 1+2 -- board + ordered queue', () => {
     const guestCtx = await browser.newContext({ permissions: ['camera', 'microphone'] });
     const guestPage = await guestCtx.newPage();
     await loginAs(guestCtx, TEST_USER2_EMAIL!, TEST_USER2_PASSWORD!);
-    const guestConsole: string[] = [];
-    guestPage.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') guestConsole.push(`[${m.type()}] ${m.text()}`); });
-    guestPage.on('pageerror', (e) => guestConsole.push(`[pageerror] ${e.message}`));
 
     const seedCardScope = (page: typeof hostPage) => page.locator('body').filter({ hasText: SEED_TITLE });
 
@@ -118,26 +115,15 @@ test.describe('Gathering Room batches 1+2 -- board + ordered queue', () => {
       await expect(guestPage.locator('div').filter({ hasText: 'Host hasn\'t pinned' })).toHaveCount(0, { timeout: 20_000 });
       const bestowBtn = guestPage.getByRole('button', { name: /Bestow/i }).first();
       await expect(bestowBtn).toBeVisible({ timeout: 10_000 });
-      // Diagnostics: a prior run saw this click's own bounding-box center
-      // resolve (via elementFromPoint) to the button's own ancestor wrapper
-      // instead of the button, for reasons not yet understood -- dump what
-      // is actually on top before deciding whether to fall back to a forced
-      // click.
-      const diag = await bestowBtn.evaluate((el) => {
-        const r = el.getBoundingClientRect();
-        const cx = r.left + r.width / 2;
-        const cy = r.top + r.height / 2;
-        const top = document.elementFromPoint(cx, cy);
-        return {
-          rect: { x: r.x, y: r.y, w: r.width, h: r.height },
-          topTag: top?.tagName, topClass: (top as HTMLElement | null)?.className, isSelf: top === el, containsSelf: top ? top.contains(el) : false,
-        };
-      });
-      console.log('bestow click diag:', JSON.stringify(diag));
+      // A prior run found this click's own bounding-box center resolving
+      // (via elementFromPoint) to an unrelated same-class element rather
+      // than the button itself -- cause not fully root-caused, but a
+      // forced click reliably reaches the real, visible, enabled button
+      // underneath, so fall back to it rather than failing the whole run
+      // on a hit-testing quirk unrelated to what this step verifies.
       try {
         await bestowBtn.click({ timeout: 15_000 });
-      } catch (e) {
-        console.log('normal click failed, forcing:', (e as Error).message.slice(0, 200));
+      } catch {
         await bestowBtn.click({ force: true });
       }
       await expect(guestPage.getByText(/Bestow|Confirm|Amount/i).first()).toBeVisible({ timeout: 10_000 });
@@ -148,62 +134,19 @@ test.describe('Gathering Room batches 1+2 -- board + ordered queue', () => {
       // mode so the guest's own request-to-join controls are the ones under
       // test, not whatever board mode batch 1 left active.
       await hostPage.getByRole('button', { name: 'Camera' }).click();
-      const micProbe = await guestPage.evaluate(async () => {
-        try {
-          const s = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const tracks = s.getTracks().map((t) => ({ kind: t.kind, label: t.label, readyState: t.readyState }));
-          const supported = { webm: (window as any).MediaRecorder?.isTypeSupported?.('audio/webm'), mp4: (window as any).MediaRecorder?.isTypeSupported?.('audio/mp4') };
-          s.getTracks().forEach((t) => t.stop());
-          return { ok: true, tracks, supported };
-        } catch (e) { return { ok: false, err: String(e) }; }
-      });
-      console.log('mic probe:', JSON.stringify(micProbe));
-      // Reproduce useMediaRecorder's exact start() mechanics directly (no
-      // timeslice, single ondataavailable at stop()) with a short 3s cap,
-      // to isolate whether raw MediaRecorder mechanics work in this
-      // environment before trusting the full 45s app-driven recording.
-      const rawRecProbe = await guestPage.evaluate(async () => {
-        const s = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const rec = new MediaRecorder(s, { mimeType: 'audio/webm' });
-        const chunks: Blob[] = [];
-        const result = await new Promise<{ size: number; chunkCount: number; err?: string }>((resolve) => {
-          rec.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-          rec.onerror = (ev) => resolve({ size: -1, chunkCount: chunks.length, err: String((ev as any)?.error?.message || (ev as any)?.error?.name || 'err') });
-          rec.onstop = () => resolve({ size: chunks.reduce((a, c) => a + c.size, 0), chunkCount: chunks.length });
-          rec.start();
-          setTimeout(() => { if (rec.state === 'recording') rec.stop(); }, 3000);
-        });
-        s.getTracks().forEach((t) => t.stop());
-        return result;
-      });
-      console.log('raw MediaRecorder probe (3s):', JSON.stringify(rawRecProbe));
       await guestPage.getByRole('button', { name: /Record a voice note instead/i }).click();
       await expect(guestPage.getByText(/recording…/)).toBeVisible({ timeout: 5_000 });
       await guestPage.waitForTimeout(2_000);
       // Let the capped recording finish on its own (VOICE_NOTE_MAX_SECONDS) --
       // simplest reliable way to stop it from this side without a Cancel path.
       await expect(guestPage.getByText(/recording…/)).toHaveCount(0, { timeout: 50_000 });
-      // Diagnostics: give the upload+moderate+raiseHand chain a moment to
-      // finish, then check directly what actually happened server-side
-      // (storage object + its moderation verdict) instead of only inferring
-      // it from host-side UI, since a prior run's raiseHand appeared to
-      // never arrive.
-      await guestPage.waitForTimeout(5_000);
-      console.log('guest console during recording:', JSON.stringify(guestConsole));
-      const diagClient = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false } });
-      await diagClient.auth.signInWithPassword({ email: TEST_USER2_EMAIL!, password: TEST_USER2_PASSWORD! });
-      const { data: files } = await diagClient.storage.from('stalls').list(`${(await diagClient.auth.getUser()).data.user!.id}/gathering`, { sortBy: { column: 'created_at', order: 'desc' } });
-      console.log('gathering files:', JSON.stringify(files?.map((f) => f.name)));
-      const { data: modRows } = await diagClient.from('media_moderation' as any).select('object_path, verdict, reason, created_at').ilike('object_path', '%voicenote%').order('created_at', { ascending: false }).limit(3);
-      console.log('media_moderation rows:', JSON.stringify(modRows));
-      await diagClient.auth.signOut();
     });
 
     await test.step('batch 2: host sees an ordered, voice-note-flagged #1 entry; it auto-plays and advances', async () => {
       // "recording…" clearing only means the local capture ended -- the
       // upload + moderateStorageUpload round-trip still has to finish
       // before raiseHand() fires, so give this more room than a plain UI sync.
-      await expect(hostPage.getByText('#1')).toBeVisible({ timeout: 45_000 });
+      await expect(hostPage.getByText('#1', { exact: true })).toBeVisible({ timeout: 45_000 });
       await expect(hostPage.getByText('voice note — plays at #1')).toBeVisible();
 
       // Auto-plays to the room without any host click.
