@@ -36,6 +36,7 @@ const CATEGORY_LABEL: Record<StallCategory, string> = Object.fromEntries(
 const PINNED_STALL_USER_IDS = [
   'e9758e23-fba4-4778-8e58-4fd8e5550a72', // Grove Station (scripts/studio/create-grove-station-stall.sql)
   '54ba45c3-382b-4cc2-9bb7-c1f895c3c119', // Wandering Hearts (scripts/studio/create-wandering-hearts-stall.sql)
+  'b385c0c2-5e41-4058-b4e1-8afdc7c93f0c', // Companions Village (supabase/migrations/20260913230000_companions_village_stall.sql)
 ];
 
 interface StallCard {
@@ -103,6 +104,13 @@ export default function StallsFeedPage() {
   // still apply on top. Read once like chip/q above; `tribeMine` set to
   // false clears it locally without touching the URL.
   const [tribeMine, setTribeMine] = useState(() => searchParams.get('tribe') === 'mine');
+  // Companions Village phase 1's "Meet the helpers"/"Try one" hotspots land
+  // here with ?village=companions -- a dedicated scoped feed (stalls.village
+  // non-null are hidden from the normal Tribal Gardens feed below, see the
+  // 'village IS NULL' filter in the main query effect). Read once like
+  // chip/tribe above; overrides chip/tribeMine/pinned entirely rather than
+  // combining with them -- there's nothing to combine with yet at 7 stalls.
+  const [villageFilter] = useState(() => searchParams.get('village'));
   const [tribeUserIds, setTribeUserIds] = useState<string[] | null>(null);
   const [cards, setCards] = useState<StallCard[] | null>(null);
   const [orchardCards, setOrchardCards] = useState<OrchardCard[] | null>(null);
@@ -251,11 +259,11 @@ export default function StallsFeedPage() {
   // happens to match the search), it isn't listed twice.
   const pinnedOrderedCards = useMemo(() => {
     if (!orderedCards) return orderedCards;
-    if (search.trim() || tribeMine || pinnedCards.length === 0) return orderedCards;
+    if (search.trim() || tribeMine || villageFilter || pinnedCards.length === 0) return orderedCards;
     const pinnedIds = new Set(pinnedCards.map((c) => c.user_id));
     const rest = orderedCards.filter((c) => !pinnedIds.has(c.user_id));
     return [...pinnedCards, ...rest];
-  }, [orderedCards, pinnedCards, search, tribeMine]);
+  }, [orderedCards, pinnedCards, search, tribeMine, villageFilter]);
 
   useEffect(() => {
     if (!showPanHint) return;
@@ -276,8 +284,8 @@ export default function StallsFeedPage() {
     }
     // tribeMine's own id list isn't ready yet -- wait rather than run an
     // unfiltered query first and flash the wrong stalls.
-    if (tribeMine && tribeUserIds === null) return;
-    if (tribeMine && tribeUserIds!.length === 0) { setCards([]); return; }
+    if (!villageFilter && tribeMine && tribeUserIds === null) return;
+    if (!villageFilter && tribeMine && tribeUserIds!.length === 0) { setCards([]); return; }
     (async () => {
       let q = supabase
         .from('stalls')
@@ -286,11 +294,20 @@ export default function StallsFeedPage() {
         .not('front_image_path', 'is', null)
         .order('created_at', { ascending: false })
         .limit(50);
-      if (chip !== 'for_you' && chip !== 'new') {
-        q = q.eq('category', chip);
-      }
-      if (tribeMine) {
-        q = q.in('user_id', tribeUserIds!);
+      if (villageFilter) {
+        // Dedicated village feed -- village-tagged stalls only, chip/
+        // tribeMine don't apply here (see villageFilter's own doc comment).
+        q = q.eq('village', villageFilter);
+      } else {
+        // Village-tagged stalls (Companions Village phase 1) never show in
+        // the normal Tribal Gardens feed -- only via ?village=<name>.
+        q = q.is('village', null);
+        if (chip !== 'for_you' && chip !== 'new') {
+          q = q.eq('category', chip);
+        }
+        if (tribeMine) {
+          q = q.in('user_id', tribeUserIds!);
+        }
       }
       const { data: stallRows } = await q;
       const rows = (stallRows ?? []) as Omit<StallCard, 'username'>[];
@@ -317,7 +334,7 @@ export default function StallsFeedPage() {
       }
     })();
     return () => { alive = false; };
-  }, [chip, tribeMine, tribeUserIds]);
+  }, [chip, tribeMine, tribeUserIds, villageFilter]);
 
   const openStall = (card: StallCard) => {
     // { from } lets StallVisitPage's close button come straight back

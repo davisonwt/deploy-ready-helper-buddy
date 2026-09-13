@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useCompanions, type CompanionEntitlement } from "@/hooks/useCompanions";
 import CompanionCard from "@/components/companions/CompanionCard";
 import CompanionDrawer from "@/components/companions/CompanionDrawer";
@@ -10,11 +10,25 @@ export default function CompanionsHubPage() {
   const { tier, companions, loading, error, refresh } = useCompanions();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<CompanionEntitlement | null>(null);
+  const [searchParams] = useSearchParams();
 
   const openCompanion = (c: CompanionEntitlement) => {
     setActive(c);
     setOpen(true);
   };
+
+  // Companions Village phase 1: a stall's "Try me" hotspot links here with
+  // ?open=<slug> (StallInteriorView's nav-kind hotspots -> here ->
+  // CompanionCard's own onOpen). Same gate CompanionCard's button already
+  // applies (disabled when locked) -- a locked companion just doesn't open,
+  // no new entitlement logic.
+  useEffect(() => {
+    if (open || loading || companions.length === 0) return;
+    const slug = searchParams.get("open");
+    if (!slug) return;
+    const match = companions.find((c) => c.slug === slug);
+    if (match && match.mode !== "none") openCompanion(match);
+  }, [searchParams, companions, loading, open]);
 
   return (
     <main

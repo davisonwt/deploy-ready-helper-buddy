@@ -526,7 +526,13 @@ const AppRoutes = () => (
     <Route path="/ai-assistant" element={
       <ProtectedRoute><Layout><CreateOrchardPage /></Layout></ProtectedRoute>
     } />
-    <Route path="/companions" element={
+    {/* Companions Village phase 1: the top-level /companions URL now leads
+        into the village stall instead of the raw hub grid -- the hub's own
+        page moved to /my-companions, reached only from the village's "My
+        helpers"/"Try me" hotspots now (see cockpitNav.ts, StallInteriorView
+        nav-kind hotspots). */}
+    <Route path="/companions" element={<Navigate to="/stall/companions" replace />} />
+    <Route path="/my-companions" element={
       <ProtectedRoute><Suspense fallback={<div>Loading...</div>}><CompanionsHubPage /></Suspense></ProtectedRoute>
     } />
     <Route path="/community-offering" element={

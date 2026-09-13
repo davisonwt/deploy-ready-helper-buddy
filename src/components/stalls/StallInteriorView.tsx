@@ -327,6 +327,14 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
       setShowJoinSheet(true);
       return;
     }
+    // Companions Village phase 1: a 'nav' hotspot leaves the stall
+    // immediately (no sheet, no two-step touch preview) -- read straight
+    // off the tapped hotspot rather than the kind-keyed activeHotspot
+    // lookup below, since many 'nav' boxes can share the kind.
+    if (h.kind === 'nav' && h.href) {
+      navigate(h.href);
+      return;
+    }
     dismissRoomHint();
     // "New seeds" gold dot disappears the moment this kind's sheet opens
     // -- a one-way dismissal, not a re-fetch (see dismissedKinds above).
@@ -775,6 +783,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           ownerName={stallName}
           kind={activeHotspot.kind}
           label={activeLabel}
+          text={activeHotspot.text ?? null}
           isOwner={effectiveIsOwner}
           onClose={() => { setOpenKind(null); setOpenLabel(null); }}
           scrollToItemId={initialScrollSeedId}

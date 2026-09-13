@@ -55,7 +55,7 @@ export const COCKPIT_NAV: CockpitNavItem[] = [
 export const COCKPIT_NAV_MORE: CockpitNavItem[] = [
   { label: 'Books', sub: 'Business bookkeeping', emoji: '📒', path: '/books', color: '#2563eb' },
   { label: 'Whisperers', sub: 'List yourself or find one', emoji: '🌬️', path: '/whisperers', color: '#a855f7' },
-  { label: 'Companions', sub: 'Orchard companions', emoji: '🤝', path: '/companions', color: '#14b8a6' },
+  { label: 'Companions', sub: 'Helpers for hire', emoji: '🏘', path: '/stall/companions', color: '#14b8a6' },
   { label: 'Classroom', sub: 'Teach or learn a skill', emoji: '🎓', path: '/classroom', color: '#3b82f6' },
   { label: 'SkillDrop', sub: 'Quick skill shares', emoji: '💡', path: '/skilldrop', color: '#eab308' },
   { label: 'Premium Rooms', sub: 'Paid live rooms', emoji: '💎', path: '/premium-rooms', color: '#06b6d4' },

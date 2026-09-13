@@ -41,7 +41,17 @@ export const STALL_TIER_LABEL: Record<StallTier, string> = {
   wayside_table: 'Wayside Table',
 };
 
-export type TileKind = 'books' | 'music' | 'lyrics' | 'story' | 'mugs' | 'products' | 'services' | 'orchard' | 'custom';
+export type TileKind =
+  | 'books' | 'music' | 'lyrics' | 'story' | 'mugs' | 'products' | 'services' | 'orchard' | 'custom'
+  // Companions Village phase 1 (places only): 'nav' never opens a sheet --
+  // StallInteriorView.handleHotspotTap reads its own `href` off the tapped
+  // hotspot and navigates immediately, so many 'nav' hotspots can coexist
+  // on one stall with no collision. The other four DO open a sheet
+  // (StallHotspotSheet) showing their own `text` verbatim instead of a
+  // product query -- each appears at most once per stall row, so
+  // StallInteriorView's existing `hotspots.find(h => h.kind === openKind)`
+  // still resolves the right one.
+  | 'nav' | 'companion_info' | 'passes' | 'activate' | 'reviews';
 
 export const TILE_KINDS: { id: TileKind; label: string }[] = [
   { id: 'books', label: 'Books' },
@@ -63,7 +73,7 @@ export const TILE_KINDS: { id: TileKind; label: string }[] = [
  * is no dedicated per-type listing page yet. Revisit once a public
  * storefront view (batch 2) needs a real per-tile browse target.
  */
-export const TILE_KIND_DEFAULT_TARGET: Record<Exclude<TileKind, 'custom'>, string> = {
+export const TILE_KIND_DEFAULT_TARGET: Record<Exclude<TileKind, 'custom' | 'nav' | 'companion_info' | 'passes' | 'activate' | 'reviews'>, string> = {
   books: '/my-products',
   music: '/music-library',
   lyrics: '/music-library',
@@ -105,6 +115,10 @@ export interface StallHotspot {
   h: number;
   /** Optional short line shown alongside the label on hover (desktop) or a brief tap-preview (mobile, ~1.5s) before the sheet opens. */
   caption?: string;
+  /** kind:'nav' only -- in-app path StallInteriorView navigates to immediately on tap, no sheet. */
+  href?: string;
+  /** kind:'companion_info'|'passes'|'activate'|'reviews' only -- static body text StallHotspotSheet shows verbatim instead of a product query. */
+  text?: string;
 }
 
 export interface StallTemplate {

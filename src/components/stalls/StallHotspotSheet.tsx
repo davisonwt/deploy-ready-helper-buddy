@@ -13,6 +13,8 @@ interface Props {
   /** The hotspot's own painted label (e.g. "Our Recipes", "Bee Facts") -- shown in the header/empty-state instead of the generic kind label, which is a fallback for when a hotspot has no label of its own. */
   label?: string;
   isOwner?: boolean;
+  /** kind:'companion_info'|'passes'|'activate'|'reviews' only -- static body text, shown verbatim in place of the usual product query. */
+  text?: string | null;
   onClose: () => void;
   /** Scrolls this item into view once its card mounts -- arriving back from a SeedCard Message action via the URL's one-time &seed=<id> (see StallInteriorView.tsx's readSeedIdFromHash). */
   scrollToItemId?: string | null;
@@ -147,7 +149,10 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
  *     painted with either kind before this fell through to the generic
  *     else branch below and silently showed books/ebooks instead.
  */
-export default function StallHotspotSheet({ ownerId, ownerName, kind, label, isOwner, onClose, scrollToItemId, viewerCutoff }: Props) {
+/** Companions Village phase 1: kinds whose sheet shows `text` verbatim instead of a product query. */
+const STATIC_TEXT_KINDS = new Set<TileKind>(['companion_info', 'passes', 'activate', 'reviews']);
+
+export default function StallHotspotSheet({ ownerId, ownerName, kind, label, text, isOwner, onClose, scrollToItemId, viewerCutoff }: Props) {
   const displayLabel = label?.trim() || KIND_LABEL[kind] || kind;
   const [items, setItems] = useState<Item[] | null>(null);
   // undefined = still loading; null = loaded, nothing there; string = loaded, has content.
@@ -168,6 +173,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, isO
   useEffect(() => {
     let alive = true;
     (async () => {
+      if (STATIC_TEXT_KINDS.has(kind)) { setItems([]); return; }
       if (kind === 'story') {
         const { data: stallRow } = await supabase.from('stalls').select('story, story_pdf_path').eq('user_id', ownerId).maybeSingle();
         const row = stallRow as { story?: string | null; story_pdf_path?: string | null } | null;
@@ -365,7 +371,11 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, isO
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-          {kind === 'story' ? (
+          {STATIC_TEXT_KINDS.has(kind) ? (
+            <div className="py-6 font-serif text-amber-100/85 leading-relaxed whitespace-pre-line">
+              {text || 'Coming soon.'}
+            </div>
+          ) : kind === 'story' ? (
             bio === undefined || storyPdfUrl === undefined ? (
               <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-amber-100/40" /></div>
             ) : storyPdfUrl ? (
