@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStallTemplates } from '@/hooks/useStallTemplates';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import StallInteriorView from '@/components/stalls/StallInteriorView';
+import StallFrontGate from '@/components/stalls/StallFrontGate';
 import { readAndClearPendingWelcomeInviter } from '@/lib/referral';
 import { STALL_TIER_LABEL, resolveStallHotspots, type StallHotspot, type StallTier } from '@/lib/stalls/stallTypes';
 
@@ -21,6 +22,7 @@ interface StallRow {
   interior_image_path: string | null;
   hotspots: StallHotspot[] | null;
   published: boolean;
+  enter_via_front: boolean;
 }
 
 /**
@@ -47,6 +49,16 @@ export default function StallVisitPage() {
   const [stall, setStall] = useState<StallRow | null | undefined>(undefined); // undefined = loading
   const [interiorFailed, setInteriorFailed] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
+  // S2G-run "places" (stalls.enter_via_front) open on the front/gate image
+  // first -- this is local, per-mount state, not part of the URL ("not a
+  // route change" per spec): visiting /stall/<username> is always the same
+  // address whether the gate or the interior is currently showing.
+  //
+  // Tribal Gardens cards still land straight in the interior, gate skipped
+  // entirely -- StallsFeedPage.openStall already tags that one navigation
+  // with #open (nothing else in the app does), so it doubles as the "came
+  // from a feed card, not the nav" signal with no new plumbing.
+  const [entered, setEntered] = useState(() => window.location.hash.startsWith('#open'));
 
   useEffect(() => {
     if (!username) { setStall(null); return; }
@@ -61,7 +73,7 @@ export default function StallVisitPage() {
 
       const { data } = await supabase
         .from('stalls')
-        .select('id, user_id, name, tagline, tier, front_image_path, interior_image_path, hotspots, published')
+        .select('id, user_id, name, tagline, tier, front_image_path, interior_image_path, hotspots, published, enter_via_front')
         .eq('user_id', ownerId)
         .maybeSingle();
       if (alive) setStall((data as StallRow | null) ?? null);
@@ -140,6 +152,17 @@ export default function StallVisitPage() {
     );
   }
 
+  if (stall.enter_via_front && stall.front_image_path && !entered) {
+    return (
+      <StallFrontGate
+        frontImageUrl={stall.front_image_path}
+        stallName={stall.name}
+        onEnter={() => setEntered(true)}
+        onClose={handleClose}
+      />
+    );
+  }
+
   if (!interiorFailed) {
     return (
       <StallInteriorView
@@ -149,7 +172,7 @@ export default function StallVisitPage() {
         stallName={stall.name}
         hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
         isOwner={isOwner}
-        onClose={handleClose}
+        onClose={stall.enter_via_front ? () => setEntered(false) : handleClose}
       />
     );
   }
