@@ -290,7 +290,7 @@ export default function StallBuildPage() {
     { title: 'Your stall', description: 'What kind of stall is this?', icon: <ClipboardList className="h-4 w-4" /> },
     { title: 'Shop front', description: 'The image visitors tap to walk in.', icon: <DoorOpen className="h-4 w-4" /> },
     { title: 'Interior', description: 'What they see once inside.', icon: <ImageIcon className="h-4 w-4" /> },
-    { title: 'Mark your shelves', description: 'Draw a box over each thing visitors can tap.', icon: <LayoutGrid className="h-4 w-4" /> },
+    { title: 'Mark your shelves', description: 'Tap each thing visitors can tap.', icon: <LayoutGrid className="h-4 w-4" /> },
     { title: 'Preview & publish', description: 'One last look before it goes live.', icon: <Eye className="h-4 w-4" /> },
   ];
 
