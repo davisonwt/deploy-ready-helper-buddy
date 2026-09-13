@@ -128,6 +128,10 @@ export function PdfBoard({ isHost, stage, setStageMode }: BoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const zoom = useZoom();
   const page = stage.pdfPage ?? 1;
+  // The canvas's own CSS display size at scale=1 ("fit" width, matching
+  // the container -- same basis the render-resolution effect below
+  // already uses) -- the zoomed display size is this * zoom.scale.
+  const [fitSize, setFitSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     if (!stage.pdfUrl) { setPdf(null); return; }
@@ -157,6 +161,7 @@ export function PdfBoard({ isHost, stage, setStageMode }: BoardProps) {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       await p.render({ canvasContext: ctx, viewport, canvas }).promise;
+      if (!cancelled) setFitSize({ width, height: width * (base.height / base.width) });
     })();
     return () => { cancelled = true; };
   }, [pdf, page]);
@@ -182,11 +187,40 @@ export function PdfBoard({ isHost, stage, setStageMode }: BoardProps) {
       : <div className="flex h-full items-center justify-center text-sm text-white/40">Host hasn't uploaded a PDF yet.</div>;
   }
 
+  // Zoomed-in scroll (was: transform:scale() inside overflow-hidden, which
+  // visually blows the canvas up past its box with no way to reach the
+  // clipped part). The canvas now gets a real CSS width/height (fitWidth/
+  // fitHeight * scale) instead of a transform, so at scale>1 it's
+  // genuinely larger than its scroll container in layout terms -- native
+  // wheel/trackpad/touch-drag scrolling reaches every part of it with no
+  // custom pan logic needed (zoom.onWheel/onTouch* already only
+  // preventDefault for the ctrl-wheel/pinch zoom gesture itself; a plain
+  // scroll/drag already falls through to the browser's own scrolling).
+  // Centered via `m-auto` on the flex CHILD, not `items-center
+  // justify-content` on the flex parent -- the parent-level version is
+  // the well-known flexbox bug where a centered child that overflows its
+  // container can never be scrolled back to its own start edge; margin:
+  // auto on the child centers it exactly the same way while it fits, and
+  // degrades to normal reachable overflow once it doesn't.
   return (
-    <div ref={containerRef} className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#0d0805]" onWheel={zoom.onWheel} onTouchStart={zoom.onTouchStart} onTouchMove={zoom.onTouchMove} onTouchEnd={zoom.onTouchEnd}>
-      {!pdf ? <Loader2 className="h-6 w-6 animate-spin text-white/40" /> : (
-        <canvas ref={canvasRef} className="max-h-full max-w-full object-contain transition-transform" style={{ transform: `scale(${zoom.scale})` }} />
-      )}
+    <div ref={containerRef} className="relative flex h-full w-full flex-col overflow-hidden bg-[#0d0805]">
+      <div
+        className="flex h-full w-full overflow-auto"
+        onWheel={zoom.onWheel}
+        onTouchStart={zoom.onTouchStart}
+        onTouchMove={zoom.onTouchMove}
+        onTouchEnd={zoom.onTouchEnd}
+      >
+        {!pdf ? (
+          <div className="m-auto"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>
+        ) : (
+          <canvas
+            ref={canvasRef}
+            className="m-auto block shrink-0"
+            style={fitSize.width ? { width: fitSize.width * zoom.scale, height: fitSize.height * zoom.scale } : undefined}
+          />
+        )}
+      </div>
       <ZoomControls scale={zoom.scale} setScale={zoom.setScale} />
       {isHost && pdf && (
         <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/60 px-2 py-1 backdrop-blur">

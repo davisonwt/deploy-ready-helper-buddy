@@ -435,9 +435,17 @@ export default function LiveStage({
           </div>
         )}
 
-        {/* Picture-in-picture host camera when not in camera mode (host preview) */}
+        {/* Picture-in-picture host camera when not in camera mode (host
+            preview) -- top-right, not bottom-right: the board's own
+            controls (PdfBoard/ClipBoard's ZoomControls AND, for PDF, the
+            page-turn pill) already live at bottom-right/bottom-center.
+            Daily's prebuilt UI is the whole iframe's own content (no SDK,
+            no way to suppress its per-tile hover menu from our side --
+            see daily-config.ts's own doc comment); this at least stops
+            OUR OWN board controls and Daily's tile UI from sitting in the
+            exact same corner. */}
         {isHost && stage.mode !== 'camera' && jitsiSrc && (
-          <div className="absolute bottom-3 right-3 z-[5] h-32 w-44 overflow-hidden rounded-lg border border-emerald-500/30 bg-black shadow-2xl">
+          <div className="absolute top-3 right-3 z-[5] h-32 w-44 overflow-hidden rounded-lg border border-emerald-500/30 bg-black shadow-2xl">
             <iframe
               title="host-cam"
               src={jitsiSrc}
