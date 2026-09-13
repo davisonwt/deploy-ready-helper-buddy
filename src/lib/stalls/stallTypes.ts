@@ -51,7 +51,19 @@ export type TileKind =
   // product query -- each appears at most once per stall row, so
   // StallInteriorView's existing `hotspots.find(h => h.kind === openKind)`
   // still resolves the right one.
-  | 'nav' | 'companion_info' | 'passes' | 'activate' | 'reviews';
+  | 'nav' | 'companion_info' | 'passes' | 'activate' | 'reviews'
+  // Scripture Study gathering room (minimum version): 'go_live' and
+  // 'share' never open a sheet either -- StallInteriorView intercepts
+  // both directly (go_live: admin/gosat-only, starts/joins the gathering;
+  // share: calls the existing shareStallLink, same as the header's own
+  // Share button). 'raise_hand'/'queue' open LiveStageOverlay directly
+  // when the gathering is live, or a static "not live" sheet (via `text`,
+  // same STATIC_TEXT_KINDS mechanism as companion_info etc.) when it
+  // isn't. 'gift' is a static placeholder sheet for now -- a real
+  // Bestow-shaped tip needs a backing orchards row (company_id/profile_id/
+  // seed_value all NOT NULL there), which is a money-routing decision left
+  // to Davison, not guessed here.
+  | 'go_live' | 'share' | 'raise_hand' | 'queue' | 'gift';
 
 export const TILE_KINDS: { id: TileKind; label: string }[] = [
   { id: 'books', label: 'Books' },
@@ -73,7 +85,7 @@ export const TILE_KINDS: { id: TileKind; label: string }[] = [
  * is no dedicated per-type listing page yet. Revisit once a public
  * storefront view (batch 2) needs a real per-tile browse target.
  */
-export const TILE_KIND_DEFAULT_TARGET: Record<Exclude<TileKind, 'custom' | 'nav' | 'companion_info' | 'passes' | 'activate' | 'reviews'>, string> = {
+export const TILE_KIND_DEFAULT_TARGET: Record<Exclude<TileKind, 'custom' | 'nav' | 'companion_info' | 'passes' | 'activate' | 'reviews' | 'go_live' | 'share' | 'raise_hand' | 'queue' | 'gift'>, string> = {
   books: '/my-products',
   music: '/music-library',
   lyrics: '/music-library',

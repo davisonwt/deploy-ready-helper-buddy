@@ -65,10 +65,15 @@ export const COCKPIT_NAV_MORE: CockpitNavItem[] = [
   { label: "Gosat's", sub: 'Elder management', emoji: '🏛', path: '/admin/dashboard', color: '#7c3aed', gated: true },
 ];
 
-/** Rendered above COCKPIT_NAV in the sidebar -- an external link, not an in-app route, so it isn't part of the array above. */
+/**
+ * Rendered above COCKPIT_NAV in the sidebar, same special styling as
+ * before -- now an in-app route (Gathering Room, minimum version) instead
+ * of the old external 364yhvh.org link, so it isn't part of the COCKPIT_NAV
+ * array above (StallSideNav.tsx renders it as a Link, not an <a>).
+ */
 export const SCRIPTURE_STUDY_LINK = {
   label: 'Scripture Study',
-  sub: '364yhvh.org',
+  sub: 'all welcome',
   emoji: '📖',
-  href: 'https://364yhvh.org',
+  path: '/stall/scripturestudy',
 };

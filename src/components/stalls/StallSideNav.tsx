@@ -57,16 +57,15 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
         <span className="truncate font-serif text-[13px] font-semibold text-amber-300">My Stall / Cockpit</span>
       </Link>
 
-      <a
-        href={SCRIPTURE_STUDY_LINK.href}
-        target="_blank"
-        rel="noopener noreferrer"
+      <Link
+        to={SCRIPTURE_STUDY_LINK.path}
+        onClick={onNavigate}
         className="flex items-center gap-2 mx-3 mt-3 mb-1 px-2.5 py-2 rounded-md border border-amber-500/25 bg-amber-500/10 text-amber-300 text-xs font-serif hover:bg-amber-500/15 transition-colors"
-        title={`Open ${SCRIPTURE_STUDY_LINK.sub} in a new tab`}
+        title={SCRIPTURE_STUDY_LINK.sub}
       >
         <span>{SCRIPTURE_STUDY_LINK.emoji}</span>
         <span className="truncate">{SCRIPTURE_STUDY_LINK.label}</span>
-      </a>
+      </Link>
 
       <nav className="flex-1 min-h-0 overflow-y-auto py-1">
         {COCKPIT_NAV.map((item, i) => renderRow(item, i > 0))}

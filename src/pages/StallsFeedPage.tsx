@@ -37,7 +37,11 @@ const PINNED_STALL_USER_IDS = [
   'e9758e23-fba4-4778-8e58-4fd8e5550a72', // Grove Station (scripts/studio/create-grove-station-stall.sql)
   '54ba45c3-382b-4cc2-9bb7-c1f895c3c119', // Wandering Hearts (scripts/studio/create-wandering-hearts-stall.sql)
   'b385c0c2-5e41-4058-b4e1-8afdc7c93f0c', // Companions Village (supabase/migrations/20260913230000_companions_village_stall.sql)
+  '50f485b8-8aa0-462f-a01d-9c2f18d2105e', // Scripture Study (supabase/migrations/20260913235500_scripture_study_stall.sql)
 ];
+
+/** Scripture Study's own synthetic seed_id (StallInteriorView.tsx's SCRIPTURE_STUDY_USER_ID doc comment has the full why) -- presence tracks under whichever admin/gosat is hosting, not this account's own id, so the LIVE badge below has to check seed_id here too. */
+const SCRIPTURE_STUDY_USER_ID = '50f485b8-8aa0-462f-a01d-9c2f18d2105e';
 
 interface StallCard {
   id: string;
@@ -136,7 +140,11 @@ export default function StallsFeedPage() {
   const [newSeedInfo, setNewSeedInfo] = useState<Map<string, { total: number; latest: string }>>(new Map());
   const [pinnedCards, setPinnedCards] = useState<StallCard[]>([]);
 
-  const liveOwnerIds = useMemo(() => new Set((liveSeeds ?? []).map((p) => p.user_id)), [liveSeeds]);
+  const liveOwnerIds = useMemo(() => {
+    const ids = new Set((liveSeeds ?? []).map((p) => p.user_id));
+    if ((liveSeeds ?? []).some((p) => p.seed_id === SCRIPTURE_STUDY_USER_ID)) ids.add(SCRIPTURE_STUDY_USER_ID);
+    return ids;
+  }, [liveSeeds]);
 
   useEffect(() => {
     if (!user) { setNewSeedInfo(new Map()); return; }

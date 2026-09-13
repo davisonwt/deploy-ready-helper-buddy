@@ -7,13 +7,29 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
+import { useRoles } from '@/hooks/useRoles';
 import { shareStallLink } from '@/lib/referral';
 import StallHotspotSheet from './StallHotspotSheet';
 import StallSideNav from './StallSideNav';
 import StallTodayPanel from './StallTodayPanel';
 import StallJoinSheet from './StallJoinSheet';
 import OwnerMenuItems from '@/components/owner/OwnerMenuItems';
+import LiveStageOverlay from '@/components/live/LiveStageOverlay';
 import type { StallHotspot, TileKind } from '@/lib/stalls/stallTypes';
+
+/**
+ * Scripture Study gathering room (minimum version, 2026-09-13): the one
+ * stall with a "go live" hotspot. No real seed backs this session -- the
+ * account's own user_id doubles as the synthetic `seedId` every existing
+ * live primitive keys off (useTribalLiveOrchard's presence, useLiveStage's
+ * `stage:${seedId}` channel, gathering_sessions.seed_id, LiveStageOverlay's
+ * `liveroom:${seedId}` chat) -- none of those columns/channels have a real
+ * FK to `products`/`orchards`, confirmed live, so reusing this id needs no
+ * engine change anywhere. Hardcoded like Companions Village's/Grove
+ * Station's own pinned ids -- see supabase/migrations/
+ * 20260913235500_scripture_study_stall.sql.
+ */
+const SCRIPTURE_STUDY_USER_ID = '50f485b8-8aa0-462f-a01d-9c2f18d2105e';
 
 interface Props {
   /** Stall owner's user id -- the sheet pulls THEIR published items, never the viewer's. */
@@ -158,8 +174,44 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   // had no equivalent indicator at all. A visitor landing directly on
   // /stall/:username via a shared link never saw the feed card, so this
   // was the one place a live class/broadcast gave no visible sign at all.
-  const { liveSeeds } = useTribalLiveOrchard();
-  const ownerIsLive = liveSeeds.some((p) => p.user_id === ownerId);
+  const { liveSeeds, goLive, endLive } = useTribalLiveOrchard();
+  // Scripture Study: presence is tracked under whichever real account
+  // actually clicked Go Live (Davison's own, or any gosat's) -- not under
+  // SCRIPTURE_STUDY_USER_ID itself, since that's a system account no one
+  // logs in as. Matched by seed_id (the synthetic id above) instead of
+  // user_id, so the LIVE badge below still lights up correctly regardless
+  // of which admin/gosat is hosting.
+  const scriptureStudyPresence = ownerId === SCRIPTURE_STUDY_USER_ID
+    ? liveSeeds.find((p) => p.seed_id === SCRIPTURE_STUDY_USER_ID) ?? null
+    : null;
+  const ownerIsLive = liveSeeds.some((p) => p.user_id === ownerId) || !!scriptureStudyPresence;
+  const { isAdminOrGosat } = useRoles();
+  // The full-screen live overlay's jitsiRoom once joined/started -- same
+  // one state this component needs regardless of whether the viewer is
+  // hosting or just joining (LiveStageOverlay's own isHost prop already
+  // derives host-ness from whether the CURRENT presence's user_id matches
+  // the viewer, same as SeedCard.tsx's identical pattern).
+  const [scriptureRoom, setScriptureRoom] = useState<string | null>(null);
+  const joinOrStartScriptureLive = async (asHost: boolean) => {
+    if (scriptureStudyPresence) { setScriptureRoom(scriptureStudyPresence.jitsi_room); return; }
+    if (!asHost) return; // no session to join, and this viewer can't start one
+    const presence = await goLive({ id: SCRIPTURE_STUDY_USER_ID, title: 'Scripture Study — Live' });
+    if (presence) setScriptureRoom(presence.jitsi_room);
+  };
+  const closeScriptureLive = async () => {
+    setScriptureRoom(null);
+    await endLive();
+  };
+  // Spec: a signed-in viewer landing on /stall/scripturestudy while it's
+  // already live joins directly, no extra tap. Guarded on scriptureRoom so
+  // this only ever fires once per mount (closing the overlay manually
+  // shouldn't immediately reopen it).
+  const autoJoinedRef = useRef(false);
+  useEffect(() => {
+    if (!user || !scriptureStudyPresence || autoJoinedRef.current) return;
+    autoJoinedRef.current = true;
+    setScriptureRoom(scriptureStudyPresence.jitsi_room);
+  }, [user, scriptureStudyPresence]);
   const navigate = useNavigate();
   const handleLogout = async () => {
     try { await logout(); } catch { /* ignore -- navigate away regardless */ }
@@ -335,6 +387,30 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
       navigate(h.href);
       return;
     }
+    // Scripture Study: 'share' is exactly the header's own Share button,
+    // just reachable from the painted plaque too -- never opens a sheet.
+    if (h.kind === 'share') {
+      void shareStallLink(username ?? stallName, stallName, user?.id);
+      return;
+    }
+    // 'go_live': hidden from the rendered hotspot list entirely for a
+    // non-admin/gosat viewer (see the hotspots.filter below) -- this check
+    // is a second guard, not the only one, in case a tap ever reaches here
+    // some other way.
+    if (h.kind === 'go_live') {
+      if (!isAdminOrGosat) return;
+      void joinOrStartScriptureLive(true);
+      return;
+    }
+    // 'raise_hand'/'queue' while actually live: straight into the same
+    // full-screen overlay every other Go-Live surface uses (LiveStage's own
+    // guest raise-hand controls + host queue tray already live inside it)
+    // -- no separate custom queue UI to build. Not live: falls through to
+    // the ordinary static-text sheet below (STATIC_TEXT_KINDS).
+    if ((h.kind === 'raise_hand' || h.kind === 'queue') && scriptureStudyPresence) {
+      void joinOrStartScriptureLive(false);
+      return;
+    }
     dismissRoomHint();
     // "New seeds" gold dot disappears the moment this kind's sheet opens
     // -- a one-way dismissal, not a re-fetch (see dismissedKinds above).
@@ -430,6 +506,11 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
     const next = openKind ? `${base}#stall-kind=${openKind}` : base;
     window.history.replaceState(window.history.state, '', next);
   }, [openKind]);
+
+  // 'go_live' never renders as a paintable box for anyone but an admin/
+  // gosat viewer -- everything else about it (including the guard inside
+  // handleHotspotTap) stays the same regardless.
+  const visibleHotspots = isAdminOrGosat ? hotspots : hotspots.filter((h) => h.kind !== 'go_live');
 
   const activeHotspot = openKind ? hotspots.find((h) => h.kind === openKind) ?? null : null;
   // openLabel is only set by an actual tap (openHotspot above) -- a fresh
@@ -590,7 +671,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
                 alt={stallName}
                 className={`block h-full w-auto max-w-none transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
               />
-              {hotspots.map((h, i) => (
+              {visibleHotspots.map((h, i) => (
                 <HotspotButton
                   key={hotspotKey(h, i)}
                   h={h}
@@ -641,7 +722,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
             className={`absolute inset-0 w-full h-full object-contain transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
           />
 
-          {rect && hotspots.map((h, i) => (
+          {rect && visibleHotspots.map((h, i) => (
             <HotspotButton
               key={hotspotKey(h, i)}
               h={h}
@@ -793,6 +874,17 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
 
       {showJoinSheet && (
         <StallJoinSheet stallName={stallName} onClose={() => setShowJoinSheet(false)} />
+      )}
+
+      {scriptureRoom && (
+        <LiveStageOverlay
+          seedId={SCRIPTURE_STUDY_USER_ID}
+          title="Scripture Study — Live"
+          subtitle="you, you we love"
+          jitsiRoom={scriptureRoom}
+          isHost={scriptureStudyPresence?.user_id === user?.id}
+          onClose={() => { void closeScriptureLive(); }}
+        />
       )}
 
       {/* z-[500]: below every sheet/overlay this component itself opens

@@ -150,7 +150,7 @@ const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
  *     else branch below and silently showed books/ebooks instead.
  */
 /** Companions Village phase 1: kinds whose sheet shows `text` verbatim instead of a product query. */
-const STATIC_TEXT_KINDS = new Set<TileKind>(['companion_info', 'passes', 'activate', 'reviews']);
+const STATIC_TEXT_KINDS = new Set<TileKind>(['companion_info', 'passes', 'activate', 'reviews', 'raise_hand', 'queue', 'gift']);
 
 export default function StallHotspotSheet({ ownerId, ownerName, kind, label, text, isOwner, onClose, scrollToItemId, viewerCutoff }: Props) {
   const displayLabel = label?.trim() || KIND_LABEL[kind] || kind;
