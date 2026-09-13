@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -93,8 +93,15 @@ function readSeedIdFromHash(): string | null {
   return m ? m[1] : null;
 }
 
-/** Tap-preview delay (mobile): how long a hotspot's caption shows before its sheet opens. */
-const CAPTION_PREVIEW_MS = 800;
+/** Touch two-step: how long a hotspot's label pill shows on a first tap before it auto-hides (a second tap while it's showing opens the sheet). */
+const TAP_PREVIEW_MS = 1500;
+
+/** Stable per-hotspot identity for React keys and tap-preview tracking -- `id` when a box has one (drawn in the wizard), else its array position, since stalls.hotspots may hold many entries sharing the same `kind`. */
+function hotspotKey(h: StallHotspot, i: number): string {
+  return h.id ?? `${h.kind}-${i}`;
+}
+
+const ROOM_HINT_SEEN_KEY = 's2g:stall-room-hint-seen';
 
 /**
  * Below 1024px, StallSideNav / StallTodayPanel live in one of these
@@ -159,12 +166,35 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
     navigate('/login');
   };
   const [openKind, setOpenKind] = useState<StallHotspot['kind'] | null>(() => readKindFromHash() as StallHotspot['kind'] | null);
+  // The specific hotspot's own label, captured at tap time -- "the sheet
+  // opens by kind + label" (object hotspots batch): many boxes can share a
+  // kind, so this can't be re-derived from openKind alone. Falls back to
+  // the first hotspot of openKind's own label below when restored from a
+  // URL hash (a fresh mount has no tapped box to remember).
+  const [openLabel, setOpenLabel] = useState<string | null>(null);
   // One-time: which card (if any) to scroll into view when the sheet
   // above opens on mount, arriving from a SeedCard Message action.
   const [initialScrollSeedId] = useState<string | null>(() => readSeedIdFromHash());
-  // Mobile-only: the hotspot whose caption is being shown for CAPTION_PREVIEW_MS before its sheet opens.
-  const [previewKind, setPreviewKind] = useState<StallHotspot['kind'] | null>(null);
+  // Which hotspot (by hotspotKey) is mid tap-preview -- keyed per-box, not
+  // per-kind, so tapping one music box doesn't light up every other music
+  // box sharing that kind.
+  const [previewKey, setPreviewKey] = useState<string | null>(null);
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // A real mouse, not just a wide viewport -- drives whether hotspots get
+  // CSS hover affordances at all (touch's two-step tap-to-preview below is
+  // the alternative, not a supplement -- some touch browsers linger a
+  // :hover state after a tap, which is exactly what this sidesteps).
+  const [isFinePointer] = useState(() => typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+  // "tap the things in the room" -- shown once ever (localStorage), not
+  // just this session, since object hotspots are invisible by design and a
+  // first-time visitor has no other cue they're there.
+  const [showRoomHint, setShowRoomHint] = useState(() => {
+    try { return typeof window !== 'undefined' && !window.localStorage.getItem(ROOM_HINT_SEEN_KEY); } catch { return true; }
+  });
+  const dismissRoomHint = () => {
+    setShowRoomHint(false);
+    try { window.localStorage.setItem(ROOM_HINT_SEEN_KEY, '1'); } catch { /* ignore */ }
+  };
   // Mobile-only (<1024px): StallSideNav / StallTodayPanel as slide-in drawers instead of the desktop's permanent columns.
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const [isTodayDrawerOpen, setIsTodayDrawerOpen] = useState(false);
@@ -272,31 +302,48 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
     return () => clearTimeout(t);
   }, [showPanHint]);
 
+  useEffect(() => {
+    if (!showRoomHint) return;
+    const t = setTimeout(dismissRoomHint, 4000);
+    return () => clearTimeout(t);
+  }, [showRoomHint]);
+
   useEffect(() => () => { if (previewTimerRef.current) clearTimeout(previewTimerRef.current); }, []);
 
-  // A hotspot with a caption gets a hover tooltip on a mouse-primary device
-  // (CSS :hover handles that, see the `group` button below) and, on a
-  // touch-primary device, a brief tap-preview of the same caption before
-  // the sheet opens. `(hover: hover) and (pointer: fine)` is the standard
-  // way to tell those apart -- a real mouse, not just viewport width.
-  function handleHotspotTap(h: StallHotspot) {
+  function openHotspot(h: StallHotspot) {
+    setOpenKind(h.kind);
+    setOpenLabel(h.label);
+  }
+
+  // Fine-pointer devices get the glow + label pill on hover already, so a
+  // click there just opens directly. Touch devices have no hover: the
+  // first tap on a box shows its glow + pill for TAP_PREVIEW_MS (same
+  // visual the mouse gets on hover) without opening anything; a second tap
+  // on that same box while it's showing opens the sheet. Tapping a
+  // DIFFERENT box always restarts the preview on the new one rather than
+  // opening it, since "already previewing" only ever means the same box.
+  function handleHotspotTap(h: StallHotspot, key: string) {
     if (!user) {
       setShowJoinSheet(true);
       return;
     }
+    dismissRoomHint();
     // "New seeds" gold dot disappears the moment this kind's sheet opens
     // -- a one-way dismissal, not a re-fetch (see dismissedKinds above).
     setDismissedKinds((prev) => (prev.has(h.kind) ? prev : new Set(prev).add(h.kind)));
-    const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    if (h.caption && !isFinePointer) {
-      setPreviewKind(h.kind);
-      previewTimerRef.current = setTimeout(() => {
-        setPreviewKind(null);
-        setOpenKind(h.kind);
-      }, CAPTION_PREVIEW_MS);
+    if (isFinePointer) {
+      openHotspot(h);
       return;
     }
-    setOpenKind(h.kind);
+    if (previewKey === key) {
+      if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+      setPreviewKey(null);
+      openHotspot(h);
+      return;
+    }
+    if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+    setPreviewKey(key);
+    previewTimerRef.current = setTimeout(() => setPreviewKey(null), TAP_PREVIEW_MS);
   }
 
   /** Gold dot + per-kind count -- rendered on a painted hotspot button when it has unseen new seeds. */
@@ -307,6 +354,42 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
       <span className="pointer-events-none absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-1 text-[10px] font-extrabold text-amber-950 shadow ring-2 ring-black/40">
         {count > 9 ? '9+' : count}
       </span>
+    );
+  }
+
+  /**
+   * One invisible box over an object. Fine pointer: CSS `group-hover`
+   * drives the gold glow + label pill (isFinePointer just gates whether
+   * those hover classes are present at all -- see handleHotspotTap for
+   * why touch can't just rely on real :hover). Touch: `isPreviewing`
+   * (this box's own tap-preview) drives the same glow/pill directly.
+   */
+  function HotspotButton({ h, hKey, style }: { h: StallHotspot; hKey: string; style: CSSProperties }) {
+    const isPreviewing = previewKey === hKey;
+    return (
+      <button
+        type="button"
+        aria-label={h.label}
+        onClick={() => handleHotspotTap(h, hKey)}
+        className="group absolute outline-none"
+        style={style}
+      >
+        <span
+          aria-hidden
+          className={`absolute inset-0 rounded-lg transition-all duration-200 ${
+            isPreviewing ? 'bg-amber-400/10 shadow-[0_0_20px_6px_rgba(251,191,36,0.55)]' : ''
+          } ${isFinePointer ? 'group-hover:bg-amber-400/10 group-hover:shadow-[0_0_20px_6px_rgba(251,191,36,0.55)]' : ''}`}
+        />
+        <span
+          className={`pointer-events-none absolute bottom-full left-1/2 mb-1.5 w-max max-w-[180px] -translate-x-1/2 rounded-md bg-black/85 px-2 py-1 text-center text-[11px] leading-tight shadow-lg transition-opacity duration-150 ${
+            isPreviewing ? 'opacity-100' : isFinePointer ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'
+          }`}
+        >
+          <span className="font-semibold text-amber-200">{h.label}</span>
+          {h.caption && <span className="block text-white/80">{h.caption}</span>}
+        </span>
+        <NewSeedDot kind={h.kind} />
+      </button>
     );
   }
 
@@ -341,6 +424,10 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   }, [openKind]);
 
   const activeHotspot = openKind ? hotspots.find((h) => h.kind === openKind) ?? null : null;
+  // openLabel is only set by an actual tap (openHotspot above) -- a fresh
+  // mount restoring openKind from the URL hash has no tapped box to recall
+  // it from, so fall back to the first hotspot of that kind's own label.
+  const activeLabel = openLabel ?? activeHotspot?.label;
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black flex flex-col overflow-hidden max-lg:portrait:overflow-y-auto">
@@ -495,13 +582,11 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
                 alt={stallName}
                 className={`block h-full w-auto max-w-none transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
               />
-              {hotspots.map((h) => (
-                <button
-                  key={h.kind}
-                  type="button"
-                  aria-label={h.label}
-                  onClick={() => handleHotspotTap(h)}
-                  className="absolute outline-none"
+              {hotspots.map((h, i) => (
+                <HotspotButton
+                  key={hotspotKey(h, i)}
+                  h={h}
+                  hKey={hotspotKey(h, i)}
                   style={{
                     left: `${h.x}%`,
                     top: `${h.y}%`,
@@ -510,23 +595,23 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
                     minWidth: 44,
                     minHeight: 44,
                   }}
-                >
-                  {h.caption && previewKind === h.kind && (
-                    <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 w-max max-w-[180px] -translate-x-1/2 rounded-md bg-black/85 px-2 py-1 text-[11px] leading-tight text-white shadow-lg">
-                      {h.caption}
-                    </span>
-                  )}
-                  <NewSeedDot kind={h.kind} />
-                </button>
+                />
               ))}
             </div>
           </div>
 
-          {showPanHint && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
-              <span className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm">
-                ‹ pan ›
-              </span>
+          {(showPanHint || showRoomHint) && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-4 flex flex-col items-center gap-1.5">
+              {showRoomHint && (
+                <span className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm">
+                  👆 tap the things in the room
+                </span>
+              )}
+              {showPanHint && (
+                <span className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm">
+                  ‹ pan ›
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -548,32 +633,27 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
             className={`absolute inset-0 w-full h-full object-contain transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
           />
 
-          {rect && hotspots.map((h) => (
-            <button
-              key={h.kind}
-              type="button"
-              aria-label={h.label}
-              onClick={() => handleHotspotTap(h)}
-              className="absolute outline-none group"
+          {rect && hotspots.map((h, i) => (
+            <HotspotButton
+              key={hotspotKey(h, i)}
+              h={h}
+              hKey={hotspotKey(h, i)}
               style={{
                 left: rect.offsetX + (h.x / 100) * rect.width,
                 top: rect.offsetY + (h.y / 100) * rect.height,
                 width: (h.w / 100) * rect.width,
                 height: (h.h / 100) * rect.height,
               }}
-            >
-              {h.caption && (
-                <span
-                  className={`pointer-events-none absolute bottom-full left-1/2 mb-1.5 w-max max-w-[180px] -translate-x-1/2 rounded-md bg-black/85 px-2 py-1 text-[11px] leading-tight text-white shadow-lg transition-opacity duration-150 ${
-                    previewKind === h.kind ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                  }`}
-                >
-                  {h.caption}
-                </span>
-              )}
-              <NewSeedDot kind={h.kind} />
-            </button>
+            />
           ))}
+
+          {showRoomHint && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-14 flex justify-center">
+              <span className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm">
+                👆 tap the things in the room
+              </span>
+            </div>
+          )}
 
           <div className="absolute top-4 right-4 flex items-center gap-2">
             <button
@@ -694,9 +774,9 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           ownerId={ownerId}
           ownerName={stallName}
           kind={activeHotspot.kind}
-          label={activeHotspot.label}
+          label={activeLabel}
           isOwner={effectiveIsOwner}
-          onClose={() => setOpenKind(null)}
+          onClose={() => { setOpenKind(null); setOpenLabel(null); }}
           scrollToItemId={initialScrollSeedId}
           viewerCutoff={viewerCutoff}
         />

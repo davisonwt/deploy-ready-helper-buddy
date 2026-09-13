@@ -88,13 +88,22 @@ export interface StallTile {
  * possibly letterboxed) image box's own coordinates at render time.
  */
 export interface StallHotspot {
+  /**
+   * Stable per-box identifier (batch: object hotspots). Optional so
+   * hand-authored template JSON never has to carry one -- anything reading
+   * hotspots for React keys / tap-preview tracking falls back to its array
+   * index when absent. Never used for "the" hotspot of a kind anymore --
+   * stalls.hotspots may hold many entries sharing the same `kind` (many
+   * objects in the room can all open the same Books/Music/... sheet).
+   */
+  id?: string;
   kind: TileKind;
   label: string;
   x: number;
   y: number;
   w: number;
   h: number;
-  /** Optional short line shown as a hover tooltip (desktop) or a brief tap-preview (mobile, ~800ms) before the sheet opens. Omit for the plain tap-only behavior every other hotspot has today. */
+  /** Optional short line shown alongside the label on hover (desktop) or a brief tap-preview (mobile, ~1.5s) before the sheet opens. */
   caption?: string;
 }
 
@@ -152,3 +161,6 @@ export function resolveStallHotspots(
 
 export const MIN_TILES = 3;
 export const MAX_TILES = 5;
+
+/** Wizard step "Mark your shelves" -- fewest object hotspots a stall can publish with. No ceiling. */
+export const MIN_HOTSPOTS = 3;

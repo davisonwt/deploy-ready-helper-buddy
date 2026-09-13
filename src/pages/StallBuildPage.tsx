@@ -5,15 +5,15 @@ import { WizardContainer } from '@/components/wizard/WizardContainer';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, Plus, Store, ClipboardList, ImageIcon, DoorOpen, LayoutGrid, Eye } from 'lucide-react';
+import { Store, ClipboardList, ImageIcon, DoorOpen, LayoutGrid, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
 import { shareStallLink } from '@/lib/referral';
 import StallImageUpload, { type StallImageResult } from '@/components/stalls/StallImageUpload';
 import StallPdfUpload, { type StallPdfResult } from '@/components/stalls/StallPdfUpload';
+import HotspotEditor, { newHotspotId } from '@/components/stalls/HotspotEditor';
 import MyProductsPage from '@/pages/MyProductsPage';
 import MyS2GLibraryPage from '@/pages/MyS2GLibraryPage';
 import ProfilePage from '@/pages/ProfilePage';
@@ -24,13 +24,12 @@ const BUILD_TABS = ['setup', 'products', 'library', 'profile', 'credentials', 'b
 type BuildTab = (typeof BUILD_TABS)[number];
 import {
   STALL_CATEGORIES,
-  TILE_KINDS,
   TILE_KIND_DEFAULT_TARGET,
-  MIN_TILES,
-  MAX_TILES,
+  MIN_HOTSPOTS,
   resolveStallHotspots,
   type StallCategory,
   type StallTile,
+  type StallHotspot,
   type StallTemplate,
   type StallTemplatesByCategory,
 } from '@/lib/stalls/stallTypes';
@@ -71,18 +70,18 @@ function FrontCardPreview({ url, name }: { url: string; name: string }) {
  * StallInteriorView itself uses at render time, so what the sower sees
  * here is exactly what a visitor will see, template pick or fresh upload
  * alike. */
-function InteriorHotspotPreview({ url, templates }: { url: string; templates: StallTemplatesByCategory | null }) {
+function InteriorHotspotPreview({ url, templates, hotspots: hotspotsOverride }: { url: string; templates: StallTemplatesByCategory | null; hotspots?: StallHotspot[] | null }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const rect = useContainImageRect(containerRef, imgRef);
-  const hotspots = resolveStallHotspots(url, null, templates);
+  const hotspots = resolveStallHotspots(url, hotspotsOverride, templates);
 
   return (
     <div ref={containerRef} className="relative aspect-video w-full overflow-hidden rounded-2xl border border-amber-500/25 bg-black shadow-lg">
       <img ref={imgRef} src={url} alt="Your stall interior" className="absolute inset-0 w-full h-full object-contain" />
-      {rect && hotspots.map((h) => (
+      {rect && hotspots.map((h, i) => (
         <div
-          key={h.kind}
+          key={h.id ?? `${h.kind}-${i}`}
           className="absolute rounded-lg border-2 border-amber-400/80 bg-amber-400/15 flex items-center justify-center"
           style={{
             left: rect.offsetX + (h.x / 100) * rect.width,
@@ -131,6 +130,13 @@ export default function StallBuildPage() {
   const [front, setFront] = useState<StallImageResult | null>(null);
   const [interior, setInterior] = useState<StallImageResult | null>(null);
   const [tiles, setTiles] = useState<TileDraft[]>([emptyTile(), emptyTile(), emptyTile()]);
+  const [hotspots, setHotspots] = useState<StallHotspot[]>([]);
+  // Which interior URL `hotspots` was last seeded from (template pre-mark
+  // or a loaded stall row) -- lets the seeding effect below tell "this is
+  // the same interior we already have boxes for" from "the sower just
+  // changed the interior image, seed fresh" without re-seeding on every
+  // unrelated re-render.
+  const seededForUrl = useRef<string | null>(null);
 
   const [templates, setTemplates] = useState<StallTemplatesByCategory | null>(null);
 
@@ -142,6 +148,23 @@ export default function StallBuildPage() {
   }, []);
 
   const categoryTemplates: StallTemplate[] = templates?.[category] ?? [];
+
+  // "template interiors ship with their boxes pre-marked": whenever the
+  // interior image changes to a URL we haven't seeded boxes for yet, seed
+  // from the matching template's own hotspots (if any) as an editable
+  // starting point -- a fresh upload with no template match just starts
+  // empty, prompting the sower to draw their own. Never overwrites boxes
+  // already loaded from this stall's own saved row (seededForUrl is set
+  // for the loaded interior_image_path on mount, above) or boxes the
+  // sower has already started editing for THIS url.
+  useEffect(() => {
+    if (!interior?.url || !templates) return;
+    if (seededForUrl.current === interior.url) return;
+    const template = resolveStallHotspots(interior.url, null, templates);
+    const isRealTemplateMatch = Object.values(templates).some((list) => list.some((t) => t.interior === interior.url && t.hotspots?.length));
+    seededForUrl.current = interior.url;
+    setHotspots(isRealTemplateMatch ? template.map((h) => ({ ...h, id: newHotspotId() })) : []);
+  }, [interior?.url, templates]);
 
   // Keyed on user?.id, NOT the whole `user` object: useAuth's AuthProviderClass
   // hands out a brand-new `user` object reference on every onAuthStateChange
@@ -171,6 +194,11 @@ export default function StallBuildPage() {
         }
         if (data.front_image_path) setFront({ url: data.front_image_path, storagePath: null });
         if (data.interior_image_path) setInterior({ url: data.interior_image_path, storagePath: null });
+        const savedHotspots = Array.isArray(data.hotspots) ? (data.hotspots as StallHotspot[]) : [];
+        if (savedHotspots.length > 0) {
+          setHotspots(savedHotspots.map((h) => (h.id ? h : { ...h, id: newHotspotId() })));
+          seededForUrl.current = data.interior_image_path ?? null;
+        }
         const savedTiles = Array.isArray(data.tiles) ? data.tiles : [];
         if (savedTiles.length > 0) {
           setTiles(savedTiles.map((t: StallTile) => ({
@@ -188,25 +216,20 @@ export default function StallBuildPage() {
 
   const pathPrefix = user ? `${user.id}` : '';
 
-  const addTile = () => setTiles((t) => (t.length >= MAX_TILES ? t : [...t, emptyTile()]));
-  const removeTile = (i: number) => setTiles((t) => (t.length <= MIN_TILES ? t : t.filter((_, idx) => idx !== i)));
-  const updateTile = (i: number, patch: Partial<TileDraft>) =>
-    setTiles((t) => t.map((tile, idx) => (idx === i ? { ...tile, ...patch } : tile)));
-
   const validTiles = tiles.filter((t) => t.label.trim().length > 0 && tileTarget(t).length > 0);
 
   const canGoNext = useMemo(() => {
     if (step === 0) return name.trim().length > 0;
     if (step === 1) return !!front;
     if (step === 2) return !!interior;
-    if (step === 3) return validTiles.length >= MIN_TILES;
+    if (step === 3) return hotspots.length >= MIN_HOTSPOTS;
     return true;
-  }, [step, name, front, interior, validTiles.length]);
+  }, [step, name, front, interior, hotspots.length]);
 
   const handlePublish = async () => {
     if (!user) return;
     if (!front || !interior) { toast.error('Add both a front and interior image first.'); return; }
-    if (validTiles.length < MIN_TILES) { toast.error(`Add at least ${MIN_TILES} tiles.`); return; }
+    if (hotspots.length < MIN_HOTSPOTS) { toast.error(`Mark at least ${MIN_HOTSPOTS} shelves.`); return; }
 
     // Captured before the upsert below sets stallId for good -- this is
     // the one moment "did a stall already exist when this page loaded"
@@ -235,6 +258,7 @@ export default function StallBuildPage() {
           front_image_path: front.url,
           interior_image_path: interior.url,
           tiles: tilesPayload,
+          hotspots,
           published: true,
         },
         { onConflict: 'user_id' },
@@ -266,7 +290,7 @@ export default function StallBuildPage() {
     { title: 'Your stall', description: 'What kind of stall is this?', icon: <ClipboardList className="h-4 w-4" /> },
     { title: 'Shop front', description: 'The image visitors tap to walk in.', icon: <DoorOpen className="h-4 w-4" /> },
     { title: 'Interior', description: 'What they see once inside.', icon: <ImageIcon className="h-4 w-4" /> },
-    { title: 'Tiles', description: `3-${MAX_TILES} buttons leading to your products.`, icon: <LayoutGrid className="h-4 w-4" /> },
+    { title: 'Mark your shelves', description: 'Draw a box over each thing visitors can tap.', icon: <LayoutGrid className="h-4 w-4" /> },
     { title: 'Preview & publish', description: 'One last look before it goes live.', icon: <Eye className="h-4 w-4" /> },
   ];
 
@@ -397,78 +421,14 @@ export default function StallBuildPage() {
           {interior && (
             <div>
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-amber-100/50">Where the painted buttons will land</p>
-              <InteriorHotspotPreview url={interior.url} templates={templates} />
+              <InteriorHotspotPreview url={interior.url} templates={templates} hotspots={hotspots} />
             </div>
           )}
         </div>
       )}
 
-      {step === 3 && (
-        <div className="space-y-4">
-          {tiles.map((tile, i) => (
-            <Card key={i} className="bg-black/30 border-amber-500/20">
-              <CardContent className="pt-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-amber-100/60">Tile {i + 1}</span>
-                  {tiles.length > MIN_TILES && (
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeTile(i)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  )}
-                </div>
-                <Input
-                  placeholder="Label (e.g. My Books)"
-                  value={tile.label}
-                  onChange={(e) => updateTile(i, { label: e.target.value })}
-                  maxLength={40}
-                  className="bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30"
-                />
-                <div className="flex flex-wrap gap-2">
-                  {TILE_KINDS.map((k) => (
-                    <Button
-                      key={k.id}
-                      type="button"
-                      size="sm"
-                      variant={tile.kind === k.id ? 'default' : 'outline'}
-                      aria-pressed={tile.kind === k.id}
-                      onClick={() => updateTile(i, { kind: k.id })}
-                      className={
-                        tile.kind === k.id
-                          ? 'bg-amber-500 text-amber-950 border-amber-500 hover:bg-amber-400'
-                          : 'border-amber-500/25 text-amber-100/70 hover:bg-amber-500/10'
-                      }
-                    >
-                      {k.label}
-                    </Button>
-                  ))}
-                </div>
-                {tile.kind === 'custom' && (
-                  <Input
-                    placeholder="/some/in-app/path"
-                    value={tile.customTarget}
-                    onChange={(e) => updateTile(i, { customTarget: e.target.value })}
-                    className="bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30"
-                  />
-                )}
-                <StallImageUpload
-                  pathPrefix={pathPrefix}
-                  mode="square"
-                  maxSize={600}
-                  value={tile.image}
-                  onChange={(img) => updateTile(i, { image: img })}
-                  templateField="front"
-                  label="Tile image (optional)"
-                  aspectClassName="aspect-square max-w-[8rem]"
-                />
-              </CardContent>
-            </Card>
-          ))}
-          {tiles.length < MAX_TILES && (
-            <Button type="button" variant="outline" onClick={addTile} className="w-full gap-2 border-amber-500/25 text-amber-100/80 hover:bg-amber-500/10">
-              <Plus className="h-4 w-4" /> Add another tile
-            </Button>
-          )}
-        </div>
+      {step === 3 && interior && (
+        <HotspotEditor imageUrl={interior.url} value={hotspots} onChange={setHotspots} />
       )}
 
       {step === 4 && (
@@ -484,7 +444,7 @@ export default function StallBuildPage() {
             </div>
             <div>
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-amber-100/50">Interior</p>
-              {interior && <InteriorHotspotPreview url={interior.url} templates={templates} />}
+              {interior && <InteriorHotspotPreview url={interior.url} templates={templates} hotspots={hotspots} />}
             </div>
           </div>
           <div>
