@@ -419,7 +419,9 @@ export default function LiveStage({
             🎙️ Your microphone isn't being shared — no one can hear you.
           </span>
           <span className="text-xs font-medium text-rose-100">
-            Check your browser's mic permission &amp; input device (Settings → Privacy → Microphone on Edge/Chrome).
+            Check your browser's mic permission &amp; input device (Settings → Privacy → Microphone on Edge/Chrome) —
+            and your computer's own OS microphone privacy setting too (Windows Settings → Privacy → Microphone / macOS
+            System Settings → Privacy &amp; Security → Microphone): a browser can be allowed while the OS still blocks it.
           </span>
           <button
             type="button"
@@ -735,6 +737,10 @@ export default function LiveStage({
           onSetSpotlight={setSpotlight}
           onToggleMute={toggleMute}
           onRemoveGuest={removeGuest}
+          callParticipants={callParticipants}
+          hostVideoTrack={myLocalVideoTrack}
+          hostVideoOn={myVideoOn}
+          hostAvatar={(user as any)?.user_metadata?.avatar_url || null}
         />
         <PortraitActionBar
           isHost={isHost}
@@ -1246,70 +1252,145 @@ interface PortraitSpeakerStripProps {
   onSetSpotlight: (userId: string | null) => void;
   onToggleMute: (userId: string, muted: boolean) => void;
   onRemoveGuest: (userId: string) => void;
+  /** Live Daily call data, keyed by session id -- matched to an
+   * ApprovedGuest by .userId so a tile can show the participant's actual
+   * camera feed, not just their avatar/initial. */
+  callParticipants: Record<string, CallParticipant>;
+  hostVideoTrack: MediaStreamTrack | null;
+  hostVideoOn: boolean;
+  hostAvatar: string | null;
+}
+
+/** One tile's own picture: live camera feed (camera on) > avatar photo >
+ * initial, in that priority -- "for host and all approved guests" means
+ * the same three-tier fallback for both, not avatar-or-initial alone
+ * (the bug reported live, 2026-09-15: tiles never rendered video at all,
+ * even with a camera on). */
+function TilePicture({ track, avatar, name, mirror }: { track: MediaStreamTrack | null; avatar: string | null; name: string; mirror?: boolean }) {
+  if (track) return <ParticipantVideo track={track} className="h-full w-full rounded-full object-cover" mirror={mirror} />;
+  if (avatar) return <img src={avatar} alt={name} className="h-full w-full rounded-full object-cover" />;
+  return <span className="text-sm font-bold text-emerald-200">{name.charAt(0).toUpperCase()}</span>;
 }
 
 /** Host + up to 3 approved speakers as small round tiles in a row. A
- * tile's own mute/spotlight/remove controls are collapsed behind a tap on
- * that tile (host only) instead of floating permanently over it -- this is
- * what "nothing overlaps the board" means for the speaker strip itself. */
-function PortraitSpeakerStrip({ isHost, approved, spotlightUserId, openTileId, setOpenTileId, onSetSpotlight, onToggleMute, onRemoveGuest }: PortraitSpeakerStripProps) {
+ * tile's own mute/spotlight/remove controls open in a fixed bottom sheet
+ * (PortraitTileActionsSheet below), not an absolutely-positioned popup
+ * anchored to the tile itself -- that popup used to render inside THIS
+ * row's own `overflow-x-auto` container, which per the CSS spec forces
+ * the other axis (overflow-y) to also clip once either axis is non-
+ * visible, silently cutting the popup off below the row instead of
+ * showing it. Reported live, 2026-09-15, as "the spotlight control is
+ * missing or not working" -- it was rendering, just invisible/unreachable
+ * beneath the scrollable strip. A fixed-position sheet can't be clipped
+ * by any ancestor's overflow, same reasoning PortraitQueueSheet already
+ * relies on. */
+function PortraitSpeakerStrip({ isHost, approved, spotlightUserId, openTileId, setOpenTileId, onSetSpotlight, onToggleMute, onRemoveGuest, callParticipants, hostVideoTrack, hostVideoOn, hostAvatar }: PortraitSpeakerStripProps) {
   const guests = approved.slice(0, 3);
+  const findVideoTrack = (userId: string) => Object.values(callParticipants).find(p => p.userId === userId)?.videoTrack ?? null;
+  const openGuest = guests.find(g => g.user_id === openTileId) ?? null;
   return (
-    <div className="flex shrink-0 items-center gap-3 overflow-x-auto border-t border-white/10 bg-black/80 px-3 py-2">
-      <button
-        type="button"
-        onClick={() => setOpenTileId(null)}
-        className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 ${
-          !spotlightUserId ? 'border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'border-emerald-500/40'
-        } bg-emerald-950/50`}
-        aria-label="Host"
-      >
-        <Crown className="h-5 w-5 text-amber-300" />
-      </button>
-      {guests.map((g) => {
-        const isLit = g.user_id === spotlightUserId;
-        const open = openTileId === g.user_id;
-        return (
-          <div key={g.user_id} className="relative shrink-0">
+    <>
+      <div className="flex shrink-0 items-center gap-3 overflow-x-auto border-t border-white/10 bg-black/80 px-3 py-2">
+        <button
+          type="button"
+          onClick={() => setOpenTileId(null)}
+          className={`relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 ${
+            !spotlightUserId ? 'border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'border-emerald-500/40'
+          } bg-emerald-950/50`}
+          aria-label="Host"
+        >
+          {hostVideoOn && hostVideoTrack ? (
+            <ParticipantVideo track={hostVideoTrack} className="h-full w-full rounded-full object-cover" mirror />
+          ) : hostAvatar ? (
+            <img src={hostAvatar} alt="Host" className="h-full w-full rounded-full object-cover" />
+          ) : (
+            <Crown className="h-5 w-5 text-amber-300" />
+          )}
+        </button>
+        {guests.map((g) => {
+          const isLit = g.user_id === spotlightUserId;
+          return (
             <button
+              key={g.user_id}
               type="button"
-              onClick={() => isHost && setOpenTileId(open ? null : g.user_id)}
+              onClick={() => isHost && setOpenTileId(g.user_id)}
               aria-label={g.name}
-              className={`relative flex h-12 w-12 items-center justify-center rounded-full border-2 ${
+              className={`relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 ${
                 isLit ? 'border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'border-emerald-500/40'
               } bg-emerald-950/40`}
             >
-              {g.avatar ? (
-                <img src={g.avatar} alt={g.name} className="h-full w-full rounded-full object-cover" />
-              ) : (
-                <span className="text-sm font-bold text-emerald-200">{g.name.charAt(0).toUpperCase()}</span>
-              )}
+              <TilePicture track={findVideoTrack(g.user_id)} avatar={g.avatar ?? null} name={g.name} />
               <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black">
                 {g.mode === 'video'
                   ? <Video className="h-2.5 w-2.5 text-amber-300" />
                   : (g.muted ? <MicOff className="h-2.5 w-2.5 text-rose-400" /> : <Mic className="h-2.5 w-2.5 text-emerald-300" />)}
               </span>
             </button>
-            {isHost && open && (
-              <div className="absolute left-1/2 top-full z-20 mt-1.5 flex -translate-x-1/2 gap-1 rounded-full border border-white/10 bg-black/95 p-1 shadow-xl backdrop-blur">
-                <button type="button" onClick={() => { onSetSpotlight(isLit ? null : g.user_id); setOpenTileId(null); }} className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500 text-black" aria-label={isLit ? 'Remove from big screen' : 'Send to big screen'}>
-                  <Star className="h-3.5 w-3.5" />
-                </button>
-                <button type="button" onClick={() => onToggleMute(g.user_id, !g.muted)} className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500 text-black" aria-label={g.muted ? 'Unmute' : 'Mute'}>
-                  {g.muted ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                </button>
-                <button type="button" onClick={() => { onRemoveGuest(g.user_id); setOpenTileId(null); }} className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white" aria-label="Remove from stage">
-                  <UserMinus className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      })}
-      {guests.length === 0 && (
-        <span className="truncate text-xs italic text-white/40">Seats open — raise a hand to join</span>
+          );
+        })}
+        {guests.length === 0 && (
+          <span className="truncate text-xs italic text-white/40">Seats open — raise a hand to join</span>
+        )}
+      </div>
+      {isHost && openGuest && (
+        <PortraitTileActionsSheet
+          guest={openGuest}
+          isLit={openGuest.user_id === spotlightUserId}
+          onSetSpotlight={onSetSpotlight}
+          onToggleMute={onToggleMute}
+          onRemoveGuest={onRemoveGuest}
+          onClose={() => setOpenTileId(null)}
+        />
       )}
-    </div>
+    </>
+  );
+}
+
+/** Fixed bottom sheet (same pattern as PortraitQueueSheet below -- proven
+ * not to get clipped by any ancestor) for one guest tile's actions: send
+ * to/remove from the big screen, mute/unmute, remove from stage. Host-only,
+ * opened by a single tap on that guest's tile. */
+function PortraitTileActionsSheet({ guest, isLit, onSetSpotlight, onToggleMute, onRemoveGuest, onClose }: {
+  guest: ApprovedGuest;
+  isLit: boolean;
+  onSetSpotlight: (userId: string | null) => void;
+  onToggleMute: (userId: string, muted: boolean) => void;
+  onRemoveGuest: (userId: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <div className="fixed inset-0 z-[1100] bg-black/60" onClick={onClose} />
+      <div className="fixed inset-x-0 bottom-0 z-[1101] rounded-t-2xl border-t border-amber-500/30 bg-[#0b1120] p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-bold text-white">{guest.name}</h3>
+          <button type="button" onClick={onClose} aria-label="Close"><X className="h-5 w-5 text-white/60" /></button>
+        </div>
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => { onSetSpotlight(isLit ? null : guest.user_id); onClose(); }}
+            className="flex w-full items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-3 text-sm font-bold text-amber-200"
+          >
+            <Star className="h-4 w-4" /> {isLit ? 'Remove from big screen' : 'Send to big screen'}
+          </button>
+          <button
+            type="button"
+            onClick={() => { onToggleMute(guest.user_id, !guest.muted); onClose(); }}
+            className="flex w-full items-center gap-3 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-3 text-sm font-bold text-sky-200"
+          >
+            {guest.muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />} {guest.muted ? 'Unmute' : 'Mute'}
+          </button>
+          <button
+            type="button"
+            onClick={() => { onRemoveGuest(guest.user_id); onClose(); }}
+            className="flex w-full items-center gap-3 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-3 text-sm font-bold text-rose-200"
+          >
+            <UserMinus className="h-4 w-4" /> Remove from stage
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
