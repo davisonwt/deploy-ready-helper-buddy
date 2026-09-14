@@ -35,6 +35,17 @@ interface Payload {
 const DAILY_API = "https://api.daily.co/v1";
 const ROOM_TTL_SECONDS = 60 * 60 * 4; // 4h -- a call/room that's been idle this long is stale
 const TOKEN_TTL_SECONDS = 60 * 60 * 2; // 2h -- long enough for one call, short-lived by design
+// Root cause of a live incident, 2026-09-15 (capacity, not a mic bug --
+// found via a real test: one participant on 2 devices, host heard only
+// ONE; a third participant wasn't heard at all): rooms were created with
+// NO max_participants set, so every room silently fell back to whatever
+// this Daily account's own default/plan ceiling is -- unknown to us,
+// never confirmed generous, and Daily drops excess participants/tracks
+// past that ceiling with no client-visible error. Set explicitly instead
+// of trusting an implicit default. 30 gives comfortable headroom over the
+// "at least 10-12" requirement; Daily's SFU handles this participant
+// count without any other change on our side.
+const ROOM_MAX_PARTICIPANTS = 30;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -169,6 +180,11 @@ async function getOrCreateDailyRoom(apiKey: string, roomName: string): Promise<s
       exp: Math.floor(Date.now() / 1000) + ROOM_TTL_SECONDS,
     };
     if (room?.config?.enable_prejoin_ui !== false) patchProps.enable_prejoin_ui = false;
+    // A room created before this fix (rooms are reused indefinitely per
+    // seed+host -- see the jitsi_room reuse fix) is still silently capped
+    // at whatever it inherited at creation time unless raised here too.
+    const currentMax = typeof room?.config?.max_participants === "number" ? room.config.max_participants : 0;
+    if (currentMax < ROOM_MAX_PARTICIPANTS) patchProps.max_participants = ROOM_MAX_PARTICIPANTS;
     await patchDailyRoomProperties(apiKey, roomName, patchProps);
     return room.url;
   }
@@ -190,6 +206,7 @@ async function getOrCreateDailyRoom(apiKey: string, roomName: string): Promise<s
         enable_prejoin_ui: false, // skip Daily's own "Are you ready to join?" tap -- see comment above
         exp: Math.floor(Date.now() / 1000) + ROOM_TTL_SECONDS,
         eject_at_room_exp: true,
+        max_participants: ROOM_MAX_PARTICIPANTS,
       },
     }),
   });

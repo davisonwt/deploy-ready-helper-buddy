@@ -1285,6 +1285,16 @@ function TilePicture({ track, avatar, name, mirror }: { track: MediaStreamTrack 
  * by any ancestor's overflow, same reasoning PortraitQueueSheet already
  * relies on. */
 function PortraitSpeakerStrip({ isHost, approved, spotlightUserId, openTileId, setOpenTileId, onSetSpotlight, onToggleMute, onRemoveGuest, callParticipants, hostVideoTrack, hostVideoOn, hostAvatar }: PortraitSpeakerStripProps) {
+  // Display-only cap on this compact phone-portrait tile row (more than a
+  // handful of round tiles doesn't fit) -- confirmed, 2026-09-15 capacity
+  // investigation: does NOT limit who is actually in the call or who gets
+  // heard. CallAudioLayer (this file) mounts a <audio> for every remote
+  // participant Daily's own call object reports, read directly from
+  // useDailyCallObject's `participants`, entirely independent of this
+  // `approved` array or this slice -- a guest beyond the 4th tile here is
+  // still fully in the call and audible, just not shown a tile on this
+  // narrow strip. Desktop's own guest-boxes row (elsewhere in this file)
+  // never slices at all.
   const guests = approved.slice(0, 3);
   const findVideoTrack = (userId: string) => Object.values(callParticipants).find(p => p.userId === userId)?.videoTrack ?? null;
   const openGuest = guests.find(g => g.user_id === openTileId) ?? null;
