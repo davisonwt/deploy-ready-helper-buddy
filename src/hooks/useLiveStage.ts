@@ -277,7 +277,18 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     // content, same as the host would.
     const isPresenter = isHost || (!!user && stage.spotlightUserId === user.id);
     if (!isPresenter) return;
-    const full: StagePayload = { ...p, at: Date.now() };
+    // spotlightUserId is presenter-CONTROL metadata, not board content -- it
+    // must always reflect the live value, never whatever `p` happens to
+    // carry. A caller can otherwise clobber it with a stale one: LiveStage's
+    // own host-reclaim effect restores a *snapshot* of the whole stage taken
+    // back when spotlight was first handed to a guest (so the guest's id is
+    // baked into that snapshot's spotlightUserId), and replays it via this
+    // same function right after setSpotlight(null) has just cleared it --
+    // silently re-spotlighting the guest and leaving the host permanently
+    // unable to become the active editor again. Confirmed live, 2026-09-14,
+    // via the E2E test: the host's Text tab stopped rendering a <textarea>
+    // for the rest of the session after any single spotlight handoff.
+    const full: StagePayload = { ...p, spotlightUserId: stage.spotlightUserId, at: Date.now() };
     setStage(full);
     send('stage_mode', full);
     // DB persistence stays host-only: gathering_sessions' RLS UPDATE policy

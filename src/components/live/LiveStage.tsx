@@ -301,6 +301,20 @@ export default function LiveStage({
     }
   }, [isActiveEditor, stage.mode, stage.text]);
 
+  // Whoever just BECAME the active editor (spotlight handed back, or taken)
+  // starts from the current shared text, not whatever they last mirrored as
+  // a bystander -- otherwise a returning host's textarea opens pre-filled
+  // with a departed panelist's old text (the mirror effect above only ever
+  // writes boardText while NOT the active editor, so nothing else clears it
+  // on the handoff itself).
+  const prevIsActiveEditorRef = useRef(isActiveEditor);
+  useEffect(() => {
+    if (!prevIsActiveEditorRef.current && isActiveEditor) {
+      setBoardText(stageRef.current.text ?? '');
+    }
+    prevIsActiveEditorRef.current = isActiveEditor;
+  }, [isActiveEditor]);
+
   const displayName = (user as any)?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Tribe';
 
   // Whether the local user should actually have an audio/video transport.

@@ -157,6 +157,8 @@ test('Go-Live: audio, PDF sync, presenter handoff, PDF persistence -- one live s
     '.env.test credentials required: TEST_USER_EMAIL/PASSWORD, TEST_USER2_EMAIL/PASSWORD'
   );
   test.setTimeout(6 * 60_000);
+  const t0 = Date.now();
+  const mark = (label: string) => console.log(`[T+${((Date.now() - t0) / 1000).toFixed(1)}s] ${label}`);
 
   const hostCtx = await browser.newContext({
     viewport: { width: 1440, height: 900 },
@@ -172,6 +174,7 @@ test('Go-Live: audio, PDF sync, presenter handoff, PDF persistence -- one live s
   guestPage.on('pageerror', (e) => console.log('[guest pageerror]', e.message));
 
   await test.step('setup: login host + guest, host starts fresh live, guest joins + is approved', async () => {
+    mark("setup: login host + guest, host starts fresh live, guest joins + is approved");
     await login(hostPage, HOST_EMAIL, HOST_PASS);
     await login(guestPage, GUEST_EMAIL, GUEST_PASS);
 
@@ -192,6 +195,7 @@ test('Go-Live: audio, PDF sync, presenter handoff, PDF persistence -- one live s
   });
 
   await test.step('REQUIREMENT 1a: audio both directions, host camera OFF', async () => {
+    mark("REQUIREMENT 1a: audio both directions, host camera OFF");
     const camBtn = hostPage.locator('button[aria-label="Turn camera off"], button[aria-label="Turn camera on"]').first();
     await expect(camBtn).toHaveCount(1);
     await expect(camBtn, 'host camera should default OFF').toHaveAttribute('aria-label', 'Turn camera on');
@@ -207,6 +211,7 @@ test('Go-Live: audio, PDF sync, presenter handoff, PDF persistence -- one live s
   });
 
   await test.step('REQUIREMENT 1b: audio survives host camera ON (mic independent of camera)', async () => {
+    mark("REQUIREMENT 1b: audio survives host camera ON (mic independent of camera)");
     const camBtn = hostPage.locator('button[aria-label="Turn camera off"], button[aria-label="Turn camera on"]').first();
     await camBtn.click();
     await hostPage.waitForTimeout(2000);
@@ -221,6 +226,7 @@ test('Go-Live: audio, PDF sync, presenter handoff, PDF persistence -- one live s
   });
 
   await test.step('REQUIREMENT 2a: PDF uploads and renders for host AND guest', async () => {
+    mark("REQUIREMENT 2a: PDF uploads and renders for host AND guest");
     const pdfTab = hostPage.locator('button:has-text("PDF")').first();
     await pdfTab.click();
     await hostPage.waitForTimeout(1000);
@@ -238,6 +244,7 @@ test('Go-Live: audio, PDF sync, presenter handoff, PDF persistence -- one live s
   });
 
   await test.step('REQUIREMENT 2b: page-turn syncs to the guest', async () => {
+    mark("REQUIREMENT 2b: page-turn syncs to the guest");
     const nextPageBtn = hostPage.locator('button[aria-label="Next page"]').first();
     await expect(nextPageBtn).toBeVisible({ timeout: 10000 });
     await nextPageBtn.click();
@@ -255,6 +262,7 @@ test('Go-Live: audio, PDF sync, presenter handoff, PDF persistence -- one live s
   const DISTINCT_MARK = `GUEST-MARK-${Date.now()}`;
 
   await test.step('REQUIREMENT 3a: host spotlights the guest', async () => {
+    mark("REQUIREMENT 3a: host spotlights the guest");
     const spotlightBtn = hostPage.locator('button[title="Send to big screen"]').first();
     await expect(spotlightBtn, 'host should be able to spotlight the approved guest').toBeVisible({ timeout: 10000 });
     await spotlightBtn.click();
@@ -262,6 +270,7 @@ test('Go-Live: audio, PDF sync, presenter handoff, PDF persistence -- one live s
   });
 
   await test.step('REQUIREMENT 3b: spotlighted guest gets presenter tools and pushes their own content', async () => {
+    mark("REQUIREMENT 3b: spotlighted guest gets presenter tools and pushes their own content");
     await expect(guestPage.locator('button:has-text("PDF")').first(), 'spotlighted guest should see the board toolbar').toBeVisible({ timeout: 10000 });
 
     const guestTextTab = guestPage.locator('button:has-text("TEXT")').first();
@@ -278,6 +287,7 @@ test('Go-Live: audio, PDF sync, presenter handoff, PDF persistence -- one live s
   });
 
   await test.step('REQUIREMENT 3c: host reclaims control, own PDF content restored (not wiped)', async () => {
+    mark("REQUIREMENT 3c: host reclaims control, own PDF content restored (not wiped)");
     const unspotlightBtn = hostPage.locator('button[title="Remove from big screen"]').first();
     await expect(unspotlightBtn).toBeVisible({ timeout: 8000 });
     await unspotlightBtn.click();
@@ -292,6 +302,7 @@ test('Go-Live: audio, PDF sync, presenter handoff, PDF persistence -- one live s
   });
 
   await test.step('REQUIREMENT 4: PDF survives a PDF -> TEXT -> PDF round trip, stays synced', async () => {
+    mark("REQUIREMENT 4: PDF survives a PDF -> TEXT -> PDF round trip, stays synced");
     const textTab = hostPage.locator('button:has-text("TEXT")').first();
     await textTab.click();
     await hostPage.waitForTimeout(1000);
