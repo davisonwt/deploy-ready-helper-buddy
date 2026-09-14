@@ -129,7 +129,72 @@ export function useTribalLiveOrchard() {
     async (seed: { id: string; title: string; image?: string | null }) => {
       const ch = ensureChannel(presenceKey);
       if (!user?.id) return null;
-      const room = `s2g_seed_${seed.id.replace(/-/g, '')}_${Date.now().toString(36)}`;
+
+      // Gathering Room: resolve (reuse, on a refresh/re-entry) or create
+      // this session's DB row HERE -- synchronously, deterministically, as
+      // the one action that actually IS "I am starting/resuming as host,"
+      // rather than useLiveStage's mount effect trying to infer host-ness
+      // later from presence state that can still be mid-sync. By the time
+      // the caller renders <LiveStage hostSessionId={...}>, this has
+      // already resolved -- no race for that hook to lose. Reuse (not a
+      // fresh INSERT) covers a host who refreshed the tab or re-entered
+      // their own still-live room: `eq('host_id', user.id).is('ended_at',
+      // null)` finds their own un-ended row for this seed rather than
+      // leaving an orphaned duplicate behind every time.
+      //
+      // jitsi_room is now reused right alongside the row id -- root cause
+      // of a live incident, 2026-09-14 (3 real participants: one guest
+      // landed in an empty room, host lost one participant's audio, a
+      // spotlighted guest lost audio+upload rights): this used to mint a
+      // FRESH `Date.now()`-suffixed room on every single goLive() call,
+      // including this exact "re-entering my own still-live room" path.
+      // gathering_sessions.id was already correctly reused; the Daily room
+      // name was not. Any host-side re-trigger of goLive() (refresh,
+      // re-navigating to the card) while others were already connected
+      // silently moved the HOST to a brand-new Daily room while
+      // board_state and the stage:${seedId} broadcast channel -- both
+      // keyed by the stable seed/row id -- stayed identical for everyone.
+      // Board/spotlight state kept syncing perfectly (it never left the
+      // shared channel); only audio/video silently split across two Daily
+      // rooms, with no error anywhere for anyone to notice.
+      let gatheringSessionId: string | null = null;
+      let room: string;
+      try {
+        const { data: existing } = await supabase
+          .from('gathering_sessions' as any)
+          .select('id, jitsi_room')
+          .eq('seed_id', seed.id)
+          .eq('host_id', user.id)
+          .is('ended_at', null)
+          .maybeSingle();
+        const existingRoom = (existing as any)?.jitsi_room as string | null | undefined;
+        room = existingRoom || `s2g_seed_${seed.id.replace(/-/g, '')}_${Date.now().toString(36)}`;
+
+        if (existing) {
+          gatheringSessionId = (existing as any).id;
+          if (!existingRoom) {
+            // Row predates the jitsi_room column, or was somehow created
+            // without one -- backfill it now so every future reuse of
+            // THIS row (including this same tab's next goLive() call)
+            // reads the identical value back instead of minting again.
+            await supabase.from('gathering_sessions' as any).update({ jitsi_room: room }).eq('id', gatheringSessionId);
+          }
+        } else {
+          const { data: created, error } = await supabase
+            .from('gathering_sessions' as any)
+            .insert({ seed_id: seed.id, host_id: user.id, board_state: INITIAL_STAGE, jitsi_room: room })
+            .select('id')
+            .maybeSingle();
+          if (!error && created) gatheringSessionId = (created as any).id;
+          else if (error) console.error('goLive: gathering_sessions insert failed', error);
+        }
+      } catch (e) {
+        console.error('goLive: gathering_sessions row failed', e);
+        room = `s2g_seed_${seed.id.replace(/-/g, '')}_${Date.now().toString(36)}`;
+      }
+      myGatheringSessionId = gatheringSessionId;
+      console.warn(`[useTribalLiveOrchard] goLive -- seed: ${seed.id}, gatheringSessionId: ${gatheringSessionId}, jitsi_room: ${room}`);
+
       const presence: LivePresence = {
         user_id: user.id,
         display_name:
@@ -147,42 +212,6 @@ export function useTribalLiveOrchard() {
       myPresenceMap.set(seed.id, presence);
       // Track the most recent presence (Supabase presence per key is replace-style)
       await ch.track(presence);
-
-      // Gathering Room: create (or reuse, on a refresh/re-entry) this
-      // session's DB row HERE -- synchronously, deterministically, as the
-      // one action that actually IS "I am starting/resuming as host,"
-      // rather than useLiveStage's mount effect trying to infer host-ness
-      // later from presence state that can still be mid-sync. By the time
-      // the caller renders <LiveStage hostSessionId={...}>, this has
-      // already resolved -- no race for that hook to lose. Reuse (not a
-      // fresh INSERT) covers a host who refreshed the tab or re-entered
-      // their own still-live room: `eq('host_id', user.id).is('ended_at',
-      // null)` finds their own un-ended row for this seed rather than
-      // leaving an orphaned duplicate behind every time.
-      let gatheringSessionId: string | null = null;
-      try {
-        const { data: existing } = await supabase
-          .from('gathering_sessions' as any)
-          .select('id')
-          .eq('seed_id', seed.id)
-          .eq('host_id', user.id)
-          .is('ended_at', null)
-          .maybeSingle();
-        if (existing) {
-          gatheringSessionId = (existing as any).id;
-        } else {
-          const { data: created, error } = await supabase
-            .from('gathering_sessions' as any)
-            .insert({ seed_id: seed.id, host_id: user.id, board_state: INITIAL_STAGE })
-            .select('id')
-            .maybeSingle();
-          if (!error && created) gatheringSessionId = (created as any).id;
-          else if (error) console.error('goLive: gathering_sessions insert failed', error);
-        }
-      } catch (e) {
-        console.error('goLive: gathering_sessions row failed', e);
-      }
-      myGatheringSessionId = gatheringSessionId;
 
       return { ...presence, gatheringSessionId };
     },

@@ -192,8 +192,15 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     // refresh mid-PDF, where the row already has real content) and point
     // sessionIdRef at it so setStageMode's writes land somewhere.
     (async () => {
+      // Which gathering_sessions row / stage broadcast channel THIS
+      // participant actually landed on -- see useTribalLiveOrchard.ts's
+      // goLive() for the room-identity bug this pairs with. A guest here
+      // whose logged sessionId doesn't match the host's own
+      // gatheringSessionId log line is the "different session entirely"
+      // failure mode, independent of which Daily room either of them joined.
       if (hostSessionId) {
         sessionIdRef.current = hostSessionId;
+        console.warn(`[useLiveStage] HOST on channel stage:${seedId}, sessionId: ${hostSessionId}`);
         const { data } = await supabase
           .from('gathering_sessions' as any)
           .select('board_state')
@@ -216,8 +223,12 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
         .eq('seed_id', seedId)
         .is('ended_at', null)
         .maybeSingle();
-      if (cancelled || !existing) return;
+      if (cancelled || !existing) {
+        console.warn(`[useLiveStage] GUEST on channel stage:${seedId} -- NO active gathering_sessions row found (board-only fallback, broadcast-only sync)`);
+        return;
+      }
       sessionIdRef.current = (existing as any).id;
+      console.warn(`[useLiveStage] GUEST on channel stage:${seedId}, sessionId: ${(existing as any).id}`);
       const board = (existing as any).board_state as Partial<StagePayload> | null;
       if (board && Object.keys(board).length > 0) {
         setStage(prev => ({ ...prev, ...board }));

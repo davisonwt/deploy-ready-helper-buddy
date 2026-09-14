@@ -240,6 +240,15 @@ export function useDailyCallObject(
           setConnecting(false);
         });
 
+        // Which Daily room THIS participant actually joined -- see
+        // useTribalLiveOrchard.ts's goLive() doc comment for the room-
+        // identity bug this pairs with. Two participants who should be in
+        // the same live but log a DIFFERENT room_url here is the direct,
+        // unambiguous signature of that split -- independent of whether
+        // the gathering_sessions row / stage channel (useLiveStage's own
+        // logging) matched.
+        console.warn(`[useDailyCallObject] joining room: ${roomId}, url: ${room_url}, as: ${displayName}`);
+
         await call.join({
           url: room_url,
           token,
