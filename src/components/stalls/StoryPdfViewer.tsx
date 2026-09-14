@@ -110,7 +110,10 @@ export default function StoryPdfViewer({ url, maxPages }: Props) {
     let doc: PDFDocumentProxy | null = null;
     pdfjsLib.getDocument({ url }).promise
       .then((d) => {
-        if (!alive) { d?.destroy?.(); return; }
+        if (!alive) {
+          try { d?.destroy?.(); } catch (e) { console.error('StoryPdfViewer: doc.destroy() threw (load-then-unmount)', e); }
+          return;
+        }
         doc = d;
         setPdf(d);
       })
@@ -120,7 +123,26 @@ export default function StoryPdfViewer({ url, maxPages }: Props) {
       });
     return () => {
       alive = false;
-      doc?.destroy();
+      // Confirmed live, 2026-09-14: "TypeError: h.destroy is not a
+      // function", ErrorBoundary-caught, on an ordinary close AFTER the
+      // PDF had fully loaded -- not the original unmount-BEFORE-load race
+      // 55b2f518 guarded. `doc` here is real and `.destroy` really is a
+      // function; the throw is pdf.js's OWN internals (a page's still-
+      // in-flight getPage()/render() -- PdfPage's own effect, an
+      // independent async chain per-page, not tied to this `alive` flag --
+      // hitting a transport pdf.js has already begun tearing down out from
+      // under it). typeof/optional-chaining can't guard against an error
+      // thrown from inside the call itself, only a try/catch can.
+      try {
+        const result = doc?.destroy();
+        // .destroy() returns a Promise -- guard the async rejection too,
+        // not just a synchronous throw.
+        if (result && typeof (result as Promise<unknown>).catch === 'function') {
+          (result as Promise<unknown>).catch((e: unknown) => console.error('StoryPdfViewer: doc.destroy() promise rejected', e));
+        }
+      } catch (e) {
+        console.error('StoryPdfViewer: doc.destroy() threw on unmount', e);
+      }
     };
   }, [url]);
 
