@@ -124,8 +124,22 @@ export default function LiveStage({
   // Whoever currently owns the big screen gets board control too -- a
   // spotlighted, approved guest, not just the literal host. setStageMode
   // itself (useLiveStage.ts) enforces the same rule server-broadcast-side;
-  // this just gates which UI renders.
+  // this just gates which UI renders (tabs row, PDF/clip/seed upload
+  // rights). Fine for those -- a stray extra click from the host while
+  // someone else presents just re-broadcasts the same shared state, no
+  // local draft to go stale.
   const isPresenter = isHost || iAmSpotlighted;
+  // The whiteboard textarea is different: it has its OWN local draft state
+  // (`boardText`) that only ever syncs FROM the broadcast for whoever isn't
+  // currently typing -- there can only be one real "hands on the keyboard"
+  // at a time. Gating that on isPresenter (true for the host unconditionally,
+  // spotlight or not) meant the host's own boardText never mirrored an
+  // incoming broadcast: a spotlighted guest's typing reached every OTHER
+  // viewer, but the host's own textarea just kept showing their own stale
+  // pre-handoff text forever. Confirmed live via the E2E test -- the host
+  // never saw the panelist's text at all. isActiveEditor is host, UNLESS
+  // someone else is currently spotlighted, in which case it's them.
+  const isActiveEditor = spotlightUserId ? iAmSpotlighted : isHost;
 
   // Always-current `stage` for callbacks that intentionally don't list it as
   // a dependency (the whiteboard debounce below, and the host-content-
@@ -274,18 +288,18 @@ export default function LiveStage({
   // tab-click handler already spreads ...stage), but this effect firing
   // 250ms later, on its own, was not.
   useEffect(() => {
-    if (!isPresenter || stage.mode !== 'whiteboard') return;
+    if (!isActiveEditor || stage.mode !== 'whiteboard') return;
     const t = setTimeout(() => {
       setStageMode({ ...stageRef.current, mode: 'whiteboard', text: boardText });
     }, 250);
     return () => clearTimeout(t);
-  }, [boardText, isPresenter, stage.mode, setStageMode]);
+  }, [boardText, isActiveEditor, stage.mode, setStageMode]);
 
   useEffect(() => {
-    if (!isPresenter && stage.mode === 'whiteboard' && typeof stage.text === 'string') {
+    if (!isActiveEditor && stage.mode === 'whiteboard' && typeof stage.text === 'string') {
       setBoardText(stage.text);
     }
-  }, [isPresenter, stage.mode, stage.text]);
+  }, [isActiveEditor, stage.mode, stage.text]);
 
   const displayName = (user as any)?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Tribe';
 
@@ -541,7 +555,7 @@ export default function LiveStage({
         {/* Whiteboard mode */}
         {stage.mode === 'whiteboard' && (
           <div className="absolute inset-0 bg-[#0b1120] p-4">
-            {isPresenter ? (
+            {isActiveEditor ? (
               <textarea
                 value={boardText}
                 onChange={(e) => setBoardText(e.target.value)}
