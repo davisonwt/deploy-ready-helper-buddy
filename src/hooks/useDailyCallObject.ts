@@ -86,10 +86,26 @@ export function useDailyCallObject(
         const call = DailyIframe.createCallObject({ subscribeToTracksAutomatically: true });
         callRef.current = call;
 
+        // Raw tracks.audio/video.state per remote participant, keyed by
+        // session_id -- diffed on every sync so a track getting stuck (e.g.
+        // audio parked at 'loading'/'sendable' while video reaches
+        // 'playable') shows up as a log line instead of silent, unheard
+        // audio with nothing to go on afterward.
+        const lastLoggedStateRef: Record<string, string> = {};
         const syncParticipants = () => {
           const all = call.participants();
           const next: Record<string, CallParticipant> = {};
-          for (const key of Object.keys(all)) next[key] = toCallParticipant(all[key]);
+          for (const key of Object.keys(all)) {
+            const p = all[key];
+            next[key] = toCallParticipant(p);
+            if (!p.local) {
+              const stateKey = `${p.tracks?.audio?.state ?? 'none'}|${p.tracks?.video?.state ?? 'none'}`;
+              if (lastLoggedStateRef[key] !== stateKey) {
+                lastLoggedStateRef[key] = stateKey;
+                console.warn(`[useDailyCallObject] remote ${p.user_name} track state -- audio: ${p.tracks?.audio?.state ?? 'none'}, video: ${p.tracks?.video?.state ?? 'none'}`);
+              }
+            }
+          }
           setParticipants(next);
         };
 
@@ -97,6 +113,24 @@ export function useDailyCallObject(
         call.on('participant-joined', syncParticipants);
         call.on('participant-updated', syncParticipants);
         call.on('participant-left', syncParticipants);
+        // `participant-updated` is documented to cover track-state changes
+        // too, but a remote AUDIO track reaching 'playable' has been seen
+        // (reported live, 2026-09-14: guest's video played on the host with
+        // a working mic locally, host never received any audio -- no
+        // "tap to enable sound" banner either, meaning ParticipantAudio's
+        // <audio> never even got a track to attach) without a
+        // `participant-updated` following it, on this SDK version. These are
+        // Daily's own dedicated per-track lifecycle events -- explicitly
+        // resyncing our participant map from both closes that gap instead of
+        // trusting `participant-updated` alone to have covered it.
+        call.on('track-started', (ev: any) => {
+          console.warn('[useDailyCallObject] track-started', ev?.participant?.user_name, ev?.track?.kind, ev?.participant?.local ? '(local)' : '(remote)');
+          syncParticipants();
+        });
+        call.on('track-stopped', (ev: any) => {
+          console.warn('[useDailyCallObject] track-stopped', ev?.participant?.user_name, ev?.track?.kind, ev?.participant?.local ? '(local)' : '(remote)');
+          syncParticipants();
+        });
         call.on('left-meeting', () => { setJoined(false); setParticipants({}); });
         call.on('camera-error', () => setError('Could not access your camera or microphone.'));
         call.on('error', (e: any) => {

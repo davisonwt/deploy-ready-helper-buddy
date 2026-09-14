@@ -172,6 +172,15 @@ test('Go-Live: audio, PDF sync, presenter handoff, PDF persistence -- one live s
   const guestPage = await guestCtx.newPage();
   hostPage.on('pageerror', (e) => console.log('[host pageerror]', e.message));
   guestPage.on('pageerror', (e) => console.log('[guest pageerror]', e.message));
+  // Daily.co remote track-state diagnostics (useDailyCallObject.ts) --
+  // collected for the whole run so REQUIREMENT 1c can dump the exact
+  // audio/video track-state transitions around the guest's camera-on
+  // toggle, the scenario reported live: guest's video reached the host,
+  // audio never did, camera off).
+  const hostConsoleLogs: string[] = [];
+  const guestConsoleLogs: string[] = [];
+  hostPage.on('console', (msg) => { const t = msg.text(); if (t.includes('[useDailyCallObject]')) hostConsoleLogs.push(`[host] ${t}`); });
+  guestPage.on('console', (msg) => { const t = msg.text(); if (t.includes('[useDailyCallObject]')) guestConsoleLogs.push(`[guest] ${t}`); });
 
   await test.step('setup: login host + guest, host starts fresh live, guest joins + is approved', async () => {
     mark("setup: login host + guest, host starts fresh live, guest joins + is approved");
@@ -222,6 +231,29 @@ test('Go-Live: audio, PDF sync, presenter handoff, PDF persistence -- one live s
     expect(guestHears.energy, 'guest must still HEAR host with camera ON').toBeGreaterThan(0.001);
 
     await camBtn.click(); // back off, matches the rest of the flow
+    await hostPage.waitForTimeout(1000);
+  });
+
+  await test.step('REQUIREMENT 1c: audio survives GUEST camera ON (host still hears guest)', async () => {
+    mark("REQUIREMENT 1c: audio survives GUEST camera ON (host still hears guest)");
+    const guestCamBtn = guestPage.locator('button[aria-label="Turn camera off"], button[aria-label="Turn camera on"]').first();
+    await expect(guestCamBtn, 'guest should have their own camera toggle while in the call').toHaveCount(1);
+    await expect(guestCamBtn, 'guest camera should default OFF').toHaveAttribute('aria-label', 'Turn camera on');
+    await guestCamBtn.click();
+    await hostPage.waitForTimeout(2000);
+    await expect(guestCamBtn, 'guest camera should now be ON').toHaveAttribute('aria-label', 'Turn camera off');
+
+    const hostHears = await measureAudioEnergyWithRetry(hostPage);
+    console.log(`AUDIO guest-camera-ON -- host hears guest: ${hostHears.energy.toFixed(4)} (elements=${hostHears.found})`);
+    console.log('--- Daily track-state diagnostics (host page) ---');
+    for (const l of hostConsoleLogs) console.log(l);
+    console.log('--- Daily track-state diagnostics (guest page) ---');
+    for (const l of guestConsoleLogs) console.log(l);
+
+    expect(hostHears.found, 'host must have a live remote-audio element for the guest, guest camera ON').toBeGreaterThan(0);
+    expect(hostHears.energy, 'host must still HEAR real audio energy from guest with GUEST camera ON').toBeGreaterThan(0.001);
+
+    await guestCamBtn.click(); // back off, matches the rest of the flow
     await hostPage.waitForTimeout(1000);
   });
 
