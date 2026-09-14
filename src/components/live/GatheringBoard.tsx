@@ -133,6 +133,24 @@ export function PdfBoard({ isHost, stage, setStageMode }: BoardProps) {
   // already uses) -- the zoomed display size is this * zoom.scale.
   const [fitSize, setFitSize] = useState({ width: 0, height: 0 });
 
+  // Zoom + page-turn controls auto-fade after 3s idle, reappear on any tap/
+  // interaction -- on a short board (phone portrait especially) a
+  // permanently-visible bottom bar sits on top of the page text underneath
+  // it for as long as it's shown; fading it out the rest of the time is
+  // the actual fix, not just moving it (it was already bottom-anchored,
+  // just permanently visible over a board too short to spare the room).
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bumpControls = useCallback(() => {
+    setControlsVisible(true);
+    if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+    fadeTimerRef.current = setTimeout(() => setControlsVisible(false), 3000);
+  }, []);
+  useEffect(() => {
+    bumpControls();
+    return () => { if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current); };
+  }, [bumpControls, stage.pdfUrl]);
+
   useEffect(() => {
     if (!stage.pdfUrl) { setPdf(null); return; }
     let alive = true;
@@ -206,10 +224,11 @@ export function PdfBoard({ isHost, stage, setStageMode }: BoardProps) {
     <div ref={containerRef} className="relative flex h-full w-full flex-col overflow-hidden bg-[#0d0805]">
       <div
         className="flex h-full w-full overflow-auto"
-        onWheel={zoom.onWheel}
-        onTouchStart={zoom.onTouchStart}
-        onTouchMove={zoom.onTouchMove}
+        onWheel={(e) => { zoom.onWheel(e); bumpControls(); }}
+        onTouchStart={(e) => { zoom.onTouchStart(e); bumpControls(); }}
+        onTouchMove={(e) => { zoom.onTouchMove(e); }}
         onTouchEnd={zoom.onTouchEnd}
+        onClick={bumpControls}
       >
         {!pdf ? (
           <div className="m-auto"><Loader2 className="h-6 w-6 animate-spin text-white/40" /></div>
@@ -221,22 +240,44 @@ export function PdfBoard({ isHost, stage, setStageMode }: BoardProps) {
           />
         )}
       </div>
-      <ZoomControls scale={zoom.scale} setScale={zoom.setScale} />
-      {isHost && pdf && (
-        <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/60 px-2 py-1 backdrop-blur">
-          <button type="button" disabled={page <= 1} onClick={() => setStageMode({ ...stage, pdfPage: page - 1 })} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10 disabled:opacity-30" aria-label="Previous page">
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="text-xs font-bold text-white/80">Page {page} of {stage.pdfPageCount ?? pdf.numPages}</span>
-          <button type="button" disabled={page >= (stage.pdfPageCount ?? pdf.numPages)} onClick={() => setStageMode({ ...stage, pdfPage: page + 1 })} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10 disabled:opacity-30" aria-label="Next page">
-            <ChevronRight className="h-4 w-4" />
-          </button>
+
+      {/* One combined bar, pinned to the board's own bottom edge, never
+          mid-page -- was two separate always-visible pills (zoom
+          bottom-right, page-turn bottom-center) that had nothing reserving
+          the space under them, so on a short board (phone portrait
+          especially) they sat directly on top of the page text. Auto-fades
+          after 3s idle (bumpControls resets the timer on any tap/zoom/
+          page-turn); a tap anywhere on the board brings it back. */}
+      {pdf && (
+        <div
+          className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center pb-2 transition-opacity duration-300 ${
+            controlsVisible ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/75 px-2 py-1 backdrop-blur">
+            <button type="button" onClick={() => { zoom.setScale(Math.max(1, zoom.scale - 0.5)); bumpControls(); }} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10" aria-label="Zoom out">
+              <ZoomOut className="h-3.5 w-3.5" />
+            </button>
+            <span className="w-9 text-center text-[10px] font-bold text-white/70">{Math.round(zoom.scale * 100)}%</span>
+            <button type="button" onClick={() => { zoom.setScale(Math.min(3, zoom.scale + 0.5)); bumpControls(); }} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10" aria-label="Zoom in">
+              <ZoomIn className="h-3.5 w-3.5" />
+            </button>
+            <span className="h-4 w-px shrink-0 bg-white/20" />
+            {isHost ? (
+              <>
+                <button type="button" disabled={page <= 1} onClick={() => { setStageMode({ ...stage, pdfPage: page - 1 }); bumpControls(); }} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10 disabled:opacity-30" aria-label="Previous page">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="whitespace-nowrap text-xs font-bold text-white/80">Page {page} of {stage.pdfPageCount ?? pdf.numPages}</span>
+                <button type="button" disabled={page >= (stage.pdfPageCount ?? pdf.numPages)} onClick={() => { setStageMode({ ...stage, pdfPage: page + 1 }); bumpControls(); }} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10 disabled:opacity-30" aria-label="Next page">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </>
+            ) : (
+              <span className="whitespace-nowrap text-xs font-bold text-white/70">Page {page} of {stage.pdfPageCount ?? '…'}</span>
+            )}
+          </div>
         </div>
-      )}
-      {!isHost && (
-        <span className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-white/70 backdrop-blur">
-          Page {page} of {stage.pdfPageCount ?? '…'}
-        </span>
       )}
     </div>
   );
