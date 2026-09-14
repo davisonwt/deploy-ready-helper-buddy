@@ -20,10 +20,25 @@ import type { StagePayload, PinnedSeed } from '@/hooks/useLiveStage';
 // Same worker setup StoryPdfViewer.tsx uses -- idempotent to re-assign.
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.mjs';
 
-/** "Now: <title>" label -- shown regardless of which board mode is active. */
+/** "Now: <title>" label -- shown regardless of which board mode is active.
+ * Auto-fades after 3s (mirrors PdfBoard's own bottom control-bar fade
+ * below) -- on phone portrait the board area is shorter than a typical
+ * page/canvas (see PdfBoard's fitSize vs its own clientHeight), so a
+ * permanently-visible top pill sits directly on top of the first line of
+ * text instead of above it. Re-shows briefly whenever the title changes. */
 export function NowLabel({ title }: { title: string }) {
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    setVisible(true);
+    const t = setTimeout(() => setVisible(false), 3000);
+    return () => clearTimeout(t);
+  }, [title]);
   return (
-    <div className="absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-amber-200 backdrop-blur">
+    <div
+      className={`absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-amber-200 backdrop-blur transition-opacity duration-300 ${
+        visible ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
       Now: {title}
     </div>
   );
@@ -224,8 +239,16 @@ export function PdfBoard({ isHost, stage, setStageMode }: BoardProps) {
     <div ref={containerRef} className="relative flex h-full w-full flex-col overflow-hidden bg-[#0d0805]">
       <div
         className="flex h-full w-full overflow-auto"
-        onWheel={(e) => { zoom.onWheel(e); bumpControls(); }}
-        onTouchStart={(e) => { zoom.onTouchStart(e); bumpControls(); }}
+        // Only re-bump the fade timer for an actual zoom gesture (ctrl-wheel /
+        // two-finger pinch start), not a plain scroll/pan -- on phone
+        // portrait the board is shorter than the page (see PdfBoard's
+        // fitSize vs. its own clientHeight), so reading it means
+        // single-finger scrolling almost every time. Bumping on every
+        // touchstart/wheel meant the bar reappeared over whatever text had
+        // just been scrolled into view, on every scroll. A plain tap
+        // (onClick) still explicitly reveals it.
+        onWheel={(e) => { zoom.onWheel(e); if (e.ctrlKey) bumpControls(); }}
+        onTouchStart={(e) => { zoom.onTouchStart(e); if (e.touches.length === 2) bumpControls(); }}
         onTouchMove={(e) => { zoom.onTouchMove(e); }}
         onTouchEnd={zoom.onTouchEnd}
         onClick={bumpControls}
