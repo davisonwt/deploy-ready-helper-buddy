@@ -118,6 +118,25 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
   // null until then -- board writes are broadcast-only (as always) before
   // it resolves, same as they'd be with no persistence at all.
   const sessionIdRef = useRef<string | null>(null);
+  // Live mirror of `isHost`, read inside the mount effect's async IIFE
+  // below instead of the closed-over `isHost` value. That effect only
+  // depends on [seedId, enabled] (re-subscribing the broadcast channel on
+  // every isHost flip would be wasteful/wrong) and runs once per mount --
+  // but the caller's own isHost prop (LiveStageOverlay's `liveHere[0]?.
+  // user_id === user?.id`) is itself derived from presence state that can
+  // still be mid-sync at the exact moment this effect first fires (goLive()
+  // tracks presence, but the local liveSeeds list only updates once that
+  // round-trips back through Realtime). A host whose OWN isHost briefly
+  // reads false at that instant would otherwise skip creating this
+  // session's gathering_sessions row forever -- board writes still work
+  // locally (broadcast + this client's own state), but a late joiner
+  // reading the DB for hydration would find nothing, and page-turn (or
+  // any board_state) would never persist for them to catch up on.
+  // Confirmed live, 2026-09-14: a real Go-Live session left mode stuck at
+  // 'camera' in gathering_sessions no matter how long the host stayed on
+  // the PDF tab, exactly this shape.
+  const isHostRef = useRef(isHost);
+  useEffect(() => { isHostRef.current = isHost; }, [isHost]);
 
   useEffect(() => {
     if (!enabled || !seedId) return;
@@ -186,7 +205,7 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
         return;
       }
 
-      if (!isHost || !user) return;
+      if (!isHostRef.current || !user) return;
       const { data: created, error } = await supabase
         .from('gathering_sessions' as any)
         .insert({ seed_id: seedId, host_id: user.id, board_state: INITIAL_STAGE })
@@ -202,7 +221,7 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
       // The host leaving/ending the live closes this session's board for
       // good -- a viewer's own unmount (just navigating away, live carries
       // on) must NOT do this.
-      if (isHost && sessionIdRef.current) {
+      if (isHostRef.current && sessionIdRef.current) {
         void supabase.from('gathering_sessions' as any).update({ ended_at: new Date().toISOString() }).eq('id', sessionIdRef.current);
       }
     };
