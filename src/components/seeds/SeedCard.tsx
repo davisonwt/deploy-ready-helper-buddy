@@ -238,6 +238,10 @@ export default function SeedCard({
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
   const [detailOverlayOpen, setDetailOverlayOpen] = useState(false);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  // goLive()'s own gathering_sessions.id -- set only when THIS card's own
+  // click started/resumed the live (never for a guest "Step In"). See
+  // handleGoLiveClick and LiveStage.tsx's hostSessionId prop.
+  const [hostSessionId, setHostSessionId] = useState<string | null>(null);
   const [starting, setStarting] = useState<'message' | 'voice' | 'video' | null>(null);
 
   // Gallery position (both variants) + video autoplay/mute (feed only)
@@ -634,14 +638,30 @@ export default function SeedCard({
     e.stopPropagation(); e.preventDefault();
     if (onGoLiveExtra) { onGoLiveExtra(); return; }
     if (!user) { navigate('/login'); return; }
-    if (isLiveHere) { setActiveRoom(liveHere[0].jitsi_room); return; }
+    if (isLiveHere) {
+      if (liveHere[0].user_id === user.id) {
+        // I'm the host re-entering my own still-live room (e.g. after a
+        // refresh, or navigating back to this card) -- redo goLive() so
+        // its gathering_sessions reuse-or-create logic runs again and
+        // hostSessionId is populated; it finds and reuses the same
+        // un-ended row rather than creating a duplicate.
+        const presence = await goLive({ id, title, image: cover ?? undefined });
+        if (presence) { setActiveRoom(presence.jitsi_room); setHostSessionId(presence.gatheringSessionId ?? null); }
+        return;
+      }
+      // A guest stepping into someone else's already-live room -- no
+      // gathering_sessions ownership, hostSessionId stays null.
+      setActiveRoom(liveHere[0].jitsi_room);
+      return;
+    }
     if (!viewerIsOwner && !hasWhispererCommission) return;
     const presence = await goLive({ id, title, image: cover ?? undefined });
-    if (presence) setActiveRoom(presence.jitsi_room);
+    if (presence) { setActiveRoom(presence.jitsi_room); setHostSessionId(presence.gatheringSessionId ?? null); }
   };
 
   const handleEndRoom = async () => {
     setActiveRoom(null);
+    setHostSessionId(null);
     await endLive();
   };
 
@@ -758,6 +778,7 @@ export default function SeedCard({
       subtitle={subtitle ?? undefined}
       jitsiRoom={activeRoom}
       isHost={liveHere[0]?.user_id === user?.id}
+      hostSessionId={hostSessionId}
       sowerUserId={ownerId}
       images={cover ? [cover] : []}
       mediaKind={kind === 'orchard' ? 'orchard' : 'seed'}

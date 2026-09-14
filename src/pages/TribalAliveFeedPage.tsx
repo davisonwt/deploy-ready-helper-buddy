@@ -195,6 +195,8 @@ export default function TribalAliveFeedPage() {
     liveSeed?: {
       seedId: string;
       isHost: boolean;
+      /** goLive()'s own gathering_sessions.id -- only set on the "I started/resumed this" branch below, never on the "join someone else's" branch. */
+      gatheringSessionId?: string | null;
       sowerUserId?: string | null;
       images?: string[];
       mediaUrl?: string | null;
@@ -1086,13 +1088,36 @@ export default function TribalAliveFeedPage() {
     // If someone in the orchard is already live on this seed, JOIN their room instead.
     const liveHere = liveSeeds.find((p) => p.seed_id === item.id);
     if (liveHere) {
+      if (liveHere.user_id === user.id) {
+        // I'm the host re-entering my own still-live room -- redo goLive()
+        // so its gathering_sessions reuse-or-create logic runs and
+        // gatheringSessionId gets populated (reuses the existing un-ended
+        // row, no duplicate). See SeedCard.tsx's identical pattern.
+        const presence = await goLive({ id: item.id, title: item.title, image: item.image });
+        if (!presence) return;
+        setActiveRoom({
+          room: presence.jitsi_room,
+          title: `Live: ${item.title}`,
+          mode: 'video',
+          liveSeed: {
+            seedId: item.id,
+            isHost: true,
+            gatheringSessionId: presence.gatheringSessionId ?? null,
+            sowerUserId: item.sower_id,
+            images: imgs,
+            mediaUrl,
+            mediaKind,
+          },
+        });
+        return;
+      }
       setActiveRoom({
         room: liveHere.jitsi_room,
         title: `Live: ${item.title}`,
         mode: 'video',
         liveSeed: {
           seedId: item.id,
-          isHost: liveHere.user_id === user.id,
+          isHost: false,
           sowerUserId: item.sower_id,
           images: imgs,
           mediaUrl,
@@ -1111,6 +1136,7 @@ export default function TribalAliveFeedPage() {
       liveSeed: {
         seedId: item.id,
         isHost: true,
+        gatheringSessionId: presence.gatheringSessionId ?? null,
         sowerUserId: item.sower_id,
         images: imgs,
         mediaUrl,
@@ -1364,6 +1390,7 @@ export default function TribalAliveFeedPage() {
             title={activeRoom.title}
             jitsiRoom={activeRoom.room}
             isHost={activeRoom.liveSeed.isHost}
+            hostSessionId={activeRoom.liveSeed.gatheringSessionId}
             sowerUserId={activeRoom.liveSeed.sowerUserId ?? null}
             images={activeRoom.liveSeed.images ?? []}
             mediaUrl={activeRoom.liveSeed.mediaUrl ?? null}

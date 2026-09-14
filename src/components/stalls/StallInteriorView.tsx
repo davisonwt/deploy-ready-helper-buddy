@@ -192,14 +192,31 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   // derives host-ness from whether the CURRENT presence's user_id matches
   // the viewer, same as SeedCard.tsx's identical pattern).
   const [scriptureRoom, setScriptureRoom] = useState<string | null>(null);
+  // goLive()'s own gathering_sessions.id -- see SeedCard.tsx's identical
+  // hostSessionId state/comment. Only ever set when THIS viewer started or
+  // resumed the live as host; stays null when just joining someone else's.
+  const [scriptureHostSessionId, setScriptureHostSessionId] = useState<string | null>(null);
   const joinOrStartScriptureLive = async (asHost: boolean) => {
-    if (scriptureStudyPresence) { setScriptureRoom(scriptureStudyPresence.jitsi_room); return; }
+    if (scriptureStudyPresence) {
+      if (asHost && scriptureStudyPresence.user_id === user?.id) {
+        // The same host re-entering their own still-live session (e.g.
+        // after a refresh) -- redo goLive() so its gathering_sessions
+        // reuse-or-create logic runs and scriptureHostSessionId gets
+        // populated; it reuses the existing un-ended row, no duplicate.
+        const presence = await goLive({ id: SCRIPTURE_STUDY_USER_ID, title: 'Scripture Study — Live' });
+        if (presence) { setScriptureRoom(presence.jitsi_room); setScriptureHostSessionId(presence.gatheringSessionId ?? null); }
+        return;
+      }
+      setScriptureRoom(scriptureStudyPresence.jitsi_room);
+      return;
+    }
     if (!asHost) return; // no session to join, and this viewer can't start one
     const presence = await goLive({ id: SCRIPTURE_STUDY_USER_ID, title: 'Scripture Study — Live' });
-    if (presence) setScriptureRoom(presence.jitsi_room);
+    if (presence) { setScriptureRoom(presence.jitsi_room); setScriptureHostSessionId(presence.gatheringSessionId ?? null); }
   };
   const closeScriptureLive = async () => {
     setScriptureRoom(null);
+    setScriptureHostSessionId(null);
     await endLive();
   };
   // Spec: a signed-in viewer landing on /stall/scripturestudy while it's
@@ -883,6 +900,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           subtitle="you, you we love"
           jitsiRoom={scriptureRoom}
           isHost={scriptureStudyPresence?.user_id === user?.id}
+          hostSessionId={scriptureHostSessionId}
           onClose={() => { void closeScriptureLive(); }}
         />
       )}

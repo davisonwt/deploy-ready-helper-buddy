@@ -27,6 +27,8 @@ export interface LiveStageOverlayProps {
   subtitle?: string;
   jitsiRoom: string;
   isHost: boolean;
+  /** goLive()'s own gathering_sessions.id -- see LiveStage.tsx's prop of the same name. Omit for a guest. */
+  hostSessionId?: string | null;
   isRadio?: boolean;
   sowerUserId?: string | null;
   images?: string[];
@@ -40,7 +42,7 @@ export interface LiveStageOverlayProps {
 }
 
 export default function LiveStageOverlay({
-  seedId, title, subtitle, jitsiRoom, isHost,
+  seedId, title, subtitle, jitsiRoom, isHost, hostSessionId,
   isRadio = false, sowerUserId,
   images = [], mediaUrl, mediaKind,
   whispererSharePct = 10,
@@ -153,6 +155,7 @@ export default function LiveStageOverlay({
             title={title}
             jitsiRoom={jitsiRoom}
             isHost={isHost}
+            hostSessionId={hostSessionId}
             isRadio={isRadio}
             sowerUserId={sowerUserId ?? null}
             whispererSharePct={whispererSharePct}

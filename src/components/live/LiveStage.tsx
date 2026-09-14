@@ -56,6 +56,11 @@ export interface LiveStageProps {
   title: string;
   jitsiRoom: string;
   isHost: boolean;
+  /** This session's gathering_sessions.id, from goLive()'s own return value
+   * -- set only for the actual host (goLive()'s caller), never a guest.
+   * Passed straight through to useLiveStage so it never has to guess/race
+   * for its own row; omit for a viewer/guest render. */
+  hostSessionId?: string | null;
   /** When true, host gets a tribal-music dropdown to pick the playing seed */
   isRadio?: boolean;
   /** seed owner — bestowals default to this user */
@@ -87,7 +92,7 @@ interface MusicSeedOption {
 }
 
 export default function LiveStage({
-  seedId, title, jitsiRoom, isHost,
+  seedId, title, jitsiRoom, isHost, hostSessionId,
   isRadio = false, sowerUserId,
   images = [], mediaUrl, mediaKind,
   className = '',
@@ -101,7 +106,7 @@ export default function LiveStage({
     spotlightRequests, setSpotlight, requestSpotlight, cancelSpotlightRequest, denySpotlight,
     myHandRaised, iAmApproved, mySpotlightRequested, iAmSpotlighted,
     playingVoiceNote, finishVoiceNote,
-  } = useLiveStage(seedId, { isHost, enabled: true });
+  } = useLiveStage(seedId, { isHost, enabled: true, hostSessionId });
   const [recordingNote, setRecordingNote] = useState(false);
   const [noteBusy, setNoteBusy] = useState(false);
   const noteRecorder = useMediaRecorder();

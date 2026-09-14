@@ -95,11 +95,15 @@ export interface ApprovedGuest {
   muted?: boolean;
 }
 
-const INITIAL_STAGE: StagePayload = { mode: 'camera', spotlightUserId: null, at: Date.now() };
+/** Exported so goLive() (useTribalLiveOrchard.ts) can seed a brand-new
+ * gathering_sessions row with the same starting shape this hook itself
+ * starts from -- single source of truth for "what a session looks like
+ * before the host has done anything yet." */
+export const INITIAL_STAGE: StagePayload = { mode: 'camera', spotlightUserId: null, at: Date.now() };
 
-export function useLiveStage(seedId: string | null, opts: { isHost: boolean; enabled: boolean }) {
+export function useLiveStage(seedId: string | null, opts: { isHost: boolean; enabled: boolean; hostSessionId?: string | null }) {
   const { user } = useAuth();
-  const { isHost, enabled } = opts;
+  const { isHost, enabled, hostSessionId } = opts;
 
   const [stage, setStage] = useState<StagePayload>(INITIAL_STAGE);
   const [hands, setHands] = useState<HandRaise[]>([]);
@@ -114,29 +118,11 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
   const triggeredVoiceNotesRef = useRef<Set<string>>(new Set());
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   // Gathering Room batch 1: this live's own gathering_sessions.id, once
-  // resolved (fetched for a viewer, fetched-or-created for the host).
-  // null until then -- board writes are broadcast-only (as always) before
-  // it resolves, same as they'd be with no persistence at all.
+  // resolved (fetched for a viewer, or handed to us pre-resolved for the
+  // host via hostSessionId -- see below). null until then -- board writes
+  // are broadcast-only (as always) before it resolves, same as they'd be
+  // with no persistence at all.
   const sessionIdRef = useRef<string | null>(null);
-  // Live mirror of `isHost`, read inside the mount effect's async IIFE
-  // below instead of the closed-over `isHost` value. That effect only
-  // depends on [seedId, enabled] (re-subscribing the broadcast channel on
-  // every isHost flip would be wasteful/wrong) and runs once per mount --
-  // but the caller's own isHost prop (LiveStageOverlay's `liveHere[0]?.
-  // user_id === user?.id`) is itself derived from presence state that can
-  // still be mid-sync at the exact moment this effect first fires (goLive()
-  // tracks presence, but the local liveSeeds list only updates once that
-  // round-trips back through Realtime). A host whose OWN isHost briefly
-  // reads false at that instant would otherwise skip creating this
-  // session's gathering_sessions row forever -- board writes still work
-  // locally (broadcast + this client's own state), but a late joiner
-  // reading the DB for hydration would find nothing, and page-turn (or
-  // any board_state) would never persist for them to catch up on.
-  // Confirmed live, 2026-09-14: a real Go-Live session left mode stuck at
-  // 'camera' in gathering_sessions no matter how long the host stayed on
-  // the PDF tab, exactly this shape.
-  const isHostRef = useRef(isHost);
-  useEffect(() => { isHostRef.current = isHost; }, [isHost]);
 
   useEffect(() => {
     if (!enabled || !seedId) return;
@@ -186,42 +172,69 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
 
     ch.subscribe();
 
-    // Late-joiner hydration + session row lifecycle (Gathering Room batch 1).
+    // Late-joiner hydration (Gathering Room batch 1) -- row CREATION is no
+    // longer this effect's job. It used to be: SELECT for an existing row,
+    // and if none, INSERT one when `isHost` -- but `isHost` here is derived
+    // from presence state (LiveStageOverlay's `liveHere[0]?.user_id ===
+    // user?.id`) that can still be mid-sync at the exact moment this effect
+    // first fires, racing the SELECT above with no guaranteed winner.
+    // Confirmed live, 2026-09-14: a real Go-Live session left mode stuck at
+    // 'camera' in gathering_sessions no matter how long the host stayed on
+    // the PDF tab -- the INSERT simply never ran that time.
+    //
+    // Fix: the host's own gathering_sessions row is now created (or reused,
+    // if this is a refresh/re-entry) synchronously inside goLive() itself
+    // (useTribalLiveOrchard.ts), BEFORE this component (and this effect)
+    // ever mounts -- by the time LiveStage/useLiveStage renders, goLive()
+    // has already resolved and `hostSessionId` is a real, stable id, not a
+    // race. This effect's only remaining job for the host path is to
+    // hydrate `stage` from that row's last-known board_state (covers a
+    // refresh mid-PDF, where the row already has real content) and point
+    // sessionIdRef at it so setStageMode's writes land somewhere.
     (async () => {
-      const { data: existing } = await supabase
-        .from('gathering_sessions' as any)
-        .select('id, board_state')
-        .eq('seed_id', seedId)
-        .is('ended_at', null)
-        .maybeSingle();
-      if (cancelled) return;
-
-      if (existing) {
-        sessionIdRef.current = (existing as any).id;
-        const board = (existing as any).board_state as Partial<StagePayload> | null;
+      if (hostSessionId) {
+        sessionIdRef.current = hostSessionId;
+        const { data } = await supabase
+          .from('gathering_sessions' as any)
+          .select('board_state')
+          .eq('id', hostSessionId)
+          .maybeSingle();
+        if (cancelled) return;
+        const board = (data as any)?.board_state as Partial<StagePayload> | null;
         if (board && Object.keys(board).length > 0) {
           setStage(prev => ({ ...prev, ...board }));
         }
         return;
       }
 
-      if (!isHostRef.current || !user) return;
-      const { data: created, error } = await supabase
+      // Guest (or any caller that hasn't threaded hostSessionId through) --
+      // hydrate from whichever un-ended row already exists for this seed.
+      // No INSERT branch: a guest never owns this session's row.
+      const { data: existing } = await supabase
         .from('gathering_sessions' as any)
-        .insert({ seed_id: seedId, host_id: user.id, board_state: INITIAL_STAGE })
-        .select('id')
+        .select('id, board_state')
+        .eq('seed_id', seedId)
+        .is('ended_at', null)
         .maybeSingle();
-      if (!cancelled && !error && created) sessionIdRef.current = (created as any).id;
+      if (cancelled || !existing) return;
+      sessionIdRef.current = (existing as any).id;
+      const board = (existing as any).board_state as Partial<StagePayload> | null;
+      if (board && Object.keys(board).length > 0) {
+        setStage(prev => ({ ...prev, ...board }));
+      }
     })();
 
     return () => {
       cancelled = true;
       supabase.removeChannel(ch);
       chRef.current = null;
-      // The host leaving/ending the live closes this session's board for
-      // good -- a viewer's own unmount (just navigating away, live carries
-      // on) must NOT do this.
-      if (isHostRef.current && sessionIdRef.current) {
+      // Primary path for closing the row is the explicit "End live" action
+      // (endLive() in useTribalLiveOrchard.ts, which knows the id
+      // deterministically -- see goLive()). This is only a defensive
+      // fallback for a host tab that closes/navigates away without ever
+      // clicking "End live" -- hostSessionId is only ever non-null for the
+      // actual host (never a guest), so this can't end someone else's live.
+      if (hostSessionId && sessionIdRef.current) {
         void supabase.from('gathering_sessions' as any).update({ ended_at: new Date().toISOString() }).eq('id', sessionIdRef.current);
       }
     };

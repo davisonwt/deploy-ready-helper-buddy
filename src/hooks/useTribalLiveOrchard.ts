@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { INITIAL_STAGE } from '@/hooks/useLiveStage';
 
 export type BloomStage = 'seed' | 'leaf' | 'tree';
 
@@ -25,6 +26,12 @@ export interface LivePresence {
   seed_image?: string | null;
   jitsi_room: string;
   started_at: string;
+  /** Gathering Room: this live's own gathering_sessions.id, created (or
+   * reused, on a refresh/re-entry) synchronously in goLive() below --
+   * null only if that write itself failed. Passed down as `hostSessionId`
+   * to useLiveStage so it never has to guess/race for its own row -- see
+   * that hook's own comment for the bug this replaces. */
+  gatheringSessionId?: string | null;
 }
 
 export interface BloomEvent {
@@ -56,6 +63,12 @@ const setStore = (next: Partial<Store>) => {
 let channel: ReturnType<typeof supabase.channel> | null = null;
 let refCount = 0;
 let myPresenceMap: Map<string, LivePresence> = new Map(); // tracks live presences by seed_id (for owner's untrack)
+// This tab's own currently-open gathering_sessions row id, set by goLive()
+// and cleared by endLive() -- module-level (per-tab, not per-component)
+// same as myPresenceMap above, and for the same reason: a same-account
+// second tab gets its own fresh copy of this module, so it can never end
+// or write to the wrong tab's session.
+let myGatheringSessionId: string | null = null;
 
 function ensureChannel(presenceKey: string) {
   if (channel) return channel;
@@ -134,7 +147,44 @@ export function useTribalLiveOrchard() {
       myPresenceMap.set(seed.id, presence);
       // Track the most recent presence (Supabase presence per key is replace-style)
       await ch.track(presence);
-      return presence;
+
+      // Gathering Room: create (or reuse, on a refresh/re-entry) this
+      // session's DB row HERE -- synchronously, deterministically, as the
+      // one action that actually IS "I am starting/resuming as host,"
+      // rather than useLiveStage's mount effect trying to infer host-ness
+      // later from presence state that can still be mid-sync. By the time
+      // the caller renders <LiveStage hostSessionId={...}>, this has
+      // already resolved -- no race for that hook to lose. Reuse (not a
+      // fresh INSERT) covers a host who refreshed the tab or re-entered
+      // their own still-live room: `eq('host_id', user.id).is('ended_at',
+      // null)` finds their own un-ended row for this seed rather than
+      // leaving an orphaned duplicate behind every time.
+      let gatheringSessionId: string | null = null;
+      try {
+        const { data: existing } = await supabase
+          .from('gathering_sessions' as any)
+          .select('id')
+          .eq('seed_id', seed.id)
+          .eq('host_id', user.id)
+          .is('ended_at', null)
+          .maybeSingle();
+        if (existing) {
+          gatheringSessionId = (existing as any).id;
+        } else {
+          const { data: created, error } = await supabase
+            .from('gathering_sessions' as any)
+            .insert({ seed_id: seed.id, host_id: user.id, board_state: INITIAL_STAGE })
+            .select('id')
+            .maybeSingle();
+          if (!error && created) gatheringSessionId = (created as any).id;
+          else if (error) console.error('goLive: gathering_sessions insert failed', error);
+        }
+      } catch (e) {
+        console.error('goLive: gathering_sessions row failed', e);
+      }
+      myGatheringSessionId = gatheringSessionId;
+
+      return { ...presence, gatheringSessionId };
     },
     [presenceKey, user]
   );
@@ -144,6 +194,18 @@ export function useTribalLiveOrchard() {
       try { await channel.untrack(); } catch {}
     }
     myPresenceMap.clear();
+    // Close this tab's own gathering_sessions row (the one goLive() just
+    // created/reused) -- deterministic, no dependency on useLiveStage's
+    // mount/unmount timing or an isHost read that could be stale.
+    if (myGatheringSessionId) {
+      const idToClose = myGatheringSessionId;
+      myGatheringSessionId = null;
+      try {
+        await supabase.from('gathering_sessions' as any).update({ ended_at: new Date().toISOString() }).eq('id', idToClose);
+      } catch (e) {
+        console.error('endLive: failed to close gathering_sessions row', e);
+      }
+    }
     // Fire-and-forget Grove harvest pipeline
     try {
       if (user?.id) {
