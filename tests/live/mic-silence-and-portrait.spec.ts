@@ -169,6 +169,16 @@ test('B: phone portrait (390x844) -- host can spotlight/un-spotlight a guest in 
     await expect(approveBtn, "host should see the guest's hand-raise").toBeVisible({ timeout: 20000 });
     await approveBtn.click();
     await hostPage.waitForTimeout(2500);
+
+    // The "want: video" on the hand-raise is queue-display metadata only
+    // (ApprovedGuest.mode) -- Daily itself always starts with
+    // startVideoOff:true regardless, same as the host. The guest must
+    // turn their own camera on explicitly, exactly like the host's own
+    // camera toggle, before there's any real track for a tile to render.
+    const guestCamBtn = guestPage.locator('button[aria-label="Turn camera on"]').first();
+    await expect(guestCamBtn, 'approved guest should have their own camera toggle').toBeVisible({ timeout: 10000 });
+    await guestCamBtn.click();
+    await guestPage.waitForTimeout(2000);
   });
 
   // Host now switches to phone-portrait to manage the panel -- reuse
