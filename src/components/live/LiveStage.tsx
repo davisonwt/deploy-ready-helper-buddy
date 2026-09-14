@@ -19,11 +19,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Camera, Image as ImageIcon, PencilLine, Film,
-  Hand, Mic, MicOff, Video, VideoOff, X, Check, UserMinus,
+  Hand, Mic, MicOff, Video, VideoOff, X, Check, UserMinus, PhoneOff,
   ChevronLeft, ChevronRight, Music, Heart, Search, Star, Crown, Users, Share2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useDailyIframeSrc } from '@/lib/daily-config';
+import { useDailyCallObject, type CallParticipant } from '@/hooks/useDailyCallObject';
 import { useAuth } from '@/hooks/useAuth';
 import { useLiveStage, type StageMode, type NowPlaying, type ApprovedGuest, type HandRaise } from '@/hooks/useLiveStage';
 import { useMediaRecorder } from '@/hooks/useMediaRecorder';
@@ -244,12 +244,30 @@ export default function LiveStage({
   // Hosts always join; viewers only join when approved (so we save bandwidth).
   const inCall = isHost || iAmApproved;
 
-  // P1-6: was a bare iframe against a raw meet.sow2growapp.com URL with no
-  // JWT. Daily's own prebuilt UI doesn't support the old start-muted/
-  // start-video-off URL hints (those were config.* Jitsi params) -- a
-  // viewer who joins muted-by-approval now un-mutes themselves manually
-  // inside Daily's own controls instead of it being pre-set for them.
-  const { src: jitsiSrc, loading: callLoading } = useDailyIframeSrc(inCall ? 'custom' : null, jitsiRoom, displayName);
+  // Explicit "Leave call" override -- inCall alone (host/approved) would
+  // otherwise immediately reconnect. Reset whenever inCall itself goes
+  // false (removed/un-approved) so the next real entry starts fresh.
+  const [leftCall, setLeftCall] = useState(false);
+  useEffect(() => { if (!inCall) setLeftCall(false); }, [inCall]);
+  const roomActive = inCall && !leftCall;
+
+  // Headless call -- ONE join per tab (see useDailyCallObject's own doc
+  // comment: the old bare-iframe version rendered two independent iframes
+  // against the same room/token -- the big camera-mode tile and the
+  // always-present host PIP -- each a separate join publishing its own
+  // mic, which is what caused the echo/feedback risk). Every render below
+  // (big tile, tile grid, PIP thumbnail) reads from these same fields.
+  const {
+    participants: callParticipants,
+    joined: callJoined,
+    connecting: callConnecting,
+    error: callError,
+    audioOn: myAudioOn,
+    videoOn: myVideoOn,
+    toggleAudio: toggleMyAudio,
+    toggleVideo: toggleMyVideo,
+  } = useDailyCallObject(roomActive ? 'custom' : null, jitsiRoom, displayName, roomActive);
+  const myLocalVideoTrack = Object.values(callParticipants).find(p => p.local)?.videoTrack ?? null;
 
   // Stage content (what occupies the big tile)
   const stageImage = stage.mode === 'image'
@@ -368,17 +386,34 @@ export default function LiveStage({
             )}
           </div>
         )}
-        {/* Camera mode → Daily call iframe */}
-        {stage.mode === 'camera' && inCall && jitsiSrc && (
-          <iframe
-            title={title}
-            src={jitsiSrc}
-            allow="camera; microphone; fullscreen; display-capture; autoplay"
-            className="absolute inset-0 h-full w-full border-0"
+        {/* Camera mode → our own headless call rendering (no Daily UI ever) */}
+        {stage.mode === 'camera' && inCall && !leftCall && (
+          <CallStageArea
+            participants={callParticipants}
+            connecting={callConnecting}
+            joined={callJoined}
+            error={callError}
+            spotlightUserId={spotlightUserId}
+            audioOn={myAudioOn}
+            videoOn={myVideoOn}
+            onToggleAudio={toggleMyAudio}
+            onToggleVideo={toggleMyVideo}
+            onLeave={() => setLeftCall(true)}
           />
         )}
-        {stage.mode === 'camera' && inCall && !jitsiSrc && callLoading && (
-          <div className="absolute inset-0 flex items-center justify-center text-white/50 text-sm">Connecting…</div>
+        {stage.mode === 'camera' && inCall && leftCall && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center text-white/60">
+              <div className="text-sm">You left the call.</div>
+              <button
+                type="button"
+                onClick={() => setLeftCall(false)}
+                className="mt-2 rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-bold text-black hover:bg-emerald-400"
+              >
+                Rejoin
+              </button>
+            </div>
+          </div>
         )}
         {stage.mode === 'camera' && !inCall && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -491,18 +526,30 @@ export default function LiveStage({
             preview) -- top-right, not bottom-right: the board's own
             controls (PdfBoard/ClipBoard's ZoomControls AND, for PDF, the
             page-turn pill) already live at bottom-right/bottom-center.
-            Daily's prebuilt UI is the whole iframe's own content (no SDK,
-            no way to suppress its per-tile hover menu from our side --
-            see daily-config.ts's own doc comment); this at least stops
-            OUR OWN board controls and Daily's tile UI from sitting in the
-            exact same corner. */}
-        {isHost && stage.mode !== 'camera' && jitsiSrc && (
-          <div className="absolute top-3 right-3 z-[5] h-20 w-28 max-lg:portrait:h-20 max-lg:portrait:w-28 lg:h-32 lg:w-44 overflow-hidden rounded-lg border border-emerald-500/30 bg-black shadow-2xl">
-            <iframe
-              title="host-cam"
-              src={jitsiSrc}
-              allow="camera; microphone; autoplay"
-              className="h-full w-full border-0"
+            Bound to the SAME local video track as the camera-mode tile
+            grid (myLocalVideoTrack, from the one shared useDailyCallObject
+            call above) -- not a second join, just a second <video> element
+            reading the same MediaStreamTrack. Audio keeps flowing whether
+            or not this thumbnail shows a picture (see
+            useDailyCallObject's own doc comment: mic/camera are
+            independent track calls). */}
+        {isHost && roomActive && stage.mode !== 'camera' && (
+          <div className="absolute top-3 right-3 z-[5] flex flex-col items-end gap-1">
+            <div className="h-20 w-28 max-lg:portrait:h-20 max-lg:portrait:w-28 lg:h-32 lg:w-44 overflow-hidden rounded-lg border border-emerald-500/30 bg-black shadow-2xl">
+              {myVideoOn && myLocalVideoTrack ? (
+                <ParticipantVideo track={myLocalVideoTrack} className="h-full w-full object-cover" mirror />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-white/40">
+                  <VideoOff className="h-6 w-6" />
+                </div>
+              )}
+            </div>
+            <MiniCallControls
+              audioOn={myAudioOn}
+              videoOn={myVideoOn}
+              onToggleAudio={toggleMyAudio}
+              onToggleVideo={toggleMyVideo}
+              onLeave={() => setLeftCall(true)}
             />
           </div>
         )}
@@ -817,6 +864,170 @@ export default function LiveStage({
         hostUserId={isRadio ? (user?.id ?? null) : (sowerUserId ?? null)}
         whispererSharePct={whispererSharePct}
       />
+    </div>
+  );
+}
+
+// ── Headless Daily call rendering (replaces Daily's own prebuilt iframe UI,
+// which never mounts anywhere in this file) ─────────────────────────────────
+// Every piece here reads MediaStreamTracks off the SAME useDailyCallObject
+// call above -- there is exactly one join per tab. ParticipantVideo/
+// ParticipantAudio are the only two places a track is ever attached to a
+// media element; the camera-mode grid and the non-camera PIP both go
+// through them instead of each owning their own call.
+
+/** Binds one MediaStreamTrack to a <video>. Never carries audio (video-only
+ * track) -- ParticipantAudio is the only thing that plays sound, and only
+ * ever for remote participants (see below), so the local mic is never
+ * played back to itself. */
+function ParticipantVideo({ track, className, mirror }: { track: MediaStreamTrack | null; className?: string; mirror?: boolean }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (ref.current) ref.current.srcObject = track ? new MediaStream([track]) : null;
+  }, [track]);
+  if (!track) return null;
+  return <video ref={ref} autoPlay playsInline muted className={className} style={mirror ? { transform: 'scaleX(-1)' } : undefined} />;
+}
+
+/** Plays one remote participant's audio track. Never rendered for the local
+ * participant -- that would play your own mic back to you. */
+function ParticipantAudio({ track }: { track: MediaStreamTrack | null }) {
+  const ref = useRef<HTMLAudioElement>(null);
+  useEffect(() => {
+    if (ref.current) ref.current.srcObject = track ? new MediaStream([track]) : null;
+  }, [track]);
+  if (!track) return null;
+  return <audio ref={ref} autoPlay playsInline className="hidden" />;
+}
+
+function CallTile({ participant, big }: { participant: CallParticipant; big?: boolean }) {
+  return (
+    <div className={`relative flex items-center justify-center overflow-hidden rounded-lg bg-emerald-950/40 ${big ? 'h-full w-full' : 'h-24 w-32 flex-shrink-0'}`}>
+      {participant.videoTrack ? (
+        <ParticipantVideo track={participant.videoTrack} className="h-full w-full object-cover" mirror={participant.local} />
+      ) : (
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20 text-base font-bold text-emerald-200">
+          {participant.userName.charAt(0).toUpperCase()}
+        </div>
+      )}
+      {/* Audio keeps playing (or not) independent of whether a picture is
+          showing -- this is the actual "camera off, mic on" fix: video and
+          audio are two unrelated tracks/elements, never coupled. */}
+      {!participant.local && <ParticipantAudio track={participant.audioTrack} />}
+      <div className="absolute bottom-1 left-1 flex items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] font-bold text-white/90">
+        {participant.audioOn ? <Mic className="h-2.5 w-2.5" /> : <MicOff className="h-2.5 w-2.5 text-rose-400" />}
+        <span className="max-w-[70px] truncate">{participant.local ? 'You' : participant.userName}</span>
+      </div>
+    </div>
+  );
+}
+
+interface CallStageAreaProps {
+  participants: Record<string, CallParticipant>;
+  connecting: boolean;
+  joined: boolean;
+  error: string | null;
+  spotlightUserId: string | null;
+  audioOn: boolean;
+  videoOn: boolean;
+  onToggleAudio: () => void;
+  onToggleVideo: () => void;
+  onLeave: () => void;
+}
+
+/** Fills the big stage tile in camera mode. Spotlighted participant (if any)
+ * goes big with everyone else in a thin dock strip below; otherwise a plain
+ * wrapping grid, same participants Daily's own prebuilt UI used to lay out
+ * on its own. */
+function CallStageArea({ participants, connecting, joined, error, spotlightUserId, audioOn, videoOn, onToggleAudio, onToggleVideo, onLeave }: CallStageAreaProps) {
+  const list = Object.values(participants);
+  const spotlighted = spotlightUserId ? list.find(p => p.userId === spotlightUserId) ?? null : null;
+  const others = spotlighted ? list.filter(p => p.sessionId !== spotlighted.sessionId) : [];
+
+  return (
+    <div className="absolute inset-0 flex flex-col bg-black">
+      <div className="relative flex-1 min-h-0">
+        {error && (
+          <div className="absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-rose-300">{error}</div>
+        )}
+        {!error && connecting && !joined && (
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-white/50">Connecting…</div>
+        )}
+        {!error && joined && spotlighted && <CallTile participant={spotlighted} big />}
+        {!error && joined && !spotlighted && (
+          <div className="flex h-full w-full flex-wrap items-center justify-center gap-2 overflow-y-auto p-2">
+            {list.length === 0 && <div className="text-sm text-white/40">Waiting for others to join…</div>}
+            {list.map(p => <CallTile key={p.sessionId} participant={p} />)}
+          </div>
+        )}
+      </div>
+      {spotlighted && others.length > 0 && (
+        <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-t border-white/10 bg-black/60 px-2 py-1.5">
+          {others.map(p => <CallTile key={p.sessionId} participant={p} />)}
+        </div>
+      )}
+      <CallControlBar audioOn={audioOn} videoOn={videoOn} onToggleAudio={onToggleAudio} onToggleVideo={onToggleVideo} onLeave={onLeave} />
+    </div>
+  );
+}
+
+interface CallControlsProps {
+  audioOn: boolean;
+  videoOn: boolean;
+  onToggleAudio: () => void;
+  onToggleVideo: () => void;
+  onLeave: () => void;
+}
+
+/** Our own control bar -- mic, camera, leave. Daily's default UI never
+ * renders anywhere in this file (createCallObject is headless by design). */
+function CallControlBar({ audioOn, videoOn, onToggleAudio, onToggleVideo, onLeave }: CallControlsProps) {
+  return (
+    <div className="flex shrink-0 items-center justify-center gap-2 border-t border-white/10 bg-black/80 px-3 py-2">
+      <button
+        type="button"
+        onClick={onToggleAudio}
+        aria-label={audioOn ? 'Mute mic' : 'Unmute mic'}
+        title={audioOn ? 'Mute mic' : 'Unmute mic'}
+        className={`flex h-9 w-9 items-center justify-center rounded-full ${audioOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-rose-500 text-white hover:bg-rose-400'}`}
+      >
+        {audioOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+      </button>
+      <button
+        type="button"
+        onClick={onToggleVideo}
+        aria-label={videoOn ? 'Turn camera off' : 'Turn camera on'}
+        title={videoOn ? 'Turn camera off' : 'Turn camera on'}
+        className={`flex h-9 w-9 items-center justify-center rounded-full ${videoOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-white/10 text-white/50 hover:bg-white/20'}`}
+      >
+        {videoOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+      </button>
+      <button
+        type="button"
+        onClick={onLeave}
+        aria-label="Leave call"
+        title="Leave call"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-600 text-white hover:bg-rose-500"
+      >
+        <PhoneOff className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+/** Compact version of the same three controls, for the non-camera-mode PIP. */
+function MiniCallControls({ audioOn, videoOn, onToggleAudio, onToggleVideo, onLeave }: CallControlsProps) {
+  return (
+    <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/80 px-1.5 py-1">
+      <button type="button" onClick={onToggleAudio} aria-label={audioOn ? 'Mute mic' : 'Unmute mic'} title={audioOn ? 'Mute mic' : 'Unmute mic'} className={`flex h-6 w-6 items-center justify-center rounded-full ${audioOn ? 'text-white' : 'bg-rose-500 text-white'}`}>
+        {audioOn ? <Mic className="h-3 w-3" /> : <MicOff className="h-3 w-3" />}
+      </button>
+      <button type="button" onClick={onToggleVideo} aria-label={videoOn ? 'Turn camera off' : 'Turn camera on'} title={videoOn ? 'Turn camera off' : 'Turn camera on'} className={`flex h-6 w-6 items-center justify-center rounded-full ${videoOn ? 'text-white' : 'text-white/50'}`}>
+        {videoOn ? <Video className="h-3 w-3" /> : <VideoOff className="h-3 w-3" />}
+      </button>
+      <button type="button" onClick={onLeave} aria-label="Leave call" title="Leave call" className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white">
+        <PhoneOff className="h-3 w-3" />
+      </button>
     </div>
   );
 }
