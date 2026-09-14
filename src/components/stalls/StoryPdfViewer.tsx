@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
+import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
 import { Loader2 } from 'lucide-react';
 
 // Local copy under public/ -- no CDN. The app's CSP (index.html) has no
@@ -49,28 +49,51 @@ function PdfPage({ pdf, pageNumber, width }: PdfPageProps) {
   useEffect(() => {
     if (!inView || rendered || width <= 0) return;
     let cancelled = false;
+    // page.render()'s own RenderTask, so the cleanup below can cancel a
+    // still-in-flight render instead of just ignoring its result. Root
+    // cause of "TypeError: h.destroy is not a function" (confirmed live,
+    // 2026-09-14, ErrorBoundary-caught on an ordinary My Story close):
+    // React unmounts children before parents, but that only stops US
+    // from acting on a stale result (the `cancelled` flag) -- it does
+    // NOT stop pdf.js's own in-flight render from still running against
+    // the shared worker transport at the exact moment StoryPdfViewer's
+    // own cleanup calls `doc.destroy()` a tick later. Cancelling the
+    // RenderTask here, before that happens, is what actually closes the
+    // race rather than just catching the throw it causes.
+    let renderTask: RenderTask | null = null;
     (async () => {
-      const page = await pdf.getPage(pageNumber);
-      if (cancelled) return;
-      const baseViewport = page.getViewport({ scale: 1 });
-      const cssScale = width / baseViewport.width;
-      setAspectRatio(baseViewport.height / baseViewport.width);
+      try {
+        const page = await pdf.getPage(pageNumber);
+        if (cancelled) return;
+        const baseViewport = page.getViewport({ scale: 1 });
+        const cssScale = width / baseViewport.width;
+        setAspectRatio(baseViewport.height / baseViewport.width);
 
-      // Render at device pixel ratio for crisp text, then let the canvas'
-      // own width:100%/height:auto CSS scale it back down to `width` --
-      // same "render big, display small" approach as <img srcset>.
-      const dpr = window.devicePixelRatio || 1;
-      const viewport = page.getViewport({ scale: cssScale * dpr });
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      canvas.width = Math.max(1, Math.round(viewport.width));
-      canvas.height = Math.max(1, Math.round(viewport.height));
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      await page.render({ canvasContext: ctx, viewport, canvas }).promise;
-      if (!cancelled) setRendered(true);
+        // Render at device pixel ratio for crisp text, then let the canvas'
+        // own width:100%/height:auto CSS scale it back down to `width` --
+        // same "render big, display small" approach as <img srcset>.
+        const dpr = window.devicePixelRatio || 1;
+        const viewport = page.getViewport({ scale: cssScale * dpr });
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        canvas.width = Math.max(1, Math.round(viewport.width));
+        canvas.height = Math.max(1, Math.round(viewport.height));
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        renderTask = page.render({ canvasContext: ctx, viewport, canvas });
+        await renderTask.promise;
+        if (!cancelled) setRendered(true);
+      } catch (e) {
+        // Expected when the cleanup below cancels an in-flight renderTask
+        // (pdf.js rejects its promise with a RenderingCancelledException)
+        // -- only actually log it if this wasn't us cancelling on purpose.
+        if (!cancelled) console.error('StoryPdfViewer: page render failed', e);
+      }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      renderTask?.cancel();
+    };
   }, [inView, rendered, pdf, pageNumber, width]);
 
   return (
