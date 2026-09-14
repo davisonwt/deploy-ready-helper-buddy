@@ -343,6 +343,7 @@ export default function LiveStage({
     videoOn: myVideoOn,
     toggleAudio: toggleMyAudio,
     toggleVideo: toggleMyVideo,
+    localMicSilent: myMicSilent,
   } = useDailyCallObject(roomActive ? 'custom' : null, jitsiRoom, displayName, roomActive);
   const myLocalVideoTrack = Object.values(callParticipants).find(p => p.local)?.videoTrack ?? null;
 
@@ -374,6 +375,22 @@ export default function LiveStage({
         >
           🔇 Tap to enable sound
         </button>
+      )}
+      {/* SENDING problem, not receiving -- shown only to the affected user's
+          own client (this is local state from THIS tab's own
+          useDailyCallObject call, never broadcast). A short on-device
+          WebAudio check (monitorLocalMicSilence, useDailyCallObject.ts)
+          found this client's own mic track live but producing no real
+          audio -- the failure mode reported live, 2026-09-14, from a
+          participant on Microsoft Edge: track state said 'playable',
+          camera/video worked fine, but no one in the room ever heard them,
+          with no error or banner anywhere to tell them why. Everyone else
+          just silently not hearing you gives you nothing to act on; this
+          does. */}
+      {roomActive && myAudioOn && myMicSilent && (
+        <div className="w-full shrink-0 bg-rose-600 px-3 py-2 text-center text-xs font-bold text-white">
+          🎙️ Your microphone isn't being shared — no one can hear you. Check your browser's mic permission and input device (Settings → Privacy → Microphone on Edge/Chrome), then rejoin.
+        </div>
       )}
       {/* Always mounted while the call is active, independent of stage.mode
           -- see CallAudioLayer's own doc comment: this is what keeps remote
