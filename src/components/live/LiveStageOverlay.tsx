@@ -15,8 +15,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  X, MessageCircle, ChevronLeft, ChevronRight, EyeOff, Eye, Send, Users, Radio,
+  X, MessageCircle, ChevronLeft, ChevronRight, EyeOff, Eye, Send, Users, Radio, Share2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import LiveStage from '@/components/live/LiveStage';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,6 +82,17 @@ export default function LiveStageOverlay({
     setChatDraft('');
   };
 
+  // Same share action as LiveStage's own portrait action-bar Share button
+  // (handlePortraitShareTap) -- desktop's top bar never had an equivalent.
+  const handleShareTap = async () => {
+    const url = window.location.href;
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try { await navigator.share({ title, url }); } catch { /* cancelled */ }
+      return;
+    }
+    try { await navigator.clipboard.writeText(url); toast.success('Link copied!'); } catch { toast.error("Couldn't copy the link"); }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -104,6 +116,13 @@ export default function LiveStageOverlay({
           >
             {faceless ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
             {faceless ? 'Show face' : 'Faceless'}
+          </button>
+          <button
+            onClick={() => void handleShareTap()}
+            className="flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-white/10"
+            title="Copy the invite link"
+          >
+            <Share2 className="h-3 w-3" /> Share
           </button>
           <button
             onClick={() => navigate(`/live/${seedId}/room`)}
