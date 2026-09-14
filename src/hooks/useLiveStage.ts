@@ -272,11 +272,22 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
   }, [isHost, hands, send]);
 
   const setStageMode = useCallback((p: Omit<StagePayload, 'at'>) => {
-    if (!isHost) return;
+    // Board control belongs to the host OR whoever's currently spotlighted
+    // -- a panelist the host has put on the big screen can drive their own
+    // content, same as the host would.
+    const isPresenter = isHost || (!!user && stage.spotlightUserId === user.id);
+    if (!isPresenter) return;
     const full: StagePayload = { ...p, at: Date.now() };
     setStage(full);
     send('stage_mode', full);
-    if (sessionIdRef.current) {
+    // DB persistence stays host-only: gathering_sessions' RLS UPDATE policy
+    // only allows auth.uid() = host_id (see its own migration), so a
+    // presenting-but-not-host panelist's write would just be silently
+    // rejected by Postgres anyway. Their content still reaches everyone
+    // live via the broadcast above; it just isn't the durable copy. When
+    // spotlight returns to the host, LiveStage.tsx's own snapshot/restore
+    // effect re-asserts (and re-persists) the host's own last content.
+    if (isHost && sessionIdRef.current) {
       // See the unmount-cleanup comment above (same file) -- `void builder`
       // never actually sends a PostgREST update; `.then()` does. This was
       // the real reason board_state stayed stuck at 'camera' forever, even
@@ -284,7 +295,7 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
       supabase.from('gathering_sessions' as any).update({ board_state: full }).eq('id', sessionIdRef.current)
         .then(({ error }) => { if (error) console.error('setStageMode: board_state write failed', error); });
     }
-  }, [isHost, send]);
+  }, [isHost, send, stage.spotlightUserId, user]);
 
   const raiseHand = useCallback((want: 'voice' | 'video', voiceNoteUrl?: string) => {
     if (!user) return;

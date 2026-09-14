@@ -121,6 +121,48 @@ export default function LiveStage({
 
   const spotlightUserId = stage.spotlightUserId ?? null;
   const spotlightedGuest = approved.find(g => g.user_id === spotlightUserId) ?? null;
+  // Whoever currently owns the big screen gets board control too -- a
+  // spotlighted, approved guest, not just the literal host. setStageMode
+  // itself (useLiveStage.ts) enforces the same rule server-broadcast-side;
+  // this just gates which UI renders.
+  const isPresenter = isHost || iAmSpotlighted;
+
+  // Always-current `stage` for callbacks that intentionally don't list it as
+  // a dependency (the whiteboard debounce below, and the host-content-
+  // restore effect) -- reading `stage` directly there would either reset a
+  // debounce timer on every unrelated board broadcast, or close over a
+  // stale value.
+  const stageRef = useRef(stage);
+  useEffect(() => { stageRef.current = stage; }, [stage]);
+
+  // Host-only: snapshot the host's own board the moment spotlight hands
+  // control to a guest, restore it the moment spotlight returns to the host
+  // (spotlightUserId back to null) -- otherwise "control returns to host"
+  // left whatever the panelist last showed sitting there instead of the
+  // host's own content. Skips the very first run (mount/late-join hydration
+  // already having a spotlight set is not a real handoff transition).
+  const hostBoardSnapshotRef = useRef<typeof stage | null>(null);
+  const prevSpotlightRef = useRef<string | null>(null);
+  const spotlightHydratedRef = useRef(false);
+  useEffect(() => {
+    if (!isHost) return;
+    if (!spotlightHydratedRef.current) {
+      spotlightHydratedRef.current = true;
+      prevSpotlightRef.current = spotlightUserId;
+      return;
+    }
+    const prev = prevSpotlightRef.current;
+    if (prev !== spotlightUserId) {
+      if (prev === null && spotlightUserId !== null) {
+        hostBoardSnapshotRef.current = stageRef.current;
+      } else if (spotlightUserId === null && hostBoardSnapshotRef.current) {
+        setStageMode(hostBoardSnapshotRef.current);
+        hostBoardSnapshotRef.current = null;
+      }
+      prevSpotlightRef.current = spotlightUserId;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spotlightUserId, isHost]);
 
   const [boardText, setBoardText] = useState('');
   const imgList = images.filter(Boolean);
@@ -176,7 +218,7 @@ export default function LiveStage({
       media_kind: 'audio',
       image: m.image,
     };
-    setStageMode({ mode: 'video', mediaUrl: m.audio_url, mediaKind: 'audio', nowPlaying: np });
+    setStageMode({ ...stage, mode: 'video', mediaUrl: m.audio_url, mediaKind: 'audio', nowPlaying: np });
     setPickerOpen(false);
   };
 
@@ -223,20 +265,27 @@ export default function LiveStage({
     try { await navigator.clipboard.writeText(url); toast.success('Link copied!'); } catch { toast.error("Couldn't copy the link"); }
   };
 
-  // Push board text changes (debounced) when host edits
+  // Push board text changes (debounced) when the presenter edits. Spreads
+  // the LATEST stage (via stageRef, not a `stage` dependency -- that would
+  // reset this debounce on every unrelated board broadcast) instead of a
+  // bare {mode, text}: a bare payload wiped pdfUrl/clipUrl/pinnedSeed/etc.
+  // the moment anyone typed in the Text tab, which is what actually caused
+  // "PDF lost on tab switch" -- switching TO whiteboard was harmless (the
+  // tab-click handler already spreads ...stage), but this effect firing
+  // 250ms later, on its own, was not.
   useEffect(() => {
-    if (!isHost || stage.mode !== 'whiteboard') return;
+    if (!isPresenter || stage.mode !== 'whiteboard') return;
     const t = setTimeout(() => {
-      setStageMode({ mode: 'whiteboard', text: boardText });
+      setStageMode({ ...stageRef.current, mode: 'whiteboard', text: boardText });
     }, 250);
     return () => clearTimeout(t);
-  }, [boardText, isHost, stage.mode, setStageMode]);
+  }, [boardText, isPresenter, stage.mode, setStageMode]);
 
   useEffect(() => {
-    if (!isHost && stage.mode === 'whiteboard' && typeof stage.text === 'string') {
+    if (!isPresenter && stage.mode === 'whiteboard' && typeof stage.text === 'string') {
       setBoardText(stage.text);
     }
-  }, [isHost, stage.mode, stage.text]);
+  }, [isPresenter, stage.mode, stage.text]);
 
   const displayName = (user as any)?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Tribe';
 
@@ -269,6 +318,15 @@ export default function LiveStage({
   } = useDailyCallObject(roomActive ? 'custom' : null, jitsiRoom, displayName, roomActive);
   const myLocalVideoTrack = Object.values(callParticipants).find(p => p.local)?.videoTrack ?? null;
 
+  // "Tap to enable sound" recovery -- see ParticipantAudio's own doc
+  // comment: an unmuted <audio>.play() blocked by the browser's autoplay
+  // policy fails silently with no error surfaced anywhere else. bumping
+  // audioRetryKey inside a real click handler re-runs .play() on every
+  // mounted ParticipantAudio within that click's user-activation window.
+  const [audioBlocked, setAudioBlocked] = useState(false);
+  const [audioRetryKey, setAudioRetryKey] = useState(0);
+  const handleEnableAudio = () => { setAudioBlocked(false); setAudioRetryKey(k => k + 1); };
+
   // Stage content (what occupies the big tile)
   const stageImage = stage.mode === 'image'
     ? (stage.imageUrl || imgList[(stage.imageIdx ?? 0) % Math.max(imgList.length, 1)])
@@ -276,8 +334,28 @@ export default function LiveStage({
 
   return (
     <div className={`flex h-full w-full flex-col bg-black text-white ${className}`}>
-      {/* Host presentation tabs */}
-      {isHost && (
+      {/* Recovers from the browser silently blocking unmuted audio autoplay
+          -- see ParticipantAudio's own doc comment. Shown the moment ANY
+          remote participant's audio.play() is rejected; clicking it is a
+          real user gesture, which is what unblocks playback. */}
+      {audioBlocked && (
+        <button
+          type="button"
+          onClick={handleEnableAudio}
+          className="w-full shrink-0 bg-amber-500 px-3 py-2 text-center text-xs font-bold text-black transition-colors hover:bg-amber-400"
+        >
+          🔇 Tap to enable sound
+        </button>
+      )}
+      {/* Always mounted while the call is active, independent of stage.mode
+          -- see CallAudioLayer's own doc comment: this is what keeps remote
+          audio playing while the host is presenting PDF/TEXT/etc, not just
+          in camera mode. */}
+      {roomActive && (
+        <CallAudioLayer participants={callParticipants} retryKey={audioRetryKey} onBlocked={() => setAudioBlocked(true)} />
+      )}
+      {/* Presentation tabs -- host, or whoever's currently spotlighted */}
+      {isPresenter && (
         <div className="flex items-center gap-1 border-b border-white/10 bg-black/60 px-2 py-1">
           {TABS.map(t => {
             const Icon = t.icon;
@@ -437,7 +515,7 @@ export default function LiveStage({
                 <button
                   onClick={() => {
                     const next = ((stage.imageIdx ?? 0) - 1 + imgList.length) % imgList.length;
-                    setStageMode({ mode: 'image', imageUrl: imgList[next], imageIdx: next });
+                    setStageMode({ ...stage, mode: 'image', imageUrl: imgList[next], imageIdx: next });
                   }}
                   className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 hover:bg-black/85"
                 >
@@ -446,7 +524,7 @@ export default function LiveStage({
                 <button
                   onClick={() => {
                     const next = ((stage.imageIdx ?? 0) + 1) % imgList.length;
-                    setStageMode({ mode: 'image', imageUrl: imgList[next], imageIdx: next });
+                    setStageMode({ ...stage, mode: 'image', imageUrl: imgList[next], imageIdx: next });
                   }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 hover:bg-black/85"
                 >
@@ -463,7 +541,7 @@ export default function LiveStage({
         {/* Whiteboard mode */}
         {stage.mode === 'whiteboard' && (
           <div className="absolute inset-0 bg-[#0b1120] p-4">
-            {isHost ? (
+            {isPresenter ? (
               <textarea
                 value={boardText}
                 onChange={(e) => setBoardText(e.target.value)}
@@ -478,20 +556,22 @@ export default function LiveStage({
           </div>
         )}
 
-        {/* Gathering Room batch 1 board modes */}
+        {/* Gathering Room batch 1 board modes -- `isHost` here means "can
+            control this board's content," which is the presenter (host or
+            spotlighted guest), not literally the seed's host. */}
         {stage.mode === 'pdf' && (
           <div className="absolute inset-0">
-            <PdfBoard isHost={isHost} stage={stage} setStageMode={setStageMode} />
+            <PdfBoard isHost={isPresenter} stage={stage} setStageMode={setStageMode} />
           </div>
         )}
         {stage.mode === 'clip' && (
           <div className="absolute inset-0">
-            <ClipBoard isHost={isHost} stage={stage} setStageMode={setStageMode} />
+            <ClipBoard isHost={isPresenter} stage={stage} setStageMode={setStageMode} />
           </div>
         )}
         {stage.mode === 'seed' && (
           <div className="absolute inset-0 bg-[#0b1120]">
-            <SeedPinBoard isHost={isHost} stage={stage} setStageMode={setStageMode} />
+            <SeedPinBoard isHost={isPresenter} stage={stage} setStageMode={setStageMode} />
           </div>
         )}
 
@@ -890,14 +970,52 @@ function ParticipantVideo({ track, className, mirror }: { track: MediaStreamTrac
 }
 
 /** Plays one remote participant's audio track. Never rendered for the local
- * participant -- that would play your own mic back to you. */
-function ParticipantAudio({ track }: { track: MediaStreamTrack | null }) {
+ * participant -- that would play your own mic back to you.
+ *
+ * Renders standalone (no `autoPlay` attribute) and calls `.play()`
+ * explicitly instead. The two are not equivalent for an UNMUTED element:
+ * ParticipantVideo's `autoPlay` works because it's rendered `muted` (browsers
+ * always allow muted autoplay); audio can't be muted and still be heard, and
+ * an unmuted `autoPlay` failing under the browser's autoplay-with-sound
+ * policy fails SILENTLY -- no thrown error, no console warning our own code
+ * would see, just no sound. An explicit `.play()` call returns a promise we
+ * can catch: on `NotAllowedError` we tell the caller (`onBlocked`) instead of
+ * the participant just never hearing anything with no way to know why. */
+function ParticipantAudio({ track, retryKey, onBlocked }: { track: MediaStreamTrack | null; retryKey?: number; onBlocked?: () => void }) {
   const ref = useRef<HTMLAudioElement>(null);
   useEffect(() => {
-    if (ref.current) ref.current.srcObject = track ? new MediaStream([track]) : null;
-  }, [track]);
-  if (!track) return null;
-  return <audio ref={ref} autoPlay playsInline className="hidden" />;
+    const el = ref.current;
+    if (!el) return;
+    el.srcObject = track ? new MediaStream([track]) : null;
+    if (!track) return;
+    el.play().catch((err: unknown) => {
+      const name = (err as { name?: string } | undefined)?.name;
+      if (name === 'NotAllowedError') onBlocked?.();
+      else console.error('ParticipantAudio: play() failed', err);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [track, retryKey]);
+  return <audio ref={ref} playsInline className="hidden" />;
+}
+
+/** Always mounted whenever the call is active, regardless of `stage.mode` --
+ * previously every ParticipantAudio lived inside CallTile, which only ever
+ * rendered inside camera-mode's CallStageArea, so switching to PDF/TEXT/etc.
+ * silently stopped ALL remote audio (the Daily connection itself stayed
+ * joined -- mic kept publishing -- there was just nothing left mounted to
+ * PLAY what came back). One audio element per remote participant, full stop;
+ * CallTile is purely visual and never touches audio. `retryKey` re-runs
+ * `.play()` on every mounted element (see the "tap to enable sound" banner
+ * in LiveStage's own render, and its `onBlocked`/retry wiring). */
+function CallAudioLayer({ participants, retryKey, onBlocked }: { participants: Record<string, CallParticipant>; retryKey: number; onBlocked: () => void }) {
+  const remotes = Object.values(participants).filter(p => !p.local);
+  return (
+    <>
+      {remotes.map(p => (
+        <ParticipantAudio key={p.sessionId} track={p.audioTrack} retryKey={retryKey} onBlocked={onBlocked} />
+      ))}
+    </>
+  );
 }
 
 function CallTile({ participant, big }: { participant: CallParticipant; big?: boolean }) {
@@ -910,10 +1028,6 @@ function CallTile({ participant, big }: { participant: CallParticipant; big?: bo
           {participant.userName.charAt(0).toUpperCase()}
         </div>
       )}
-      {/* Audio keeps playing (or not) independent of whether a picture is
-          showing -- this is the actual "camera off, mic on" fix: video and
-          audio are two unrelated tracks/elements, never coupled. */}
-      {!participant.local && <ParticipantAudio track={participant.audioTrack} />}
       <div className="absolute bottom-1 left-1 flex items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] font-bold text-white/90">
         {participant.audioOn ? <Mic className="h-2.5 w-2.5" /> : <MicOff className="h-2.5 w-2.5 text-rose-400" />}
         <span className="max-w-[70px] truncate">{participant.local ? 'You' : participant.userName}</span>
