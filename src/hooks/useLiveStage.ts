@@ -235,7 +235,17 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
       // clicking "End live" -- hostSessionId is only ever non-null for the
       // actual host (never a guest), so this can't end someone else's live.
       if (hostSessionId && sessionIdRef.current) {
-        void supabase.from('gathering_sessions' as any).update({ ended_at: new Date().toISOString() }).eq('id', sessionIdRef.current);
+        // .update().eq() returns a lazy PostgREST thenable -- it only ever
+        // issues the request from inside its own .then()/await, same as a
+        // Promise executor never runs until you consume it. `void builder`
+        // alone (the previous form here) discards that thenable without
+        // ever calling .then(), so the request was NEVER actually sent --
+        // confirmed live, 2026-09-14: zero PATCH requests for any
+        // board_state/ended_at write, on every single test, regardless of
+        // whether sessionIdRef was correctly populated. `.then()` is the
+        // minimal fix (this fires from a synchronous cleanup fn, can't await).
+        supabase.from('gathering_sessions' as any).update({ ended_at: new Date().toISOString() }).eq('id', sessionIdRef.current)
+          .then(({ error }) => { if (error) console.error('useLiveStage cleanup: failed to close gathering_sessions row', error); });
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -267,7 +277,12 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     setStage(full);
     send('stage_mode', full);
     if (sessionIdRef.current) {
-      void supabase.from('gathering_sessions' as any).update({ board_state: full }).eq('id', sessionIdRef.current);
+      // See the unmount-cleanup comment above (same file) -- `void builder`
+      // never actually sends a PostgREST update; `.then()` does. This was
+      // the real reason board_state stayed stuck at 'camera' forever, even
+      // in test runs where sessionIdRef WAS correctly populated.
+      supabase.from('gathering_sessions' as any).update({ board_state: full }).eq('id', sessionIdRef.current)
+        .then(({ error }) => { if (error) console.error('setStageMode: board_state write failed', error); });
     }
   }, [isHost, send]);
 
