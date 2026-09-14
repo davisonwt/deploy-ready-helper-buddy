@@ -106,6 +106,13 @@ if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
       setTimeout(registerServiceWorker, 2000);
     }
   });
+} else if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  // Dev never registers a SW of its own (see the branch above), but this
+  // origin could still be carrying one over from an earlier visit --
+  // unregister on load so it can never intercept/cache a dev request.
+  navigator.serviceWorker.getRegistrations()
+    .then((regs) => regs.forEach((r) => r.unregister()))
+    .catch(() => undefined);
 }
 
 async function registerServiceWorker() {
@@ -120,6 +127,14 @@ async function registerServiceWorker() {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') registration.update().catch(() => undefined);
     });
+    // visibilitychange alone misses a tab that's been continuously
+    // foregrounded the whole time -- exactly the case during an active live
+    // session (camera on, presenting), which never fires it. Check on an
+    // interval too so a mid-session deploy is still caught within ~45s
+    // instead of only whenever the member happens to switch away and back.
+    setInterval(() => {
+      if (document.visibilityState === 'visible') registration.update().catch(() => undefined);
+    }, 45_000);
   } catch (error) {
     console.warn('Service worker registration skipped:', error.message);
   }
