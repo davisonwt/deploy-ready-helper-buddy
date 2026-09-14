@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -243,17 +243,43 @@ function StallImage({ src, alt, className = "" }: { src: string; alt: string; cl
   );
 }
 
-/** "paint your front" / "paint your inside" -- a real stall photo, a one-line caption, tapping it opens the real guest-mode StallInteriorView (StallVisitPage already handles this, no ProtectedRoute -- see the invite-link batch). */
-function StepCard({ image, title, line, href }: { image: string; title: string; line: string; href: string }) {
-  return (
-    <Link to={href} className="block rounded-2xl border border-amber-500/20 bg-black/30 p-4 hover:border-amber-500/40 transition-colors">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-black">
-        <StallImage src={image} alt={title} className="absolute inset-0" />
+/**
+ * "paint your front" / "paint your inside" -- a real stall photo, a
+ * one-line caption, tapping it opens the real guest-mode
+ * StallInteriorView (StallVisitPage already handles this, no
+ * ProtectedRoute -- see the invite-link batch).
+ *
+ * Fixed aspect-square box + object-cover (crop to fill, no
+ * letterboxing) -- confirmed live, 2026-09-14: this row's three image
+ * slots read as visibly different sizes on wide viewports, because
+ * `image`'s own aspect ratio (landscape, via StallImage's object-
+ * contain desktop branch) and the third card's SeedCard illustration
+ * (unconstrained -- no fixed box at all, see below) never actually
+ * matched each other. Same fixed-box + object-cover treatment
+ * EmptyPlotView.tsx's own "your plot is ready" step cards already use
+ * (proven live there) -- StallImage itself is untouched (still used
+ * for the pannable-on-portrait hero images elsewhere on this page,
+ * where letterboxing-free readability, not visual uniformity with
+ * other cards, is the actual goal).
+ */
+function StepCard({ image, title, line, href, children }: { image?: string; title: string; line: string; href?: string; children?: ReactNode }) {
+  const body = (
+    <>
+      <div className="relative aspect-square overflow-hidden rounded-xl bg-black">
+        {children ?? (image && <img src={image} alt={title} className="absolute inset-0 w-full h-full object-cover" />)}
       </div>
       <h3 className="mt-3 font-serif text-lg font-semibold text-amber-100">{title}</h3>
       <p className="mt-1 text-xs text-amber-100/60">{line}</p>
-    </Link>
+    </>
   );
+  if (href) {
+    return (
+      <Link to={href} className="block rounded-2xl border border-amber-500/20 bg-black/30 p-4 hover:border-amber-500/40 transition-colors">
+        {body}
+      </Link>
+    );
+  }
+  return <div className="rounded-2xl border border-amber-500/20 bg-black/30 p-4">{body}</div>;
 }
 
 function IndexContent() {
@@ -501,15 +527,13 @@ function IndexContent() {
             line="a room for your books, music and more."
             href={`/stall/${ED.username}`}
           />
-          <div className="rounded-2xl border border-amber-500/20 bg-black/30 p-4">
-            <h3 className="font-serif text-lg font-semibold text-amber-100">sow your seeds</h3>
-            <p className="mt-1 mb-3 text-xs text-amber-100/60">list what you're offering — a book, a song, a service.</p>
+          <StepCard title="sow your seeds" line="list what you're offering — a book, a song, a service.">
             {/* forceViewerIsOwner: this is a demo card, not a real
                 interaction -- SeedCard already renders the rail greyed
                 (not hidden) for the "owner viewing their own card" case,
                 exactly the look a pure illustration wants here. */}
             {featuredSeed ? (
-              <Suspense fallback={<div className="aspect-square rounded-xl bg-black/40 animate-pulse" />}>
+              <Suspense fallback={<div className="absolute inset-0 bg-black/40 animate-pulse" />}>
                 <SeedCard
                   id={featuredSeed.id}
                   kind="music"
@@ -525,9 +549,9 @@ function IndexContent() {
                 />
               </Suspense>
             ) : (
-              <div className="aspect-square rounded-xl bg-black/40 animate-pulse" />
+              <div className="absolute inset-0 bg-black/40 animate-pulse" />
             )}
-          </div>
+          </StepCard>
         </div>
       </section>
 
