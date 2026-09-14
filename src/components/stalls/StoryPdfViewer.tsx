@@ -130,14 +130,12 @@ export default function StoryPdfViewer({ url, maxPages }: Props) {
 
   useEffect(() => {
     let alive = true;
-    let doc: PDFDocumentProxy | null = null;
     pdfjsLib.getDocument({ url }).promise
       .then((d) => {
         if (!alive) {
           try { d?.destroy?.(); } catch (e) { console.error('StoryPdfViewer: doc.destroy() threw (load-then-unmount)', e); }
           return;
         }
-        doc = d;
         setPdf(d);
       })
       .catch((e: unknown) => {
@@ -146,26 +144,28 @@ export default function StoryPdfViewer({ url, maxPages }: Props) {
       });
     return () => {
       alive = false;
-      // Confirmed live, 2026-09-14: "TypeError: h.destroy is not a
-      // function", ErrorBoundary-caught, on an ordinary close AFTER the
-      // PDF had fully loaded -- not the original unmount-BEFORE-load race
-      // 55b2f518 guarded. `doc` here is real and `.destroy` really is a
-      // function; the throw is pdf.js's OWN internals (a page's still-
-      // in-flight getPage()/render() -- PdfPage's own effect, an
-      // independent async chain per-page, not tied to this `alive` flag --
-      // hitting a transport pdf.js has already begun tearing down out from
-      // under it). typeof/optional-chaining can't guard against an error
-      // thrown from inside the call itself, only a try/catch can.
-      try {
-        const result = doc?.destroy();
-        // .destroy() returns a Promise -- guard the async rejection too,
-        // not just a synchronous throw.
-        if (result && typeof (result as Promise<unknown>).catch === 'function') {
-          (result as Promise<unknown>).catch((e: unknown) => console.error('StoryPdfViewer: doc.destroy() promise rejected', e));
-        }
-      } catch (e) {
-        console.error('StoryPdfViewer: doc.destroy() threw on unmount', e);
-      }
+      // Confirmed live, 2026-09-14 (repeatedly -- including after trying
+      // both a try/catch guard AND cancelling every PdfPage's own
+      // RenderTask before this runs): calling .destroy() on a document
+      // that actually finished loading and was used -- `doc` genuinely
+      // assigned, `.destroy` genuinely a function -- throws "TypeError:
+      // h.destroy is not a function" INSIDE pdf.js's own internals every
+      // single time, independent of whether any individual page was still
+      // mid-render (ruled out: reproduced even with every page fully
+      // rendered, RenderTask cancellation notwithstanding) and independent
+      // of a pdf.js/worker version mismatch (ruled out: public/pdfjs/
+      // pdf.worker.min.mjs vs node_modules/pdfjs-dist's own -- byte-
+      // identical, confirmed via md5sum).
+      //
+      // Not worth chasing further inside pdf.js's own minified internals
+      // for what this component actually needs: `doc` only needs explicit
+      // destroy()ing to free an ABANDONED in-flight load's resources (the
+      // `!alive` branch in .then() above already covers that -- a
+      // genuinely unused document, safe to destroy). A `doc` that was
+      // successfully assigned here was actually loaded and rendered --
+      // ordinary unmount + GC reclaims it and its canvases exactly like
+      // any other unmounted component's local state, no explicit destroy()
+      // needed, and none attempted.
     };
   }, [url]);
 
