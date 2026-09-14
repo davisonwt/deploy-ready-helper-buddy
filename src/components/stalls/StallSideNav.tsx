@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { COCKPIT_NAV, COCKPIT_NAV_MORE, SCRIPTURE_STUDY_LINK, type CockpitNavItem } from '@/lib/nav/cockpitNav';
 import { useRoles } from '@/hooks/useRoles';
+import { AdminButton } from '@/components/AdminButton';
 
 interface Props {
   /** Called on every tap, before navigating (or before the action fires) -- lets the caller close the stall interior first. */
@@ -56,6 +57,24 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
         <span className="text-base leading-none w-5 text-center shrink-0 text-amber-400">🏠</span>
         <span className="truncate font-serif text-[13px] font-semibold text-amber-300">My Stall / Cockpit</span>
       </Link>
+
+      {/* Gosat/admin only -- AdminButton's own internal check
+          (userRoles.length > 0, any user_roles row) is the real gate; this
+          outer `isAdminOrGosat` just keeps the wrapper (border/padding)
+          from leaving an empty gap in the nav for every non-admin viewer,
+          same double-guard shape as the go_live hotspot elsewhere in this
+          file's sibling components. Was a fully orphaned component
+          (defined, never imported/rendered anywhere) until now -- confirmed
+          live 2026-09-14: an account that still held admin+gosat in
+          user_roles had no nav path to /admin/dashboard, /admin/radio,
+          /admin/treasury, or /admin/seeds at all. Right under "My Stall /
+          Cockpit" per spec -- first thing an admin sees, same as that link
+          is for everyone else. */}
+      {isAdminOrGosat && (
+        <div className="px-3 py-2 border-b border-amber-500/15">
+          <AdminButton />
+        </div>
+      )}
 
       <Link
         to={SCRIPTURE_STUDY_LINK.path}
