@@ -29,13 +29,19 @@
     {
       "source": "/index.html",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate, s-maxage=0, stale-while-revalidate=0" }
       ]
     },
     {
       "source": "/",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate, s-maxage=0, stale-while-revalidate=0" }
+      ]
+    },
+    {
+      "source": "/((?!assets/|.*\\.(?:js|mjs|css|map|json|png|jpg|jpeg|webp|svg|ico|gif|woff|woff2|ttf|otf|mp3|mp4|webm|wav|txt|xml)).*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate, s-maxage=0, stale-while-revalidate=0" }
       ]
     },
     {
