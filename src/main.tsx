@@ -115,6 +115,7 @@ if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
     .catch(() => undefined);
 }
 
+// Auto-update verification trigger, 2026-09-14 -- see the interval check below.
 async function registerServiceWorker() {
   try {
     if (localStorage.getItem('sw:disabled') === '1') return;
