@@ -8,7 +8,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
-import { TILE_KINDS, type StallHotspot } from '@/lib/stalls/stallTypes';
+import { TILE_KINDS, type StallHotspot, type TileKind } from '@/lib/stalls/stallTypes';
 
 const MIN_BOX_PCT = 2;
 const DEFAULT_BOX_PCT = 12;
@@ -18,6 +18,31 @@ const TAP_MOVE_THRESHOLD_PX = 6;
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
+}
+
+/**
+ * A brand-new box used to default to kind:'products' silently -- if the
+ * owner typed a label like "My Music" and just hit Done without ever
+ * opening the kind row, the box saved as 'products' anyway (confirmed
+ * live: this is exactly what happened to several boxes on real stalls --
+ * "My Music"/"My Story"/"My Books" all saved as 'products', all opening
+ * whatever single products.type='product' item existed instead). Guessing
+ * a kind from the label as it's typed, applied only until the owner picks
+ * one themselves (see autoKindIdRef below), means a box can only end up
+ * with the wrong kind if they deliberately choose it -- never silently.
+ * First confident keyword wins; no match leaves the kind exactly as it was
+ * (still overridable via the row of buttons either way).
+ */
+function inferKindFromLabel(label: string): TileKind | null {
+  const l = label.toLowerCase();
+  if (l.includes('music')) return 'music';
+  if (l.includes('lyric')) return 'lyrics';
+  if (l.includes('book')) return 'books';
+  if (l.includes('story')) return 'story';
+  if (l.includes('mug')) return 'mugs';
+  if (l.includes('service')) return 'services';
+  if (l.includes('orchard')) return 'orchard';
+  return null;
 }
 
 /** Exported so callers can assign ids to hotspots loaded without one (a
@@ -59,6 +84,12 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
   // -- a stall can fill with many overlapping boxes fast, and removing one
   // has no undo, so every path asks first rather than only some of them.
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // Which hotspot's kind is still "auto" -- only ever the box just marked
+  // this editing session, and only until the owner taps a kind button
+  // themselves (see inferKindFromLabel above). null once nothing is
+  // auto-eligible (every other box's kind was a deliberate choice,
+  // whenever it was made -- never silently overwritten by typing a label).
+  const [autoKindId, setAutoKindId] = useState<string | null>(null);
   const dragRef = useRef<DragMode | null>(null);
   const tapStartRef = useRef<{ x: number; y: number } | null>(null);
   const [, forceTick] = useState(0);
@@ -146,10 +177,31 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
     onChange([...value, { id, kind: 'products', label: '', x, y, w, h }]);
     setSelectedId(id);
     setEditingId(id);
+    setAutoKindId(id);
   };
 
   const updateHotspot = (id: string, patch: Partial<StallHotspot>) =>
     onChange(value.map((h) => (h.id === id ? { ...h, ...patch } : h)));
+
+  /** Label changed on the box still eligible for auto-kind -- re-guess and
+   * apply it in the same update (a separate updateHotspot call for kind
+   * right after would still work, but batches into one array rewrite
+   * instead of two). Any OTHER box's label edit never touches its kind. */
+  const updateLabel = (id: string, label: string) => {
+    if (autoKindId === id) {
+      const guess = inferKindFromLabel(label);
+      onChange(value.map((h) => (h.id === id ? { ...h, label, ...(guess ? { kind: guess } : {}) } : h)));
+      return;
+    }
+    updateHotspot(id, { label });
+  };
+
+  /** The owner picked a kind themselves -- from here on this box's kind is
+   * a deliberate choice, not a guess, even if they keep editing the label. */
+  const chooseKind = (id: string, kind: TileKind) => {
+    if (autoKindId === id) setAutoKindId(null);
+    updateHotspot(id, { kind });
+  };
 
   const removeHotspot = (id: string) => {
     onChange(value.filter((h) => h.id !== id));
@@ -236,7 +288,7 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
                   autoFocus
                   placeholder="Label (e.g. my books)"
                   value={editingHotspot.label}
-                  onChange={(e) => updateHotspot(editingHotspot.id!, { label: e.target.value })}
+                  onChange={(e) => updateLabel(editingHotspot.id!, e.target.value)}
                   maxLength={40}
                   className="h-11 bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30"
                 />
@@ -248,7 +300,7 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
                       size="sm"
                       variant={editingHotspot.kind === k.id ? 'default' : 'outline'}
                       aria-pressed={editingHotspot.kind === k.id}
-                      onClick={() => updateHotspot(editingHotspot.id!, { kind: k.id })}
+                      onClick={() => chooseKind(editingHotspot.id!, k.id)}
                       className={`min-h-[44px] ${
                         editingHotspot.kind === k.id
                           ? 'bg-amber-500 text-amber-950 border-amber-500 hover:bg-amber-400'
