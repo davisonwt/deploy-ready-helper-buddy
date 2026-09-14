@@ -179,19 +179,27 @@ export function useTribalLiveOrchard() {
       // has (a host re-entering their own live shouldn't silently flip an
       // already-Restricted session back to Open); only a genuinely NEW
       // session takes opts?.access, defaulting to 'open'.
-      let access: SessionAccess;
+      //
+      // Deliberately a SEPARATE query from the id/jitsi_room one below, not
+      // one extra column added to it: that select (and the insert) are the
+      // already-proven-safe room-identity fix from the previous incident --
+      // coupling access's column to the SAME statement would mean a
+      // deploy that ships this code before its own migration has run
+      // reintroduces THAT bug (an unknown column fails the whole query,
+      // not just the new field), not just fail to add access. Isolated
+      // here so a missing access column can only ever cost the access
+      // feature, never the session-identity fix it's built next to.
+      let access: SessionAccess = opts?.access || 'open';
       try {
         const { data: existing } = await supabase
           .from('gathering_sessions' as any)
-          .select('id, jitsi_room, access')
+          .select('id, jitsi_room')
           .eq('seed_id', seed.id)
           .eq('host_id', user.id)
           .is('ended_at', null)
           .maybeSingle();
         const existingRoom = (existing as any)?.jitsi_room as string | null | undefined;
-        const existingAccess = (existing as any)?.access as SessionAccess | null | undefined;
         room = existingRoom || `s2g_seed_${seed.id.replace(/-/g, '')}_${Date.now().toString(36)}`;
-        access = existingAccess || opts?.access || 'open';
 
         if (existing) {
           gatheringSessionId = (existing as any).id;
@@ -202,19 +210,45 @@ export function useTribalLiveOrchard() {
             // reads the identical value back instead of minting again.
             await supabase.from('gathering_sessions' as any).update({ jitsi_room: room }).eq('id', gatheringSessionId);
           }
+          try {
+            const { data: accessRow } = await supabase
+              .from('gathering_sessions' as any)
+              .select('access')
+              .eq('id', gatheringSessionId)
+              .maybeSingle();
+            const existingAccess = (accessRow as any)?.access as SessionAccess | null | undefined;
+            if (existingAccess === 'open' || existingAccess === 'restricted') access = existingAccess;
+          } catch (e) {
+            console.warn('goLive: access column not readable yet (migration pending?) -- defaulting to', access, e);
+          }
         } else {
-          const { data: created, error } = await supabase
+          let created: { id: string } | null = null;
+          let error: unknown = null;
+          ({ data: created, error } = await supabase
             .from('gathering_sessions' as any)
             .insert({ seed_id: seed.id, host_id: user.id, board_state: INITIAL_STAGE, jitsi_room: room, access })
             .select('id')
-            .maybeSingle();
-          if (!error && created) gatheringSessionId = (created as any).id;
+            .maybeSingle() as any);
+          if (error) {
+            // Most likely cause: the access column doesn't exist on this
+            // DB yet (migration not applied). Retry WITHOUT it so session
+            // creation itself -- the part that actually matters -- still
+            // succeeds; access just falls back to the local default above.
+            console.warn('goLive: insert with access failed, retrying without it (migration pending?)', error);
+            const retry = await supabase
+              .from('gathering_sessions' as any)
+              .insert({ seed_id: seed.id, host_id: user.id, board_state: INITIAL_STAGE, jitsi_room: room })
+              .select('id')
+              .maybeSingle();
+            created = retry.data as any;
+            error = retry.error;
+          }
+          if (!error && created) gatheringSessionId = created.id;
           else if (error) console.error('goLive: gathering_sessions insert failed', error);
         }
       } catch (e) {
         console.error('goLive: gathering_sessions row failed', e);
         room = `s2g_seed_${seed.id.replace(/-/g, '')}_${Date.now().toString(36)}`;
-        access = opts?.access || 'open';
       }
       myGatheringSessionId = gatheringSessionId;
       console.warn(`[useTribalLiveOrchard] goLive -- seed: ${seed.id}, gatheringSessionId: ${gatheringSessionId}, jitsi_room: ${room}, access: ${access}`);
