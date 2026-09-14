@@ -1,8 +1,12 @@
 import { useRef, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
 import { TILE_KINDS, type StallHotspot } from '@/lib/stalls/stallTypes';
 
@@ -50,6 +54,11 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
   const rect = useContainImageRect(containerRef, imgRef);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  // Shared confirm step for every delete entry point (the selected box's
+  // own ×, the list row's trash icon, and the edit sheet's Delete button)
+  // -- a stall can fill with many overlapping boxes fast, and removing one
+  // has no undo, so every path asks first rather than only some of them.
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const dragRef = useRef<DragMode | null>(null);
   const tapStartRef = useRef<{ x: number; y: number } | null>(null);
   const [, forceTick] = useState(0);
@@ -149,6 +158,7 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
   };
 
   const editingHotspot = value.find((h) => h.id === editingId) ?? null;
+  const confirmDeleteHotspot = value.find((h) => h.id === confirmDeleteId) ?? null;
 
   return (
     <div className="space-y-4">
@@ -181,6 +191,23 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
               <span className="pointer-events-none absolute -top-5 left-0 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-200">
                 {h.label || 'Untitled'}
               </span>
+              {/* Delete -- only on the selected box, so an idle box isn't
+                  cluttered with a permanent × next to every one of what
+                  can be many overlapping boxes. Own 44px touch target,
+                  stops the pointerdown from also starting a move-drag. */}
+              {isSelected && (
+                <button
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(h.id ?? null); }}
+                  aria-label={`Delete ${h.label || 'this hotspot'}`}
+                  className="absolute -top-3.5 -right-3.5 flex h-11 w-11 items-center justify-center"
+                >
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-black bg-rose-500 text-white">
+                    <X className="h-3 w-3" />
+                  </span>
+                </button>
+              )}
               {/* 44px touch target (min-h/w-11) around a smaller visible
                   dot -- the handle itself only needs to look small. */}
               <div
@@ -244,7 +271,7 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
                     type="button"
                     variant="ghost"
                     className="min-h-[44px] gap-1.5 text-destructive hover:text-destructive"
-                    onClick={() => removeHotspot(editingHotspot.id!)}
+                    onClick={() => setConfirmDeleteId(editingHotspot.id ?? null)}
                   >
                     <Trash2 className="h-4 w-4" /> Delete
                   </Button>
@@ -269,17 +296,57 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
           </p>
         )}
         {value.map((h) => (
-          <button
+          <div
             key={h.id}
-            type="button"
-            onClick={() => { setSelectedId(h.id ?? null); setEditingId(h.id ?? null); }}
-            className={`flex w-full min-h-[44px] items-center justify-between gap-2 rounded-xl border p-3 text-left ${selectedId === h.id ? 'border-amber-400/60 bg-amber-500/5' : 'border-amber-500/20 bg-black/30'}`}
+            className={`flex w-full min-h-[44px] items-stretch gap-1 rounded-xl border ${selectedId === h.id ? 'border-amber-400/60 bg-amber-500/5' : 'border-amber-500/20 bg-black/30'}`}
           >
-            <span className="truncate text-sm text-amber-50">{h.label || 'Untitled'}</span>
-            <span className="shrink-0 text-xs uppercase tracking-wide text-amber-100/50">{h.kind}</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => { setSelectedId(h.id ?? null); setEditingId(h.id ?? null); }}
+              className="flex flex-1 min-w-0 items-center justify-between gap-2 p-3 text-left"
+            >
+              <span className="truncate text-sm text-amber-50">{h.label || 'Untitled'}</span>
+              <span className="shrink-0 text-xs uppercase tracking-wide text-amber-100/50">{h.kind}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmDeleteId(h.id ?? null)}
+              aria-label={`Delete ${h.label || 'this hotspot'}`}
+              className="flex w-11 shrink-0 items-center justify-center text-amber-100/40 hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         ))}
       </div>
+
+      {/* Shared confirm for every delete entry point (box ×, list row
+          trash, edit sheet's own Delete) -- removeHotspot() only ever
+          runs from here, never directly from a tap. Removes from `value`
+          via onChange the same way every other edit here does; the
+          caller (StallBuildPage) saves the whole hotspots array back to
+          this stall's own row on publish -- same RLS-scoped update as any
+          other field on it, no separate per-hotspot permission to get
+          wrong. */}
+      <AlertDialog open={!!confirmDeleteHotspot} onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}>
+        <AlertDialogContent className="bg-[#140c06] border-amber-500/20 text-amber-50">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif text-amber-100">Delete "{confirmDeleteHotspot?.label || 'this hotspot'}"?</AlertDialogTitle>
+            <AlertDialogDescription className="text-amber-100/60">
+              This removes the marked box from your stall. You'll need to re-mark it if you change your mind.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-amber-500/25 text-amber-100/70 hover:bg-amber-500/10">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (confirmDeleteId) removeHotspot(confirmDeleteId); setConfirmDeleteId(null); }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
