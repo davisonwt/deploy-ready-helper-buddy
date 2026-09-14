@@ -17,6 +17,8 @@ import { INITIAL_STAGE } from '@/hooks/useLiveStage';
 
 export type BloomStage = 'seed' | 'leaf' | 'tree';
 
+export type SessionAccess = 'open' | 'restricted';
+
 export interface LivePresence {
   user_id: string;
   display_name: string;
@@ -32,6 +34,18 @@ export interface LivePresence {
    * to useLiveStage so it never has to guess/race for its own row -- see
    * that hook's own comment for the bug this replaces. */
   gatheringSessionId?: string | null;
+  /** "Live Now" directory (2026-09-15): 'open' (default -- directly
+   * joinable from the directory) or 'restricted' (invite-link only, shown
+   * as invite-only rather than joinable). Mirrors
+   * gathering_sessions.access -- kept on presence too since the directory
+   * lists from presence, not a DB query, for the same realtime-without-
+   * polling reason everything else here does. */
+  access: SessionAccess;
+  /** "Live Now" directory: how many people are currently on this live --
+   * updated by the HOST's own tab (see updateParticipantCount below,
+   * called from LiveStage.tsx) whenever its approved-guest count changes.
+   * Starts at 0 (just the host) at goLive() time. */
+  participant_count: number;
 }
 
 export interface BloomEvent {
@@ -126,7 +140,7 @@ export function useTribalLiveOrchard() {
   }, [presenceKey]);
 
   const goLive = useCallback(
-    async (seed: { id: string; title: string; image?: string | null }) => {
+    async (seed: { id: string; title: string; image?: string | null }, opts?: { access?: SessionAccess }) => {
       const ch = ensureChannel(presenceKey);
       if (!user?.id) return null;
 
@@ -159,16 +173,25 @@ export function useTribalLiveOrchard() {
       // rooms, with no error anywhere for anyone to notice.
       let gatheringSessionId: string | null = null;
       let room: string;
+      // "Live Now" directory (2026-09-15): access follows the exact same
+      // reuse-over-remint rule jitsi_room just got fixed to follow --
+      // resuming an already-live session keeps whatever access it already
+      // has (a host re-entering their own live shouldn't silently flip an
+      // already-Restricted session back to Open); only a genuinely NEW
+      // session takes opts?.access, defaulting to 'open'.
+      let access: SessionAccess;
       try {
         const { data: existing } = await supabase
           .from('gathering_sessions' as any)
-          .select('id, jitsi_room')
+          .select('id, jitsi_room, access')
           .eq('seed_id', seed.id)
           .eq('host_id', user.id)
           .is('ended_at', null)
           .maybeSingle();
         const existingRoom = (existing as any)?.jitsi_room as string | null | undefined;
+        const existingAccess = (existing as any)?.access as SessionAccess | null | undefined;
         room = existingRoom || `s2g_seed_${seed.id.replace(/-/g, '')}_${Date.now().toString(36)}`;
+        access = existingAccess || opts?.access || 'open';
 
         if (existing) {
           gatheringSessionId = (existing as any).id;
@@ -182,7 +205,7 @@ export function useTribalLiveOrchard() {
         } else {
           const { data: created, error } = await supabase
             .from('gathering_sessions' as any)
-            .insert({ seed_id: seed.id, host_id: user.id, board_state: INITIAL_STAGE, jitsi_room: room })
+            .insert({ seed_id: seed.id, host_id: user.id, board_state: INITIAL_STAGE, jitsi_room: room, access })
             .select('id')
             .maybeSingle();
           if (!error && created) gatheringSessionId = (created as any).id;
@@ -191,9 +214,10 @@ export function useTribalLiveOrchard() {
       } catch (e) {
         console.error('goLive: gathering_sessions row failed', e);
         room = `s2g_seed_${seed.id.replace(/-/g, '')}_${Date.now().toString(36)}`;
+        access = opts?.access || 'open';
       }
       myGatheringSessionId = gatheringSessionId;
-      console.warn(`[useTribalLiveOrchard] goLive -- seed: ${seed.id}, gatheringSessionId: ${gatheringSessionId}, jitsi_room: ${room}`);
+      console.warn(`[useTribalLiveOrchard] goLive -- seed: ${seed.id}, gatheringSessionId: ${gatheringSessionId}, jitsi_room: ${room}, access: ${access}`);
 
       const presence: LivePresence = {
         user_id: user.id,
@@ -208,6 +232,8 @@ export function useTribalLiveOrchard() {
         seed_image: seed.image || null,
         jitsi_room: room,
         started_at: new Date().toISOString(),
+        access,
+        participant_count: 0,
       };
       myPresenceMap.set(seed.id, presence);
       // Track the most recent presence (Supabase presence per key is replace-style)
@@ -217,6 +243,39 @@ export function useTribalLiveOrchard() {
     },
     [presenceKey, user]
   );
+
+  // "Live Now" directory: the host's own tab reports how many approved
+  // guests are currently on the live (LiveStage.tsx calls this whenever
+  // its `approved.length` changes) -- presence has no other channel for
+  // this, and a directory listing needs it without joining every session
+  // just to count heads.
+  const updateParticipantCount = useCallback((seedId: string, count: number) => {
+    const ch = ensureChannel(presenceKey);
+    const existing = myPresenceMap.get(seedId);
+    if (!existing || existing.participant_count === count) return;
+    const updated: LivePresence = { ...existing, participant_count: count };
+    myPresenceMap.set(seedId, updated);
+    void ch.track(updated);
+  }, [presenceKey]);
+
+  // "Live Now" directory: host-only access toggle (LiveStageOverlay.tsx) --
+  // updates the durable row (source of truth for a late joiner reading
+  // straight from gathering_sessions) and re-tracks presence (source of
+  // truth for the directory listing itself) together, so neither can be
+  // seen briefly out of sync with the other.
+  const updateSessionAccess = useCallback(async (seedId: string, access: SessionAccess) => {
+    const ch = ensureChannel(presenceKey);
+    const existing = myPresenceMap.get(seedId);
+    if (existing) {
+      const updated: LivePresence = { ...existing, access };
+      myPresenceMap.set(seedId, updated);
+      void ch.track(updated);
+    }
+    if (myGatheringSessionId) {
+      const { error } = await supabase.from('gathering_sessions' as any).update({ access }).eq('id', myGatheringSessionId);
+      if (error) console.error('updateSessionAccess: gathering_sessions update failed', error);
+    }
+  }, [presenceKey]);
 
   const endLive = useCallback(async (opts?: { seedId?: string; seedTitle?: string; transcript?: string; bestowers?: Array<{ user_id: string; name?: string; amount?: number; chat_snippet?: string }> }) => {
     if (channel) {
@@ -282,5 +341,7 @@ export function useTribalLiveOrchard() {
     goLive,
     endLive,
     sendBloom,
+    updateParticipantCount,
+    updateSessionAccess,
   };
 }

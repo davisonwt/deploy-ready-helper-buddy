@@ -15,12 +15,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  X, MessageCircle, ChevronLeft, ChevronRight, EyeOff, Eye, Send, Users, Radio, Share2,
+  X, MessageCircle, ChevronLeft, ChevronRight, EyeOff, Eye, Send, Users, Radio, Share2, Lock, Unlock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import LiveStage from '@/components/live/LiveStage';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useTribalLiveOrchard, type SessionAccess } from '@/hooks/useTribalLiveOrchard';
 
 export interface LiveStageOverlayProps {
   seedId: string;
@@ -52,12 +53,38 @@ export default function LiveStageOverlay({
 }: LiveStageOverlayProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { updateSessionAccess } = useTribalLiveOrchard();
 
   const imgList = (images || []).filter(Boolean) as string[];
   const [overlayImgIdx, setOverlayImgIdx] = useState(0);
   const [faceless, setFaceless] = useState(false);
   const [chatMsgs, setChatMsgs] = useState<Array<{ id: string; from: string; text: string; at: number }>>([]);
   const [chatDraft, setChatDraft] = useState('');
+
+  // "Live Now" directory (2026-09-15): host-only Open/Restricted toggle.
+  // Read straight off this host's own gathering_sessions row (hostSessionId
+  // is only ever set for the actual host -- see this prop's own doc
+  // comment) rather than threading access through every goLive() caller;
+  // one place to read/toggle it, works everywhere this overlay is used.
+  const [access, setAccess] = useState<SessionAccess>('open');
+  useEffect(() => {
+    if (!isHost || !hostSessionId) return;
+    let cancelled = false;
+    supabase.from('gathering_sessions' as any).select('access').eq('id', hostSessionId).maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const a = (data as any)?.access as SessionAccess | undefined;
+        if (a === 'open' || a === 'restricted') setAccess(a);
+      });
+    return () => { cancelled = true; };
+  }, [isHost, hostSessionId]);
+
+  const toggleAccess = async () => {
+    const next: SessionAccess = access === 'open' ? 'restricted' : 'open';
+    setAccess(next);
+    await updateSessionAccess(seedId, next);
+    toast.success(next === 'open' ? 'Session is now Open — listed in Live Now, anyone can join' : 'Session is now Restricted — invite link only, not listed as joinable');
+  };
 
   // Live-room chat (Supabase realtime broadcast)
   useEffect(() => {
@@ -109,6 +136,20 @@ export default function LiveStageOverlay({
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {isHost && (
+            <button
+              onClick={() => void toggleAccess()}
+              className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-bold ${
+                access === 'open' ? 'text-emerald-300 hover:bg-emerald-500/10' : 'text-amber-300 hover:bg-amber-500/10'
+              }`}
+              title={access === 'open'
+                ? 'Open — anyone can find and join from Live Now. Tap to make invite-only.'
+                : 'Restricted — invite link only, not listed as joinable. Tap to make it open.'}
+            >
+              {access === 'open' ? <Unlock className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+              {access === 'open' ? 'Open session' : 'Restricted'}
+            </button>
+          )}
           <button
             onClick={() => setFaceless(f => !f)}
             className="flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-white/10"

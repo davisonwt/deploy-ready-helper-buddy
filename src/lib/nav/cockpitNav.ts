@@ -26,6 +26,10 @@ export interface CockpitNavItem {
  * a SeedCard IS Let It Rain now, no separate feature/nav entry at all.
  */
 export const COCKPIT_NAV: CockpitNavItem[] = [
+  // Urgent, 2026-09-15: real users could not find each other's live
+  // sessions without a shared link -- listed first so it's the most
+  // visible nav item, not buried under Tribal Gardens.
+  { label: 'Live Now', sub: 'Join a live session happening now', emoji: '🔴', path: '/live-now', color: '#e11d48' },
   { label: 'Tribal Gardens', sub: 'All tribal seeds & orchards', emoji: '🌳', path: '/stalls-feed', color: '#0d9488' },
   // Wandering Hearts now has its own stall (S2G-run, phase 1) -- points
   // there instead of /tribal-hearts for now; /tribal-hearts keeps working

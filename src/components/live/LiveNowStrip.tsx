@@ -5,7 +5,7 @@
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Radio, Users, ArrowRight } from 'lucide-react';
+import { Radio, Users, ArrowRight, Lock, Unlock } from 'lucide-react';
 import { useTribalLiveOrchard, type LivePresence } from '@/hooks/useTribalLiveOrchard';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
 import { useAuth } from '@/hooks/useAuth';
@@ -31,9 +31,17 @@ function LiveNowStrip({ className = '' }: { className?: string }) {
             </span>
             Live now in the orchard
           </div>
-          <span className="rounded-full border border-rose-400/40 bg-rose-500/10 px-2 py-0.5 font-bold text-rose-200">
-            {liveSeeds.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full border border-rose-400/40 bg-rose-500/10 px-2 py-0.5 font-bold text-rose-200">
+              {liveSeeds.length}
+            </span>
+            <button
+              onClick={() => navigate('/live-now')}
+              className="font-bold text-emerald-300 hover:text-emerald-200 hover:underline"
+            >
+              See all live sessions →
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -55,24 +63,31 @@ function LiveNowStrip({ className = '' }: { className?: string }) {
               <div className="flex flex-1 flex-col justify-between p-2">
                 <div className="min-w-0">
                   <div className="truncate text-xs font-extrabold text-white">{p.seed_title}</div>
-                  <div className="mt-0.5 flex items-center gap-1 truncate text-[10px] text-emerald-200/80">
+                  <div className="mt-0.5 flex items-center gap-1.5 truncate text-[10px] text-emerald-200/80">
                     <Users className="h-2.5 w-2.5" /> {p.display_name || 'Tribe member'}
+                    <span className="text-white/30">·</span>
+                    <span className={`inline-flex items-center gap-0.5 font-bold ${p.access === 'restricted' ? 'text-amber-300' : 'text-emerald-300'}`}>
+                      {p.access === 'restricted' ? <Lock className="h-2.5 w-2.5" /> : <Unlock className="h-2.5 w-2.5" />}
+                      {p.access === 'restricted' ? 'Restricted' : 'Open'}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setJoining(p)}
-                    className="flex flex-1 items-center justify-center gap-1 rounded-md bg-emerald-500 px-2 py-1.5 text-[11px] font-extrabold text-black hover:bg-emerald-400"
-                  >
-                    Join the live <ArrowRight className="h-3 w-3" />
-                  </button>
-                  <button
-                    onClick={() => navigate(`/live/${p.seed_id}/room`)}
-                    className="rounded-md border border-white/15 bg-black/40 px-2 py-1.5 text-[10px] font-bold text-white/80 hover:bg-white/10"
-                    title="See everyone in this live"
-                  >
-                    See all
-                  </button>
+                  {(p.access !== 'restricted' || user?.id === p.user_id) ? (
+                    <button
+                      onClick={() => setJoining(p)}
+                      className="flex flex-1 items-center justify-center gap-1 rounded-md bg-emerald-500 px-2 py-1.5 text-[11px] font-extrabold text-black hover:bg-emerald-400"
+                    >
+                      Join the live <ArrowRight className="h-3 w-3" />
+                    </button>
+                  ) : (
+                    <span
+                      className="flex flex-1 items-center justify-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-1.5 text-[11px] font-bold text-white/40"
+                      title="This host has kept this session invite-only"
+                    >
+                      Invite only
+                    </span>
+                  )}
                   {user?.id === p.user_id && (
                     <button
                       onClick={async () => { await endLive({ seedId: p.seed_id, seedTitle: p.seed_title }); }}

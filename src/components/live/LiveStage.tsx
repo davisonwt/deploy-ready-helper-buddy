@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 import { useDailyCallObject, type CallParticipant } from '@/hooks/useDailyCallObject';
 import { useAuth } from '@/hooks/useAuth';
 import { useLiveStage, type StageMode, type NowPlaying, type ApprovedGuest, type HandRaise } from '@/hooks/useLiveStage';
+import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { useMediaRecorder } from '@/hooks/useMediaRecorder';
 import { supabase } from '@/integrations/supabase/client';
 import { moderateStorageUpload } from '@/lib/moderation/moderateUpload';
@@ -118,6 +119,17 @@ export default function LiveStage({
   // in the engine.
   const [openTileId, setOpenTileId] = useState<string | null>(null);
   const [queueSheetOpen, setQueueSheetOpen] = useState(false);
+
+  // "Live Now" directory: report how many approved guests are on this live
+  // to presence, so the directory can show a participant count without
+  // joining every session just to count heads. Host-only -- a guest's own
+  // `approved` list is identical (same broadcast state), but only the
+  // host's tab has a presence entry to update.
+  const { updateParticipantCount } = useTribalLiveOrchard();
+  useEffect(() => {
+    if (!isHost) return;
+    updateParticipantCount(seedId, approved.length);
+  }, [isHost, seedId, approved.length, updateParticipantCount]);
 
   const spotlightUserId = stage.spotlightUserId ?? null;
   const spotlightedGuest = approved.find(g => g.user_id === spotlightUserId) ?? null;

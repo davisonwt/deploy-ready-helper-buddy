@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import StallSideNav from '@/components/stalls/StallSideNav';
 import StallTodayPanel from '@/components/stalls/StallTodayPanel';
+import LiveNowStrip from '@/components/live/LiveNowStrip';
 import { STALL_CATEGORIES, STALL_TIER_LABEL, type StallCategory, type StallTier } from '@/lib/stalls/stallTypes';
 import SeedCard from '@/components/seeds/SeedCard';
 import { fetchTribeOrchards } from '@/api/sowerContent';
@@ -366,6 +367,13 @@ export default function StallsFeedPage() {
         />
 
         <div className="flex-1 min-h-0 min-w-0 flex flex-col lg:bg-[#140c06]">
+          {/* "Live Now" directory (urgent, 2026-09-15): surfaced at the top
+              of Tribal Gardens so a live session is findable without a
+              shared link -- see LiveNowStrip's own doc comment. Renders
+              nothing when no one's live. */}
+          <div className="shrink-0 px-4 pt-3 lg:bg-[#140c06]">
+            <LiveNowStrip />
+          </div>
           {/* My Tribe's "My village" hotspot arrives with ?tribe=mine --
               shown as a dismissible badge rather than silently narrowing
               the feed with no indication why, or trapping the visitor in

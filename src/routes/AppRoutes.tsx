@@ -23,6 +23,7 @@ import {
   StallBuildPage,
   StallVisitPage,
   StallsFeedPage,
+  LiveNowPage,
   ReceiptPage,
   BulkUploadWizardPage,
   BulkSowerPage,
@@ -321,6 +322,9 @@ const AppRoutes = () => (
     } />
     <Route path="/stalls-feed" element={
       <ProtectedRoute><RequireVerification><Layout><Suspense fallback={<LoadingFallback />}><StallsFeedPage /></Suspense></Layout></RequireVerification></ProtectedRoute>
+    } />
+    <Route path="/live-now" element={
+      <ProtectedRoute><RequireVerification><Layout><Suspense fallback={<LoadingFallback />}><LiveNowPage /></Suspense></Layout></RequireVerification></ProtectedRoute>
     } />
     <Route path="/factories" element={<Layout><FactoriesDirectoryPage /></Layout>} />
     <Route path="/factories/:slug" element={<Layout><FactoryDetailPage /></Layout>} />
