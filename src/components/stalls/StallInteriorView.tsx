@@ -229,6 +229,21 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
     autoJoinedRef.current = true;
     setScriptureRoom(scriptureStudyPresence.jitsi_room);
   }, [user, scriptureStudyPresence]);
+  // Companion to the auto-join above, for a visitor who isn't signed in
+  // yet (a shared invite link is the common case) -- the live itself
+  // (Daily call token, chat, raise-hand) is user-keyed everywhere else in
+  // the app, so there's no anonymous viewer path to drop them into
+  // directly. Surfacing the join sheet immediately, same trigger
+  // (scriptureStudyPresence), means signing in is the ONLY tap standing
+  // between "opened the link" and "in the live" -- once `user` becomes
+  // truthy the effect above fires on its own next render. Own guard ref
+  // so dismissing the sheet manually doesn't reopen it every re-render.
+  const autoPromptedJoinRef = useRef(false);
+  useEffect(() => {
+    if (user || !scriptureStudyPresence || autoPromptedJoinRef.current) return;
+    autoPromptedJoinRef.current = true;
+    setShowJoinSheet(true);
+  }, [user, scriptureStudyPresence]);
   const navigate = useNavigate();
   const handleLogout = async () => {
     try { await logout(); } catch { /* ignore -- navigate away regardless */ }

@@ -95,9 +95,12 @@ export default function StallVisitPage() {
   }, [stall?.interior_image_path, retryNonce]);
 
   const isOwner = !!user && !!stall && user.id === stall.user_id;
-  // Pre-flight (2026-09-13, Davison): only reachable for the broken-image
-  // fallback card below -- the normal path renders StallInteriorView
-  // directly, which carries this same badge itself.
+  // Also gates the front gate itself below -- a visitor arriving (invite
+  // link or otherwise) while the owner is live must never be made to tap
+  // through an empty-looking gate/interior first. Confirmed live,
+  // 2026-09-14: Davison live at Scripture Study, a guest opening the
+  // invite link still landed on the front gate, then the plain interior --
+  // this check used to only feed the broken-image fallback card's badge.
   const { liveSeeds } = useTribalLiveOrchard();
   const ownerIsLive = !!stall && liveSeeds.some((p) => p.user_id === stall.user_id);
 
@@ -152,7 +155,7 @@ export default function StallVisitPage() {
     );
   }
 
-  if (stall.enter_via_front && stall.front_image_path && !entered) {
+  if (stall.enter_via_front && stall.front_image_path && !entered && !ownerIsLive) {
     return (
       <StallFrontGate
         frontImageUrl={stall.front_image_path}
