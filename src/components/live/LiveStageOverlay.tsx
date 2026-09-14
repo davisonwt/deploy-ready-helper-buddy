@@ -86,7 +86,7 @@ export default function LiveStageOverlay({
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[1000] flex flex-col bg-black"
     >
-      <div className="flex items-center justify-between border-b border-emerald-500/20 bg-emerald-950/60 px-4 py-2 text-white">
+      <div className="flex items-center justify-between gap-y-1 border-b border-emerald-500/20 bg-emerald-950/60 px-4 py-2 text-white max-lg:portrait:flex-wrap max-lg:portrait:shrink-0">
         <div className="flex items-center gap-2 text-sm">
           <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-400" />
           Live: <span className="font-semibold">{title}</span>
@@ -137,8 +137,17 @@ export default function LiveStageOverlay({
       </div>
 
       <div className="flex flex-1 min-h-0 flex-col md:flex-row">
-        {/* LEFT: Stage */}
-        <div className="relative flex-1 min-h-[40vh] bg-black">
+        {/* LEFT: Stage. Portrait phone: an explicit flex ratio against the
+            chat panel below (both min-h-0) instead of flex-1 racing a
+            content-sized sibling -- previously the board could get
+            squeezed toward its min-h-[40vh] floor by however much chat/
+            seed-media content happened to need, and nothing stopped the
+            total from exceeding the viewport (chat's own input pushed off
+            the bottom). A fixed ratio makes "board is the largest
+            element" and "chat never pushes the board off screen" both
+            true regardless of message count. Desktop/landscape (md+)
+            unaffected -- flex-1 there still means "the rest of the row". */}
+        <div className="relative flex-1 min-h-[40vh] bg-black max-lg:portrait:flex-[3] max-lg:portrait:min-h-0 max-lg:portrait:basis-0">
           <LiveStage
             seedId={seedId}
             title={title}
@@ -153,17 +162,20 @@ export default function LiveStageOverlay({
           />
         </div>
 
-        {/* RIGHT: seed media + chat */}
-        <div className="flex w-full md:w-[360px] flex-col border-l border-white/5 bg-[#0a0f1a] text-white">
-          <div className="border-b border-white/5 p-3">
+        {/* RIGHT: seed media + chat. Portrait phone: explicit flex ratio
+            against the board above (see its own comment) -- and seed
+            media (carousel/inline video/audio) is dropped entirely so
+            this panel is just chat, filling its whole allotted share. */}
+        <div className="flex w-full md:w-[360px] flex-col border-l border-white/5 bg-[#0a0f1a] text-white max-lg:portrait:flex-[2] max-lg:portrait:min-h-0 max-lg:portrait:basis-0 max-lg:portrait:w-full">
+          <div className="hidden max-lg:landscape:block lg:block border-b border-white/5 p-3">
             <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">🌱 Seed Media</div>
             <div className="mt-1 truncate text-sm font-bold">{title}</div>
             {subtitle && <div className="mt-0.5 line-clamp-2 text-xs text-white/60">{subtitle}</div>}
           </div>
 
-          {/* Image carousel */}
+          {/* Image carousel (desktop/landscape only, see above) */}
           {imgList.length > 0 && (
-            <div className="relative h-44 bg-black">
+            <div className="hidden max-lg:landscape:block lg:block relative h-44 bg-black">
               <img
                 key={imgList[overlayImgIdx % imgList.length]}
                 src={imgList[overlayImgIdx % imgList.length]}
@@ -190,15 +202,18 @@ export default function LiveStageOverlay({
             </div>
           )}
 
-          {/* Inline media */}
+          {/* Inline media (desktop/landscape only, see above) */}
           {mediaUrl && mediaKind === 'video' && (
-            <video src={mediaUrl} controls className="w-full bg-black" />
+            <video src={mediaUrl} controls className="hidden max-lg:landscape:block lg:block w-full bg-black" />
           )}
           {mediaUrl && mediaKind === 'audio' && (
-            <audio src={mediaUrl} controls className="w-full p-2" />
+            <audio src={mediaUrl} controls className="hidden max-lg:landscape:block lg:block w-full p-2" />
           )}
 
-          {/* Chat */}
+          {/* Chat -- fills whatever's left of this panel's own flex-[2]
+              share on portrait; input stays a normal flow child (not
+              position:fixed) so it's never hidden behind the on-screen
+              keyboard, just wherever this bounded column's bottom is. */}
           <div className="flex flex-1 min-h-0 flex-col">
             <div className="border-b border-t border-white/5 bg-black/30 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-400">
               💬 Live Chat
