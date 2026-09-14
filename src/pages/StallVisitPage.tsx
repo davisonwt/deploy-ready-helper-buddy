@@ -58,7 +58,18 @@ export default function StallVisitPage() {
   // entirely -- StallsFeedPage.openStall already tags that one navigation
   // with #open (nothing else in the app does), so it doubles as the "came
   // from a feed card, not the nav" signal with no new plumbing.
-  const [entered, setEntered] = useState(() => window.location.hash.startsWith('#open'));
+  //
+  // `?live=1` is the same idea for a live-session invite link
+  // (shareStallLink's `opts.live`, burned into the URL at share time by
+  // the sharer's own client, which already knows for certain the stall is
+  // live) -- an explicit, synchronous signal read on the very first
+  // render, not dependent on THIS visitor's own realtime presence
+  // subscription completing first. See the ownerIsLive effect below for
+  // the plain-URL (no signal) case.
+  const [entered, setEntered] = useState(() => {
+    if (window.location.hash.startsWith('#open')) return true;
+    return new URLSearchParams(window.location.search).get('live') === '1';
+  });
 
   useEffect(() => {
     if (!username) { setStall(null); return; }
@@ -103,6 +114,19 @@ export default function StallVisitPage() {
   // this check used to only feed the broken-image fallback card's badge.
   const { liveSeeds } = useTribalLiveOrchard();
   const ownerIsLive = !!stall && liveSeeds.some((p) => p.user_id === stall.user_id);
+  // The plain /stall/<username> URL (no ?live=1 signal, e.g. a bookmark or
+  // an old link) must still land a visitor already-on-this-page in the
+  // live once one starts/is detected -- ownerIsLive itself races
+  // presence-sync (liveSeeds is empty for the first ~1-2s after a fresh
+  // or logged-out client's realtime channel subscribes), so the very
+  // FIRST render's gate-vs-interior choice can't be trusted alone.
+  // Re-evaluates reactively instead of once: the moment ownerIsLive flips
+  // true -- whenever presence actually finishes syncing -- this dismisses
+  // the gate even if it was already showing, rather than leaving the
+  // visitor stranded on whatever the first render happened to decide.
+  useEffect(() => {
+    if (ownerIsLive) setEntered(true);
+  }, [ownerIsLive]);
 
   // Stall invite links ("come see my shop"): a referred signup queues the
   // inviter's display name (useAuth.jsx's register(), src/lib/referral.ts)

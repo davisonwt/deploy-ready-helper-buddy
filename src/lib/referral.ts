@@ -82,8 +82,16 @@ export function burnReferralCode(url: string, code?: string | null): string {
  * happens; before it, this correctly shares whatever Vercel/Lovable URL
  * is actually live right now.
  */
-export async function shareStallLink(username: string, stallName: string, viewerId?: string | null): Promise<void> {
+export async function shareStallLink(username: string, stallName: string, viewerId?: string | null, opts?: { live?: boolean }): Promise<void> {
   let url = `${window.location.origin}/stall/${username}`;
+  // `?live=1` -- an explicit, stable signal that survives the round trip
+  // through a copy/paste or a native share sheet, unlike relying on the
+  // recipient's own client to detect the live via presence (which races:
+  // liveSeeds is empty for the first ~1-2s after a fresh/logged-out
+  // client's realtime channel subscribes -- see StallVisitPage.tsx).
+  // Caller passes this when the stall is actually live right now (e.g.
+  // StallInteriorView's own `ownerIsLive`).
+  if (opts?.live) url += "?live=1";
   if (viewerId) {
     try {
       const { code } = await ensureReferralCode(viewerId);

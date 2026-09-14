@@ -422,7 +422,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
     // Scripture Study: 'share' is exactly the header's own Share button,
     // just reachable from the painted plaque too -- never opens a sheet.
     if (h.kind === 'share') {
-      void shareStallLink(username ?? stallName, stallName, user?.id);
+      void shareStallLink(username ?? stallName, stallName, user?.id, { live: ownerIsLive });
       return;
     }
     // 'go_live': hidden from the rendered hotspot list entirely for a
@@ -641,7 +641,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
                       {username && (
                         <button
                           type="button"
-                          onClick={() => { shareStallLink(username, stallName, user?.id); setOwnerMenuOpen(false); }}
+                          onClick={() => { shareStallLink(username, stallName, user?.id, { live: ownerIsLive }); setOwnerMenuOpen(false); }}
                           className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
                         >
                           <Share2 className="h-4 w-4 shrink-0" /> Share my stall
@@ -668,7 +668,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           {username && (
             <button
               type="button"
-              onClick={() => shareStallLink(username, stallName, user?.id)}
+              onClick={() => shareStallLink(username, stallName, user?.id, { live: ownerIsLive })}
               aria-label="Share this stall"
               title="Share this stall"
               className="shrink-0 flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
@@ -788,7 +788,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
             {username && (
               <button
                 type="button"
-                onClick={() => shareStallLink(username, stallName, user?.id)}
+                onClick={() => shareStallLink(username, stallName, user?.id, { live: ownerIsLive })}
                 aria-label="Share this stall"
                 title="Share this stall"
                 className="flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
@@ -848,7 +848,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
                       {username && (
                         <button
                           type="button"
-                          onClick={() => { shareStallLink(username, stallName, user?.id); setOwnerMenuOpen(false); }}
+                          onClick={() => { shareStallLink(username, stallName, user?.id, { live: ownerIsLive }); setOwnerMenuOpen(false); }}
                           className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
                         >
                           <Share2 className="h-4 w-4 shrink-0" /> Share my stall
