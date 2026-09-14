@@ -368,6 +368,16 @@ export default function LiveStage({
   const [audioRetryKey, setAudioRetryKey] = useState(0);
   const handleEnableAudio = () => { setAudioBlocked(false); setAudioRetryKey(k => k + 1); };
 
+  // Mic-off-then-on forces a fresh silence check (useDailyCallObject.ts
+  // resets its "already checked" ref on every toggleAudio call) -- the
+  // banner's own retry action, for a mic that was silent because of a
+  // one-off device-selection glitch rather than a real permission block
+  // (still silent after this just confirms it's the latter).
+  const handleRetryMic = () => {
+    toggleMyAudio();
+    setTimeout(() => toggleMyAudio(), 400);
+  };
+
   // Stage content (what occupies the big tile)
   const stageImage = stage.mode === 'image'
     ? (stage.imageUrl || imgList[(stage.imageIdx ?? 0) % Math.max(imgList.length, 1)])
@@ -400,8 +410,24 @@ export default function LiveStage({
           just silently not hearing you gives you nothing to act on; this
           does. */}
       {roomActive && myAudioOn && myMicSilent && (
-        <div className="w-full shrink-0 bg-rose-600 px-3 py-2 text-center text-xs font-bold text-white">
-          🎙️ Your microphone isn't being shared — no one can hear you. Check your browser's mic permission and input device (Settings → Privacy → Microphone on Edge/Chrome), then rejoin.
+        <div className="z-20 flex w-full shrink-0 flex-col items-center gap-1.5 border-b-2 border-rose-300 bg-rose-600 px-3 py-3 text-center text-white shadow-[0_0_20px_rgba(225,29,72,0.6)] sm:flex-row sm:justify-center sm:gap-3">
+          <span className="flex items-center gap-2 text-sm font-extrabold">
+            <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
+            </span>
+            🎙️ Your microphone isn't being shared — no one can hear you.
+          </span>
+          <span className="text-xs font-medium text-rose-100">
+            Check your browser's mic permission &amp; input device (Settings → Privacy → Microphone on Edge/Chrome).
+          </span>
+          <button
+            type="button"
+            onClick={handleRetryMic}
+            className="flex-shrink-0 rounded-full bg-white px-3 py-1 text-xs font-extrabold text-rose-700 hover:bg-rose-50"
+          >
+            Try again
+          </button>
         </div>
       )}
       {/* Always mounted while the call is active, independent of stage.mode
