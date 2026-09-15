@@ -36,8 +36,27 @@ export function AdminButton() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // TEMPORARY diagnostic instrumentation (2026-09-15) -- reported live:
+  // clicking this button does nothing, no dropdown, no error visible to
+  // the user. Console-only, no behavior change; remove once the root
+  // cause is confirmed from real console output.
+  useEffect(() => {
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const topEl = document.elementFromPoint(cx, cy);
+    console.warn('[AdminButton DIAG] trigger mounted', {
+      rect: { top: r.top, left: r.left, width: r.width, height: r.height },
+      elementAtCenter: topEl ? { tag: topEl.tagName, className: (topEl as HTMLElement).className, id: topEl.id } : null,
+      isTriggerItself: topEl === triggerRef.current,
+      userRoles,
+    });
+  }, [userRoles]);
+
   useEffect(() => {
     if (!open) return;
+    console.warn('[AdminButton DIAG] open effect running (open=true)');
     const updatePos = () => {
       const r = triggerRef.current?.getBoundingClientRect();
       if (r) setMenuPos({ top: r.bottom + 4, right: Math.max(8, window.innerWidth - r.right) });
@@ -98,7 +117,15 @@ export function AdminButton() {
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onPointerDown={() => console.warn('[AdminButton DIAG] trigger onPointerDown fired')}
+        onClick={() => {
+          console.warn('[AdminButton DIAG] trigger onClick fired', { openBefore: open });
+          try {
+            setOpen((v) => !v);
+          } catch (e) {
+            console.error('[AdminButton DIAG] setOpen threw', e);
+          }
+        }}
         aria-haspopup="true"
         aria-expanded={open}
         className="inline-flex items-center rounded-2xl border-2 border-[#20b2aa] bg-[#20b2aa] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#20b2aa]/90 hover:border-[#20b2aa]/90"
@@ -107,6 +134,7 @@ export function AdminButton() {
         gosat's ({userRoles.join(', ')})
         <ChevronDown className="w-3 h-3 ml-1" />
       </button>
+      {(() => { console.warn('[AdminButton DIAG] render decision', { open, menuPos, willRenderMenu: !!(open && menuPos) }); return null; })()}
       {open && menuPos && createPortal(
         <div
           ref={menuRef}
