@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { insertProduct } from '@/api/products';
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
+import { useExchangeRates, convertBetween } from '@/lib/currency/rates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileSpreadsheet, FileText, AlertCircle, CheckCircle2, ArrowLeft, Sprout, ImagePlus, X, Star, GripVertical, ChevronRight } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, AlertCircle, CheckCircle2, ArrowLeft, Sprout, ImagePlus, X, Star, GripVertical, ChevronRight, Images } from 'lucide-react';
 import SignedImg from '@/components/media/SignedImg';
 
 type ProductImage = { url: string; path: string };
@@ -21,11 +22,19 @@ type ParsedRow = {
     name?: string;
     description?: string;
     price?: number;
+    /** Raw, not-yet-converted source-currency price (e.g. price_zar) --
+     * cleared once converted to USD in `price` above. Kept only so the
+     * conversion step can tell "already USD" apart from "needs converting". */
+    price_zar?: number;
+    variant?: string;
     commission_pct?: number;
     commission_fixed?: number;
     category?: string;
     sku?: string;
     stock_qty?: number;
+    /** CSV-supplied filename to match against uploaded images by name in
+     * the Images step -- never sent to insertProduct itself. */
+    image_filename?: string;
   };
   issues: string[];
   images?: ProductImage[];
@@ -50,6 +59,7 @@ export default function BulkUploadWizardPage() {
   const [sowerId, setSowerId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [publishedCount, setPublishedCount] = useState(0);
+  const { rates, loading: ratesLoading } = useExchangeRates();
 
   useEffect(() => {
     (async () => {
@@ -86,11 +96,45 @@ export default function BulkUploadWizardPage() {
       clearInterval(tick);
       setProgress(100);
       if (!res.ok) throw new Error(json.error || 'Parse failed');
-      setRows(json.rows ?? []);
+      let parsedRows: ParsedRow[] = json.rows ?? [];
+
+      // price_zar (or any recognized non-USD price column) -- convert to
+      // USD here, once, via the same live exchange_rates table every other
+      // money display in this app uses (src/lib/currency/rates.ts), never
+      // stored as the raw source-currency number. Surfaced in a toast
+      // (not silent) with the exact rate used, and left fully editable in
+      // the review table below like any other field.
+      let zarConverted = 0;
+      let zarRate: number | null = null;
+      parsedRows = parsedRows.map((r) => {
+        const n = r.normalized;
+        if (n.price === undefined && n.price_zar !== undefined) {
+          const usd = convertBetween(n.price_zar, 'ZAR', 'USD', rates);
+          if (usd !== null) {
+            zarConverted++;
+            zarRate = rates.ZAR ?? zarRate;
+            const nextIssues = r.issues.filter((i) => i !== 'Missing price');
+            return { ...r, normalized: { ...n, price: Math.round(usd * 100) / 100 }, issues: nextIssues };
+          }
+          const nextIssues = r.issues.includes('Exchange rate unavailable for ZAR')
+            ? r.issues
+            : [...r.issues, 'Exchange rate unavailable for ZAR'];
+          return { ...r, issues: nextIssues };
+        }
+        return r;
+      });
+
+      setRows(parsedRows);
       setSummary(json.summary ?? null);
       setJobId(json.job_id ?? null);
       setStep(2);
       toast({ title: 'Seeds parsed', description: `${json.summary?.total ?? 0} rows ready for review.` });
+      if (zarConverted > 0) {
+        toast({
+          title: `Converted ${zarConverted} price${zarConverted === 1 ? '' : 's'} from ZAR`,
+          description: zarRate ? `Rate used: 1 USD = R${zarRate.toFixed(2)}. Review the converted prices below before publishing.` : undefined,
+        });
+      }
     } catch (e) {
       clearInterval(tick);
       toast({ title: 'Could not parse file', description: e instanceof Error ? e.message : String(e), variant: 'destructive' });
@@ -99,7 +143,7 @@ export default function BulkUploadWizardPage() {
       setParsing(false);
       setTimeout(() => setProgress(0), 800);
     }
-  }, [sowerId, toast]);
+  }, [sowerId, toast, rates]);
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -167,6 +211,7 @@ export default function BulkUploadWizardPage() {
                   type="file"
                   accept={ACCEPT}
                   className="max-w-xs"
+                  disabled={ratesLoading}
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
                 />
                 <div className="flex flex-wrap gap-2 justify-center pt-2">
@@ -174,7 +219,9 @@ export default function BulkUploadWizardPage() {
                     <Badge key={t} variant="secondary">{t}</Badge>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground pt-2">Max 50MB · PDF/DOCX flagged for review</p>
+                <p className="text-xs text-muted-foreground pt-2">
+                  {ratesLoading ? 'Loading exchange rates…' : 'Max 50MB · PDF/DOCX flagged for review'}
+                </p>
               </>
             )}
           </CardContent>
@@ -183,7 +230,11 @@ export default function BulkUploadWizardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Expected columns (any order, flexible names)</CardTitle>
-            <CardDescription>name · description · price · commission · category · sku · stock</CardDescription>
+            <CardDescription>
+              name (or product_name) · variant (folded into name) · description · price (or price_zar,
+              auto-converted to USD) · commission · category · sku · stock · image_filename (matched to
+              uploaded images by name in the next step)
+            </CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -385,6 +436,71 @@ function ImagesStep({
 
   const totalWithImages = rows.filter((r) => (r.images?.length ?? 0) > 0).length;
 
+  // ---- Batch matching: select every image at once (a folder, or every
+  // file extracted from a zip), matched to rows by the CSV's
+  // image_filename column comparing against each selected file's own
+  // name -- the per-row drag-and-drop above still works as a fallback/
+  // correction for anything left unmatched. ----
+  const [matching, setMatching] = useState(false);
+  const [matchReport, setMatchReport] = useState<{ matched: number; unmatchedFiles: string[]; rowsWithoutMatch: number } | null>(null);
+
+  const normalizeFilename = (name: string) => name.trim().toLowerCase().replace(/\.[a-z0-9]+$/i, '');
+
+  const matchAndUploadFiles = async (files: FileList | File[]) => {
+    if (!sowerId || !jobId) {
+      toast({ title: 'Missing sower or job', variant: 'destructive' });
+      return;
+    }
+    const fileList = Array.from(files).filter((f) => f.type.startsWith('image/'));
+    if (!fileList.length) return;
+    setMatching(true);
+
+    // Build filename -> file lookup once; only rows that don't already
+    // have an image get auto-matched, so a manual assignment already made
+    // is never silently overwritten.
+    const byNormalizedName = new Map<string, File>();
+    for (const f of fileList) byNormalizedName.set(normalizeFilename(f.name), f);
+
+    const usedFilenames = new Set<string>();
+    let matched = 0;
+    let rowsWithoutMatch = 0;
+
+    try {
+      for (const r of rows) {
+        if ((r.images?.length ?? 0) > 0) continue; // don't overwrite an existing manual assignment
+        const wanted = r.normalized.image_filename;
+        if (!wanted) { rowsWithoutMatch++; continue; }
+        const file = byNormalizedName.get(normalizeFilename(wanted));
+        if (!file) { rowsWithoutMatch++; continue; }
+
+        if (file.size > 5 * 1024 * 1024) {
+          toast({ title: `${file.name} skipped`, description: 'Max 5MB per image.', variant: 'destructive' });
+          continue;
+        }
+        const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const path = `products/${sowerId}/${jobId}_${r.idx}/${Date.now()}_0.${ext}`;
+        const { error } = await supabase.storage.from(IMG_BUCKET).upload(path, file, { upsert: false, contentType: file.type });
+        if (error) { toast({ title: `Upload failed for ${file.name}`, description: error.message, variant: 'destructive' }); continue; }
+        const { data: pub } = supabase.storage.from(IMG_BUCKET).getPublicUrl(path);
+        onUpdate(r.idx, [{ url: pub.publicUrl, path }]);
+        usedFilenames.add(normalizeFilename(wanted));
+        matched++;
+      }
+      const unmatchedFiles = fileList
+        .filter((f) => !usedFilenames.has(normalizeFilename(f.name)))
+        .map((f) => f.name);
+      setMatchReport({ matched, unmatchedFiles, rowsWithoutMatch });
+      toast({
+        title: `Matched ${matched} image${matched === 1 ? '' : 's'}`,
+        description: unmatchedFiles.length || rowsWithoutMatch
+          ? `${unmatchedFiles.length} uploaded file(s) didn't match any row; ${rowsWithoutMatch} row(s) still need an image. Assign the rest manually below.`
+          : 'Every product with an image_filename got matched.',
+      });
+    } finally {
+      setMatching(false);
+    }
+  };
+
   return (
     <div className="container max-w-7xl py-8 space-y-4">
       <div className="flex items-center justify-between">
@@ -395,6 +511,42 @@ function ImagesStep({
           {totalWithImages} / {rows.length} products with images
         </div>
       </div>
+
+      <Card className="border-dashed">
+        <CardHeader className="py-3">
+          <CardTitle className="text-base flex items-center gap-2"><Images className="h-4 w-4" /> Match all images at once</CardTitle>
+          <CardDescription>
+            Select every image file (or the whole extracted folder) at once — each one is matched to a
+            product by comparing its filename against the CSV's <code>image_filename</code> column. Rows
+            that already have an image, or that don't match anything, are left for the manual assignment
+            below.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Input
+            type="file"
+            accept="image/*"
+            multiple
+            // @ts-expect-error -- non-standard but widely supported attribute for "pick a whole folder"
+            webkitdirectory=""
+            disabled={matching}
+            onChange={(e) => { if (e.target.files?.length) matchAndUploadFiles(e.target.files); e.target.value = ''; }}
+          />
+          <p className="text-xs text-muted-foreground">Or select the individual image files directly (folder-picker not supported in every browser).</p>
+          {matching && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Sprout className="h-4 w-4 animate-pulse text-primary" /> Matching &amp; uploading…
+            </div>
+          )}
+          {matchReport && !matching && (
+            <p className="text-xs text-muted-foreground">
+              Last run: matched {matchReport.matched}
+              {(matchReport.unmatchedFiles.length > 0 || matchReport.rowsWithoutMatch > 0) &&
+                ` · ${matchReport.unmatchedFiles.length} file(s) unmatched · ${matchReport.rowsWithoutMatch} row(s) still need an image`}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4">
         {/* Row list */}
@@ -580,6 +732,13 @@ function PublishStep({
           bulk_upload_id: jobId,
           status,
           delivery_type: 'physical',
+          // No column default on either -- confirmed against a real,
+          // working physical-product row (kind='product', type='product')
+          // that this same standard SeedCard/basket/bestow/bookkeeping
+          // path already renders correctly; left unset here before, so a
+          // bulk-imported row never actually matched that convention.
+          kind: 'product',
+          type: 'product',
           file_url: '',
           image_urls: (r.images ?? []).map((im) => im.url),
           cover_image_url: r.images?.[0]?.url ?? null,

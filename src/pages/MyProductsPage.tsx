@@ -169,6 +169,12 @@ export default function MyProductsPage() {
                     Upload New Product
                   </Button>
                 </Link>
+                <Link to="/dashboard/sower/upload">
+                  <Button size="lg" variant="outline" className='backdrop-blur-md bg-white/10 border-white/30 text-white hover:bg-white/20'>
+                    <Package className="w-5 h-5 mr-2" />
+                    Import Products (CSV)
+                  </Button>
+                </Link>
                 <Link to="/seller/business-settings">
                   <Button size="lg" variant="outline" className='backdrop-blur-md bg-white/10 border-white/30 text-white hover:bg-white/20'>
                     <Store className="w-5 h-5 mr-2" />

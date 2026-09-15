@@ -12,20 +12,36 @@ const SYN: Record<string, string> = {
   name: 'name', product: 'name', title: 'name', product_name: 'name', item: 'name',
   description: 'description', desc: 'description', details: 'description', summary: 'description',
   price: 'price', amount: 'price', cost: 'price', unit_price: 'price',
+  // price_zar (or any non-USD price_<code> column) is kept SEPARATE from
+  // `price`, never aliased to it -- products.price is stored in USD
+  // (see src/lib/currency/rates.ts), so a raw ZAR number written straight
+  // into `price` would be ~18x too high. The client converts it via the
+  // live exchange_rates table (convertBetween) once rows come back, using
+  // the SAME currency-conversion path every other money display in this
+  // app already goes through -- not a bespoke rate here.
+  price_zar: 'price_zar',
+  // Variant (e.g. "30 Capsules") isn't its own product field -- it's
+  // folded into `name` below (name = "{product_name} {variant}"), so the
+  // existing single "Name" review column already shows the combined,
+  // correct result with no new UI needed.
+  variant: 'variant',
   commission: 'commission_pct', commission_pct: 'commission_pct', 'commission_%': 'commission_pct', whisperer_pct: 'commission_pct', whisperer: 'commission_pct',
   commission_fixed: 'commission_fixed', commission_amount: 'commission_fixed',
   category: 'category', cat: 'category',
   sku: 'sku', code: 'sku', product_code: 'sku',
   stock: 'stock_qty', qty: 'stock_qty', quantity: 'stock_qty', stock_qty: 'stock_qty', inventory: 'stock_qty',
+  // Passed through as-is for the client's Images step to match against
+  // uploaded file names -- never touched by this parser beyond that.
+  image_filename: 'image_filename', image: 'image_filename', photo: 'image_filename', filename: 'image_filename',
 };
 
 const norm = (s: string) => s.toLowerCase().trim().replace(/[\s\-]+/g, '_').replace(/[^a-z0-9_%]/g, '');
 const mapKey = (k: string) => SYN[norm(k)] ?? null;
 
 type Normalized = {
-  name?: string; description?: string; price?: number;
+  name?: string; description?: string; price?: number; price_zar?: number; variant?: string;
   commission_pct?: number; commission_fixed?: number;
-  category?: string; sku?: string; stock_qty?: number;
+  category?: string; sku?: string; stock_qty?: number; image_filename?: string;
 };
 
 function normalizeRow(raw: Record<string, unknown>): { normalized: Normalized; issues: string[] } {
@@ -33,17 +49,26 @@ function normalizeRow(raw: Record<string, unknown>): { normalized: Normalized; i
   for (const [k, v] of Object.entries(raw)) {
     const mapped = mapKey(k);
     if (!mapped || v === null || v === undefined || v === '') continue;
-    if (mapped === 'price' || mapped === 'commission_pct' || mapped === 'commission_fixed' || mapped === 'stock_qty') {
+    if (mapped === 'price' || mapped === 'price_zar' || mapped === 'commission_pct' || mapped === 'commission_fixed' || mapped === 'stock_qty') {
       const n = Number(String(v).replace(/[^0-9.\-]/g, ''));
       if (!Number.isNaN(n)) (out as any)[mapped] = n;
     } else {
       (out as any)[mapped] = String(v).trim();
     }
   }
+  // name = "{product_name} {variant}" -- concatenated here so the existing
+  // single "Name" review column already shows the right combined value;
+  // order-independent of which CSV column appeared first.
+  if (out.variant && out.name) out.name = `${out.name} ${out.variant}`.trim();
+
   const issues: string[] = [];
   if (!out.name) issues.push('Missing product name');
-  if (out.price === undefined) issues.push('Missing price');
-  else if (out.price < 0) issues.push('Price cannot be negative');
+  // price_zar (or any recognized non-USD price column) satisfies this --
+  // the client converts it to USD before publish; only flag if NEITHER
+  // a USD price nor a convertible one was found.
+  if (out.price === undefined && out.price_zar === undefined) issues.push('Missing price');
+  else if (out.price !== undefined && out.price < 0) issues.push('Price cannot be negative');
+  else if (out.price_zar !== undefined && out.price_zar < 0) issues.push('Price cannot be negative');
   if (out.commission_pct !== undefined && (out.commission_pct < 0 || out.commission_pct > 100))
     issues.push('Commission % must be 0-100');
   if (out.stock_qty !== undefined && out.stock_qty < 0) issues.push('Stock cannot be negative');
