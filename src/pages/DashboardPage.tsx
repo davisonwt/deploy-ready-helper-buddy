@@ -221,18 +221,29 @@ export default function CockpitPage() {
           live uses -- board (defaulted to this stall's own interior image,
           via initialBoard above), chat, raise-hand queue, host controls,
           Part 1's speaker-permission enforcement. No sowerUserId (nothing
-          to Bestow toward) and no openPath (no seed page to open). */}
+          to Bestow toward) and no openPath (no seed page to open).
+          LiveStageOverlay's own root is `fixed z-[1000]` -- fine when it's
+          nested INSIDE StallInteriorView's z-[9999] tree (Scripture Study's
+          own join flow does this), but here it's a plain SIBLING of
+          <StallInteriorView> in this page's own Fragment, so the two
+          compare z-index directly and 1000 loses to 9999 -- confirmed live:
+          StallInteriorView's own Owner Menu chrome intercepted clicks
+          meant for "End live". This wrapper re-establishes the stacking
+          context at a z-index StallInteriorView can never out-rank, same
+          fix shape as the AdminButton dropdown's z-index bug earlier. */}
       {adHocLive && (
-        <LiveStageOverlay
-          seedId={adHocLive.seed_id}
-          title={adHocLive.seed_title}
-          jitsiRoom={adHocLive.jitsi_room}
-          isHost
-          hostSessionId={adHocLive.gatheringSessionId}
-          images={stall.interior_image_path ? [stall.interior_image_path] : []}
-          whispererSharePct={0}
-          onClose={() => setEndFlowOpen(true)}
-        />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 2147483647 }}>
+          <LiveStageOverlay
+            seedId={adHocLive.seed_id}
+            title={adHocLive.seed_title}
+            jitsiRoom={adHocLive.jitsi_room}
+            isHost
+            hostSessionId={adHocLive.gatheringSessionId}
+            images={stall.interior_image_path ? [stall.interior_image_path] : []}
+            whispererSharePct={0}
+            onClose={() => setEndFlowOpen(true)}
+          />
+        </div>
       )}
 
       {endFlowOpen && (
