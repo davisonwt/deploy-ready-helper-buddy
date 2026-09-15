@@ -58,7 +58,25 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
     <div className={`bg-[#140c06] ${className}`}>
       <div className="flex items-center gap-2 px-3 pt-3 pb-1">
         <img src="/s2g-logo.webp" alt="" className="h-7 w-7 object-contain shrink-0" />
-        <span className="font-serif text-sm font-semibold text-amber-100">sow2grow</span>
+        <span className="flex-1 truncate font-serif text-sm font-semibold text-amber-100">sow2grow</span>
+        {/* Bug report, 2026-09-15: no logout option anywhere in the app UI.
+            Lives in the header row, not at the bottom of this column --
+            StallInteriorView/DashboardPage's own bottomBar renders as a
+            page-level `fixed inset-x-0 bottom-0 z-[500]` bar (its own
+            Plant-Seed/Go-Live/Chat row) that spans the FULL viewport
+            width, including over this column's bottom edge -- confirmed
+            live: a bottom-anchored button here was visible but its clicks
+            were silently swallowed by that bar sitting on top of it. The
+            header has no such overlap. */}
+        <button
+          type="button"
+          onClick={handleLogout}
+          aria-label="Log out"
+          title="Log out"
+          className="shrink-0 flex items-center justify-center rounded-full p-1.5 text-rose-300 hover:bg-rose-500/10 transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Farm-Stalls feed/interior (StallsFeedPage, StallVisitPage) had no
@@ -118,15 +136,6 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
         </button>
         {moreOpen && visibleMore.map((item) => renderRow(item, true))}
       </nav>
-
-      <button
-        type="button"
-        onClick={handleLogout}
-        className="flex w-full items-center gap-2.5 px-3 py-2.5 border-t border-amber-500/15 text-rose-300 hover:bg-rose-500/10 transition-colors"
-      >
-        <LogOut className="h-4 w-4 shrink-0" />
-        <span className="truncate font-serif text-[13px] font-semibold">Log out</span>
-      </button>
     </div>
   );
 }
