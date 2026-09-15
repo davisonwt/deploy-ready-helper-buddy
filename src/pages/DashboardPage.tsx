@@ -93,14 +93,22 @@ export default function CockpitPage() {
     }
   }
 
-  // "End live" doesn't immediately tear the session down -- it offers the
-  // save-as-seed prompt first (spec: "same option Scripture Study/recorded
-  // shows already use"), same as any other end-of-live flow in this app.
-  // Both the dialog's Save and Skip actions call finishAdHocLive below.
-  const finishAdHocLive = async () => {
-    setEndFlowOpen(false)
+  // "End live" ends the session right away (Daily call/chat/queue torn
+  // down immediately -- same "End live" already meant everywhere else in
+  // this app), THEN offers the save-as-seed prompt as its own standalone
+  // step. Confirmed live: keeping LiveStageOverlay mounted underneath the
+  // save prompt (so a still-connected guest's realtime activity kept
+  // re-rendering it) made the prompt's own buttons intermittently
+  // click-flaky in a real multi-participant run -- ending first removes
+  // the live background activity entirely, not just the symptom.
+  const [endedTitle, setEndedTitle] = useState('')
+  const handleEndLive = async () => {
+    setEndedTitle(adHocLive?.seed_title ?? '')
+    const seedIdForHarvest = user?.id
+    const seedTitleForHarvest = adHocLive?.seed_title
     setAdHocLive(null)
-    await endLive({ seedId: user?.id, seedTitle: adHocLive?.seed_title })
+    await endLive({ seedId: seedIdForHarvest, seedTitle: seedTitleForHarvest })
+    setEndFlowOpen(true)
   }
 
   // Bare content, no positioning of its own -- when a stall exists this
@@ -241,16 +249,16 @@ export default function CockpitPage() {
             hostSessionId={adHocLive.gatheringSessionId}
             images={stall.interior_image_path ? [stall.interior_image_path] : []}
             whispererSharePct={0}
-            onClose={() => setEndFlowOpen(true)}
+            onClose={() => void handleEndLive()}
           />
         </div>
       )}
 
       {endFlowOpen && (
         <SaveLiveAsSeedDialog
-          defaultTitle={adHocLive?.seed_title ?? ''}
+          defaultTitle={endedTitle}
           coverImage={stall.interior_image_path}
-          onDone={() => void finishAdHocLive()}
+          onDone={() => setEndFlowOpen(false)}
         />
       )}
     </>
