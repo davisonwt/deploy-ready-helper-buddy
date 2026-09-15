@@ -9,7 +9,7 @@ import { useAppContext } from '@/contexts/AppContext';
 export const NotificationBanner = () => {
   const { user } = useAuth();
   const { isEnabled, isInitializing, initializeNotifications } = useNotifications();
-  const { wizardOpen } = useAppContext();
+  const { wizardOpen, stallInteriorOpen } = useAppContext();
   const [dismissed, setDismissed] = useState(false);
 
   // Check if user has dismissed the banner
@@ -29,9 +29,13 @@ export const NotificationBanner = () => {
   };
 
   // Don't show if user is not logged in, notifications are already enabled, banner was
-  // dismissed, or a WizardContainer flow (its own Back/Next/Submit bar sits in this same
-  // bottom-right corner on mobile) is on screen.
-  if (!user || isEnabled || dismissed || wizardOpen) {
+  // dismissed, a WizardContainer flow (its own Back/Next/Submit bar sits in this same
+  // bottom-right corner on mobile) is on screen, or a stall interior is open -- this
+  // fixed bottom-right card was intercepting taps on any hotspot painted underneath it
+  // (found via the Gosat's Boardroom hotspot bug: GlobalChrome already hides its own
+  // three fixed-bottom-right widgets for stallInteriorOpen, but this banner -- mounted
+  // separately at the App root, not through GlobalChrome -- never got the same check).
+  if (!user || isEnabled || dismissed || wizardOpen || stallInteriorOpen) {
     return null;
   }
 

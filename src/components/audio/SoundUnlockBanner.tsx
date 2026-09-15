@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Volume2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { primeCallAudio } from '@/lib/callAudio';
+import { useAppContext } from '@/contexts/AppContext';
 
 // A small, dismissible pill prompting users to enable sound once per
 // session. This helps iOS users receive ringtones without tapping at call
@@ -23,6 +24,7 @@ const UNLOCKED_KEY = 'audioUnlocked';
 
 const SoundUnlockBanner: React.FC = () => {
   const location = useLocation();
+  const { stallInteriorOpen } = useAppContext();
   const [visible, setVisible] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
 
@@ -98,7 +100,14 @@ const SoundUnlockBanner: React.FC = () => {
     }
   }, []);
 
-  if (!visible) return null;
+  // Gosat's Boardroom hotspot bug: the existing hideOnMobileStallRoutes
+  // check above only hides this pill on MOBILE (`max-lg:hidden`) -- on
+  // desktop/landscape it stayed on top of the interior's own hotspot
+  // layer (z-[110], higher than any hotspot), silently eating taps on
+  // whichever painted box happened to sit under its bottom-right corner.
+  // stallInteriorOpen hides it unconditionally, any viewport, whenever an
+  // interior is actually open (not just on these two known routes).
+  if (!visible || stallInteriorOpen) return null;
 
   return (
     <div

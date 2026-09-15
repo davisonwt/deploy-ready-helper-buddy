@@ -15,7 +15,7 @@ import { useAppContext } from '@/contexts/AppContext';
  */
 export const PayoutSetupBanner = () => {
   const { user } = useAuth() as any;
-  const { wizardOpen } = useAppContext();
+  const { wizardOpen, stallInteriorOpen } = useAppContext();
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -30,9 +30,10 @@ export const PayoutSetupBanner = () => {
 
   // Only show for signed-in users whose profile says payout setup is incomplete.
   // We read straight from the user object (profile fields are merged in useAuth).
-  // Also hidden while a WizardContainer flow is on screen -- see NotificationBanner
-  // for why (same fixed bottom-right corner, same collision with the wizard's own nav bar).
-  if (!user || user.payout_setup_complete === true || dismissed || wizardOpen) {
+  // Also hidden while a WizardContainer flow, or a stall interior, is on screen --
+  // see NotificationBanner for why (same fixed bottom-right corner, same collision
+  // with the wizard's own nav bar / a painted hotspot underneath).
+  if (!user || user.payout_setup_complete === true || dismissed || wizardOpen || stallInteriorOpen) {
     return null;
   }
 

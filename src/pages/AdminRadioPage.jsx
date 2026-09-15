@@ -1,3 +1,6 @@
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "../components/ui/button";
 import { RadioSlotApprovalInterface } from "../components/radio/RadioSlotApprovalInterface";
 import AdminRadioManagement from "../components/radio/AdminRadioManagement";
 import { RadioScheduleGrid } from "../components/radio/RadioScheduleGrid";
@@ -9,6 +12,11 @@ function AdminRadioPage() {
       <div className="max-w-[1600px] mx-auto space-y-6">
         {/* Header */}
         <div className="mb-6">
+          <Button asChild variant="outline" size="sm" className="mb-4">
+            <Link to="/stall/gosatsboardroom">
+              <ArrowLeft className="h-4 w-4 mr-1" /> Back to Boardroom
+            </Link>
+          </Button>
           <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             AOD Station Radio Management
           </h1>

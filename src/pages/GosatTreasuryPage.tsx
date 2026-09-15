@@ -118,7 +118,7 @@ export default function GosatTreasuryPage() {
       <header className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost" size="sm" className="-ml-2">
-            <Link to="/admin/dashboard"><ArrowLeft className="h-4 w-4 mr-1" />Admin</Link>
+            <Link to="/stall/gosatsboardroom"><ArrowLeft className="h-4 w-4 mr-1" />Back to Boardroom</Link>
           </Button>
           <Vault className="h-7 w-7 text-primary" />
           <div>

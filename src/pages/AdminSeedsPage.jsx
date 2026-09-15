@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../integrations/supabase/client';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -6,7 +7,7 @@ import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import { useToast } from '../hooks/use-toast';
 import { useRoles } from '../hooks/useRoles';
-import { CheckCircle, XCircle, MessageCircle, ImageIcon } from 'lucide-react';
+import { CheckCircle, XCircle, MessageCircle, ImageIcon, ArrowLeft } from 'lucide-react';
 
 export default function AdminSeedsPage() {
   const [submissions, setSubmissions] = useState([]);
@@ -92,6 +93,11 @@ export default function AdminSeedsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-6">
       <div className="max-w-7xl mx-auto">
+        <Button asChild variant="outline" size="sm" className="mb-4">
+          <Link to="/stall/gosatsboardroom">
+            <ArrowLeft className="h-4 w-4 mr-1" /> Back to Boardroom
+          </Link>
+        </Button>
         <h1 className="text-4xl font-bold text-primary mb-8">Seeds Management</h1>
         
         <div className="grid gap-6">
