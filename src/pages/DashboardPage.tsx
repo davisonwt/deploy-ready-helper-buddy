@@ -189,7 +189,7 @@ export default function CockpitPage() {
       {/* Ad-hoc Go Live, step 1: just a title -- no seed, no whisperer
           commission, no product fields at all. */}
       {titleSheetOpen && (
-        <div className="fixed inset-0 z-[10010] flex items-end justify-center bg-black/70 sm:items-center" onClick={() => !startingLive && setTitleSheetOpen(false)}>
+        <div className="fixed inset-0 z-[2147483647] flex items-end justify-center bg-black/70 sm:items-center" onClick={() => !startingLive && setTitleSheetOpen(false)}>
           <div className="w-full max-w-sm rounded-t-2xl border border-rose-500/30 bg-[#0a0f1a] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-white sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-extrabold">🔴 Go Live</h3>
@@ -303,7 +303,7 @@ function SaveLiveAsSeedDialog({ defaultTitle, coverImage, onDone }: { defaultTit
   }
 
   return (
-    <div className="fixed inset-0 z-[10010] flex items-end justify-center bg-black/70 sm:items-center">
+    <div className="fixed inset-0 z-[2147483647] flex items-end justify-center bg-black/70 sm:items-center">
       <div className="w-full max-w-sm rounded-t-2xl border border-emerald-500/30 bg-[#0a0f1a] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-white sm:rounded-2xl">
         <h3 className="mb-1 text-sm font-extrabold">🌱 Save this live as a seed?</h3>
         <p className="mb-3 text-xs text-white/50">Keeps a free listing in your stall so the tribe can find it later.</p>
