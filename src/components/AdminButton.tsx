@@ -32,7 +32,7 @@ export function AdminButton() {
   // regardless of which page/drawer renders this button. Also portaled to
   // document.body, belt-and-suspenders on top of `fixed` alone.
   const [open, setOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -57,9 +57,29 @@ export function AdminButton() {
   useEffect(() => {
     if (!open) return;
     console.error('[AdminButton DIAG] open effect running (open=true)');
+    // Root cause, confirmed live 2026-09-15: this positioned itself via
+    // `right: window.innerWidth - trigger.right`, i.e. relative to the
+    // trigger's distance from the RIGHT edge -- correct for a
+    // top-right-corner trigger, but this button lives in StallSideNav,
+    // the LEFT-hand nav column (x near 0). For a trigger there, that
+    // math produces a huge `right` value, pushing the 256px (w-64) panel
+    // off the LEFT edge of the viewport entirely -- state (`open`,
+    // `menuPos`) was correct the whole time; the panel was just rendered
+    // off-screen. Position from the trigger's own LEFT edge instead,
+    // clamped to stay inside the viewport regardless of which side of
+    // the screen the trigger ends up on.
+    const MENU_WIDTH = 256; // w-64
+    const VIEWPORT_MARGIN = 8;
     const updatePos = () => {
       const r = triggerRef.current?.getBoundingClientRect();
-      if (r) setMenuPos({ top: r.bottom + 4, right: Math.max(8, window.innerWidth - r.right) });
+      if (!r) return;
+      const left = Math.max(
+        VIEWPORT_MARGIN,
+        Math.min(r.left, window.innerWidth - MENU_WIDTH - VIEWPORT_MARGIN)
+      );
+      const next = { top: r.bottom + 4, left };
+      console.error('[AdminButton DIAG] computed menuPos', { ...next, triggerRect: { top: r.top, left: r.left, right: r.right, bottom: r.bottom }, viewportWidth: window.innerWidth });
+      setMenuPos(next);
     };
     updatePos();
     const onClickOutside = (e: MouseEvent) => {
@@ -138,7 +158,7 @@ export function AdminButton() {
       {open && menuPos && createPortal(
         <div
           ref={menuRef}
-          style={{ position: 'fixed', top: menuPos.top, right: menuPos.right }}
+          style={{ position: 'fixed', top: menuPos.top, left: menuPos.left }}
           className="z-[1000] w-64 rounded-md border bg-white text-[#0A1931] shadow-lg"
         >
           <div className="flex items-center justify-between border-b px-2 py-1.5 sm:hidden">
