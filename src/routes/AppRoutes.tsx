@@ -6,6 +6,10 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { RequireVerification } from '@/components/auth/RequireVerification';
 import { RequireSettlementConsent } from '@/components/auth/RequireSettlementConsent';
 import Layout from '@/components/Layout';
+// Lazy -- this pulls in the whole Daily.co call engine (LiveStage/
+// LiveStageOverlay), which must NOT land in the main bundle every page
+// load pays for just because this is mounted unconditionally at the root.
+const GlobalLiveSessionOverlay = lazy(() => import('@/components/live/GlobalLiveSessionOverlay'));
 import { S2G_BALANCE_ENABLED } from '@/lib/featureFlags';
 import {
   Index,
@@ -189,7 +193,13 @@ function SearchRedirect() {
 }
 
 const AppRoutes = () => (
-  <Routes>
+  <>
+    {/* Mounted once here, above every route -- not inside any specific
+        page -- so a Gathering Room live survives in-app navigation and a
+        backgrounded-tab reload alike. See GlobalLiveSessionOverlay.tsx's
+        own doc comment for the full "silent auto-rejoin" design. */}
+    <Suspense fallback={null}><GlobalLiveSessionOverlay /></Suspense>
+    <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/login" element={<LoginPage />} />
     <Route path="/sow" element={
@@ -773,7 +783,8 @@ const AppRoutes = () => (
     } />
     <Route path="/trust" element={<Suspense fallback={<LoadingFallback />}><TrustPage /></Suspense>} />
     <Route path="*" element={<NotFound />} />
-  </Routes>
+    </Routes>
+  </>
 );
 
 export default AppRoutes;

@@ -27,6 +27,7 @@ import { useDailyCallObject, type CallParticipant } from '@/hooks/useDailyCallOb
 import { useAuth } from '@/hooks/useAuth';
 import { useLiveStage, type StageMode, type NowPlaying, type ApprovedGuest, type HandRaise } from '@/hooks/useLiveStage';
 import { useGatheringModerators } from '@/hooks/useGatheringModerators';
+import { useGatheringSessionId } from '@/hooks/useGatheringSessionId';
 import { useGatheringSongRequests } from '@/hooks/useGatheringSongRequests';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { useMediaRecorder } from '@/hooks/useMediaRecorder';
@@ -108,13 +109,17 @@ export default function LiveStage({
   // why this is a second, independent hook call rather than a value
   // threaded down from a single shared instance.
   const {
-    sessionId: gatheringSessionId,
+    hostId: gatheringHostId,
     isModerator,
     isHostOrMod,
     moderatorUserIds,
     addModerator,
     removeModerator,
   } = useGatheringModerators(seedId, isHost, hostSessionId);
+  // Song requests are still scoped per LIVE SESSION (one request queue per
+  // broadcast, not per host generally) -- gathering_moderators itself is
+  // what became host-scoped/persistent, not this.
+  const gatheringSessionId = useGatheringSessionId(seedId, hostSessionId);
   const {
     stage, setStageMode,
     hands, raiseHand, cancelHand, approveHand, denyHand,
@@ -450,22 +455,55 @@ export default function LiveStage({
     toggleVideo: toggleMyVideo,
     localMicSilent: myMicSilent,
     setRemoteAudio,
-  } = useDailyCallObject(roomActive ? 'custom' : null, jitsiRoom, displayName, roomActive, isHost, hostSessionId);
+    ejectRemote,
+  } = useDailyCallObject(roomActive ? 'custom' : null, jitsiRoom, displayName, roomActive, isHostOrMod, hostSessionId);
   const myLocalVideoTrack = Object.values(callParticipants).find(p => p.local)?.videoTrack ?? null;
+
+  // Part 2 (active speaker indicator): Daily's own reported per-participant
+  // audio state is the real ground truth for "currently has a live mic" --
+  // unlike liveSpeakerUserId (which only ever governs the queue-gated
+  // REGULAR-participant case), this is correct uniformly for the host,
+  // any moderator (mic open by default, self-managed from then on), and
+  // whoever currently holds the queue floor alike, with no separate
+  // per-role branching needed here.
+  const isAudibleUserId = (userId: string | null | undefined) => {
+    if (!userId) return false;
+    if (userId === user?.id) return myAudioOn;
+    return Object.values(callParticipants).some(p => p.userId === userId && p.audioOn);
+  };
+  // Part 2 (sharer indicator): whoever currently controls the board content
+  // -- host by default, or the spotlighted guest once handed off (same
+  // isActiveEditor condition the board-control code itself already uses).
+  // Camera mode isn't really "sharing" anything, so the badge only shows
+  // once the board is actually presenting something.
+  const currentSharerUserId: string | null = stage.mode === 'camera'
+    ? null
+    : (stage.spotlightUserId ?? gatheringHostId ?? null);
 
   // Speaker-permission enforcement (fixes: 5 in a Scripture Study room,
   // only host + first joiner could hear each other -- audibility was
   // purely incidental to Daily's own default routing, nothing ever
-  // actually gated it). Host-only, reconciled on every relevant change:
-  // for each currently-connected approved (non-host) guest, force their
-  // Daily audio to exactly "on" iff they're liveSpeakerUserId, "off"
-  // otherwise -- covers a guest's FIRST appearance (freshly approved,
-  // starts muted), a queue advance (previous speaker muted, next
-  // unmuted, same effect run), and re-asserts idempotently if a guest's
-  // own client ever tries to defeat it. `call.updateParticipant` only
-  // takes effect because this client's own token carries is_owner (see
-  // create-daily-meeting-token) -- a non-host running this same code
+  // actually gated it). Host-only (a single client runs the continuous
+  // reconciliation loop -- see the doc comment below on why not every
+  // owner-grant client also runs it), reconciled on every relevant
+  // change: for each currently-connected REGULAR (non-mod) participant,
+  // force their Daily audio to exactly "on" iff they're liveSpeakerUserId,
+  // "off" otherwise -- covers a guest's FIRST appearance (freshly
+  // approved, starts muted), a queue advance (previous speaker muted,
+  // next unmuted, same effect run), and re-asserts idempotently if a
+  // guest's own client ever tries to defeat it. `call.updateParticipant`
+  // only takes effect because this client's own token carries is_owner
+  // (see create-daily-meeting-token) -- a non-owner running this same code
   // would be a silent no-op at Daily's SFU, not a privilege escalation.
+  //
+  // Mic-rules revision: moderators are excluded from this forcing
+  // entirely -- their mic is open by default (useDailyCallObject's own
+  // hasOwnerGrant) and stays under THEIR OWN toggle from then on, never
+  // auto-muted by the speaker queue. Newly-promoted mods get one explicit
+  // force-ON the moment they appear in moderatorUserIds (covers a regular
+  // participant promoted mid-session while still queue-muted); demoting
+  // them just lets the queue-else-branch below reclaim them next pass,
+  // same as any other regular participant.
   const appliedRemoteAudioRef = useRef<Record<string, boolean>>({});
   useEffect(() => {
     if (!isHost) return;
@@ -473,7 +511,7 @@ export default function LiveStage({
     const applied = appliedRemoteAudioRef.current;
     for (const p of remoteBySessionId.values()) {
       if (!p.userId) continue;
-      const shouldBeOn = p.userId === liveSpeakerUserId;
+      const shouldBeOn = moderatorUserIds.has(p.userId) ? true : p.userId === liveSpeakerUserId;
       if (applied[p.sessionId] === shouldBeOn) continue;
       setRemoteAudio(p.sessionId, shouldBeOn);
       applied[p.sessionId] = shouldBeOn;
@@ -484,7 +522,7 @@ export default function LiveStage({
     for (const sid of Object.keys(applied)) {
       if (!remoteBySessionId.has(sid)) delete applied[sid];
     }
-  }, [isHost, callParticipants, liveSpeakerUserId, setRemoteAudio]);
+  }, [isHost, callParticipants, liveSpeakerUserId, moderatorUserIds, setRemoteAudio]);
 
   // Requirement: a participant leaving WHILE they're the live speaker
   // auto-advances the queue -- covers a real disconnect (closed tab,
@@ -681,7 +719,7 @@ export default function LiveStage({
             <ListMusic className="h-3 w-3" /> Song requests{songRequests.length > 0 ? ` (${songRequests.length})` : ''}
           </button>
         )}
-        {isHost && (
+        {isHostOrMod && (
           <button
             type="button"
             onClick={() => setParticipantsOpen(true)}
@@ -778,10 +816,13 @@ export default function LiveStage({
         </div>
       )}
 
-      {/* Part 2: Participants -- host-only "make mod"/"remove mod" per
-          connected Daily participant. Mods themselves never see this
-          panel (adding/removing a mod is a host-only action per spec). */}
-      {participantsOpen && isHost && (
+      {/* Part 2/4: Participants -- host-only "make mod"/"remove mod" per
+          connected Daily participant; host OR any moderator can mute/
+          unmute or remove(kick) any OTHER participant, including other
+          moderators -- never the host themselves (excluded below), matching
+          "only the host and other moderators can perform these actions on
+          moderators" (nothing says a mod can act on the host). */}
+      {participantsOpen && isHostOrMod && (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 sm:items-center" onClick={() => setParticipantsOpen(false)}>
           <div
             className="max-h-[70vh] w-full max-w-md overflow-hidden rounded-t-2xl border border-purple-500/30 bg-[#0a1320] sm:rounded-2xl"
@@ -797,11 +838,33 @@ export default function LiveStage({
               )}
               {Object.values(callParticipants).filter(p => !p.local).map((p) => {
                 const isMod = !!p.userId && moderatorUserIds.has(p.userId);
+                const isTargetHost = !!p.userId && !!gatheringHostId && p.userId === gatheringHostId;
                 return (
                   <div key={p.sessionId} className="flex items-center gap-2 border-b border-white/5 p-3">
                     <span className="flex-1 truncate text-sm text-white/90">{p.userName || 'Guest'}</span>
+                    {isTargetHost && <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">HOST</span>}
                     {isMod && <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-bold text-purple-300">MOD</span>}
-                    {p.userId && (
+                    {!isTargetHost && p.userId && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setRemoteAudio(p.sessionId, !p.audioOn)}
+                          title={p.audioOn ? 'Mute' : 'Unmute'}
+                          className={`flex h-7 w-7 items-center justify-center rounded-full ${p.audioOn ? 'bg-sky-500 text-black hover:bg-sky-400' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                        >
+                          {p.audioOn ? <Mic className="h-3.5 w-3.5" /> : <MicOff className="h-3.5 w-3.5" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => ejectRemote(p.sessionId)}
+                          title="Remove from the room"
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-400"
+                        >
+                          <UserMinus className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    )}
+                    {isHost && !isTargetHost && p.userId && (
                       <button
                         type="button"
                         onClick={() => (isMod ? removeModerator(p.userId!) : addModerator(p.userId!))}
@@ -862,7 +925,7 @@ export default function LiveStage({
             spotlightUserId={spotlightUserId}
             audioOn={myAudioOn}
             videoOn={myVideoOn}
-            canSpeak={isHost || iAmLiveSpeaker}
+            canSpeak={isHostOrMod || iAmLiveSpeaker}
             onToggleAudio={toggleMyAudio}
             onToggleVideo={toggleMyVideo}
             onLeave={() => setLeftCall(true)}
@@ -1091,14 +1154,24 @@ export default function LiveStage({
           {/* Host's own seat */}
           <div
             className={`relative flex h-24 w-32 flex-shrink-0 flex-col items-center justify-center rounded-lg border-2 ${
-              !spotlightUserId ? 'border-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.45)]' : 'border-emerald-500/40'
+              gatheringHostId && isAudibleUserId(gatheringHostId)
+                ? 'border-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.5)]'
+                : !spotlightUserId ? 'border-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.45)]' : 'border-emerald-500/40'
             } bg-emerald-950/50`}
             title="Host"
           >
             <Crown className="h-6 w-6 text-amber-300" />
-            <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-amber-200">Host</span>
+            <div className="mt-1 flex items-center gap-1">
+              {gatheringHostId && isAudibleUserId(gatheringHostId) && <Mic className="h-3 w-3 text-emerald-300 animate-pulse" />}
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-200">Host</span>
+            </div>
             {!spotlightUserId && (
               <span className="absolute top-1 right-1 rounded-full bg-amber-400 px-1.5 py-0.5 text-[9px] font-bold text-black">BIG</span>
+            )}
+            {currentSharerUserId && gatheringHostId === currentSharerUserId && (
+              <span className="absolute bottom-1 left-1 flex items-center gap-0.5 rounded-full bg-sky-500 px-1.5 py-0.5 text-[9px] font-bold text-black">
+                <FileText className="h-2.5 w-2.5" /> Sharing
+              </span>
             )}
           </div>
 
@@ -1111,11 +1184,13 @@ export default function LiveStage({
           {approved.map(g => {
             const isLit = g.user_id === spotlightUserId;
             const isSpeaking = g.user_id === liveSpeakerUserId;
+            const isAudible = isAudibleUserId(g.user_id);
+            const isSharing = currentSharerUserId === g.user_id;
             return (
               <div
                 key={g.user_id}
                 className={`relative flex h-24 w-32 flex-shrink-0 flex-col items-center justify-center rounded-lg border-2 ${
-                  isLit ? 'border-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.45)]' : 'border-emerald-500/40'
+                  isAudible ? 'border-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.5)]' : isLit ? 'border-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.45)]' : 'border-emerald-500/40'
                 } bg-emerald-950/40`}
                 title={g.name}
               >
@@ -1127,13 +1202,18 @@ export default function LiveStage({
                   </div>
                 )}
                 <div className="mt-1 flex items-center gap-1 text-[10px] text-emerald-200">
-                  {isSpeaking
+                  {isAudible
                     ? <Mic className="h-3 w-3 text-emerald-300 animate-pulse" />
                     : <MicOff className="h-3 w-3 text-rose-400" />}
                   <span className="max-w-[80px] truncate font-bold">{g.name}</span>
                 </div>
                 {isLit && (
                   <span className="absolute top-1 left-1 rounded-full bg-amber-400 px-1.5 py-0.5 text-[9px] font-bold text-black">BIG</span>
+                )}
+                {isSharing && (
+                  <span className="absolute bottom-1 left-1 flex items-center gap-0.5 rounded-full bg-sky-500 px-1.5 py-0.5 text-[9px] font-bold text-black">
+                    <FileText className="h-2.5 w-2.5" /> Sharing
+                  </span>
                 )}
 
                 {/* Host controls -- Spotlight stays host-only (not part of
@@ -1647,6 +1727,9 @@ function PortraitSpeakerStrip({ isHost, isRealHost, approved, spotlightUserId, l
   // never slices at all.
   const guests = approved.slice(0, 3);
   const findVideoTrack = (userId: string) => Object.values(callParticipants).find(p => p.userId === userId)?.videoTrack ?? null;
+  // Part 2: real Daily audio state, not the queue-only liveSpeakerUserId --
+  // see the same helper's doc comment in the parent LiveStage component.
+  const isAudibleUserId = (userId: string) => Object.values(callParticipants).some(p => p.userId === userId && p.audioOn);
   const openGuest = guests.find(g => g.user_id === openTileId) ?? null;
   return (
     <>
@@ -1669,6 +1752,7 @@ function PortraitSpeakerStrip({ isHost, isRealHost, approved, spotlightUserId, l
         </button>
         {guests.map((g) => {
           const isLit = g.user_id === spotlightUserId;
+          const isAudible = isAudibleUserId(g.user_id);
           return (
             <button
               key={g.user_id}
@@ -1676,12 +1760,12 @@ function PortraitSpeakerStrip({ isHost, isRealHost, approved, spotlightUserId, l
               onClick={() => isHost && setOpenTileId(g.user_id)}
               aria-label={g.name}
               className={`relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 ${
-                isLit ? 'border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'border-emerald-500/40'
+                isAudible ? 'border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]' : isLit ? 'border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'border-emerald-500/40'
               } bg-emerald-950/40`}
             >
               <TilePicture track={findVideoTrack(g.user_id)} avatar={g.avatar ?? null} name={g.name} />
               <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black">
-                {g.user_id === liveSpeakerUserId
+                {isAudible
                   ? <Mic className="h-2.5 w-2.5 text-emerald-300 animate-pulse" />
                   : <MicOff className="h-2.5 w-2.5 text-rose-400" />}
               </span>

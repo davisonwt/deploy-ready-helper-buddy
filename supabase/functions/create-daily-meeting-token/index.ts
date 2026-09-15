@@ -135,11 +135,17 @@ Deno.serve(async (req) => {
     const roomUrl = await getOrCreateDailyRoom(dailyApiKey, dailyRoomName);
 
     // Gathering Room speaker enforcement (LiveStage.tsx / useLiveStage.ts):
-    // only the VERIFIED host of this specific gathering_sessions row gets
-    // Daily's is_owner grant -- a service-role read of host_id, never the
-    // client's own say-so. Any lookup miss/mismatch just leaves isOwner
-    // false, same token shape every other caller of this function already
-    // gets, so no other roomKind/flow is affected.
+    // the VERIFIED host of this specific gathering_sessions row, OR one of
+    // that host's PERSISTENT moderators (gathering_moderators, host-scoped
+    // -- see its own migration comment), gets Daily's is_owner grant -- a
+    // service-role read, never the client's own say-so. Moderators need
+    // this too as of the mic-rules revision: an open-by-default mic and
+    // the ability to mute/remove any other participant (including other
+    // moderators) both require call.updateParticipant()/updateParticipants()
+    // to actually take effect at Daily's SFU, which only ever works for an
+    // is_owner token. Any lookup miss/mismatch just leaves isOwner false,
+    // same token shape every other caller of this function already gets,
+    // so no other roomKind/flow is affected.
     let isOwner = false;
     if (roomKind === "custom" && gatheringSessionId) {
       const { data: session, error: sessionErr } = await service
@@ -147,8 +153,20 @@ Deno.serve(async (req) => {
         .select("host_id")
         .eq("id", gatheringSessionId)
         .maybeSingle();
-      if (sessionErr) console.error("create-daily-meeting-token: gathering_sessions lookup failed", sessionErr);
-      else if (session?.host_id === user.id) isOwner = true;
+      if (sessionErr) {
+        console.error("create-daily-meeting-token: gathering_sessions lookup failed", sessionErr);
+      } else if (session?.host_id === user.id) {
+        isOwner = true;
+      } else if (session?.host_id) {
+        const { data: mod, error: modErr } = await service
+          .from("gathering_moderators")
+          .select("user_id")
+          .eq("host_id", session.host_id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (modErr) console.error("create-daily-meeting-token: gathering_moderators lookup failed", modErr);
+        else if (mod) isOwner = true;
+      }
     }
 
     const tokenRes = await fetch(`${DAILY_API}/meeting-tokens`, {

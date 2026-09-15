@@ -6,18 +6,34 @@
  * auto-refreshes as sessions start/end with no polling, since presence
  * sync already pushes updates the instant someone goes live or ends theirs.
  */
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, Radio, Unlock, Users } from 'lucide-react';
 import { useTribalLiveOrchard, type LivePresence } from '@/hooks/useTribalLiveOrchard';
 import { useAuth } from '@/hooks/useAuth';
-import LiveStageOverlay from '@/components/live/LiveStageOverlay';
+import { setActiveLiveSession } from '@/lib/liveSession/activeLiveSession';
 
 export default function LiveNowPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { liveSeeds } = useTribalLiveOrchard();
-  const [joining, setJoining] = useState<LivePresence | null>(null);
+
+  // Silent-rejoin revision: joining hands off to the shared
+  // activeLiveSession store -- GlobalLiveSessionOverlay (mounted once near
+  // the app root) is what actually renders <LiveStageOverlay> now, so the
+  // call survives navigating away from /live-now and a backgrounded-tab
+  // reload alike. See that component's own doc comment.
+  const joinLive = (p: LivePresence) => {
+    setActiveLiveSession({
+      seedId: p.seed_id,
+      title: p.seed_title,
+      subtitle: `Hosted by ${p.display_name}`,
+      jitsiRoom: p.jitsi_room,
+      isHost: p.user_id === user?.id,
+      hostSessionId: p.gatheringSessionId,
+      images: p.seed_image ? [p.seed_image] : [],
+      openPath: `/live/${p.seed_id}/room`,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0f1a] text-white">
@@ -92,7 +108,7 @@ export default function LiveNowPage() {
 
                 {canJoin ? (
                   <button
-                    onClick={() => setJoining(p)}
+                    onClick={() => joinLive(p)}
                     className="flex-shrink-0 rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-extrabold text-black hover:bg-emerald-400"
                   >
                     Join
@@ -110,19 +126,6 @@ export default function LiveNowPage() {
           })}
         </div>
       </div>
-
-      {joining && (
-        <LiveStageOverlay
-          seedId={joining.seed_id}
-          title={joining.seed_title}
-          subtitle={`Hosted by ${joining.display_name}`}
-          jitsiRoom={joining.jitsi_room}
-          isHost={joining.user_id === user?.id}
-          images={joining.seed_image ? [joining.seed_image] : []}
-          openPath={`/live/${joining.seed_id}/room`}
-          onClose={() => setJoining(null)}
-        />
-      )}
     </div>
   );
 }

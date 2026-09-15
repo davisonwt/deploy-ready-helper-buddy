@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from "@/integrations/supabase/client"
@@ -11,8 +11,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import OwnerMenuItems from '@/components/owner/OwnerMenuItems'
 import SettlementConsentBanner from '@/components/dashboard/SettlementConsentBanner'
 import type { StallHotspot, StallTier } from '@/lib/stalls/stallTypes'
-import { useTribalLiveOrchard, type LivePresence } from '@/hooks/useTribalLiveOrchard'
-import LiveStageOverlay from '@/components/live/LiveStageOverlay'
+import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard'
+import { useActiveLiveSession } from '@/hooks/useActiveLiveSession'
+import { setActiveLiveSession } from '@/lib/liveSession/activeLiveSession'
 import { insertProduct } from '@/api/products'
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId'
 import { toast } from 'sonner'
@@ -66,12 +67,40 @@ export default function CockpitPage() {
   // Scripture Study already uses (StallInteriorView.tsx's
   // SCRIPTURE_STUDY_USER_ID), and gathering_sessions.seed_id has no FK to
   // any seed/product table, so this is a supported shape, not a hack.
-  const { goLive, endLive } = useTribalLiveOrchard()
+  //
+  // Silent-rejoin revision: this page no longer renders its own
+  // <LiveStageOverlay> or owns "am I currently live" state directly --
+  // GlobalLiveSessionOverlay (mounted once near the app root) is now the
+  // one place that renders it, from the shared activeLiveSession store, so
+  // the call survives navigating away from /cockpit and a backgrounded-tab
+  // reload alike. This page's own job is just: start one (setActiveLiveSession),
+  // and watch for OWN ad-hoc session ending while still mounted here to
+  // offer the save-as-seed follow-up (a real gap if the host ends it from
+  // some other page instead -- acceptable, see this page's own PR notes).
+  const { goLive } = useTribalLiveOrchard()
+  const activeLive = useActiveLiveSession()
   const [titleSheetOpen, setTitleSheetOpen] = useState(false)
   const [adHocTitle, setAdHocTitle] = useState('')
   const [startingLive, setStartingLive] = useState(false)
-  const [adHocLive, setAdHocLive] = useState<LivePresence | null>(null)
   const [endFlowOpen, setEndFlowOpen] = useState(false)
+  const [endedTitle, setEndedTitle] = useState('')
+
+  const isMyAdHocLive = !!user && !!activeLive && activeLive.isHost && activeLive.seedId === user.id
+  const wasMyAdHocLiveRef = useRef(false)
+  useEffect(() => {
+    if (isMyAdHocLive) {
+      wasMyAdHocLiveRef.current = true;
+    } else if (wasMyAdHocLiveRef.current) {
+      // Transitioned from "I was live" to "not live" while this page
+      // stayed mounted -- GlobalLiveSessionOverlay already handled the
+      // actual endLive() call (its own onClose); this page's only
+      // remaining job is the save-as-seed follow-up.
+      wasMyAdHocLiveRef.current = false;
+      setEndedTitle(activeLive?.title ?? adHocTitle);
+      setEndFlowOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMyAdHocLive]);
 
   const startAdHocLive = async () => {
     if (!stall || !adHocTitle.trim() || !user) return
@@ -82,7 +111,15 @@ export default function CockpitPage() {
         { initialBoard: stall.interior_image_path ? { mode: 'image', imageUrl: stall.interior_image_path, imageIdx: 0 } : undefined }
       )
       if (presence) {
-        setAdHocLive(presence)
+        setActiveLiveSession({
+          seedId: user.id,
+          title: adHocTitle.trim(),
+          jitsiRoom: presence.jitsi_room,
+          isHost: true,
+          hostSessionId: presence.gatheringSessionId,
+          images: stall.interior_image_path ? [stall.interior_image_path] : [],
+          whispererSharePct: 0,
+        })
         setTitleSheetOpen(false)
         setAdHocTitle('')
       } else {
@@ -91,24 +128,6 @@ export default function CockpitPage() {
     } finally {
       setStartingLive(false)
     }
-  }
-
-  // "End live" ends the session right away (Daily call/chat/queue torn
-  // down immediately -- same "End live" already meant everywhere else in
-  // this app), THEN offers the save-as-seed prompt as its own standalone
-  // step. Confirmed live: keeping LiveStageOverlay mounted underneath the
-  // save prompt (so a still-connected guest's realtime activity kept
-  // re-rendering it) made the prompt's own buttons intermittently
-  // click-flaky in a real multi-participant run -- ending first removes
-  // the live background activity entirely, not just the symptom.
-  const [endedTitle, setEndedTitle] = useState('')
-  const handleEndLive = async () => {
-    setEndedTitle(adHocLive?.seed_title ?? '')
-    const seedIdForHarvest = user?.id
-    const seedTitleForHarvest = adHocLive?.seed_title
-    setAdHocLive(null)
-    await endLive({ seedId: seedIdForHarvest, seedTitle: seedTitleForHarvest })
-    setEndFlowOpen(true)
   }
 
   // Bare content, no positioning of its own -- when a stall exists this
@@ -225,34 +244,12 @@ export default function CockpitPage() {
         </div>
       )}
 
-      {/* Ad-hoc Go Live, step 2: the SAME Gathering Room engine every seed
-          live uses -- board (defaulted to this stall's own interior image,
-          via initialBoard above), chat, raise-hand queue, host controls,
-          Part 1's speaker-permission enforcement. No sowerUserId (nothing
-          to Bestow toward) and no openPath (no seed page to open).
-          LiveStageOverlay's own root is `fixed z-[1000]` -- fine when it's
-          nested INSIDE StallInteriorView's z-[9999] tree (Scripture Study's
-          own join flow does this), but here it's a plain SIBLING of
-          <StallInteriorView> in this page's own Fragment, so the two
-          compare z-index directly and 1000 loses to 9999 -- confirmed live:
-          StallInteriorView's own Owner Menu chrome intercepted clicks
-          meant for "End live". This wrapper re-establishes the stacking
-          context at a z-index StallInteriorView can never out-rank, same
-          fix shape as the AdminButton dropdown's z-index bug earlier. */}
-      {adHocLive && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 2147483647 }}>
-          <LiveStageOverlay
-            seedId={adHocLive.seed_id}
-            title={adHocLive.seed_title}
-            jitsiRoom={adHocLive.jitsi_room}
-            isHost
-            hostSessionId={adHocLive.gatheringSessionId}
-            images={stall.interior_image_path ? [stall.interior_image_path] : []}
-            whispererSharePct={0}
-            onClose={() => void handleEndLive()}
-          />
-        </div>
-      )}
+      {/* Ad-hoc Go Live, step 2: rendered by GlobalLiveSessionOverlay now
+          (mounted once near the app root), not here -- see this page's own
+          top-of-file comment on the silent-rejoin revision. That also
+          retires the z-index wrapper this used to need: StallInteriorView's
+          z-[9999] tree can't out-rank an overlay that isn't even a sibling
+          of it in the DOM anymore. */}
 
       {endFlowOpen && (
         <SaveLiveAsSeedDialog

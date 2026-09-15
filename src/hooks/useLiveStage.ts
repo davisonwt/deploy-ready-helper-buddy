@@ -118,10 +118,20 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
   // Scripture Study speaker-permission fix (2026-09-15): who, among
   // `approved` (non-host) guests, currently has the floor -- the ONE
   // non-host mic LiveStage.tsx's own Daily-enforcement effect will ever
-  // unmute. Ephemeral (broadcast-only, like `hands`/`approved`) rather
-  // than persisted to gathering_sessions -- a host refresh just means
-  // nobody's speaking until they advance the queue again, same cold-start
-  // shape those two already have.
+  // unmute.
+  //
+  // Silent-rejoin revision (2026-09-15): `approved` and `liveSpeakerUserId`
+  // are now ALSO persisted to gathering_sessions.queue_state (see
+  // persistQueueState/hydrateQueueState below) -- backgrounding the app,
+  // answering a call, or a memory-pressure tab reload all unmount this
+  // hook and reset its state to empty; without durable state, a
+  // previously-approved participant returning would have to raise their
+  // hand and wait for re-approval all over again, exactly the re-prompt
+  // this feature exists to remove. `hands` (pending, not-yet-approved
+  // raises) stays broadcast-only -- losing a raised-but-not-yet-approved
+  // hand on a rare unmount is a much smaller inconvenience than losing
+  // already-granted speaking rights, and persisting it too would mean
+  // writing on every single raise/cancel, not just approve/remove.
   const [liveSpeakerUserId, setLiveSpeakerUserId] = useState<string | null>(null);
   const playingVoiceNoteRef = useRef<PlayingVoiceNote | null>(null);
   // Gathering Room batch 2: which #1-position user_ids the host has already
@@ -136,6 +146,39 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
   // are broadcast-only (as always) before it resolves, same as they'd be
   // with no persistence at all.
   const sessionIdRef = useRef<string | null>(null);
+
+  // Silent-rejoin (see liveSpeakerUserId's own doc comment above): applies
+  // a hydrated queue_state row on mount -- called from both the host and
+  // guest branches of the mount effect below, same "only overwrite if
+  // there's real content" shape board_state hydration already uses (an
+  // empty/missing queue_state means a brand-new session, nothing to
+  // restore, `approved`/`liveSpeakerUserId` correctly stay at their
+  // cold-start empty defaults).
+  const hydrateQueueState = (raw: unknown) => {
+    const q = raw as { approved?: ApprovedGuest[]; liveSpeakerUserId?: string | null } | null;
+    if (!q) return;
+    if (Array.isArray(q.approved) && q.approved.length > 0) setApproved(q.approved);
+    if (q.liveSpeakerUserId) setLiveSpeakerUserId(q.liveSpeakerUserId);
+  };
+
+  // Writes through on every approved/liveSpeakerUserId change -- host-only
+  // (gathering_sessions' UPDATE policy is host_id = auth.uid(), same as
+  // every other write to this row), so a moderator's own approve/remove/
+  // advance action doesn't attempt (and fail) this write directly; the
+  // HOST's own client sees that same change via broadcast (approved/
+  // liveSpeakerUserId are already updated by the broadcast handlers below
+  // regardless of who triggered it) and persists it from here instead --
+  // one durable copy, one writer, no RLS-rejected duplicate attempts.
+  const lastPersistedQueueRef = useRef<string>('');
+  useEffect(() => {
+    if (!isHost || !sessionIdRef.current) return;
+    const queue_state = { approved, liveSpeakerUserId };
+    const serialized = JSON.stringify(queue_state);
+    if (serialized === lastPersistedQueueRef.current) return;
+    lastPersistedQueueRef.current = serialized;
+    supabase.from('gathering_sessions' as any).update({ queue_state }).eq('id', sessionIdRef.current)
+      .then(({ error }) => { if (error) console.error('useLiveStage: queue_state write failed', error); });
+  }, [isHost, approved, liveSpeakerUserId]);
 
   useEffect(() => {
     if (!enabled || !seedId) return;
@@ -219,7 +262,7 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
         console.warn(`[useLiveStage] HOST on channel stage:${seedId}, sessionId: ${hostSessionId}`);
         const { data } = await supabase
           .from('gathering_sessions' as any)
-          .select('board_state')
+          .select('board_state, queue_state')
           .eq('id', hostSessionId)
           .maybeSingle();
         if (cancelled) return;
@@ -227,6 +270,7 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
         if (board && Object.keys(board).length > 0) {
           setStage(prev => ({ ...prev, ...board }));
         }
+        hydrateQueueState((data as any)?.queue_state);
         return;
       }
 
@@ -235,7 +279,7 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
       // No INSERT branch: a guest never owns this session's row.
       const { data: existing } = await supabase
         .from('gathering_sessions' as any)
-        .select('id, board_state')
+        .select('id, board_state, queue_state')
         .eq('seed_id', seedId)
         .is('ended_at', null)
         .maybeSingle();
@@ -249,6 +293,7 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
       if (board && Object.keys(board).length > 0) {
         setStage(prev => ({ ...prev, ...board }));
       }
+      hydrateQueueState((existing as any).queue_state);
     })();
 
     return () => {

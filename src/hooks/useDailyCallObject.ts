@@ -59,15 +59,20 @@ export interface UseDailyCallObjectResult {
    * ("your microphone isn't being shared") instead of everyone else just
    * silently not hearing them with no feedback anywhere. */
   localMicSilent: boolean;
-  /** Host-only speaker enforcement (Gathering Room / Scripture Study --
-   * see LiveStage.tsx's speaker-reconciliation effect): forces a REMOTE
-   * participant's audio on/off via Daily's own call.updateParticipant(),
-   * which only actually takes effect when the local participant's own
-   * meeting token carries is_owner (see create-daily-meeting-token/
-   * index.ts) -- a non-owner caller's updateParticipant silently has no
-   * effect at Daily's SFU, so this is safe to expose unconditionally
-   * rather than re-deriving isHost in here too. */
+  /** Host/moderator speaker enforcement (Gathering Room / Scripture Study --
+   * see LiveStage.tsx's speaker-reconciliation effect and its Participants
+   * panel): forces a REMOTE participant's audio on/off via Daily's own
+   * call.updateParticipant(), which only actually takes effect when the
+   * local participant's own meeting token carries is_owner (see
+   * create-daily-meeting-token/index.ts) -- a non-owner caller's
+   * updateParticipant silently has no effect at Daily's SFU, so this is
+   * safe to expose unconditionally rather than re-deriving permission in
+   * here too. */
   setRemoteAudio: (sessionId: string, on: boolean) => void;
+  /** Host/moderator: removes a participant from the call outright (Daily's
+   * `eject`). Same is_owner-gated no-op-for-non-owners safety as
+   * setRemoteAudio above. */
+  ejectRemote: (sessionId: string) => void;
 }
 
 const SILENCE_CHECK_SAMPLES = 8;
@@ -126,21 +131,24 @@ function monitorLocalMicSilence(track: MediaStreamTrack, onResult: (silent: bool
  * both "not in the call yet" (guest not yet approved) and an explicit
  * "Leave" click.
  *
- * `isHost` controls two things: (1) whether THIS join starts with audio
- * already on (host, always live) or off (every non-host participant --
+ * `hasOwnerGrant` (host OR a persistent gathering_moderators appointee --
+ * see LiveStage.tsx's own call site) controls two things: (1) whether
+ * THIS join starts with audio already on (host/moderator, always live by
+ * default per the mic-rules spec) or off (a regular participant --
  * Gathering Room speaker permissions are host-enforced from the moment
  * they join, not just once the host gets around to it), and (2) is passed
  * through to the meeting-token fetch (with `gatheringSessionId`) so the
  * edge function can grant this client Daily's is_owner permission when
- * it's actually the verified host -- see create-daily-meeting-token's own
- * doc comment. A non-host `isHost:false` caller never gets that grant
- * regardless of what it claims, so this can't be used to self-elevate. */
+ * it's actually the verified host or one of their moderators -- see
+ * create-daily-meeting-token's own doc comment. A caller claiming
+ * `hasOwnerGrant:true` who is neither never gets that grant regardless of
+ * what it claims, so this can't be used to self-elevate. */
 export function useDailyCallObject(
   roomKind: DailyRoomKind | null,
   roomId: string | null,
   displayName: string,
   enabled: boolean,
-  isHost: boolean,
+  hasOwnerGrant: boolean,
   gatheringSessionId?: string | null,
 ): UseDailyCallObjectResult {
   const callRef = useRef<DailyCall | null>(null);
@@ -148,7 +156,7 @@ export function useDailyCallObject(
   const [joined, setJoined] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [audioOn, setAudioOn] = useState(isHost);
+  const [audioOn, setAudioOn] = useState(hasOwnerGrant);
   const [videoOn, setVideoOn] = useState(false);
   const [localMicSilent, setLocalMicSilent] = useState(false);
   const stopSilenceMonitorRef = useRef<(() => void) | null>(null);
@@ -283,7 +291,7 @@ export function useDailyCallObject(
           // client-side too means there's no in-between instant where a
           // fresh joiner is briefly publishing audio before the host's
           // updateParticipant call lands.
-          startAudioOff: !isHost,
+          startAudioOff: !hasOwnerGrant,
         });
         if (cancelled) { teardownDailyCall(call); return; }
       } catch (e: any) {
@@ -306,11 +314,11 @@ export function useDailyCallObject(
       setJoined(false);
       setConnecting(false);
       setParticipants({});
-      setAudioOn(isHost);
+      setAudioOn(hasOwnerGrant);
       setVideoOn(false);
       setLocalMicSilent(false);
     };
-  }, [enabled, roomKind, roomId, displayName, isHost, gatheringSessionId]);
+  }, [enabled, roomKind, roomId, displayName, hasOwnerGrant, gatheringSessionId]);
 
   const toggleAudio = useCallback(() => {
     const call = callRef.current;
@@ -347,5 +355,9 @@ export function useDailyCallObject(
     callRef.current?.updateParticipant(sessionId, { setAudio: on });
   }, []);
 
-  return { participants, joined, connecting, error, audioOn, videoOn, toggleAudio, toggleVideo, localMicSilent, setRemoteAudio };
+  const ejectRemote = useCallback((sessionId: string) => {
+    callRef.current?.updateParticipant(sessionId, { eject: true });
+  }, []);
+
+  return { participants, joined, connecting, error, audioOn, videoOn, toggleAudio, toggleVideo, localMicSilent, setRemoteAudio, ejectRemote };
 }
