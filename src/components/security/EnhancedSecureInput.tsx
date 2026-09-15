@@ -184,24 +184,33 @@ export const EnhancedSecureInput: React.FC<EnhancedSecureInputProps> = ({
   };
 
   const handleBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    // React nulls out a synthetic event's target/currentTarget once the
+    // event has finished dispatching -- reading them AFTER an `await`
+    // throws "Cannot read properties of null (reading 'value')" the
+    // moment that await takes any real time (confirmed live, 2026-09-15:
+    // checkRateLimit's round trip was more than enough, crashing the
+    // login page's own email-field blur on every submit). Capture
+    // everything needed from the event synchronously, before the await.
+    const fieldName = e.target.name;
+    const currentValue = e.currentTarget.value;
+
     // Rate limiting check on blur
     if (rateLimitKey) {
       const isAllowed = await checkRateLimit(
-        `${rateLimitKey}_${e.target.name}`,
+        `${rateLimitKey}_${fieldName}`,
         'input_validation',
         20, // 20 validations
         5   // per 5 minutes
       );
 
       if (!isAllowed) {
-        e.preventDefault();
         return;
       }
     }
 
     // Strict email validation and normalization on blur only
     if (sanitizeType === 'email') {
-      const original = e.currentTarget.value;
+      const original = currentValue;
       const validated = sanitizeInput.email(original);
       if (!validated && original) {
         toast({
