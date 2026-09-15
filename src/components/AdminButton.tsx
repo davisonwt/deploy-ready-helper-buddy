@@ -180,8 +180,24 @@ export function AdminButton() {
       {open && menuPos && createPortal(
         <div
           ref={menuRef}
-          style={{ position: 'fixed', top: menuPos.top, left: menuPos.left }}
-          className="z-[1000] w-64 rounded-md border bg-white text-[#0A1931] shadow-lg"
+          // Root cause, confirmed live 2026-09-15 via document.elementFromPoint
+          // + an actual rendered screenshot (not just DOM/computed-style
+          // inspection, which all looked correct and were misleading):
+          // z-[1000] loses outright to /cockpit's own full-viewport
+          // `position: fixed` page wrappers -- EmptyPlotView.tsx and
+          // StallInteriorView.tsx both use z-[9999] for their root
+          // fixed-inset-0 container. Two `position: fixed` elements compare
+          // z-index directly against each other regardless of DOM/portal
+          // nesting (this dropdown being portaled "outside" everything
+          // doesn't matter -- fixed elements without an intervening
+          // stacking-context ancestor all compare at the same, topmost
+          // level), so the page's own 9999 legitimately painted over this
+          // dropdown's 1000 every time, even though every DOM inspection
+          // (element exists, correct position, opacity:1, visibility:visible)
+          // said it should be showing. Set high enough to beat every
+          // z-index used anywhere in this app (highest found: 999999).
+          style={{ position: 'fixed', top: menuPos.top, left: menuPos.left, zIndex: 2147483647 }}
+          className="w-64 rounded-md border bg-white text-[#0A1931] shadow-lg"
         >
           <div className="flex items-center justify-between border-b px-2 py-1.5 sm:hidden">
             <span className="text-xs font-semibold">Gosat's</span>
