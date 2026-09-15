@@ -11,6 +11,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import OwnerMenuItems from '@/components/owner/OwnerMenuItems'
 import SettlementConsentBanner from '@/components/dashboard/SettlementConsentBanner'
 import type { StallHotspot, StallTier } from '@/lib/stalls/stallTypes'
+import { useTribalLiveOrchard, type LivePresence } from '@/hooks/useTribalLiveOrchard'
+import LiveStageOverlay from '@/components/live/LiveStageOverlay'
+import { insertProduct } from '@/api/products'
+import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId'
+import { toast } from 'sonner'
+import { X } from 'lucide-react'
 
 interface StallRow {
   name: string;
@@ -52,6 +58,51 @@ export default function CockpitPage() {
     return () => { alive = false }
   }, [user])
 
+  // Ad-hoc "Go Live" (no seed) -- the bottom bar's own entry point, reusing
+  // the existing Gathering Room engine (board/chat/raise-hand/speaker
+  // permissions) rather than building a new one. Uses the SAME goLive()
+  // every seed-attached live already calls, just with the host's own
+  // user_id standing in for a real seed_id -- same non-product identity
+  // Scripture Study already uses (StallInteriorView.tsx's
+  // SCRIPTURE_STUDY_USER_ID), and gathering_sessions.seed_id has no FK to
+  // any seed/product table, so this is a supported shape, not a hack.
+  const { goLive, endLive } = useTribalLiveOrchard()
+  const [titleSheetOpen, setTitleSheetOpen] = useState(false)
+  const [adHocTitle, setAdHocTitle] = useState('')
+  const [startingLive, setStartingLive] = useState(false)
+  const [adHocLive, setAdHocLive] = useState<LivePresence | null>(null)
+  const [endFlowOpen, setEndFlowOpen] = useState(false)
+
+  const startAdHocLive = async () => {
+    if (!stall || !adHocTitle.trim() || !user) return
+    setStartingLive(true)
+    try {
+      const presence = await goLive(
+        { id: user.id, title: adHocTitle.trim(), image: stall.interior_image_path },
+        { initialBoard: stall.interior_image_path ? { mode: 'image', imageUrl: stall.interior_image_path, imageIdx: 0 } : undefined }
+      )
+      if (presence) {
+        setAdHocLive(presence)
+        setTitleSheetOpen(false)
+        setAdHocTitle('')
+      } else {
+        toast.error('Could not start your live session. Please try again.')
+      }
+    } finally {
+      setStartingLive(false)
+    }
+  }
+
+  // "End live" doesn't immediately tear the session down -- it offers the
+  // save-as-seed prompt first (spec: "same option Scripture Study/recorded
+  // shows already use"), same as any other end-of-live flow in this app.
+  // Both the dialog's Save and Skip actions call finishAdHocLive below.
+  const finishAdHocLive = async () => {
+    setEndFlowOpen(false)
+    setAdHocLive(null)
+    await endLive({ seedId: user?.id, seedTitle: adHocLive?.seed_title })
+  }
+
   // Bare content, no positioning of its own -- when a stall exists this
   // gets embedded INSIDE StallInteriorView (its own bottomBar/topBanner
   // props), sharing its z-[9999] stacking context so LiveStageOverlay/
@@ -84,11 +135,11 @@ export default function CockpitPage() {
           />
         </PopoverContent>
       </Popover>
-      <Link to="/communications-hub" style={{ flex: 1, textDecoration: 'none' }}>
+      <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => setTitleSheetOpen(true)}>
         <LivingButton variant="live" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
           🔴 Go Live
         </LivingButton>
-      </Link>
+      </div>
       <Link to="/chatapp" style={{ flex: 1, textDecoration: 'none' }}>
         <LivingButton variant="share" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
           💬 Chat
@@ -122,16 +173,164 @@ export default function CockpitPage() {
   }
 
   return (
-    <StallInteriorView
-      ownerId={user.id}
-      interiorImageUrl={stall.interior_image_path}
-      stallName={stall.name}
-      hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
-      isOwner
-      hideClose
-      onClose={() => {}}
-      topBanner={consentNagContent}
-      bottomBar={bottomBarContent}
-    />
+    <>
+      <StallInteriorView
+        ownerId={user.id}
+        interiorImageUrl={stall.interior_image_path}
+        stallName={stall.name}
+        hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
+        isOwner
+        hideClose
+        onClose={() => {}}
+        topBanner={consentNagContent}
+        bottomBar={bottomBarContent}
+      />
+
+      {/* Ad-hoc Go Live, step 1: just a title -- no seed, no whisperer
+          commission, no product fields at all. */}
+      {titleSheetOpen && (
+        <div className="fixed inset-0 z-[10010] flex items-end justify-center bg-black/70 sm:items-center" onClick={() => !startingLive && setTitleSheetOpen(false)}>
+          <div className="w-full max-w-sm rounded-t-2xl border border-rose-500/30 bg-[#0a0f1a] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-white sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-extrabold">🔴 Go Live</h3>
+              <button type="button" onClick={() => setTitleSheetOpen(false)} aria-label="Close"><X className="h-4 w-4 text-white/50" /></button>
+            </div>
+            <p className="mb-3 text-xs text-white/50">Broadcast live to the tribe, right now -- no seed needed.</p>
+            <input
+              autoFocus
+              value={adHocTitle}
+              onChange={(e) => setAdHocTitle(e.target.value)}
+              placeholder="What's this live about?"
+              maxLength={80}
+              onKeyDown={(e) => { if (e.key === 'Enter' && adHocTitle.trim()) void startAdHocLive(); }}
+              className="mb-3 w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-rose-400/60 focus:outline-none"
+            />
+            <button
+              type="button"
+              disabled={!adHocTitle.trim() || startingLive}
+              onClick={() => void startAdHocLive()}
+              className="w-full rounded-lg bg-rose-500 py-2.5 text-sm font-extrabold text-black hover:bg-rose-400 disabled:opacity-40"
+            >
+              {startingLive ? 'Starting…' : 'Go Live'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Ad-hoc Go Live, step 2: the SAME Gathering Room engine every seed
+          live uses -- board (defaulted to this stall's own interior image,
+          via initialBoard above), chat, raise-hand queue, host controls,
+          Part 1's speaker-permission enforcement. No sowerUserId (nothing
+          to Bestow toward) and no openPath (no seed page to open). */}
+      {adHocLive && (
+        <LiveStageOverlay
+          seedId={adHocLive.seed_id}
+          title={adHocLive.seed_title}
+          jitsiRoom={adHocLive.jitsi_room}
+          isHost
+          hostSessionId={adHocLive.gatheringSessionId}
+          images={stall.interior_image_path ? [stall.interior_image_path] : []}
+          whispererSharePct={0}
+          onClose={() => setEndFlowOpen(true)}
+        />
+      )}
+
+      {endFlowOpen && (
+        <SaveLiveAsSeedDialog
+          defaultTitle={adHocLive?.seed_title ?? ''}
+          coverImage={stall.interior_image_path}
+          onDone={() => void finishAdHocLive()}
+        />
+      )}
+    </>
+  )
+}
+
+/** Offered once an ad-hoc live ends -- same option Scripture Study/recorded
+ * shows already use. No actual recording exists to attach (Daily cloud
+ * recording isn't enabled anywhere in this app -- see docs/GATHERING-
+ * ROOM.md's own inventory), so this saves a simple commemorative seed
+ * (title + note + the stall's own interior as cover), not a video/audio
+ * file -- honest about what's actually being saved. Skip just ends the
+ * session with nothing saved, same as today. */
+function SaveLiveAsSeedDialog({ defaultTitle, coverImage, onDone }: { defaultTitle: string; coverImage: string | null; onDone: () => void }) {
+  const { user } = useAuth()
+  const [title, setTitle] = useState(defaultTitle)
+  const [note, setNote] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    if (!user || !title.trim()) return
+    setSaving(true)
+    try {
+      const { data: sower } = await supabase.from('sowers').select('id').eq('user_id', user.id).maybeSingle()
+      if (!sower?.id) { toast.error("Couldn't find your sower profile -- nothing saved."); onDone(); return }
+      const companyId = await getDefaultCompanyId(sower.id)
+      if (!companyId) { toast.error("Couldn't find your stall's default listing -- nothing saved."); onDone(); return }
+      await insertProduct({
+        sower_id: sower.id,
+        company_id: companyId,
+        title: title.trim(),
+        description: note.trim() || null,
+        price: 0,
+        status: 'active',
+        delivery_type: 'digital',
+        kind: 'product',
+        type: 'product',
+        file_url: '',
+        cover_image_url: coverImage,
+        image_urls: coverImage ? [coverImage] : [],
+      })
+      toast.success('Saved to your stall.')
+    } catch (e) {
+      console.error('SaveLiveAsSeedDialog: save failed', e)
+      toast.error('Could not save this live as a seed.')
+    } finally {
+      setSaving(false)
+      onDone()
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[10010] flex items-end justify-center bg-black/70 sm:items-center">
+      <div className="w-full max-w-sm rounded-t-2xl border border-emerald-500/30 bg-[#0a0f1a] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-white sm:rounded-2xl">
+        <h3 className="mb-1 text-sm font-extrabold">🌱 Save this live as a seed?</h3>
+        <p className="mb-3 text-xs text-white/50">Keeps a free listing in your stall so the tribe can find it later.</p>
+        <input
+          autoFocus
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Title"
+          maxLength={80}
+          className="mb-2 w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-emerald-400/60 focus:outline-none"
+        />
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="A short note about this live (optional)"
+          rows={3}
+          maxLength={500}
+          className="mb-3 w-full resize-none rounded-lg border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-emerald-400/60 focus:outline-none"
+        />
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onDone}
+            disabled={saving}
+            className="flex-1 rounded-lg border border-white/15 py-2.5 text-sm font-bold text-white/70 hover:bg-white/5 disabled:opacity-40"
+          >
+            Skip
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleSave()}
+            disabled={saving || !title.trim()}
+            className="flex-1 rounded-lg bg-emerald-500 py-2.5 text-sm font-extrabold text-black hover:bg-emerald-400 disabled:opacity-40"
+          >
+            {saving ? 'Saving…' : 'Save to my stall'}
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }

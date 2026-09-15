@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { INITIAL_STAGE } from '@/hooks/useLiveStage';
+import { INITIAL_STAGE, type StagePayload } from '@/hooks/useLiveStage';
 
 export type BloomStage = 'seed' | 'leaf' | 'tree';
 
@@ -140,7 +140,20 @@ export function useTribalLiveOrchard() {
   }, [presenceKey]);
 
   const goLive = useCallback(
-    async (seed: { id: string; title: string; image?: string | null }, opts?: { access?: SessionAccess }) => {
+    async (
+      seed: { id: string; title: string; image?: string | null },
+      opts?: {
+        access?: SessionAccess;
+        /** Ad-hoc "Go Live" (no seed): seeds board_state with the host's own
+         * stall interior as the initial backdrop instead of INITIAL_STAGE's
+         * plain camera mode -- same visual pattern Scripture Study/other
+         * Gathering Room places already use. Only applied on a genuinely
+         * NEW row, same reuse-over-remint rule `access` above follows (a
+         * host re-entering their own still-live session keeps whatever's
+         * already on the board, not reset to this every time). */
+        initialBoard?: Partial<StagePayload>;
+      }
+    ) => {
       const ch = ensureChannel(presenceKey);
       if (!user?.id) return null;
 
@@ -222,11 +235,14 @@ export function useTribalLiveOrchard() {
             console.warn('goLive: access column not readable yet (migration pending?) -- defaulting to', access, e);
           }
         } else {
+          const boardState: StagePayload = opts?.initialBoard
+            ? { ...INITIAL_STAGE, ...opts.initialBoard, at: Date.now() }
+            : INITIAL_STAGE;
           let created: { id: string } | null = null;
           let error: unknown = null;
           ({ data: created, error } = await supabase
             .from('gathering_sessions' as any)
-            .insert({ seed_id: seed.id, host_id: user.id, board_state: INITIAL_STAGE, jitsi_room: room, access })
+            .insert({ seed_id: seed.id, host_id: user.id, board_state: boardState, jitsi_room: room, access })
             .select('id')
             .maybeSingle() as any);
           if (error) {
@@ -237,7 +253,7 @@ export function useTribalLiveOrchard() {
             console.warn('goLive: insert with access failed, retrying without it (migration pending?)', error);
             const retry = await supabase
               .from('gathering_sessions' as any)
-              .insert({ seed_id: seed.id, host_id: user.id, board_state: INITIAL_STAGE, jitsi_room: room })
+              .insert({ seed_id: seed.id, host_id: user.id, board_state: boardState, jitsi_room: room })
               .select('id')
               .maybeSingle();
             created = retry.data as any;
