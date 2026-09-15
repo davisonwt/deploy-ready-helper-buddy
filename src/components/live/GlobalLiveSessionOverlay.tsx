@@ -96,21 +96,35 @@ export default function GlobalLiveSessionOverlay() {
   };
 
   return (
-    <LiveStageOverlay
-      seedId={active.seedId}
-      title={active.title}
-      subtitle={active.subtitle}
-      jitsiRoom={active.jitsiRoom}
-      isHost={active.isHost}
-      hostSessionId={active.hostSessionId}
-      isRadio={active.isRadio}
-      sowerUserId={active.sowerUserId}
-      images={active.images}
-      mediaUrl={active.mediaUrl}
-      mediaKind={active.mediaKind}
-      whispererSharePct={active.whispererSharePct}
-      openPath={active.openPath}
-      onClose={() => void handleClose()}
-    />
+    // LiveStageOverlay's own root is `fixed z-[1000]` -- fine when nested
+    // INSIDE a StallInteriorView's z-[9999] tree (Scripture Study's own
+    // join flow does that), but this component renders as a SIBLING of
+    // <Routes> (mounted above it in AppRoutes.tsx), so on any page that
+    // itself renders a z-[9999] StallInteriorView (e.g. /cockpit) the two
+    // are plain DOM siblings and 1000 loses to 9999 -- confirmed live:
+    // clicking "Approve" (and, before that, "End live" in a different
+    // flow) got intercepted by StallInteriorView's own chrome. Same fix
+    // shape as the AdminButton dropdown z-index bug and DashboardPage's
+    // now-retired local version of this same wrapper -- centralizing it
+    // here means every entry point that hands off to this component gets
+    // it for free, not just the ones that used to build it themselves.
+    <div style={{ position: 'fixed', inset: 0, zIndex: 2147483647 }}>
+      <LiveStageOverlay
+        seedId={active.seedId}
+        title={active.title}
+        subtitle={active.subtitle}
+        jitsiRoom={active.jitsiRoom}
+        isHost={active.isHost}
+        hostSessionId={active.hostSessionId}
+        isRadio={active.isRadio}
+        sowerUserId={active.sowerUserId}
+        images={active.images}
+        mediaUrl={active.mediaUrl}
+        mediaKind={active.mediaKind}
+        whispererSharePct={active.whispererSharePct}
+        openPath={active.openPath}
+        onClose={() => void handleClose()}
+      />
+    </div>
   );
 }
