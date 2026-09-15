@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, Radio, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,6 +43,22 @@ const PINNED_STALL_USER_IDS = [
 
 /** Scripture Study's own synthetic seed_id (StallInteriorView.tsx's SCRIPTURE_STUDY_USER_ID doc comment has the full why) -- presence tracks under whichever admin/gosat is hosting, not this account's own id, so the LIVE badge below has to check seed_id here too. */
 const SCRIPTURE_STUDY_USER_ID = '50f485b8-8aa0-462f-a01d-9c2f18d2105e';
+
+/** Bug report, 2026-09-15: entering a stall then navigating Back reset
+ * the feed to the top instead of resuming where the visitor left off.
+ * Root cause: this whole page remounts on navigation (cards refetched
+ * from scratch, a brand-new scroll container starts at scrollTop 0) --
+ * there's no client-side router cache keeping the old DOM/scroll state
+ * around. Saved here, in openStall, at the exact moment of leaving (the
+ * card being clicked IS "the stall currently in view", no separate
+ * scroll-position math needed); restored once cards re-render after
+ * coming back, by scrolling that same card's element into view. One
+ * scroll container serves both the phone swipe-feed and the desktop
+ * layout (only what's INSIDE each card differs), so this covers both
+ * with no per-layout branching. sessionStorage (not location state) so
+ * it also survives a hard Back that remounts via history rather than an
+ * in-app navigate call. */
+const FEED_SCROLL_STATE_KEY = 'stallsFeed:lastStallId';
 
 interface StallCard {
   id: string;
@@ -140,6 +156,8 @@ export default function StallsFeedPage() {
   // content regardless of which chip is active.
   const [newSeedInfo, setNewSeedInfo] = useState<Map<string, { total: number; latest: string }>>(new Map());
   const [pinnedCards, setPinnedCards] = useState<StallCard[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const hasRestoredScrollRef = useRef(false);
 
   const liveOwnerIds = useMemo(() => {
     const ids = new Set((liveSeeds ?? []).map((p) => p.user_id));
@@ -346,11 +364,37 @@ export default function StallsFeedPage() {
   }, [chip, tribeMine, tribeUserIds, villageFilter]);
 
   const openStall = (card: StallCard) => {
+    // Save which stall is being entered -- see FEED_SCROLL_STATE_KEY's own
+    // doc comment above. The card being clicked IS the one "currently in
+    // view", so no scroll-position math is needed here at all.
+    try { sessionStorage.setItem(FEED_SCROLL_STATE_KEY, card.id); } catch { /* private mode / storage full -- feed just opens at the top, same as before this fix */ }
     // { from } lets StallVisitPage's close button come straight back
     // here instead of guessing (or, before this, blindly history.back()-ing
     // into whatever the visitor did inside the stall in the meantime).
     if (card.username) navigate(`/stall/${card.username}#open`, { state: { from: '/stalls-feed' } });
   };
+
+  // Restore: once cards for this visit have actually rendered, scroll the
+  // previously-open stall back into view -- instant (no smooth-scroll
+  // animation on page load), and only ever once per mount so it can't
+  // fight a visitor's own subsequent scrolling. Consumed (removed) after
+  // use so a later FRESH visit to the feed starts at the top as normal,
+  // not just any time this key happens to be set.
+  useEffect(() => {
+    if (hasRestoredScrollRef.current) return;
+    if (chip === 'orchard' || !pinnedOrderedCards || pinnedOrderedCards.length === 0) return;
+    let savedId: string | null = null;
+    try { savedId = sessionStorage.getItem(FEED_SCROLL_STATE_KEY); } catch { /* private mode */ }
+    if (!savedId) return;
+    if (!pinnedOrderedCards.some((c) => c.id === savedId)) return; // not in the current chip/search view -- nothing to scroll to
+    const container = scrollContainerRef.current;
+    const target = container?.querySelector<HTMLElement>(`[data-stall-id="${savedId}"]`);
+    if (container && target) {
+      hasRestoredScrollRef.current = true;
+      target.scrollIntoView({ block: 'start', behavior: 'auto' });
+      try { sessionStorage.removeItem(FEED_SCROLL_STATE_KEY); } catch { /* private mode */ }
+    }
+  }, [chip, pinnedOrderedCards]);
 
   return (
     <div className="flex flex-col h-[calc(100dvh-4rem)] lg:h-[100dvh]">
@@ -529,9 +573,9 @@ export default function StallsFeedPage() {
               )}
             </div>
           ) : (
-            <div className="flex-1 min-h-0 overflow-y-auto snap-y snap-mandatory">
+            <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto snap-y snap-mandatory">
               {(pinnedOrderedCards ?? []).map((card) => (
-                <article key={card.id} className="snap-start h-[calc(100dvh-8rem)] lg:h-full relative overflow-hidden">
+                <article key={card.id} data-stall-id={card.id} className="snap-start h-[calc(100dvh-8rem)] lg:h-full relative overflow-hidden">
                   {/* Portrait phones (<lg, portrait): pannable sideways --
                       image height = container height, width auto, instead
                       of object-contain shrinking a 1216-wide front image
