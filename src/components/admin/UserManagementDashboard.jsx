@@ -31,6 +31,26 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { formatAppDate } from '@/lib/dates';
 
+// S2G-run accounts (Wandering Hearts, Grove Station, Companions Village
+// and its individual Companions, Scripture Study) are real auth users
+// with real stalls, but they're not "members" for gosat/admin user
+// management -- reported live, 2026-09-15: mixed in with real members
+// with no way to tell them apart or filter them out. Fixed, reserved
+// set of usernames (members can never collide with these), confirmed
+// against the live profiles table -- a short list like this doesn't
+// need a schema change, just a client-side check.
+const SYSTEM_ACCOUNT_USERNAMES = new Set([
+  'wanderinghearts',
+  'grovestation',
+  'companions',
+  'scripturestudy',
+]);
+function isSystemAccount(profile) {
+  const u = profile?.username?.toLowerCase();
+  if (!u) return false;
+  return SYSTEM_ACCOUNT_USERNAMES.has(u) || u.startsWith('companion-');
+}
+
 export function UserManagementDashboard() {
   const { user } = useAuth();
   const { isAdminOrGosat, fetchAllUsers, grantRole, revokeRole } = useRoles();
@@ -39,6 +59,9 @@ export function UserManagementDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  // Defaults to real members only -- system accounts stay reachable via
+  // the tab, just never mixed into the default member-management view.
+  const [accountView, setAccountView] = useState('members');
   const [selectedUser, setSelectedUser] = useState(null);
   const [isUserDetailOpen, setIsUserDetailOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -96,7 +119,10 @@ export function UserManagementDashboard() {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
+    const matchesAccountView = accountView === 'system' ? isSystemAccount(user) : !isSystemAccount(user);
+    if (!matchesAccountView) return false;
+
+    const matchesSearch =
       user.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -238,6 +264,20 @@ export function UserManagementDashboard() {
         </Card>
       </div>
 
+      {/* Members vs S2G System Accounts -- defaults to Members; system
+          accounts (Wandering Hearts, Grove Station, Companions Village +
+          each Companion, Scripture Study) stay reachable here without
+          cluttering the default member-management view. */}
+      <Tabs
+        value={accountView}
+        onValueChange={(v) => { setAccountView(v); setCurrentPage(1); setSelectedUser(null); }}
+      >
+        <TabsList>
+          <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="system">S2G System Accounts</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
@@ -283,7 +323,7 @@ export function UserManagementDashboard() {
       {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Users ({filteredUsers.length})</CardTitle>
+          <CardTitle>{accountView === 'system' ? 'S2G System Accounts' : 'Members'} ({filteredUsers.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
