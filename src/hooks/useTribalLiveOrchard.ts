@@ -83,6 +83,19 @@ let myPresenceMap: Map<string, LivePresence> = new Map(); // tracks live presenc
 // second tab gets its own fresh copy of this module, so it can never end
 // or write to the wrong tab's session.
 let myGatheringSessionId: string | null = null;
+// Resolves once THIS channel instance has actually reached Realtime's
+// SUBSCRIBED state -- goLive() awaits this before ch.track(presence).
+// Confirmed live (silent-rejoin bug, 2026-09-15): a resumed session's
+// gathering_sessions row/Daily call/board all came back correctly, but
+// the host vanished from everyone else's Live Now list -- ch.subscribe()
+// is fire-and-forget, and calling ch.track() on a channel that hasn't
+// finished its SUBSCRIBED handshake yet is silently ineffective. The
+// FIRST "Go Live" tap of a normal session never hit this (the channel,
+// mounted earlier via useTribalLiveOrchard's own effect, has almost
+// always finished subscribing by the time a real person gets around to
+// tapping Go Live); the auto-rejoin path calls goLive() again within
+// moments of a fresh page load, before that handshake reliably completes.
+let channelSubscribedPromise: Promise<void> | null = null;
 
 function ensureChannel(presenceKey: string) {
   if (channel) return channel;
@@ -106,7 +119,16 @@ function ensureChannel(presenceKey: string) {
     });
   });
 
-  ch.subscribe();
+  channelSubscribedPromise = new Promise((resolve) => {
+    ch.subscribe((status) => {
+      // Resolve on ANY terminal status, not just SUBSCRIBED -- presence
+      // tracking is best-effort; goLive() awaiting this must never hang
+      // forever just because a connection had trouble.
+      if (status === 'SUBSCRIBED' || status === 'TIMED_OUT' || status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+        resolve();
+      }
+    });
+  });
   channel = ch;
   return ch;
 }
@@ -286,6 +308,11 @@ export function useTribalLiveOrchard() {
         participant_count: 0,
       };
       myPresenceMap.set(seed.id, presence);
+      // Wait for the channel's own SUBSCRIBED handshake before tracking --
+      // see ensureChannel's doc comment; ch.track() on a not-yet-subscribed
+      // channel is silently ineffective, the exact cause of the silent-
+      // rejoin presence bug.
+      if (channelSubscribedPromise) await channelSubscribedPromise;
       // Track the most recent presence (Supabase presence per key is replace-style)
       await ch.track(presence);
 
