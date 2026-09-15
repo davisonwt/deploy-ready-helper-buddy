@@ -5,6 +5,28 @@ import { Settings, ChevronDown, Radio, Sprout, Wallet, X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
+const PORTAL_ROOT_ID = 'admin-button-portal-root';
+
+/** Confirmed live, 2026-09-15 via direct DOM inspection: the dropdown
+ * rendered as a direct child of <body> with correct on-screen fixed
+ * coordinates and z-index, yet was still invisible -- <body> carries an
+ * inline `overflow: hidden` for this component's entire time on
+ * /cockpit (StallInteriorView.tsx's own full-viewport scroll-lock,
+ * intentional and needed elsewhere, not something to change), and that
+ * was clipping it in the reporting browser/OS combination. document.body
+ * can never be a safe portal target on this page for that reason --
+ * mount to a dedicated node appended as a SIBLING of <body> (a direct
+ * child of <html> itself) instead, which no body-level style can reach
+ * regardless of the exact clipping mechanism. */
+function getPortalRoot(): HTMLElement {
+  const existing = document.getElementById(PORTAL_ROOT_ID);
+  if (existing) return existing;
+  const el = document.createElement('div');
+  el.id = PORTAL_ROOT_ID;
+  document.documentElement.appendChild(el);
+  return el;
+}
+
 export function AdminButton() {
   const auth = useAuth();
   const [userRoles, setUserRoles] = useState<string[]>([]);
@@ -177,7 +199,7 @@ export function AdminButton() {
             </Link>
           ))}
         </div>,
-        document.body
+        getPortalRoot()
       )}
     </>
   );
