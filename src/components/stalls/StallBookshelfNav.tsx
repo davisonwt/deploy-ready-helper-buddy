@@ -35,9 +35,12 @@ const SPINE_TONES = [
  */
 export default function StallBookshelfNav({ onNavigate, className = '' }: Props) {
   const navigate = useNavigate();
-  const { isAdminOrGosat } = useRoles();
+  const { isAdminOrGosat, roles } = useRoles();
+  // Gosat's Boardroom is also open to radio_admin, which isAdminOrGosat
+  // alone doesn't cover -- same 3-role check StallSideNav uses.
+  const canSeeGated = isAdminOrGosat || roles.includes('radio_admin');
   const [moreOpen, setMoreOpen] = useState(false);
-  const visibleMore = COCKPIT_NAV_MORE.filter((item) => !item.gated || isAdminOrGosat);
+  const visibleMore = COCKPIT_NAV_MORE.filter((item) => !item.gated || canSeeGated);
   const spines: CockpitNavItem[] = moreOpen ? [...COCKPIT_NAV, ...visibleMore] : COCKPIT_NAV;
 
   const handleTap = (path: string) => {

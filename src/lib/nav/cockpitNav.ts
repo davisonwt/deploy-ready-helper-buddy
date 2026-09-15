@@ -12,7 +12,7 @@ export interface CockpitNavItem {
   emoji: string;
   path: string;
   color: string;
-  /** Flow v2 step 8: only ever shown to a viewer with the admin or gosat role (COCKPIT_NAV_MORE's "Gosat's" entry) -- every renderer must filter this out itself, cockpitNav.ts has no access to the viewer's own role. */
+  /** Flow v2 step 8: only ever shown to a viewer with the admin, gosat, or radio_admin role (COCKPIT_NAV_MORE's "Gosat's Boardroom" entry) -- every renderer must filter this out itself, cockpitNav.ts has no access to the viewer's own role. */
   gated?: boolean;
 }
 
@@ -51,10 +51,19 @@ export const COCKPIT_NAV: CockpitNavItem[] = [
 
 /**
  * Flow v2 step 8's "More ▾" -- KEEP-but-secondary routes, reachable from
- * every nav surface but not cluttering the primary list. "Gosat's" is
- * `gated: true`; every renderer filters it out unless the viewer is
- * admin/gosat (`useRoles().isAdminOrGosat`) rather than hiding it via a
- * route guard alone, matching "role-gated" in the nav itself.
+ * every nav surface but not cluttering the primary list. "Gosat's
+ * Boardroom" is `gated: true`; every renderer filters it out unless the
+ * viewer is admin/gosat/radio_admin rather than hiding it via a route
+ * guard alone, matching "role-gated" in the nav itself.
+ *
+ * 2026-09-15: replaces the old direct "Gosat's" -> /admin/dashboard link
+ * and the separate AdminButton dropdown (StallSideNav's header) that used
+ * to fan out to the same 4 admin routes. Both are gone now -- this one
+ * entry leads into the "Gosat's Boardroom" stall (S2G-run place, own
+ * front/interior like Grove Station/Companions Village), whose interior
+ * hotspots are the real path to those 4 routes now (Admin Dashboard &
+ * Wallet Settings, AOD Station Radio Management, Treasury, Seeds
+ * Management), placed by hand via the normal "Mark your shelves" editor.
  */
 export const COCKPIT_NAV_MORE: CockpitNavItem[] = [
   { label: 'Books', sub: 'Business bookkeeping', emoji: '📒', path: '/books', color: '#2563eb' },
@@ -66,7 +75,7 @@ export const COCKPIT_NAV_MORE: CockpitNavItem[] = [
   { label: 'Prescriptions', sub: 'Your submitted prescriptions', emoji: '📋', path: '/my-garden/prescriptions', color: '#84cc16' },
   { label: 'Bulk directory', sub: 'Wholesale seed directory', emoji: '📦', path: '/bulk/directory', color: '#f59e0b' },
   { label: 'Settings', sub: 'Payout settings', emoji: '⚙️', path: '/settings/payouts', color: '#64748b' },
-  { label: "Gosat's", sub: 'Elder management', emoji: '🏛', path: '/admin/dashboard', color: '#7c3aed', gated: true },
+  { label: "Gosat's Boardroom", sub: 'Elder management', emoji: '🏛', path: '/stall/gosatsboardroom', color: '#7c3aed', gated: true },
 ];
 
 /**
