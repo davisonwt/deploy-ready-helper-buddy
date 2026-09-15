@@ -15,6 +15,18 @@
  *    tab lifetime; if the underlying gathering_sessions row is still live
  *    (ended_at IS NULL), silently resume it -- no tap, no re-prompt. A
  *    stale/ended remembered session is cleared instead.
+ *
+ *    HOST resume specifically calls goLive() again (not just a raw
+ *    validation SELECT) -- confirmed live: without this, the host's OWN
+ *    overlay/Daily call reconnected fine after a reload, but they vanished
+ *    from everyone else's Live Now list, because presence
+ *    (useTribalLiveOrchard's realtime channel.track()) is a SEPARATE
+ *    mechanism from this store/localStorage, torn down by the reload's
+ *    own WebSocket disconnect and never re-established by just re-
+ *    rendering the overlay. goLive() re-tracks presence AND reuses the
+ *    existing gathering_sessions row/jitsi room (its own already-built
+ *    reuse-over-remint logic), so this is the one correct way to resume
+ *    as host, not a shortcut around it.
  * 2. Render <LiveStageOverlay> whenever the shared store has an active
  *    session, for ANY entry point that hands off to it (see
  *    activeLiveSession.ts's own doc comment for exactly which ones do,
@@ -31,7 +43,7 @@ import LiveStageOverlay from '@/components/live/LiveStageOverlay';
 
 export default function GlobalLiveSessionOverlay() {
   const { user } = useAuth();
-  const { endLive } = useTribalLiveOrchard();
+  const { goLive, endLive } = useTribalLiveOrchard();
   const active = useActiveLiveSession();
   const triedResumeRef = useRef(false);
 
@@ -41,22 +53,37 @@ export default function GlobalLiveSessionOverlay() {
     const remembered = readRememberedLiveSession();
     if (!remembered) return;
     (async () => {
+      if (remembered.isHost) {
+        // A remembered HOST session must still actually belong to this
+        // user (a stale/forged localStorage entry can't grant host rights
+        // -- goLive()/the token edge function re-verify independently
+        // regardless, this just avoids a pointless goLive() call for a
+        // session that was never this user's own).
+        const { data } = await supabase
+          .from('gathering_sessions' as any)
+          .select('id, host_id, ended_at')
+          .eq('seed_id', remembered.seedId)
+          .is('ended_at', null)
+          .maybeSingle();
+        if (!data || (data as any).host_id !== user.id) { clearActiveLiveSession(); return; }
+        const presence = await goLive({ id: remembered.seedId, title: remembered.title, image: remembered.images?.[0] ?? null });
+        if (!presence) { clearActiveLiveSession(); return; }
+        setActiveLiveSession({ ...remembered, jitsiRoom: presence.jitsi_room, hostSessionId: presence.gatheringSessionId });
+        return;
+      }
+      // Guest: no presence of their own to re-track (only the host tracks
+      // presence for a session) -- just confirm the session they were in
+      // is still live before silently reconnecting the call.
       const { data } = await supabase
         .from('gathering_sessions' as any)
-        .select('id, host_id, ended_at')
+        .select('id, ended_at')
         .eq('seed_id', remembered.seedId)
         .is('ended_at', null)
         .maybeSingle();
       if (!data) { clearActiveLiveSession(); return; }
-      // A remembered HOST session must still actually belong to this
-      // user (a stale/forged localStorage entry can't grant host rights
-      // -- goLive()/the token edge function re-verify independently
-      // regardless, this just avoids silently resuming as a "host" the
-      // server will refuse).
-      if (remembered.isHost && (data as any).host_id !== user.id) { clearActiveLiveSession(); return; }
       setActiveLiveSession({ ...remembered, hostSessionId: (data as any).id });
     })();
-  }, [user]);
+  }, [user, goLive]);
 
   if (!active) return null;
 
