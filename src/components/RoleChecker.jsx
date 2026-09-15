@@ -2,6 +2,7 @@ import React from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { supabase } from '@/integrations/supabase/client'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { toast } from 'sonner'
 
 /**
  * Pure class component for role checking - avoids hooks entirely
@@ -58,7 +59,36 @@ class RoleChecker extends React.Component {
         }
         return
       }
-      const hasAccess = await this.checkAllowedRole(session.user.id, allowedRoles, roles)
+      let hasAccess = await this.checkAllowedRole(session.user.id, allowedRoles, roles)
+      // Found live (2026-09-15, Gosat's Boardroom hotspots): a role query
+      // that comes back EMPTY (not an error -- RLS's own "Users can view
+      // own roles" policy just returns 0 rows) looks identical to "this
+      // user genuinely has no roles," but Davison's account really does
+      // have gosat/admin/radio_admin in user_roles -- a client-side
+      // SPA navigate() straight into a role-gated route can hit this
+      // query before the session held in memory has caught up with a
+      // just-refreshed token, same stale-session class the retry above
+      // already exists for on a hard error, just never extended to an
+      // empty-but-not-erroring result. One retry before concluding a
+      // real "no access" -- only when roles came back completely empty,
+      // so a user who legitimately has SOME roles but not the required
+      // one is never retried or delayed.
+      if (!hasAccess && roles.length === 0) {
+        await supabase.auth.refreshSession().catch(() => null)
+        const retry = await this.fetchRoles(session.user.id)
+        if (!retry.error && retry.roles.length > 0) {
+          roles = retry.roles
+          hasAccess = await this.checkAllowedRole(session.user.id, allowedRoles, roles)
+        }
+      }
+      // A denied gosat/admin route used to redirect to /cockpit with zero
+      // explanation -- from the Boardroom hotspot investigation, that
+      // silence is exactly what made a real denial (or the stale-session
+      // race above, if it still slips through) indistinguishable from "my
+      // click did nothing." Say so, once, before the redirect fires.
+      if (!hasAccess) {
+        toast.error("You don't have access to this page.")
+      }
       if (this._isMounted) {
         this.setState({ loading: false, isAuthenticated: true, user: session.user, hasAccess, userRoles: roles, checkError: null })
       }
