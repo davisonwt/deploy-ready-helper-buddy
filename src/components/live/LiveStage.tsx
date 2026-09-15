@@ -1065,7 +1065,15 @@ export default function LiveStage({
             or not this thumbnail shows a picture (see
             useDailyCallObject's own doc comment: mic/camera are
             independent track calls). */}
-        {isHost && roomActive && stage.mode !== 'camera' && (
+        {/* Mic-rules fix: this used to be host-only, which meant a
+            moderator (and the current queue speaker) had NO mic toggle at
+            all whenever the board wasn't in camera mode -- exactly the
+            default for ad-hoc Go Live (initialBoard defaults to 'image').
+            Confirmed live: a promoted moderator's own mic control was
+            simply absent from the page. Widened to match CallStageArea's
+            own canSpeak condition (isHostOrMod || iAmLiveSpeaker), same
+            real value now, not a hardcoded `canSpeak` shorthand. */}
+        {(isHostOrMod || iAmLiveSpeaker) && roomActive && stage.mode !== 'camera' && (
           <div className="absolute top-3 right-3 z-[5] flex flex-col items-end gap-1">
             <div className="h-20 w-28 max-lg:portrait:h-20 max-lg:portrait:w-28 lg:h-32 lg:w-44 overflow-hidden rounded-lg border border-emerald-500/30 bg-black shadow-2xl">
               {myVideoOn && myLocalVideoTrack ? (
@@ -1076,10 +1084,14 @@ export default function LiveStage({
                 </div>
               )}
             </div>
+            {/* No canSpeak prop here -- MiniCallControls doesn't gate its
+                own button (unlike CallControlBar); the outer condition
+                above is already the real permission boundary, since only
+                an authorized viewer (host/mod/current speaker) ever gets
+                this component rendered at all. */}
             <MiniCallControls
               audioOn={myAudioOn}
               videoOn={myVideoOn}
-              canSpeak
               onToggleAudio={toggleMyAudio}
               onToggleVideo={toggleMyVideo}
               onLeave={() => setLeftCall(true)}
