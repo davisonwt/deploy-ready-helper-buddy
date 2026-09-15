@@ -35,6 +35,23 @@ export default function BestowalCheckout() {
   // to the sower when nobody is credited.
   const [credited, setCredited] = useState<Record<string, { refCode: string }>>({});
 
+  // Dropship note: basket items don't carry is_dropship themselves (they're
+  // whatever SeedCard's addToBasket passed, then persisted to
+  // localStorage) -- read fresh from products so this always reflects the
+  // CURRENT flag rather than whatever a possibly-stale basket entry has.
+  // Pure display -- no effect on price/fee/split below.
+  const [dropshipIds, setDropshipIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const ids = basketItems.map((item: any) => item.id).filter(Boolean);
+    if (ids.length === 0) { setDropshipIds(new Set()); return; }
+    let alive = true;
+    supabase.from('products').select('id, is_dropship').in('id', ids).then(({ data }) => {
+      if (!alive || !data) return;
+      setDropshipIds(new Set((data as { id: string; is_dropship: boolean | null }[]).filter((p) => p.is_dropship).map((p) => p.id)));
+    });
+    return () => { alive = false; };
+  }, [basketItems]);
+
   useEffect(() => {
     console.log('🛒 BestowalCheckout: Basket items', basketItems);
     setSellerBlocked(false);
@@ -195,6 +212,9 @@ export default function BestowalCheckout() {
                 <p className="text-sm text-muted-foreground">by {item.sowers?.display_name}</p>
                 {Number(item.quantity ?? 1) > 1 && (
                   <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                )}
+                {dropshipIds.has(item.id) && (
+                  <p className="text-xs font-medium text-sky-600 dark:text-sky-400">🚚 Ships direct from supplier</p>
                 )}
               </div>
               <div className="text-right">

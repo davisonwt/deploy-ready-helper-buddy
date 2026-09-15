@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 interface SeedLine {
   title: string;
   amount: number;
+  isDropship?: boolean;
 }
 
 interface ReceiptMetadata {
@@ -127,6 +128,14 @@ export async function buildReceiptPdf(m: ReceiptMetadata, orderId: string): Prom
       doc.text(line.title, marginX, y, { maxWidth: pageWidth - marginX * 2 - 80 });
       doc.text(usd(line.amount), pageWidth - marginX, y, { align: 'right' });
       y += 16;
+      if (line.isDropship) {
+        doc.setFontSize(8);
+        doc.setTextColor(2, 132, 199); // sky-600, matches the on-screen note's color
+        doc.text('Ships direct from supplier', marginX, y);
+        doc.setTextColor(0);
+        doc.setFontSize(10);
+        y += 13;
+      }
     }
     doc.setFontSize(9);
     doc.setTextColor(120);

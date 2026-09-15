@@ -37,6 +37,13 @@ function Line({ row, children }: { row: EscrowBestowal; children?: React.ReactNo
           {money(row.amount)} · {row.delivery_type === 'physical' ? 'Physical delivery' : 'Digital delivery'}
           {when(row.created_at) ? ` · ${when(row.created_at)}` : ''}
         </p>
+        {row.products?.is_dropship && (
+          <p className="mt-0.5">
+            <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-400">
+              🚚 Dropship — Supplier Fulfilled
+            </span>
+          </p>
+        )}
         {row.release_status === 'held' && (
           <p className="text-xs text-muted-foreground">
             {row.delivered_at

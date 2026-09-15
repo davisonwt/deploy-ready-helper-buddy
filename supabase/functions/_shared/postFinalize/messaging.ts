@@ -34,6 +34,11 @@ interface SeedLine {
   itemSource?: "product" | "content" | null;
   /** Only meaningful when itemSource is "content" — content_purchases.content_type. */
   contentType?: string | null;
+  /** Dropship (factory-sower product fulfilled by a supplier, not the
+   * listing account's own stock) — pure display flag on the receipt, no
+   * effect on any amount/fee/split field on this line or the leg it
+   * belongs to. Only ever true for a product-sourced line (basket order). */
+  isDropship?: boolean;
 }
 
 interface SowerLeg {
@@ -122,7 +127,7 @@ async function resolveBasketOrder(supabase: SupabaseLike, basketOrderId: string)
     .from("product_bestowals")
     .select(`
       id, sower_id, whisperer_id, amount, s2g_fee, sower_amount, whisperer_amount, status, product_id,
-      products:product_id ( title ),
+      products:product_id ( title, is_dropship ),
       sowers:sower_id ( user_id, display_name )
     `)
     .in("id", bestowalIds)
@@ -169,6 +174,7 @@ async function resolveBasketOrder(supabase: SupabaseLike, basketOrderId: string)
       amount: Number(r.amount || 0),
       itemId: r.product_id ?? null,
       itemSource: "product",
+      isDropship: !!r.products?.is_dropship,
     });
     leg.sowerAmount += Number(r.sower_amount || 0);
     leg.s2gFee += Number(r.s2g_fee || 0);

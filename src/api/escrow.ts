@@ -36,7 +36,7 @@ export interface EscrowBestowal {
   dispute_reason: string | null;
   payout_status: string;
   created_at: string;
-  products?: { title: string | null; cover_image_url: string | null; delivery_type: string | null } | null;
+  products?: { title: string | null; cover_image_url: string | null; delivery_type: string | null; is_dropship: boolean | null } | null;
 }
 
 const SELECT = `
@@ -44,7 +44,7 @@ const SELECT = `
   whisperer_amount, whisperer_id, status, release_status, hold_reason,
   delivery_type, shipped_at, delivered_at, delivery_confirmed_at,
   auto_release_at, released_at, dispute_reason, payout_status, created_at,
-  products:product_id ( title, cover_image_url, delivery_type )
+  products:product_id ( title, cover_image_url, delivery_type, is_dropship )
 `;
 
 /**

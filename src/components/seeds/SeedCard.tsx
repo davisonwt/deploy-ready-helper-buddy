@@ -360,11 +360,22 @@ export default function SeedCard({
   // basket-checkout items. products.delivery_type drives it; unset means
   // digital (the column's own default everywhere else in the app).
   const [productDeliveryType, setProductDeliveryType] = useState<'physical' | 'digital' | null>(null);
+  // Dropship (factory-sower products fulfilled by a supplier, not the
+  // listing account's own stock) -- a pure fulfillment/display flag,
+  // deliberately NOT folded into delivery_type itself (isPhysical below
+  // still keys off delivery_type==='physical' unchanged; a dropship item
+  // is still physical goods, just fulfilled differently). No effect on
+  // price, whisperer commission, or Go Live -- same seed in every other
+  // respect.
+  const [isDropship, setIsDropship] = useState(false);
   useEffect(() => {
     if (!isProductRow || kind !== 'seed') return;
     let alive = true;
-    supabase.from('products').select('delivery_type').eq('id', id).maybeSingle().then(({ data }) => {
-      if (alive) setProductDeliveryType((data as { delivery_type?: string | null } | null)?.delivery_type === 'physical' ? 'physical' : 'digital');
+    supabase.from('products').select('delivery_type, is_dropship').eq('id', id).maybeSingle().then(({ data }) => {
+      if (!alive) return;
+      const row = data as { delivery_type?: string | null; is_dropship?: boolean | null } | null;
+      setProductDeliveryType(row?.delivery_type === 'physical' ? 'physical' : 'digital');
+      setIsDropship(!!row?.is_dropship);
     });
     return () => { alive = false; };
   }, [isProductRow, kind, id]);
@@ -1014,6 +1025,14 @@ export default function SeedCard({
               // edge (right-1 top-1 bottom-1) at every scroll position.
               <span className={`absolute left-2 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-950 shadow ${badgePct != null ? 'top-9' : 'top-2'}`}>
                 🌱 New
+              </span>
+            )}
+            {isDropship && (
+              // Stacks below Whisperer/New (same left corner, own distinct
+              // color so it doesn't read as another promo badge) -- sets
+              // buyer expectation before they ever open the checkout step.
+              <span className={`absolute left-2 rounded-full bg-gradient-to-b from-sky-400 to-sky-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-sky-950 shadow ${badgePct != null && isNew ? 'top-16' : badgePct != null || isNew ? 'top-9' : 'top-2'}`}>
+                🚚 Ships direct from supplier
               </span>
             )}
 

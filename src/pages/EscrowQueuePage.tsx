@@ -84,7 +84,14 @@ export default function EscrowQueuePage() {
           <Card key={row.id}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-base">{row.products?.title ?? 'Seed'}</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  {row.products?.title ?? 'Seed'}
+                  {row.products?.is_dropship && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-400">
+                      🚚 Dropship
+                    </span>
+                  )}
+                </CardTitle>
                 <EscrowStatusBadge status={row.release_status} />
               </div>
               <CardDescription>

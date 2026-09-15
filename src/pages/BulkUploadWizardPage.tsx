@@ -35,6 +35,9 @@ type ParsedRow = {
     /** CSV-supplied filename to match against uploaded images by name in
      * the Images step -- never sent to insertProduct itself. */
     image_filename?: string;
+    /** Optional factory-sower column -- true marks the row "ships direct
+     * from supplier"; defaults to false when absent for normal sowers. */
+    dropship?: boolean;
   };
   issues: string[];
   images?: ProductImage[];
@@ -742,6 +745,7 @@ function PublishStep({
           file_url: '',
           image_urls: (r.images ?? []).map((im) => im.url),
           cover_image_url: r.images?.[0]?.url ?? null,
+          is_dropship: n.dropship ?? false,
         };
         const prod = await insertProduct(productPayload);
 

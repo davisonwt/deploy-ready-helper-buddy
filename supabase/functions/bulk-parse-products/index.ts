@@ -33,6 +33,10 @@ const SYN: Record<string, string> = {
   // Passed through as-is for the client's Images step to match against
   // uploaded file names -- never touched by this parser beyond that.
   image_filename: 'image_filename', image: 'image_filename', photo: 'image_filename', filename: 'image_filename',
+  // Factory-sower dropship flag: fulfillment/display only, never touches
+  // price/commission math -- defaults to false (a normal sower's batch
+  // with no dropship column at all is entirely unaffected).
+  dropship: 'dropship', is_dropship: 'dropship', drop_ship: 'dropship',
 };
 
 const norm = (s: string) => s.toLowerCase().trim().replace(/[\s\-]+/g, '_').replace(/[^a-z0-9_%]/g, '');
@@ -42,7 +46,11 @@ type Normalized = {
   name?: string; description?: string; price?: number; price_zar?: number; variant?: string;
   commission_pct?: number; commission_fixed?: number;
   category?: string; sku?: string; stock_qty?: number; image_filename?: string;
+  dropship?: boolean;
 };
+
+const TRUTHY = new Set(['true', 'yes', 'y', '1']);
+const FALSY = new Set(['false', 'no', 'n', '0']);
 
 function normalizeRow(raw: Record<string, unknown>): { normalized: Normalized; issues: string[] } {
   const out: Normalized = {};
@@ -52,6 +60,12 @@ function normalizeRow(raw: Record<string, unknown>): { normalized: Normalized; i
     if (mapped === 'price' || mapped === 'price_zar' || mapped === 'commission_pct' || mapped === 'commission_fixed' || mapped === 'stock_qty') {
       const n = Number(String(v).replace(/[^0-9.\-]/g, ''));
       if (!Number.isNaN(n)) (out as any)[mapped] = n;
+    } else if (mapped === 'dropship') {
+      // Optional factory-sower column -- unrecognized text is left
+      // undefined (defaults to false downstream) rather than guessed at.
+      const s = String(v).trim().toLowerCase();
+      if (TRUTHY.has(s)) out.dropship = true;
+      else if (FALSY.has(s)) out.dropship = false;
     } else {
       (out as any)[mapped] = String(v).trim();
     }

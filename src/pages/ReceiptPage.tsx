@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 interface SeedLine {
   title: string;
   amount: number;
+  isDropship?: boolean;
 }
 
 interface ReceiptMetadata {
@@ -173,9 +174,14 @@ export default function ReceiptPage() {
                 Seed{(m.seed_lines?.length ?? 0) > 1 ? 's' : ''} — from {m.sower_name}
               </p>
               {m.seed_lines?.map((line, i) => (
-                <div key={i} className="flex justify-between text-sm text-gray-900 mb-1">
-                  <span>{line.title}</span>
-                  <span className="font-medium">{usd(line.amount)}</span>
+                <div key={i} className="mb-1">
+                  <div className="flex justify-between text-sm text-gray-900">
+                    <span>{line.title}</span>
+                    <span className="font-medium">{usd(line.amount)}</span>
+                  </div>
+                  {line.isDropship && (
+                    <p className="text-xs text-sky-600">🚚 Ships direct from supplier</p>
+                  )}
                 </div>
               ))}
               <div className="flex justify-between text-xs text-gray-500 mt-2">
