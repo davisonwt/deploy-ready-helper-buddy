@@ -737,7 +737,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           )}
         </div>
 
-        <StallTodayPanel stacked className="px-4 py-4" />
+        <StallTodayPanel stacked className="px-4 py-4" ownerId={ownerId} isOwner={effectiveIsOwner} />
       </div>
 
       <div className="relative flex-1 min-h-0 max-lg:portrait:hidden flex">
@@ -879,7 +879,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           </p>
         </div>
 
-        <StallTodayPanel className="hidden lg:flex lg:flex-col lg:w-[220px] lg:shrink-0 lg:border-l lg:border-amber-500/15" />
+        <StallTodayPanel className="hidden lg:flex lg:flex-col lg:w-[220px] lg:shrink-0 lg:border-l lg:border-amber-500/15" ownerId={ownerId} isOwner={effectiveIsOwner} />
       </div>
 
       <StallDrawer side="left" open={isNavDrawerOpen} onClose={() => setIsNavDrawerOpen(false)}>
@@ -887,7 +887,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
       </StallDrawer>
 
       <StallDrawer side="right" open={isTodayDrawerOpen} onClose={() => setIsTodayDrawerOpen(false)}>
-        <StallTodayPanel className="flex flex-col flex-1 min-h-0" />
+        <StallTodayPanel className="flex flex-col flex-1 min-h-0" ownerId={ownerId} isOwner={effectiveIsOwner} />
       </StallDrawer>
 
       {activeHotspot && (

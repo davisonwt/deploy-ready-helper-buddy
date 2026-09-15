@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Loader2 } from 'lucide-react';
+import { Wallet, Loader2, Eye } from 'lucide-react';
 import { useSacredNow } from '@/hooks/useSacredNow';
 import { useCommunityGrowthStats } from '@/hooks/useCommunityGrowthStats';
+import { useStallVisitorCount } from '@/hooks/useStallVisitorCount';
 import { useAuth } from '@/hooks/useAuth';
 import { useLiveWalletBalance } from '@/lib/payments/liveWalletBalance';
 
@@ -10,6 +11,13 @@ interface Props {
   className?: string;
   /** Each section (Wallet, Today, Omer, Growth) as its own bordered wood card with a gap between, instead of one continuous panel with hairline dividers -- the mobile-portrait stall interior page (StallInteriorView) stacks these below the pannable image. */
   stacked?: boolean;
+  /** Stall being viewed + whether the current viewer is really its owner
+   * (StallInteriorView's effectiveIsOwner -- false while "viewing as
+   * visitor"). Both required for the Visitors section below: owner-only,
+   * so a plain visitor never sees another member's audience size. Omitted
+   * entirely by EmptyPlotView (no stall built yet) -- no section renders. */
+  ownerId?: string | null;
+  isOwner?: boolean;
 }
 
 const LOW_BALANCE_THRESHOLD = 5;
@@ -32,12 +40,13 @@ const LOW_BALANCE_THRESHOLD = 5;
  * button that used to live here is retired -- the Heart tip picker on a
  * SeedCard IS Let It Rain now, no separate feature.
  */
-export default function StallTodayPanel({ className = '', stacked = false }: Props) {
+export default function StallTodayPanel({ className = '', stacked = false, ownerId = null, isOwner = false }: Props) {
   const sacred = useSacredNow();
   const stats = useCommunityGrowthStats();
   const { user } = useAuth();
   const address = user?.solana_wallet_address || null;
   const { balance, error, loading } = useLiveWalletBalance(address);
+  const { count: visitorCount, loading: visitorCountLoading } = useStallVisitorCount(ownerId, isOwner);
 
   const dayType = sacred.isSabbath ? 'Sabbath' : sacred.isFeast ? sacred.feastName || 'Feast Day' : 'Regular Day';
   const low = !!address && balance !== null && balance < LOW_BALANCE_THRESHOLD;
@@ -76,6 +85,23 @@ export default function StallTodayPanel({ className = '', stacked = false }: Pro
           </Link>
         )}
       </Section>
+
+      {isOwner && ownerId && (
+        <>
+          <Divider />
+          <Section>
+            <h3 className="font-serif text-xs tracking-[0.12em] uppercase text-amber-400/80 mb-2">👀 Visitors</h3>
+            <div className="flex items-center justify-between rounded-lg border border-amber-500/15 bg-black/25 px-3 py-2">
+              <span className="flex items-center gap-1.5 text-xs text-amber-100/70">
+                <Eye className="h-3.5 w-3.5" /> Unique visitors
+              </span>
+              <span className="text-sm font-semibold text-amber-200">
+                {visitorCountLoading && visitorCount === null ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : visitorCount ?? 0}
+              </span>
+            </div>
+          </Section>
+        </>
+      )}
 
       <Divider />
 
