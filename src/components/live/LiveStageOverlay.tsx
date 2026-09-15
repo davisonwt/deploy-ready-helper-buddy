@@ -23,6 +23,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useTribalLiveOrchard, type SessionAccess } from '@/hooks/useTribalLiveOrchard';
 import { useGatheringModerators } from '@/hooks/useGatheringModerators';
+import { useLiveStage } from '@/hooks/useLiveStage';
 
 export interface LiveStageOverlayProps {
   seedId: string;
@@ -59,6 +60,20 @@ export default function LiveStageOverlay({
   // instance of the hook (see useGatheringModerators.ts's own doc comment
   // on why LiveStage.tsx and this overlay each resolve it independently).
   const { isHostOrMod } = useGatheringModerators(seedId, isHost, hostSessionId);
+
+  // "See everyone" bug fix (root cause: this button used to navigate() to
+  // /live/:seedId/room -- a real route change, which unmounts whichever
+  // page renders this overlay and, with it, <LiveStage>'s Daily call.
+  // Confirmed live: the acting viewer got dropped from the call entirely
+  // (others stayed connected -- their own tabs never unmounted). Fixed by
+  // showing the same info in-place instead of navigating anywhere.
+  // isHost:false and no hostSessionId on purpose -- this second useLiveStage
+  // instance is read-only display only, never writes board_state and never
+  // runs the host-only "close the session row on unmount" cleanup (that
+  // path is gated on hostSessionId being set), so it can't interfere with
+  // <LiveStage>'s own instance of this same hook.
+  const { approved: everyoneApproved, hands: everyoneHands } = useLiveStage(seedId, { isHost: false, enabled: true });
+  const [participantsSheetOpen, setParticipantsSheetOpen] = useState(false);
 
   const imgList = (images || []).filter(Boolean) as string[];
   const [overlayImgIdx, setOverlayImgIdx] = useState(0);
@@ -183,7 +198,7 @@ export default function LiveStageOverlay({
             <Share2 className="h-3 w-3" /> Share
           </button>
           <button
-            onClick={() => navigate(`/live/${seedId}/room`)}
+            onClick={() => setParticipantsSheetOpen(true)}
             className="flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-white/10"
             title="See everyone joined / queued / in the pocket"
           >
@@ -345,6 +360,44 @@ export default function LiveStageOverlay({
           </div>
         </div>
       </div>
+
+      {/* "See everyone" -- in-place, on top of the still-live call (see the
+          hook comment above for why this replaced a navigate() call). */}
+      {participantsSheetOpen && (
+        <div className="fixed inset-0 z-[1100] flex items-end justify-center bg-black/70 sm:items-center" onClick={() => setParticipantsSheetOpen(false)}>
+          <div
+            className="max-h-[70vh] w-full max-w-sm overflow-hidden rounded-t-2xl border border-emerald-500/30 bg-[#0a0f1a] text-white sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 p-3">
+              <span className="text-sm font-extrabold">👥 Everyone here</span>
+              <button onClick={() => setParticipantsSheetOpen(false)} aria-label="Close"><X className="h-4 w-4 text-white/50" /></button>
+            </div>
+            <div className="max-h-[55vh] overflow-y-auto p-3 space-y-3">
+              <div>
+                <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-400">In the pocket · {everyoneApproved.length}</div>
+                {everyoneApproved.length === 0 && <div className="rounded-md bg-black/20 p-2 text-center text-xs italic text-white/40">Empty seats.</div>}
+                {everyoneApproved.map((g) => (
+                  <div key={g.user_id} className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1.5 text-xs">
+                    {g.avatar ? <img src={g.avatar} alt="" className="h-6 w-6 rounded-full object-cover" /> : <div className="h-6 w-6 rounded-full bg-emerald-900/40" />}
+                    <span className="truncate font-bold">{g.name}</span>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-400">Waiting to come up · {everyoneHands.length}</div>
+                {everyoneHands.length === 0 && <div className="rounded-md bg-black/20 p-2 text-center text-xs italic text-white/40">No one waiting.</div>}
+                {everyoneHands.map((h) => (
+                  <div key={h.user_id} className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1.5 text-xs">
+                    {h.avatar ? <img src={h.avatar} alt="" className="h-6 w-6 rounded-full object-cover" /> : <div className="h-6 w-6 rounded-full bg-amber-900/40" />}
+                    <span className="truncate font-bold">{h.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
