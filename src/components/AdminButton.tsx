@@ -46,7 +46,7 @@ export function AdminButton() {
     const cx = r.left + r.width / 2;
     const cy = r.top + r.height / 2;
     const topEl = document.elementFromPoint(cx, cy);
-    console.warn('[AdminButton DIAG] trigger mounted', {
+    console.error('[AdminButton DIAG] trigger mounted', {
       rect: { top: r.top, left: r.left, width: r.width, height: r.height },
       elementAtCenter: topEl ? { tag: topEl.tagName, className: (topEl as HTMLElement).className, id: topEl.id } : null,
       isTriggerItself: topEl === triggerRef.current,
@@ -56,7 +56,7 @@ export function AdminButton() {
 
   useEffect(() => {
     if (!open) return;
-    console.warn('[AdminButton DIAG] open effect running (open=true)');
+    console.error('[AdminButton DIAG] open effect running (open=true)');
     const updatePos = () => {
       const r = triggerRef.current?.getBoundingClientRect();
       if (r) setMenuPos({ top: r.bottom + 4, right: Math.max(8, window.innerWidth - r.right) });
@@ -117,9 +117,9 @@ export function AdminButton() {
       <button
         ref={triggerRef}
         type="button"
-        onPointerDown={() => console.warn('[AdminButton DIAG] trigger onPointerDown fired')}
+        onPointerDown={() => console.error('[AdminButton DIAG] trigger onPointerDown fired')}
         onClick={() => {
-          console.warn('[AdminButton DIAG] trigger onClick fired', { openBefore: open });
+          console.error('[AdminButton DIAG] trigger onClick fired', { openBefore: open });
           try {
             setOpen((v) => !v);
           } catch (e) {
@@ -134,7 +134,7 @@ export function AdminButton() {
         gosat's ({userRoles.join(', ')})
         <ChevronDown className="w-3 h-3 ml-1" />
       </button>
-      {(() => { console.warn('[AdminButton DIAG] render decision', { open, menuPos, willRenderMenu: !!(open && menuPos) }); return null; })()}
+      {(() => { console.error('[AdminButton DIAG] render decision', { open, menuPos, willRenderMenu: !!(open && menuPos) }); return null; })()}
       {open && menuPos && createPortal(
         <div
           ref={menuRef}
