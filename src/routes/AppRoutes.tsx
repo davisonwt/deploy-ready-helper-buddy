@@ -82,6 +82,10 @@ import {
   SowProductPage,
   SowHandPage,
   HandSeedDetailPage,
+  SowWheelPage,
+  WheelSeedDetailPage,
+  SowPillowPage,
+  PillowSeedDetailPage,
   RegisterWanderingPage,
   StorePage,
   PrivacyPage,
@@ -225,6 +229,18 @@ const AppRoutes = () => (
     } />
     <Route path="/seed/hand/:id" element={
       <Suspense fallback={<LoadingFallback />}><HandSeedDetailPage /></Suspense>
+    } />
+    <Route path="/sow/wheel" element={
+      <ProtectedRoute><RequireSettlementConsent><Suspense fallback={<LoadingFallback />}><SowWheelPage /></Suspense></RequireSettlementConsent></ProtectedRoute>
+    } />
+    <Route path="/seed/wheel/:id" element={
+      <Suspense fallback={<LoadingFallback />}><WheelSeedDetailPage /></Suspense>
+    } />
+    <Route path="/sow/pillow" element={
+      <ProtectedRoute><RequireSettlementConsent><Suspense fallback={<LoadingFallback />}><SowPillowPage /></Suspense></RequireSettlementConsent></ProtectedRoute>
+    } />
+    <Route path="/seed/pillow/:id" element={
+      <Suspense fallback={<LoadingFallback />}><PillowSeedDetailPage /></Suspense>
     } />
     <Route path="/register-wandering" element={
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><RegisterWanderingPage /></Suspense></ProtectedRoute>
