@@ -29,11 +29,17 @@ export async function fetchDailyMeetingToken(input: {
   roomKind: DailyRoomKind;
   roomId: string;
   displayName?: string;
+  /** gathering_sessions.id -- pass the caller's OWN hostSessionId (never
+   * set for a guest) so the edge function can verify host_id server-side
+   * and grant Daily's is_owner permission. See that function's own doc
+   * comment on Payload.gatheringSessionId. */
+  gatheringSessionId?: string | null;
 }): Promise<DailyMeetingToken> {
   return invokePaymentFunction<DailyMeetingToken>('create-daily-meeting-token', {
     roomKind: input.roomKind,
     roomId: input.roomId,
     displayName: input.displayName,
+    gatheringSessionId: input.gatheringSessionId ?? undefined,
   });
 }
 

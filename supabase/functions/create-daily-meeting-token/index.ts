@@ -30,6 +30,20 @@ interface Payload {
   roomKind: RoomKind;
   roomId: string;
   displayName?: string;
+  /** gathering_sessions.id for a Gathering Room / Scripture Study live --
+   * only meaningful for roomKind "custom". When present, verified against
+   * that row's own host_id (service-role read, not client-trusted) and, on
+   * a match, the minted token gets Daily's is_owner grant. That's the one
+   * thing that makes call.updateParticipant()/updateParticipants() from
+   * the host's own client actually take effect at Daily's SFU -- without
+   * it there is no way to force-mute a guest server-side at all, which is
+   * the root cause behind "everyone approved is audible to everyone,
+   * incidental to Daily's own default routing" (see useLiveStage.ts's
+   * liveSpeakerUserId / LiveStage.tsx's speaker-enforcement effect). A
+   * guest passing someone else's real gatheringSessionId still only ever
+   * gets checked against THEIR OWN auth.uid() here, so this can't be used
+   * to steal owner rights. */
+  gatheringSessionId?: string;
 }
 
 const DAILY_API = "https://api.daily.co/v1";
@@ -68,7 +82,7 @@ Deno.serve(async (req) => {
 
     let payload: Payload;
     try { payload = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
-    const { roomKind, roomId, displayName } = payload ?? {};
+    const { roomKind, roomId, displayName, gatheringSessionId } = payload ?? {};
     if (!roomKind || !roomId || typeof roomId !== "string") {
       return json({ error: "roomKind and roomId are required" }, 400);
     }
@@ -120,6 +134,23 @@ Deno.serve(async (req) => {
 
     const roomUrl = await getOrCreateDailyRoom(dailyApiKey, dailyRoomName);
 
+    // Gathering Room speaker enforcement (LiveStage.tsx / useLiveStage.ts):
+    // only the VERIFIED host of this specific gathering_sessions row gets
+    // Daily's is_owner grant -- a service-role read of host_id, never the
+    // client's own say-so. Any lookup miss/mismatch just leaves isOwner
+    // false, same token shape every other caller of this function already
+    // gets, so no other roomKind/flow is affected.
+    let isOwner = false;
+    if (roomKind === "custom" && gatheringSessionId) {
+      const { data: session, error: sessionErr } = await service
+        .from("gathering_sessions")
+        .select("host_id")
+        .eq("id", gatheringSessionId)
+        .maybeSingle();
+      if (sessionErr) console.error("create-daily-meeting-token: gathering_sessions lookup failed", sessionErr);
+      else if (session?.host_id === user.id) isOwner = true;
+    }
+
     const tokenRes = await fetch(`${DAILY_API}/meeting-tokens`, {
       method: "POST",
       headers: { Authorization: `Bearer ${dailyApiKey}`, "Content-Type": "application/json" },
@@ -129,6 +160,7 @@ Deno.serve(async (req) => {
           user_id: user.id,
           user_name: (displayName || "Sower").slice(0, 80),
           exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
+          is_owner: isOwner,
         },
       }),
     });

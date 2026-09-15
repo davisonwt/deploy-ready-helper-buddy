@@ -110,6 +110,14 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
   const [approved, setApproved] = useState<ApprovedGuest[]>([]);
   const [spotlightRequests, setSpotlightRequests] = useState<SpotlightRequest[]>([]);
   const [playingVoiceNote, setPlayingVoiceNote] = useState<PlayingVoiceNote | null>(null);
+  // Scripture Study speaker-permission fix (2026-09-15): who, among
+  // `approved` (non-host) guests, currently has the floor -- the ONE
+  // non-host mic LiveStage.tsx's own Daily-enforcement effect will ever
+  // unmute. Ephemeral (broadcast-only, like `hands`/`approved`) rather
+  // than persisted to gathering_sessions -- a host refresh just means
+  // nobody's speaking until they advance the queue again, same cold-start
+  // shape those two already have.
+  const [liveSpeakerUserId, setLiveSpeakerUserId] = useState<string | null>(null);
   const playingVoiceNoteRef = useRef<PlayingVoiceNote | null>(null);
   // Gathering Room batch 2: which #1-position user_ids the host has already
   // triggered a play_voice_note for, so the same note doesn't fire twice
@@ -156,6 +164,9 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     ch.on('broadcast', { event: 'force_mute' }, ({ payload }) => {
       const { user_id, muted } = payload as any;
       setApproved(prev => prev.map(g => g.user_id === user_id ? { ...g, muted } : g));
+    });
+    ch.on('broadcast', { event: 'set_live_speaker' }, ({ payload }) => {
+      setLiveSpeakerUserId((payload as { user_id: string | null }).user_id);
     });
     ch.on('broadcast', { event: 'request_spotlight' }, ({ payload }) => {
       const r = payload as SpotlightRequest;
@@ -351,13 +362,34 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     send('cancel_hand', { user_id: user.id });
   }, [user, send]);
 
+  // Scripture Study speaker-permission fix: who currently has the floor,
+  // host-only. Broadcasts to every client (so everyone's own view of "who's
+  // speaking" agrees), but the actual audio enforcement -- muting/unmuting
+  // real Daily tracks -- happens in LiveStage.tsx's own effect, which is
+  // the only place that has both this value AND the Daily call object.
+  const setLiveSpeaker = useCallback((userId: string | null) => {
+    if (!isHost) return;
+    setLiveSpeakerUserId(userId);
+    send('set_live_speaker', { user_id: userId });
+  }, [isHost, send]);
+
   const approveHand = useCallback((h: HandRaise) => {
     if (!isHost) return;
     const g: ApprovedGuest = { user_id: h.user_id, name: h.name, avatar: h.avatar, mode: h.want, muted: false };
+    // A lone approved guest (the ordinary 1:1 "seller demos a seed to one
+    // buyer" shape, not a multi-guest panel) gets the floor immediately --
+    // the reported bug only ever happens once a SECOND+ guest is also
+    // approved and nothing arbitrates between them, so gating a solo guest
+    // too would just be a needless regression (the host having to
+    // remember to click "Next speaker" for a call that only ever has one
+    // possible speaker to begin with). Approving a second/third/etc. guest
+    // does NOT touch who currently has the floor -- the host decides that
+    // via setLiveSpeaker/advanceQueue once there's an actual choice to make.
+    if (approved.length === 0) setLiveSpeaker(h.user_id);
     setApproved(prev => prev.find(x => x.user_id === g.user_id) ? prev : [...prev, g]);
     setHands(prev => prev.filter(x => x.user_id !== h.user_id));
     send('approve_hand', g);
-  }, [isHost, send]);
+  }, [isHost, send, approved, setLiveSpeaker]);
 
   const denyHand = useCallback((userId: string) => {
     if (!isHost) return;
@@ -365,11 +397,35 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     send('cancel_hand', { user_id: userId });
   }, [isHost, send]);
 
+  // Host-only: hands the floor to the next approved guest after whoever's
+  // currently speaking, in approval order -- wraps to the first once past
+  // the end, clears to "nobody" once no approved guest is left. Optional
+  // `presentUserIds` additionally excludes anyone `approved` still lists
+  // but whose Daily participant is already gone (LiveStage.tsx passes this
+  // from its own live call-participant map so a just-disconnected guest is
+  // never picked as the "next" speaker before their `approved` entry is
+  // cleaned up).
+  const advanceQueue = useCallback((presentUserIds?: Set<string>) => {
+    if (!isHost) return;
+    const list = presentUserIds ? approved.filter(g => presentUserIds.has(g.user_id)) : approved;
+    if (list.length === 0) { setLiveSpeaker(null); return; }
+    const curIdx = liveSpeakerUserId ? list.findIndex(g => g.user_id === liveSpeakerUserId) : -1;
+    const next = list[(curIdx + 1) % list.length];
+    setLiveSpeaker(next.user_id);
+  }, [isHost, approved, liveSpeakerUserId, setLiveSpeaker]);
+
   const removeGuest = useCallback((userId: string) => {
     if (!isHost) return;
     setApproved(prev => prev.filter(g => g.user_id !== userId));
     send('remove_guest', { user_id: userId });
-  }, [isHost, send]);
+    // Requirement: a participant leaving (here, host-removed) while they're
+    // the live speaker must auto-advance, not just leave the room silently
+    // muted-forever with nobody able to talk.
+    if (liveSpeakerUserId === userId) {
+      const remaining = approved.filter(g => g.user_id !== userId);
+      setLiveSpeaker(remaining[0]?.user_id ?? null);
+    }
+  }, [isHost, send, approved, liveSpeakerUserId, setLiveSpeaker]);
 
   const toggleMute = useCallback((userId: string, muted: boolean) => {
     if (!isHost) return;
@@ -410,10 +466,12 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     stage, setStageMode,
     hands, raiseHand, cancelHand, approveHand, denyHand,
     approved, removeGuest, toggleMute,
+    liveSpeakerUserId, setLiveSpeaker, advanceQueue,
     spotlightRequests, setSpotlight, requestSpotlight, cancelSpotlightRequest, denySpotlight,
     playingVoiceNote, finishVoiceNote,
     myHandRaised: !!user && hands.some(h => h.user_id === user.id),
     iAmApproved: !!user && approved.some(g => g.user_id === user.id),
+    iAmLiveSpeaker: !!user && liveSpeakerUserId === user.id,
     mySpotlightRequested: !!user && spotlightRequests.some(r => r.user_id === user.id),
     iAmSpotlighted: !!user && stage.spotlightUserId === user.id,
   };

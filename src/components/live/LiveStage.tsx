@@ -103,9 +103,10 @@ export default function LiveStage({
   const {
     stage, setStageMode,
     hands, raiseHand, cancelHand, approveHand, denyHand,
-    approved, removeGuest, toggleMute,
+    approved, removeGuest,
+    liveSpeakerUserId, setLiveSpeaker, advanceQueue,
     spotlightRequests, setSpotlight, requestSpotlight, cancelSpotlightRequest, denySpotlight,
-    myHandRaised, iAmApproved, mySpotlightRequested, iAmSpotlighted,
+    myHandRaised, iAmApproved, iAmLiveSpeaker, mySpotlightRequested, iAmSpotlighted,
     playingVoiceNote, finishVoiceNote,
   } = useLiveStage(seedId, { isHost, enabled: true, hostSessionId });
   const [recordingNote, setRecordingNote] = useState(false);
@@ -115,7 +116,7 @@ export default function LiveStage({
   // speaker-strip tile's tap-revealed controls are open, and whether the
   // host's queue-management sheet is open. Both replace an always-visible
   // desktop tray with a tap-to-reveal one -- same underlying actions
-  // (setSpotlight/toggleMute/removeGuest/approveHand/denyHand), nothing new
+  // (setSpotlight/setLiveSpeaker/removeGuest/approveHand/denyHand), nothing new
   // in the engine.
   const [openTileId, setOpenTileId] = useState<string | null>(null);
   const [queueSheetOpen, setQueueSheetOpen] = useState(false);
@@ -356,8 +357,56 @@ export default function LiveStage({
     toggleAudio: toggleMyAudio,
     toggleVideo: toggleMyVideo,
     localMicSilent: myMicSilent,
-  } = useDailyCallObject(roomActive ? 'custom' : null, jitsiRoom, displayName, roomActive);
+    setRemoteAudio,
+  } = useDailyCallObject(roomActive ? 'custom' : null, jitsiRoom, displayName, roomActive, isHost, hostSessionId);
   const myLocalVideoTrack = Object.values(callParticipants).find(p => p.local)?.videoTrack ?? null;
+
+  // Speaker-permission enforcement (fixes: 5 in a Scripture Study room,
+  // only host + first joiner could hear each other -- audibility was
+  // purely incidental to Daily's own default routing, nothing ever
+  // actually gated it). Host-only, reconciled on every relevant change:
+  // for each currently-connected approved (non-host) guest, force their
+  // Daily audio to exactly "on" iff they're liveSpeakerUserId, "off"
+  // otherwise -- covers a guest's FIRST appearance (freshly approved,
+  // starts muted), a queue advance (previous speaker muted, next
+  // unmuted, same effect run), and re-asserts idempotently if a guest's
+  // own client ever tries to defeat it. `call.updateParticipant` only
+  // takes effect because this client's own token carries is_owner (see
+  // create-daily-meeting-token) -- a non-host running this same code
+  // would be a silent no-op at Daily's SFU, not a privilege escalation.
+  const appliedRemoteAudioRef = useRef<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!isHost) return;
+    const remoteBySessionId = new Map(Object.values(callParticipants).filter(p => !p.local).map(p => [p.sessionId, p] as const));
+    const applied = appliedRemoteAudioRef.current;
+    for (const p of remoteBySessionId.values()) {
+      if (!p.userId) continue;
+      const shouldBeOn = p.userId === liveSpeakerUserId;
+      if (applied[p.sessionId] === shouldBeOn) continue;
+      setRemoteAudio(p.sessionId, shouldBeOn);
+      applied[p.sessionId] = shouldBeOn;
+    }
+    // Drop bookkeeping for sessions that left, so a returning participant
+    // (new session_id) gets a fresh, explicit apply rather than being
+    // skipped as "already handled."
+    for (const sid of Object.keys(applied)) {
+      if (!remoteBySessionId.has(sid)) delete applied[sid];
+    }
+  }, [isHost, callParticipants, liveSpeakerUserId, setRemoteAudio]);
+
+  // Requirement: a participant leaving WHILE they're the live speaker
+  // auto-advances the queue -- covers a real disconnect (closed tab,
+  // network drop), not just the host's own explicit "remove from stage"
+  // (removeGuest itself already auto-advances, see useLiveStage.ts).
+  useEffect(() => {
+    if (!isHost || !liveSpeakerUserId) return;
+    const stillConnected = Object.values(callParticipants).some(p => !p.local && p.userId === liveSpeakerUserId);
+    if (stillConnected) return;
+    const presentUserIds = new Set(
+      Object.values(callParticipants).filter(p => !p.local && p.userId).map(p => p.userId as string)
+    );
+    advanceQueue(presentUserIds);
+  }, [isHost, liveSpeakerUserId, callParticipants, advanceQueue]);
 
   // "Tap to enable sound" recovery -- see ParticipantAudio's own doc
   // comment: an unmuted <audio>.play() blocked by the browser's autoplay
@@ -559,6 +608,7 @@ export default function LiveStage({
             spotlightUserId={spotlightUserId}
             audioOn={myAudioOn}
             videoOn={myVideoOn}
+            canSpeak={isHost || iAmLiveSpeaker}
             onToggleAudio={toggleMyAudio}
             onToggleVideo={toggleMyVideo}
             onLeave={() => setLeftCall(true)}
@@ -712,6 +762,7 @@ export default function LiveStage({
             <MiniCallControls
               audioOn={myAudioOn}
               videoOn={myVideoOn}
+              canSpeak
               onToggleAudio={toggleMyAudio}
               onToggleVideo={toggleMyVideo}
               onLeave={() => setLeftCall(true)}
@@ -732,10 +783,11 @@ export default function LiveStage({
           isHost={isHost}
           approved={approved}
           spotlightUserId={spotlightUserId}
+          liveSpeakerUserId={liveSpeakerUserId}
           openTileId={openTileId}
           setOpenTileId={setOpenTileId}
           onSetSpotlight={setSpotlight}
-          onToggleMute={toggleMute}
+          onSetLiveSpeaker={setLiveSpeaker}
           onRemoveGuest={removeGuest}
           callParticipants={callParticipants}
           hostVideoTrack={myLocalVideoTrack}
@@ -765,6 +817,21 @@ export default function LiveStage({
       {/* Guest boxes row — Discord/TikTok style "seats" (desktop/landscape only, see portrait speaker strip above) */}
       {(approved.length > 0 || isHost) && (
         <div className="hidden max-lg:landscape:flex lg:flex items-stretch gap-2 border-t border-white/10 bg-gradient-to-b from-black/80 to-black/95 px-3 py-2.5 overflow-x-auto">
+          {/* Host-only: advances speaking rights to the next approved guest
+              in queue order -- the per-seat Mic button below also lets the
+              host jump straight to a specific guest; both funnel through
+              the same setLiveSpeaker/advanceQueue enforcement. */}
+          {isHost && approved.length > 0 && (
+            <button
+              type="button"
+              onClick={() => advanceQueue()}
+              className="flex h-24 w-16 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-emerald-400/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20"
+              title="Mute the current speaker and hand the floor to the next approved guest"
+            >
+              <Mic className="h-4 w-4" />
+              <span className="text-[9px] font-bold uppercase leading-tight">Next<br />speaker</span>
+            </button>
+          )}
           {/* Host's own seat */}
           <div
             className={`relative flex h-24 w-32 flex-shrink-0 flex-col items-center justify-center rounded-lg border-2 ${
@@ -787,6 +854,7 @@ export default function LiveStage({
 
           {approved.map(g => {
             const isLit = g.user_id === spotlightUserId;
+            const isSpeaking = g.user_id === liveSpeakerUserId;
             return (
               <div
                 key={g.user_id}
@@ -803,9 +871,9 @@ export default function LiveStage({
                   </div>
                 )}
                 <div className="mt-1 flex items-center gap-1 text-[10px] text-emerald-200">
-                  {g.mode === 'video'
-                    ? <Video className="h-3 w-3" />
-                    : (g.muted ? <MicOff className="h-3 w-3 text-rose-400" /> : <Mic className="h-3 w-3" />)}
+                  {isSpeaking
+                    ? <Mic className="h-3 w-3 text-emerald-300 animate-pulse" />
+                    : <MicOff className="h-3 w-3 text-rose-400" />}
                   <span className="max-w-[80px] truncate font-bold">{g.name}</span>
                 </div>
                 {isLit && (
@@ -825,11 +893,13 @@ export default function LiveStage({
                       <Star className="h-3 w-3" />
                     </button>
                     <button
-                      onClick={() => toggleMute(g.user_id, !g.muted)}
-                      className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-500 text-black hover:bg-sky-400"
-                      title={g.muted ? 'Unmute' : 'Mute'}
+                      onClick={() => setLiveSpeaker(isSpeaking ? null : g.user_id)}
+                      className={`flex h-5 w-5 items-center justify-center rounded-full ${
+                        isSpeaking ? 'bg-emerald-400 text-black' : 'bg-sky-500 text-black hover:bg-sky-400'
+                      }`}
+                      title={isSpeaking ? 'Mute — take the floor away' : 'Make live speaker — only one guest can talk at a time'}
                     >
-                      {g.muted ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
+                      {isSpeaking ? <Mic className="h-3 w-3" /> : <MicOff className="h-3 w-3" />}
                     </button>
                     <button
                       onClick={() => removeGuest(g.user_id)}
@@ -1070,7 +1140,7 @@ function ParticipantVideo({ track, className, mirror }: { track: MediaStreamTrac
  * would see, just no sound. An explicit `.play()` call returns a promise we
  * can catch: on `NotAllowedError` we tell the caller (`onBlocked`) instead of
  * the participant just never hearing anything with no way to know why. */
-function ParticipantAudio({ track, retryKey, onBlocked }: { track: MediaStreamTrack | null; retryKey?: number; onBlocked?: () => void }) {
+function ParticipantAudio({ track, retryKey, onBlocked, userId }: { track: MediaStreamTrack | null; retryKey?: number; onBlocked?: () => void; userId?: string | null }) {
   const ref = useRef<HTMLAudioElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -1084,7 +1154,11 @@ function ParticipantAudio({ track, retryKey, onBlocked }: { track: MediaStreamTr
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [track, retryKey]);
-  return <audio ref={ref} playsInline className="hidden" />;
+  // data-user-id: no runtime purpose -- lets an E2E test attribute this
+  // element's measured energy to a specific participant (speaker-
+  // permission proof needs to know WHO is/isn't audible, not just how many
+  // remote tracks are live) instead of only a bare count/max.
+  return <audio ref={ref} playsInline className="hidden" data-user-id={userId ?? undefined} />;
 }
 
 /** Always mounted whenever the call is active, regardless of `stage.mode` --
@@ -1101,7 +1175,7 @@ function CallAudioLayer({ participants, retryKey, onBlocked }: { participants: R
   return (
     <>
       {remotes.map(p => (
-        <ParticipantAudio key={p.sessionId} track={p.audioTrack} retryKey={retryKey} onBlocked={onBlocked} />
+        <ParticipantAudio key={p.sessionId} track={p.audioTrack} retryKey={retryKey} onBlocked={onBlocked} userId={p.userId} />
       ))}
     </>
   );
@@ -1133,6 +1207,11 @@ interface CallStageAreaProps {
   spotlightUserId: string | null;
   audioOn: boolean;
   videoOn: boolean;
+  /** Host, or the current live speaker -- everyone else's own mic toggle
+   * is disabled, not just visually muted. Their Daily audio is already
+   * force-muted server-side (LiveStage's speaker-enforcement effect); this
+   * just stops the button from lying about having any effect. */
+  canSpeak: boolean;
   onToggleAudio: () => void;
   onToggleVideo: () => void;
   onLeave: () => void;
@@ -1142,7 +1221,7 @@ interface CallStageAreaProps {
  * goes big with everyone else in a thin dock strip below; otherwise a plain
  * wrapping grid, same participants Daily's own prebuilt UI used to lay out
  * on its own. */
-function CallStageArea({ participants, connecting, joined, error, spotlightUserId, audioOn, videoOn, onToggleAudio, onToggleVideo, onLeave }: CallStageAreaProps) {
+function CallStageArea({ participants, connecting, joined, error, spotlightUserId, audioOn, videoOn, canSpeak, onToggleAudio, onToggleVideo, onLeave }: CallStageAreaProps) {
   const list = Object.values(participants);
   const spotlighted = spotlightUserId ? list.find(p => p.userId === spotlightUserId) ?? null : null;
   const others = spotlighted ? list.filter(p => p.sessionId !== spotlighted.sessionId) : [];
@@ -1169,7 +1248,7 @@ function CallStageArea({ participants, connecting, joined, error, spotlightUserI
           {others.map(p => <CallTile key={p.sessionId} participant={p} />)}
         </div>
       )}
-      <CallControlBar audioOn={audioOn} videoOn={videoOn} onToggleAudio={onToggleAudio} onToggleVideo={onToggleVideo} onLeave={onLeave} />
+      <CallControlBar audioOn={audioOn} videoOn={videoOn} canSpeak={canSpeak} onToggleAudio={onToggleAudio} onToggleVideo={onToggleVideo} onLeave={onLeave} />
     </div>
   );
 }
@@ -1177,6 +1256,9 @@ function CallStageArea({ participants, connecting, joined, error, spotlightUserI
 interface CallControlsProps {
   audioOn: boolean;
   videoOn: boolean;
+  /** See CallStageAreaProps.canSpeak -- defaults true (host-only call sites
+   * never need to pass it explicitly). */
+  canSpeak?: boolean;
   onToggleAudio: () => void;
   onToggleVideo: () => void;
   onLeave: () => void;
@@ -1184,17 +1266,18 @@ interface CallControlsProps {
 
 /** Our own control bar -- mic, camera, leave. Daily's default UI never
  * renders anywhere in this file (createCallObject is headless by design). */
-function CallControlBar({ audioOn, videoOn, onToggleAudio, onToggleVideo, onLeave }: CallControlsProps) {
+function CallControlBar({ audioOn, videoOn, canSpeak = true, onToggleAudio, onToggleVideo, onLeave }: CallControlsProps) {
   return (
     <div className="flex shrink-0 items-center justify-center gap-2 border-t border-white/10 bg-black/80 px-3 py-2">
       <button
         type="button"
         onClick={onToggleAudio}
-        aria-label={audioOn ? 'Mute mic' : 'Unmute mic'}
-        title={audioOn ? 'Mute mic' : 'Unmute mic'}
-        className={`flex h-9 w-9 items-center justify-center rounded-full ${audioOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-rose-500 text-white hover:bg-rose-400'}`}
+        disabled={!canSpeak}
+        aria-label={canSpeak ? (audioOn ? 'Mute mic' : 'Unmute mic') : 'Muted by the host'}
+        title={canSpeak ? (audioOn ? 'Mute mic' : 'Unmute mic') : "Only the host or the current speaker can talk — wait for the host to bring you into the discussion"}
+        className={`flex h-9 w-9 items-center justify-center rounded-full ${!canSpeak ? 'bg-white/5 text-white/30 cursor-not-allowed' : audioOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-rose-500 text-white hover:bg-rose-400'}`}
       >
-        {audioOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+        {canSpeak && audioOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
       </button>
       <button
         type="button"
@@ -1247,10 +1330,11 @@ interface PortraitSpeakerStripProps {
   isHost: boolean;
   approved: ApprovedGuest[];
   spotlightUserId: string | null;
+  liveSpeakerUserId: string | null;
   openTileId: string | null;
   setOpenTileId: (id: string | null) => void;
   onSetSpotlight: (userId: string | null) => void;
-  onToggleMute: (userId: string, muted: boolean) => void;
+  onSetLiveSpeaker: (userId: string | null) => void;
   onRemoveGuest: (userId: string) => void;
   /** Live Daily call data, keyed by session id -- matched to an
    * ApprovedGuest by .userId so a tile can show the participant's actual
@@ -1284,7 +1368,7 @@ function TilePicture({ track, avatar, name, mirror }: { track: MediaStreamTrack 
  * beneath the scrollable strip. A fixed-position sheet can't be clipped
  * by any ancestor's overflow, same reasoning PortraitQueueSheet already
  * relies on. */
-function PortraitSpeakerStrip({ isHost, approved, spotlightUserId, openTileId, setOpenTileId, onSetSpotlight, onToggleMute, onRemoveGuest, callParticipants, hostVideoTrack, hostVideoOn, hostAvatar }: PortraitSpeakerStripProps) {
+function PortraitSpeakerStrip({ isHost, approved, spotlightUserId, liveSpeakerUserId, openTileId, setOpenTileId, onSetSpotlight, onSetLiveSpeaker, onRemoveGuest, callParticipants, hostVideoTrack, hostVideoOn, hostAvatar }: PortraitSpeakerStripProps) {
   // Display-only cap on this compact phone-portrait tile row (more than a
   // handful of round tiles doesn't fit) -- confirmed, 2026-09-15 capacity
   // investigation: does NOT limit who is actually in the call or who gets
@@ -1331,9 +1415,9 @@ function PortraitSpeakerStrip({ isHost, approved, spotlightUserId, openTileId, s
             >
               <TilePicture track={findVideoTrack(g.user_id)} avatar={g.avatar ?? null} name={g.name} />
               <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black">
-                {g.mode === 'video'
-                  ? <Video className="h-2.5 w-2.5 text-amber-300" />
-                  : (g.muted ? <MicOff className="h-2.5 w-2.5 text-rose-400" /> : <Mic className="h-2.5 w-2.5 text-emerald-300" />)}
+                {g.user_id === liveSpeakerUserId
+                  ? <Mic className="h-2.5 w-2.5 text-emerald-300 animate-pulse" />
+                  : <MicOff className="h-2.5 w-2.5 text-rose-400" />}
               </span>
             </button>
           );
@@ -1346,8 +1430,9 @@ function PortraitSpeakerStrip({ isHost, approved, spotlightUserId, openTileId, s
         <PortraitTileActionsSheet
           guest={openGuest}
           isLit={openGuest.user_id === spotlightUserId}
+          isSpeaking={openGuest.user_id === liveSpeakerUserId}
           onSetSpotlight={onSetSpotlight}
-          onToggleMute={onToggleMute}
+          onSetLiveSpeaker={onSetLiveSpeaker}
           onRemoveGuest={onRemoveGuest}
           onClose={() => setOpenTileId(null)}
         />
@@ -1360,11 +1445,12 @@ function PortraitSpeakerStrip({ isHost, approved, spotlightUserId, openTileId, s
  * not to get clipped by any ancestor) for one guest tile's actions: send
  * to/remove from the big screen, mute/unmute, remove from stage. Host-only,
  * opened by a single tap on that guest's tile. */
-function PortraitTileActionsSheet({ guest, isLit, onSetSpotlight, onToggleMute, onRemoveGuest, onClose }: {
+function PortraitTileActionsSheet({ guest, isLit, isSpeaking, onSetSpotlight, onSetLiveSpeaker, onRemoveGuest, onClose }: {
   guest: ApprovedGuest;
   isLit: boolean;
+  isSpeaking: boolean;
   onSetSpotlight: (userId: string | null) => void;
-  onToggleMute: (userId: string, muted: boolean) => void;
+  onSetLiveSpeaker: (userId: string | null) => void;
   onRemoveGuest: (userId: string) => void;
   onClose: () => void;
 }) {
@@ -1386,10 +1472,10 @@ function PortraitTileActionsSheet({ guest, isLit, onSetSpotlight, onToggleMute, 
           </button>
           <button
             type="button"
-            onClick={() => { onToggleMute(guest.user_id, !guest.muted); onClose(); }}
+            onClick={() => { onSetLiveSpeaker(isSpeaking ? null : guest.user_id); onClose(); }}
             className="flex w-full items-center gap-3 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-3 text-sm font-bold text-sky-200"
           >
-            {guest.muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />} {guest.muted ? 'Unmute' : 'Mute'}
+            {isSpeaking ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />} {isSpeaking ? 'Mute — take the floor away' : 'Make live speaker'}
           </button>
           <button
             type="button"
