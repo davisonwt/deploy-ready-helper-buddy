@@ -26,13 +26,15 @@ import { toast } from 'sonner';
 import { useDailyCallObject, type CallParticipant } from '@/hooks/useDailyCallObject';
 import { useAuth } from '@/hooks/useAuth';
 import { useLiveStage, type StageMode, type NowPlaying, type ApprovedGuest, type HandRaise } from '@/hooks/useLiveStage';
+import { useGatheringModerators } from '@/hooks/useGatheringModerators';
+import { useGatheringSongRequests } from '@/hooks/useGatheringSongRequests';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { useMediaRecorder } from '@/hooks/useMediaRecorder';
 import { supabase } from '@/integrations/supabase/client';
 import { moderateStorageUpload } from '@/lib/moderation/moderateUpload';
 import QuickBestowModal from '@/components/bestow/QuickBestowModal';
 import { PdfBoard, ClipBoard, SeedPinBoard, NowLabel } from './GatheringBoard';
-import { FileText, Clapperboard, Sprout } from 'lucide-react';
+import { FileText, Clapperboard, Sprout, ShieldPlus, ShieldMinus, ListMusic, Play, SkipForward } from 'lucide-react';
 
 const VOICE_NOTE_MAX_SECONDS = 45;
 
@@ -100,6 +102,19 @@ export default function LiveStage({
   whispererSharePct = 10,
 }: LiveStageProps) {
   const { user } = useAuth();
+  // Gathering Room moderators (Part 2): resolved before useLiveStage so its
+  // own mute/remove/advance-queue gates can widen from host-only to
+  // host-or-moderator. See useGatheringModerators.ts's own doc comment for
+  // why this is a second, independent hook call rather than a value
+  // threaded down from a single shared instance.
+  const {
+    sessionId: gatheringSessionId,
+    isModerator,
+    isHostOrMod,
+    moderatorUserIds,
+    addModerator,
+    removeModerator,
+  } = useGatheringModerators(seedId, isHost, hostSessionId);
   const {
     stage, setStageMode,
     hands, raiseHand, cancelHand, approveHand, denyHand,
@@ -108,7 +123,12 @@ export default function LiveStage({
     spotlightRequests, setSpotlight, requestSpotlight, cancelSpotlightRequest, denySpotlight,
     myHandRaised, iAmApproved, iAmLiveSpeaker, mySpotlightRequested, iAmSpotlighted,
     playingVoiceNote, finishVoiceNote,
-  } = useLiveStage(seedId, { isHost, enabled: true, hostSessionId });
+  } = useLiveStage(seedId, { isHost, enabled: true, hostSessionId, isModerator });
+  // Part 3: visitor song requests, host/mod Play-Skip queue.
+  const { requests: songRequests, requestSong, markPlayed, markSkipped } = useGatheringSongRequests(gatheringSessionId, isHostOrMod);
+  const [songPickerOpen, setSongPickerOpen] = useState(false);
+  const [songQueueOpen, setSongQueueOpen] = useState(false);
+  const [participantsOpen, setParticipantsOpen] = useState(false);
   const [recordingNote, setRecordingNote] = useState(false);
   const [noteBusy, setNoteBusy] = useState(false);
   const noteRecorder = useMediaRecorder();
@@ -203,6 +223,38 @@ export default function LiveStage({
   const [musicSearch, setMusicSearch] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
 
+  // Part 3: visitor "Request a song" picker -- the REAL S2G music library
+  // (dj_music_tracks), independent of the isRadio host-only orchards
+  // dropdown above. Loaded once, on first open, same lazy-load shape as
+  // musicLib.
+  const [djTracks, setDjTracks] = useState<{ id: string; track_title: string; artist_name: string | null }[]>([]);
+  const [djTracksLoading, setDjTracksLoading] = useState(false);
+  const [songRequestSearch, setSongRequestSearch] = useState('');
+  useEffect(() => {
+    if (!songPickerOpen || djTracks.length > 0) return;
+    setDjTracksLoading(true);
+    (async () => {
+      const { data, error } = await supabase
+        .from('dj_music_tracks')
+        .select('id, track_title, artist_name')
+        .order('created_at', { ascending: false })
+        .limit(300);
+      if (!error && data) setDjTracks(data as any[]);
+      setDjTracksLoading(false);
+    })();
+  }, [songPickerOpen, djTracks.length]);
+  const filteredDjTracks = useMemo(
+    () => (songRequestSearch
+      ? djTracks.filter(t => t.track_title.toLowerCase().includes(songRequestSearch.toLowerCase()))
+      : djTracks),
+    [djTracks, songRequestSearch]
+  );
+  const handleRequestSong = async (track: { id: string; track_title: string }) => {
+    const res = await requestSong({ id: track.id, title: track.track_title });
+    if (res.success) { toast.success(`Requested "${track.track_title}" — the host/mod will see it in their queue.`); setSongPickerOpen(false); }
+    else toast.error(res.error || 'Could not request that song.');
+  };
+
   useEffect(() => {
     if (!isRadio || !isHost || musicLib.length > 0) return;
     setMusicLoading(true);
@@ -247,6 +299,46 @@ export default function LiveStage({
     };
     setStageMode({ ...stage, mode: 'video', mediaUrl: m.audio_url, mediaKind: 'audio', nowPlaying: np });
     setPickerOpen(false);
+  };
+
+  // Part 3: a requested track's file_url may be a bucket-relative path in
+  // a private music bucket (same storage convention MusicLibraryTable.tsx
+  // already resolves for its own playback) -- sign it before handing it to
+  // the board, same "plays the track the same way the room already plays
+  // music" mechanism playMusicSeed above uses (setStageMode -> stage
+  // broadcast + board_state write-through, every viewer's <audio> syncs).
+  const resolveTrackAudioUrl = async (rawUrl: string): Promise<string> => {
+    if (!rawUrl.startsWith('http')) {
+      const { data } = await supabase.storage.from('music-tracks').createSignedUrl(rawUrl, 3600);
+      return data?.signedUrl || rawUrl;
+    }
+    const m = rawUrl.match(/\/storage\/v1\/object\/(?:public|authenticated|sign)\/([^/]+)\/(.+)$/);
+    if (!m) return rawUrl;
+    const [, bucket, path] = m;
+    if (bucket !== 'music-tracks' && bucket !== 'dj-music') return rawUrl;
+    const { data } = await supabase.storage.from(bucket).createSignedUrl(decodeURIComponent(path.split('?')[0]), 3600);
+    return data?.signedUrl || rawUrl;
+  };
+
+  const playSongRequest = async (requestId: string, songId: string, songTitle: string) => {
+    const { data, error } = await supabase
+      .from('dj_music_tracks')
+      .select('id, track_title, dj_id, file_url')
+      .eq('id', songId)
+      .maybeSingle();
+    if (error || !data?.file_url) { toast.error("Couldn't load that track."); return; }
+    const audioUrl = await resolveTrackAudioUrl(data.file_url);
+    const np: NowPlaying = {
+      seed_id: data.id,
+      title: data.track_title || songTitle,
+      sower_user_id: data.dj_id,
+      media_url: audioUrl,
+      media_kind: 'audio',
+      image: null,
+    };
+    setStageMode({ ...stage, mode: 'video', mediaUrl: audioUrl, mediaKind: 'audio', nowPlaying: np });
+    markPlayed(requestId);
+    setSongQueueOpen(false);
   };
 
   const nowPlaying: NowPlaying = (stage.nowPlaying as NowPlaying) || {
@@ -567,6 +659,168 @@ export default function LiveStage({
         </div>
       )}
 
+      {/* Part 3: music corner -- "Request a song" is visitor-facing (any
+          participant, host included), separate from the isRadio dropdown
+          above (different data source: dj_music_tracks, the real library,
+          not the isRadio orchards guess). Song-requests queue is host/mod
+          only, same isHostOrMod gate as mute/remove/advance-queue. */}
+      <div className="flex items-center gap-2 border-b border-white/10 bg-black/40 px-2 py-1.5">
+        <button
+          type="button"
+          onClick={() => setSongPickerOpen(true)}
+          className="flex items-center gap-1.5 rounded-md border border-sky-400/40 bg-sky-500/10 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-200 hover:bg-sky-500/20"
+        >
+          <Music className="h-3 w-3" /> Request a song
+        </button>
+        {isHostOrMod && (
+          <button
+            type="button"
+            onClick={() => setSongQueueOpen(true)}
+            className="flex items-center gap-1.5 rounded-md border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-200 hover:bg-amber-500/20"
+          >
+            <ListMusic className="h-3 w-3" /> Song requests{songRequests.length > 0 ? ` (${songRequests.length})` : ''}
+          </button>
+        )}
+        {isHost && (
+          <button
+            type="button"
+            onClick={() => setParticipantsOpen(true)}
+            className="ml-auto flex items-center gap-1.5 rounded-md border border-purple-400/40 bg-purple-500/10 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-purple-200 hover:bg-purple-500/20"
+          >
+            <Users className="h-3 w-3" /> Participants
+          </button>
+        )}
+      </div>
+
+      {/* Request-a-song picker -- any participant */}
+      {songPickerOpen && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 sm:items-center" onClick={() => setSongPickerOpen(false)}>
+          <div
+            className="max-h-[70vh] w-full max-w-md overflow-hidden rounded-t-2xl border border-sky-500/30 bg-[#0a1320] sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 border-b border-white/10 p-3">
+              <Search className="h-3.5 w-3.5 text-white/40" />
+              <input
+                autoFocus
+                value={songRequestSearch}
+                onChange={(e) => setSongRequestSearch(e.target.value)}
+                placeholder="Search the music library…"
+                className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
+              />
+              <button onClick={() => setSongPickerOpen(false)} className="text-white/50 hover:text-white"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="max-h-[55vh] overflow-y-auto">
+              {djTracksLoading && <div className="p-4 text-center text-xs text-white/40">Loading library…</div>}
+              {!djTracksLoading && filteredDjTracks.length === 0 && (
+                <div className="p-4 text-center text-xs text-white/40">No tracks found.</div>
+              )}
+              {filteredDjTracks.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => void handleRequestSong(t)}
+                  className="flex w-full items-center gap-2 border-b border-white/5 p-3 text-left text-sm hover:bg-sky-500/10"
+                >
+                  <Music className="h-4 w-4 flex-shrink-0 text-sky-400" />
+                  <span className="flex-1 min-w-0">
+                    <span className="block truncate text-white/90">{t.track_title}</span>
+                    {t.artist_name && <span className="block truncate text-xs text-white/40">{t.artist_name}</span>}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Song-requests queue -- host/mod only */}
+      {songQueueOpen && isHostOrMod && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 sm:items-center" onClick={() => setSongQueueOpen(false)}>
+          <div
+            className="max-h-[70vh] w-full max-w-md overflow-hidden rounded-t-2xl border border-amber-500/30 bg-[#0a1320] sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 p-3">
+              <span className="text-sm font-bold uppercase tracking-wider text-amber-200">🎶 Song requests</span>
+              <button onClick={() => setSongQueueOpen(false)} className="text-white/50 hover:text-white"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="max-h-[55vh] overflow-y-auto">
+              {songRequests.length === 0 && (
+                <div className="p-4 text-center text-xs text-white/40">No pending requests.</div>
+              )}
+              {songRequests.map((r) => (
+                <div key={r.id} className="flex items-center gap-2 border-b border-white/5 p-3">
+                  <span className="flex-1 min-w-0">
+                    <span className="block truncate text-sm text-white/90">{r.song_title}</span>
+                    <span className="block truncate text-xs text-white/40">requested by {r.requester_name}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void playSongRequest(r.id, r.song_id, r.song_title)}
+                    title="Play — marks played and plays it to the room"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-black hover:bg-emerald-400"
+                  >
+                    <Play className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => markSkipped(r.id)}
+                    title="Skip"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                  >
+                    <SkipForward className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Part 2: Participants -- host-only "make mod"/"remove mod" per
+          connected Daily participant. Mods themselves never see this
+          panel (adding/removing a mod is a host-only action per spec). */}
+      {participantsOpen && isHost && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 sm:items-center" onClick={() => setParticipantsOpen(false)}>
+          <div
+            className="max-h-[70vh] w-full max-w-md overflow-hidden rounded-t-2xl border border-purple-500/30 bg-[#0a1320] sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 p-3">
+              <span className="text-sm font-bold uppercase tracking-wider text-purple-200">👥 Participants</span>
+              <button onClick={() => setParticipantsOpen(false)} className="text-white/50 hover:text-white"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="max-h-[55vh] overflow-y-auto">
+              {Object.values(callParticipants).filter(p => !p.local).length === 0 && (
+                <div className="p-4 text-center text-xs text-white/40">No one else has joined yet.</div>
+              )}
+              {Object.values(callParticipants).filter(p => !p.local).map((p) => {
+                const isMod = !!p.userId && moderatorUserIds.has(p.userId);
+                return (
+                  <div key={p.sessionId} className="flex items-center gap-2 border-b border-white/5 p-3">
+                    <span className="flex-1 truncate text-sm text-white/90">{p.userName || 'Guest'}</span>
+                    {isMod && <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-bold text-purple-300">MOD</span>}
+                    {p.userId && (
+                      <button
+                        type="button"
+                        onClick={() => (isMod ? removeModerator(p.userId!) : addModerator(p.userId!))}
+                        className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold ${
+                          isMod ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-purple-500 text-black hover:bg-purple-400'
+                        }`}
+                      >
+                        {isMod ? <ShieldMinus className="h-3.5 w-3.5" /> : <ShieldPlus className="h-3.5 w-3.5" />}
+                        {isMod ? 'Remove mod' : 'Make mod'}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Big stage area */}
       <div className="relative flex-1 min-h-0 bg-black">
         {/* Gathering Room batch 1: "Now: <title>" label, every mode. */}
@@ -780,7 +1034,8 @@ export default function LiveStage({
           added, nothing else about them changes). */}
       <div className="hidden max-lg:portrait:flex max-lg:portrait:flex-col">
         <PortraitSpeakerStrip
-          isHost={isHost}
+          isHost={isHostOrMod}
+          isRealHost={isHost}
           approved={approved}
           spotlightUserId={spotlightUserId}
           liveSpeakerUserId={liveSpeakerUserId}
@@ -817,11 +1072,12 @@ export default function LiveStage({
       {/* Guest boxes row — Discord/TikTok style "seats" (desktop/landscape only, see portrait speaker strip above) */}
       {(approved.length > 0 || isHost) && (
         <div className="hidden max-lg:landscape:flex lg:flex items-stretch gap-2 border-t border-white/10 bg-gradient-to-b from-black/80 to-black/95 px-3 py-2.5 overflow-x-auto">
-          {/* Host-only: advances speaking rights to the next approved guest
-              in queue order -- the per-seat Mic button below also lets the
-              host jump straight to a specific guest; both funnel through
-              the same setLiveSpeaker/advanceQueue enforcement. */}
-          {isHost && approved.length > 0 && (
+          {/* Host or moderator: advances speaking rights to the next
+              approved guest in queue order -- the per-seat Mic button
+              below also lets the host/mod jump straight to a specific
+              guest; both funnel through the same setLiveSpeaker/
+              advanceQueue enforcement. */}
+          {isHostOrMod && approved.length > 0 && (
             <button
               type="button"
               onClick={() => advanceQueue()}
@@ -880,34 +1136,41 @@ export default function LiveStage({
                   <span className="absolute top-1 left-1 rounded-full bg-amber-400 px-1.5 py-0.5 text-[9px] font-bold text-black">BIG</span>
                 )}
 
-                {/* Host controls */}
-                {isHost && (
+                {/* Host controls -- Spotlight stays host-only (not part of
+                    the mod spec); mute/live-speaker/remove are host-or-mod. */}
+                {(isHost || isHostOrMod) && (
                   <div className="absolute -top-2 -right-2 flex gap-0.5">
-                    <button
-                      onClick={() => setSpotlight(isLit ? null : g.user_id)}
-                      className={`flex h-5 w-5 items-center justify-center rounded-full ${
-                        isLit ? 'bg-amber-400 text-black' : 'bg-amber-500 text-black hover:bg-amber-400'
-                      }`}
-                      title={isLit ? 'Remove from big screen' : 'Send to big screen'}
-                    >
-                      <Star className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => setLiveSpeaker(isSpeaking ? null : g.user_id)}
-                      className={`flex h-5 w-5 items-center justify-center rounded-full ${
-                        isSpeaking ? 'bg-emerald-400 text-black' : 'bg-sky-500 text-black hover:bg-sky-400'
-                      }`}
-                      title={isSpeaking ? 'Mute — take the floor away' : 'Make live speaker — only one guest can talk at a time'}
-                    >
-                      {isSpeaking ? <Mic className="h-3 w-3" /> : <MicOff className="h-3 w-3" />}
-                    </button>
-                    <button
-                      onClick={() => removeGuest(g.user_id)}
-                      className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-400"
-                      title="Remove from stage"
-                    >
-                      <UserMinus className="h-3 w-3" />
-                    </button>
+                    {isHost && (
+                      <button
+                        onClick={() => setSpotlight(isLit ? null : g.user_id)}
+                        className={`flex h-5 w-5 items-center justify-center rounded-full ${
+                          isLit ? 'bg-amber-400 text-black' : 'bg-amber-500 text-black hover:bg-amber-400'
+                        }`}
+                        title={isLit ? 'Remove from big screen' : 'Send to big screen'}
+                      >
+                        <Star className="h-3 w-3" />
+                      </button>
+                    )}
+                    {isHostOrMod && (
+                      <>
+                        <button
+                          onClick={() => setLiveSpeaker(isSpeaking ? null : g.user_id)}
+                          className={`flex h-5 w-5 items-center justify-center rounded-full ${
+                            isSpeaking ? 'bg-emerald-400 text-black' : 'bg-sky-500 text-black hover:bg-sky-400'
+                          }`}
+                          title={isSpeaking ? 'Mute — take the floor away' : 'Make live speaker — only one guest can talk at a time'}
+                        >
+                          {isSpeaking ? <Mic className="h-3 w-3" /> : <MicOff className="h-3 w-3" />}
+                        </button>
+                        <button
+                          onClick={() => removeGuest(g.user_id)}
+                          className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-400"
+                          title="Remove from stage"
+                        >
+                          <UserMinus className="h-3 w-3" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -1327,7 +1590,10 @@ function MiniCallControls({ audioOn, videoOn, onToggleAudio, onToggleVideo, onLe
 // always-visible one.
 
 interface PortraitSpeakerStripProps {
+  /** Host OR moderator -- gates opening a tile's actions sheet at all (mute/remove). */
   isHost: boolean;
+  /** True host only -- Spotlight ("send to big screen") stays host-exclusive, not part of the mod spec. */
+  isRealHost: boolean;
   approved: ApprovedGuest[];
   spotlightUserId: string | null;
   liveSpeakerUserId: string | null;
@@ -1368,7 +1634,7 @@ function TilePicture({ track, avatar, name, mirror }: { track: MediaStreamTrack 
  * beneath the scrollable strip. A fixed-position sheet can't be clipped
  * by any ancestor's overflow, same reasoning PortraitQueueSheet already
  * relies on. */
-function PortraitSpeakerStrip({ isHost, approved, spotlightUserId, liveSpeakerUserId, openTileId, setOpenTileId, onSetSpotlight, onSetLiveSpeaker, onRemoveGuest, callParticipants, hostVideoTrack, hostVideoOn, hostAvatar }: PortraitSpeakerStripProps) {
+function PortraitSpeakerStrip({ isHost, isRealHost, approved, spotlightUserId, liveSpeakerUserId, openTileId, setOpenTileId, onSetSpotlight, onSetLiveSpeaker, onRemoveGuest, callParticipants, hostVideoTrack, hostVideoOn, hostAvatar }: PortraitSpeakerStripProps) {
   // Display-only cap on this compact phone-portrait tile row (more than a
   // handful of round tiles doesn't fit) -- confirmed, 2026-09-15 capacity
   // investigation: does NOT limit who is actually in the call or who gets
@@ -1431,6 +1697,7 @@ function PortraitSpeakerStrip({ isHost, approved, spotlightUserId, liveSpeakerUs
           guest={openGuest}
           isLit={openGuest.user_id === spotlightUserId}
           isSpeaking={openGuest.user_id === liveSpeakerUserId}
+          isRealHost={isRealHost}
           onSetSpotlight={onSetSpotlight}
           onSetLiveSpeaker={onSetLiveSpeaker}
           onRemoveGuest={onRemoveGuest}
@@ -1445,10 +1712,11 @@ function PortraitSpeakerStrip({ isHost, approved, spotlightUserId, liveSpeakerUs
  * not to get clipped by any ancestor) for one guest tile's actions: send
  * to/remove from the big screen, mute/unmute, remove from stage. Host-only,
  * opened by a single tap on that guest's tile. */
-function PortraitTileActionsSheet({ guest, isLit, isSpeaking, onSetSpotlight, onSetLiveSpeaker, onRemoveGuest, onClose }: {
+function PortraitTileActionsSheet({ guest, isLit, isSpeaking, isRealHost, onSetSpotlight, onSetLiveSpeaker, onRemoveGuest, onClose }: {
   guest: ApprovedGuest;
   isLit: boolean;
   isSpeaking: boolean;
+  isRealHost: boolean;
   onSetSpotlight: (userId: string | null) => void;
   onSetLiveSpeaker: (userId: string | null) => void;
   onRemoveGuest: (userId: string) => void;
@@ -1463,13 +1731,15 @@ function PortraitTileActionsSheet({ guest, isLit, isSpeaking, onSetSpotlight, on
           <button type="button" onClick={onClose} aria-label="Close"><X className="h-5 w-5 text-white/60" /></button>
         </div>
         <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => { onSetSpotlight(isLit ? null : guest.user_id); onClose(); }}
-            className="flex w-full items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-3 text-sm font-bold text-amber-200"
-          >
-            <Star className="h-4 w-4" /> {isLit ? 'Remove from big screen' : 'Send to big screen'}
-          </button>
+          {isRealHost && (
+            <button
+              type="button"
+              onClick={() => { onSetSpotlight(isLit ? null : guest.user_id); onClose(); }}
+              className="flex w-full items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-3 text-sm font-bold text-amber-200"
+            >
+              <Star className="h-4 w-4" /> {isLit ? 'Remove from big screen' : 'Send to big screen'}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => { onSetLiveSpeaker(isSpeaking ? null : guest.user_id); onClose(); }}

@@ -101,9 +101,14 @@ export interface ApprovedGuest {
  * before the host has done anything yet." */
 export const INITIAL_STAGE: StagePayload = { mode: 'camera', spotlightUserId: null, at: Date.now() };
 
-export function useLiveStage(seedId: string | null, opts: { isHost: boolean; enabled: boolean; hostSessionId?: string | null }) {
+export function useLiveStage(seedId: string | null, opts: { isHost: boolean; enabled: boolean; hostSessionId?: string | null; isModerator?: boolean }) {
   const { user } = useAuth();
-  const { isHost, enabled, hostSessionId } = opts;
+  const { isHost, enabled, hostSessionId, isModerator = false } = opts;
+  // Gathering Room moderators (useGatheringModerators.ts): mute/remove a
+  // participant and advance/skip the raise-hand queue are allowed for the
+  // host OR a session moderator -- everything else here (approve/deny a
+  // hand, spotlight, board control) stays host-only, per spec.
+  const canModerate = isHost || isModerator;
 
   const [stage, setStage] = useState<StagePayload>(INITIAL_STAGE);
   const [hands, setHands] = useState<HandRaise[]>([]);
@@ -368,10 +373,10 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
   // real Daily tracks -- happens in LiveStage.tsx's own effect, which is
   // the only place that has both this value AND the Daily call object.
   const setLiveSpeaker = useCallback((userId: string | null) => {
-    if (!isHost) return;
+    if (!canModerate) return;
     setLiveSpeakerUserId(userId);
     send('set_live_speaker', { user_id: userId });
-  }, [isHost, send]);
+  }, [canModerate, send]);
 
   const approveHand = useCallback((h: HandRaise) => {
     if (!isHost) return;
@@ -406,32 +411,32 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
   // never picked as the "next" speaker before their `approved` entry is
   // cleaned up).
   const advanceQueue = useCallback((presentUserIds?: Set<string>) => {
-    if (!isHost) return;
+    if (!canModerate) return;
     const list = presentUserIds ? approved.filter(g => presentUserIds.has(g.user_id)) : approved;
     if (list.length === 0) { setLiveSpeaker(null); return; }
     const curIdx = liveSpeakerUserId ? list.findIndex(g => g.user_id === liveSpeakerUserId) : -1;
     const next = list[(curIdx + 1) % list.length];
     setLiveSpeaker(next.user_id);
-  }, [isHost, approved, liveSpeakerUserId, setLiveSpeaker]);
+  }, [canModerate, approved, liveSpeakerUserId, setLiveSpeaker]);
 
   const removeGuest = useCallback((userId: string) => {
-    if (!isHost) return;
+    if (!canModerate) return;
     setApproved(prev => prev.filter(g => g.user_id !== userId));
     send('remove_guest', { user_id: userId });
-    // Requirement: a participant leaving (here, host-removed) while they're
-    // the live speaker must auto-advance, not just leave the room silently
-    // muted-forever with nobody able to talk.
+    // Requirement: a participant leaving (here, host/mod-removed) while
+    // they're the live speaker must auto-advance, not just leave the room
+    // silently muted-forever with nobody able to talk.
     if (liveSpeakerUserId === userId) {
       const remaining = approved.filter(g => g.user_id !== userId);
       setLiveSpeaker(remaining[0]?.user_id ?? null);
     }
-  }, [isHost, send, approved, liveSpeakerUserId, setLiveSpeaker]);
+  }, [canModerate, send, approved, liveSpeakerUserId, setLiveSpeaker]);
 
   const toggleMute = useCallback((userId: string, muted: boolean) => {
-    if (!isHost) return;
+    if (!canModerate) return;
     setApproved(prev => prev.map(g => g.user_id === userId ? { ...g, muted } : g));
     send('force_mute', { user_id: userId, muted });
-  }, [isHost, send]);
+  }, [canModerate, send]);
 
   const setSpotlight = useCallback((userId: string | null) => {
     if (!isHost) return;

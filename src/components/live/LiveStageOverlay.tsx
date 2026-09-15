@@ -15,13 +15,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  X, MessageCircle, ChevronLeft, ChevronRight, EyeOff, Eye, Send, Users, Radio, Share2, Lock, Unlock,
+  X, MessageCircle, ChevronLeft, ChevronRight, EyeOff, Eye, Send, Users, Radio, Share2, Lock, Unlock, Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import LiveStage from '@/components/live/LiveStage';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useTribalLiveOrchard, type SessionAccess } from '@/hooks/useTribalLiveOrchard';
+import { useGatheringModerators } from '@/hooks/useGatheringModerators';
 
 export interface LiveStageOverlayProps {
   seedId: string;
@@ -54,6 +55,10 @@ export default function LiveStageOverlay({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { updateSessionAccess } = useTribalLiveOrchard();
+  // Part 2: host or a session moderator can delete a chat message -- own
+  // instance of the hook (see useGatheringModerators.ts's own doc comment
+  // on why LiveStage.tsx and this overlay each resolve it independently).
+  const { isHostOrMod } = useGatheringModerators(seedId, isHost, hostSessionId);
 
   const imgList = (images || []).filter(Boolean) as string[];
   const [overlayImgIdx, setOverlayImgIdx] = useState(0);
@@ -91,9 +96,21 @@ export default function LiveStageOverlay({
     const ch = supabase.channel(`liveroom:${seedId}`);
     ch.on('broadcast', { event: 'chat' }, ({ payload }) => {
       setChatMsgs(m => [...m.slice(-99), payload as any]);
+    }).on('broadcast', { event: 'delete_chat' }, ({ payload }) => {
+      // Chat is broadcast-only, never persisted -- "delete" just means
+      // every currently-connected client drops it from their own local
+      // list, same as it was never durable to begin with.
+      setChatMsgs(m => m.filter(msg => msg.id !== (payload as { id: string }).id));
     }).subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [seedId]);
+
+  // Part 2: host or moderator only -- see useGatheringModerators.ts.
+  const deleteChatMessage = (id: string) => {
+    if (!isHostOrMod) return;
+    setChatMsgs(m => m.filter(msg => msg.id !== id));
+    supabase.channel(`liveroom:${seedId}`).send({ type: 'broadcast', event: 'delete_chat', payload: { id } });
+  };
 
   const sendChat = () => {
     const text = chatDraft.trim();
@@ -288,9 +305,22 @@ export default function LiveStageOverlay({
                 </div>
               )}
               {chatMsgs.map(m => (
-                <div key={m.id} className="rounded-lg bg-white/5 px-2 py-1.5 text-xs">
-                  <div className="font-bold text-emerald-300">{m.from}</div>
-                  <div className="text-white/85">{m.text}</div>
+                <div key={m.id} className="flex items-start gap-1 rounded-lg bg-white/5 px-2 py-1.5 text-xs">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-emerald-300">{m.from}</div>
+                    <div className="text-white/85">{m.text}</div>
+                  </div>
+                  {isHostOrMod && (
+                    <button
+                      type="button"
+                      onClick={() => deleteChatMessage(m.id)}
+                      aria-label="Delete message"
+                      title="Delete message"
+                      className="shrink-0 rounded p-0.5 text-white/30 hover:bg-rose-500/20 hover:text-rose-300"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
