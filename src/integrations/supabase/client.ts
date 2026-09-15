@@ -14,6 +14,43 @@ if (import.meta.env.DEV && (!import.meta.env.VITE_SUPABASE_URL || (!import.meta.
   console.warn('⚠️ Using fallback Supabase configuration. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in your .env file.');
 }
 
+// Reported live, 2026-09-15: a session whose refresh token had gone
+// invalid (revoked/expired) left the app in a half-authed limbo instead
+// of a clean re-login -- autoRefreshToken keeps retrying in the
+// background, but nothing detects a refresh that's actually FAILING, so
+// React state kept showing "signed in" (stale session object) while
+// every real API call 401'd underneath it. Symptom: buttons whose own
+// render depends on a query that 401s (AdminButton's user_roles fetch)
+// silently render as if nothing happened.
+//
+// Wrapping fetch is the one place that sees EVERY request this client
+// makes, regardless of which hook/component issued it. A 401 from any
+// endpoint OTHER than Supabase's own /auth/v1/* (a bad login attempt or
+// a normal token-refresh cycle there is an expected, user-facing
+// outcome, not evidence of a stale session elsewhere) means our access
+// token is dead and auto-refresh isn't recovering it -- force a clean
+// sign-out and send the tab back to /login rather than leaving it
+// running on a session that looks alive but silently fails everything.
+let forcingReauth = false;
+async function fetchWithAuthGuard(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const res = await fetch(input, init);
+  if (res.status === 401 && !forcingReauth) {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    if (!url.includes('/auth/v1/')) {
+      forcingReauth = true;
+      console.warn('[supabase] 401 on a non-auth endpoint -- session refresh is failing, forcing a clean re-login', url);
+      try { await supabase.auth.signOut(); } catch { /* session may already be dead server-side; clear locally regardless */ }
+      try {
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
+          .forEach((k) => localStorage.removeItem(k));
+      } catch { /* localStorage unavailable (private mode, quota) -- redirect still recovers the tab */ }
+      window.location.href = '/login?session_expired=1';
+    }
+  }
+  return res;
+}
+
 // Export the Supabase client instance
 // Usage in other files: import { supabase } from "@/integrations/supabase/client";
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -23,7 +60,10 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'pkce'
-  }
+  },
+  global: {
+    fetch: fetchWithAuthGuard,
+  },
 });
 
 // Add session monitoring (production-safe)
