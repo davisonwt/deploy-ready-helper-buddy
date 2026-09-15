@@ -32,20 +32,57 @@ if (import.meta.env.DEV && (!import.meta.env.VITE_SUPABASE_URL || (!import.meta.
 // sign-out and send the tab back to /login rather than leaving it
 // running on a session that looks alive but silently fails everything.
 let forcingReauth = false;
+/** True only if a Supabase auth session is actually stored locally --
+ * cheap, synchronous, no network call. A 401 with NO stored session at
+ * all cannot possibly mean "the session died"; there was never one to
+ * begin with (an anonymous visitor on e.g. the login page). */
+function hasStoredSession(): boolean {
+  try {
+    return Object.keys(localStorage).some((k) => k.startsWith('sb-') && k.endsWith('-auth-token'));
+  } catch {
+    return false; // localStorage unavailable -- can't confirm a session exists, so don't assume one died
+  }
+}
 async function fetchWithAuthGuard(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const res = await fetch(input, init);
   if (res.status === 401 && !forcingReauth) {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-    if (!url.includes('/auth/v1/')) {
-      forcingReauth = true;
-      console.warn('[supabase] 401 on a non-auth endpoint -- session refresh is failing, forcing a clean re-login', url);
-      try { await supabase.auth.signOut(); } catch { /* session may already be dead server-side; clear locally regardless */ }
+    // Live incident, 2026-09-15: a missing anon EXECUTE grant on an
+    // unrelated RPC (check_rate_limit_enhanced) 401'd on every /login
+    // page load, before any session ever existed -- this guard treated
+    // THAT as "session died," force-signed-out and hard-redirected
+    // (window.location.href) mid-keystroke, wiping the login form before
+    // submit ever ran. A 401 status alone conflates two very different
+    // things: our access token is genuinely dead (this guard's actual
+    // job), vs. a plain Postgres permission-denied error (SQLSTATE
+    // 42501) that PostgREST also reports as 401 -- the exact case here.
+    // Two independent checks before treating it as the former: (1) a
+    // session must actually be stored (an anonymous caller has nothing
+    // to lose), and (2) the response body must be PostgREST's OWN
+    // JWT-related error, not a passthrough Postgres error with its own
+    // unrelated SQLSTATE.
+    if (!url.includes('/auth/v1/') && hasStoredSession()) {
+      let isJwtFailure = false;
       try {
-        Object.keys(localStorage)
-          .filter((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
-          .forEach((k) => localStorage.removeItem(k));
-      } catch { /* localStorage unavailable (private mode, quota) -- redirect still recovers the tab */ }
-      window.location.href = '/login?session_expired=1';
+        const body = await res.clone().json();
+        const code = typeof body?.code === 'string' ? body.code : '';
+        const message = typeof body?.message === 'string' ? body.message : '';
+        isJwtFailure = code.startsWith('PGRST') && /jwt|token/i.test(message);
+      } catch {
+        // Non-JSON/unreadable body -- can't confirm it's really a JWT
+        // failure, so don't assume the worst.
+      }
+      if (isJwtFailure) {
+        forcingReauth = true;
+        console.warn('[supabase] 401 (expired/invalid JWT) on a non-auth endpoint -- session refresh is failing, forcing a clean re-login', url);
+        try { await supabase.auth.signOut(); } catch { /* session may already be dead server-side; clear locally regardless */ }
+        try {
+          Object.keys(localStorage)
+            .filter((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
+            .forEach((k) => localStorage.removeItem(k));
+        } catch { /* localStorage unavailable (private mode, quota) -- redirect still recovers the tab */ }
+        window.location.href = '/login?session_expired=1';
+      }
     }
   }
   return res;

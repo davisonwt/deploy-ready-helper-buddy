@@ -1,0 +1,24 @@
+-- Live incident, 2026-09-15: check_rate_limit_enhanced (created
+-- 20250821104210, replaced 20251001105451) was never explicitly granted
+-- EXECUTE to anon/authenticated -- Supabase revokes EXECUTE from PUBLIC on
+-- public-schema functions by default, so unlike its sibling
+-- log_security_event_enhanced/log_authentication_attempt (which happened
+-- to pick up a grant elsewhere), every call to this one 401'd with a
+-- genuine Postgres "permission denied for function" (42501), anon or
+-- authenticated.
+--
+-- This is SECURITY DEFINER and already handles auth.uid() being null
+-- (an anonymous caller) in its own body -- it's explicitly meant to be
+-- called by a not-yet-logged-in visitor (the login form's own
+-- rateLimitKey="login_form" check runs before auth exists), so anon needs
+-- this too, not just authenticated.
+--
+-- Blast radius of the missing grant turned out much larger than "rate
+-- limiting silently fails open": src/integrations/supabase/client.ts's
+-- fetchWithAuthGuard treats ANY non-/auth/v1/* 401 as "the session is
+-- dead," forces a sign-out, and hard-redirects to /login?session_expired=1
+-- -- firing the instant the login page's email field blurs (i.e. the
+-- moment focus moves to the password field), wiping the form before
+-- submit ever runs. Confirmed live: login was broken for every visitor,
+-- not just one test account.
+grant execute on function public.check_rate_limit_enhanced(text, text, integer, integer) to anon, authenticated;
