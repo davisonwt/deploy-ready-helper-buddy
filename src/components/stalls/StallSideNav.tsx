@@ -1,10 +1,47 @@
-import { useState } from 'react';
+import { Component, useState, type ErrorInfo, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, LogOut } from 'lucide-react';
 import { COCKPIT_NAV, COCKPIT_NAV_MORE, SCRIPTURE_STUDY_LINK, type CockpitNavItem } from '@/lib/nav/cockpitNav';
 import { useRoles } from '@/hooks/useRoles';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminButton } from '@/components/AdminButton';
+
+/** TEMPORARY diagnostic (2026-09-15): reported live -- the gosat button
+ * renders (correct label, correct role count) but clicking it does
+ * nothing, in a real gosat session, in every browser/engine tried, with
+ * no reproduction found in any synthetic (mocked-role) test. Every
+ * synthetic test necessarily uses CLEAN, well-formed data; if the real
+ * account's user_roles/profiles row has some shape AdminButton's render
+ * doesn't expect, React would normally still log the resulting error to
+ * console on its own -- but if something ELSE up the tree already has a
+ * defensive try/catch swallowing it, or the browser's own console
+ * filtering hides it, it could go unseen. An error boundary is the one
+ * thing that catches a render-phase exception ANYWHERE in AdminButton's
+ * tree and forces it into view instead of silently unmounting. Remove
+ * once the root cause is confirmed either way. */
+class AdminButtonErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('[AdminButton DIAG] render-phase exception caught by boundary', {
+      message: error.message,
+      stack: error.stack,
+      componentStack: info.componentStack,
+    });
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="rounded-md border-2 border-rose-500 bg-rose-950/40 px-2 py-1.5 text-[11px] font-bold text-rose-200">
+          Admin menu crashed: {this.state.error.message}
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 interface Props {
   /** Called on every tap, before navigating (or before the action fires) -- lets the caller close the stall interior first. */
@@ -107,7 +144,9 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
           is for everyone else. */}
       {isAdminOrGosat && (
         <div className="px-3 py-2 border-b border-amber-500/15">
-          <AdminButton />
+          <AdminButtonErrorBoundary>
+            <AdminButton />
+          </AdminButtonErrorBoundary>
         </div>
       )}
 
