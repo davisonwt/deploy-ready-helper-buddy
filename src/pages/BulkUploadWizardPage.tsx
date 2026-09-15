@@ -13,6 +13,16 @@ import { useToast } from '@/hooks/use-toast';
 import { Upload, FileSpreadsheet, FileText, AlertCircle, CheckCircle2, ArrowLeft, Sprout, ImagePlus, X, Star, GripVertical, ChevronRight, Images } from 'lucide-react';
 import SignedImg from '@/components/media/SignedImg';
 
+// Pre-existing bug found live 2026-09-15 while verifying dropship support:
+// this page was the only caller in the codebase using
+// VITE_SUPABASE_PROJECT_ID, which nothing in the build ever defines --
+// every other edge-function caller (src/lib/payments/invokeFunction.ts,
+// src/integrations/supabase/client.ts) uses VITE_SUPABASE_URL with this
+// same hardcoded fallback. Broke the entire bulk-upload wizard in
+// production (every parse request went to https://undefined.supabase.co),
+// unrelated to dropship -- fixed here since it blocked verifying step 5.
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
+
 type ProductImage = { url: string; path: string };
 
 type ParsedRow = {
@@ -89,7 +99,7 @@ export default function BulkUploadWizardPage() {
       if (sowerId) fd.append('sower_id', sowerId);
 
       const { data: { session } } = await supabase.auth.getSession();
-      const url = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/bulk-parse-products`;
+      const url = `${SUPABASE_URL}/functions/v1/bulk-parse-products`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
