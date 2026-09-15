@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronUp, LogOut } from 'lucide-react';
 import { COCKPIT_NAV, COCKPIT_NAV_MORE, SCRIPTURE_STUDY_LINK, type CockpitNavItem } from '@/lib/nav/cockpitNav';
 import { useRoles } from '@/hooks/useRoles';
+import { useAuth } from '@/hooks/useAuth';
 import { AdminButton } from '@/components/AdminButton';
 
 interface Props {
@@ -22,8 +23,24 @@ interface Props {
  */
 export default function StallSideNav({ onNavigate, className = '' }: Props) {
   const { isAdminOrGosat } = useRoles();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
   const visibleMore = COCKPIT_NAV_MORE.filter((item) => !item.gated || isAdminOrGosat);
+
+  // Bug report, 2026-09-15: no logout option anywhere in the app UI -- true
+  // for any member whose stall isn't published yet (EmptyPlotView has no
+  // header of its own to put one in, and StallInteriorView's own hideClose
+  // Log-out swap in its header only ever renders once a stall EXISTS).
+  // This nav is the one component both states already share (EmptyPlotView
+  // and StallInteriorView both render it, desktop column and mobile
+  // drawer alike), so it's the one place a logout action reaches everyone
+  // regardless of stall state.
+  const handleLogout = async () => {
+    onNavigate();
+    try { await logout(); } catch { /* ignore -- navigate away regardless */ }
+    navigate('/login');
+  };
 
   const renderRow = (item: CockpitNavItem, bordered: boolean) => {
     const rowClassName = `flex items-center gap-2.5 px-3 py-2 hover:bg-amber-500/10 transition-colors ${
@@ -101,6 +118,15 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
         </button>
         {moreOpen && visibleMore.map((item) => renderRow(item, true))}
       </nav>
+
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="flex w-full items-center gap-2.5 px-3 py-2.5 border-t border-amber-500/15 text-rose-300 hover:bg-rose-500/10 transition-colors"
+      >
+        <LogOut className="h-4 w-4 shrink-0" />
+        <span className="truncate font-serif text-[13px] font-semibold">Log out</span>
+      </button>
     </div>
   );
 }
