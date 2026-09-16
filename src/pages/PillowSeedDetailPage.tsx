@@ -1,3 +1,7 @@
+import { formatNativeAmount, paymentCurrencyNoteFor } from '@/lib/sleeping/currency';
+import { pillowRatesOn, labelForAmenity, stayTypeLabel } from '@/lib/sleeping/pillowOptions';
+import { formatDistance, haversineMetres, unitForViewer } from '@/lib/sleeping/units';
+import { useWorldwideLocation } from '@/hooks/useWorldwideLocation';
 import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -54,6 +58,12 @@ export default function PillowSeedDetailPage() {
   const [note, setNote] = useState('');
   const [submittingBooking, setSubmittingBooking] = useState(false);
 
+  // Structured stay detail. A listing made before this table has no row;
+  // the page falls back to service_details.
+  const [pillow, setPillow] = useState<any | null>(null);
+  const { location: viewerLocation } = useWorldwideLocation();
+  const distanceUnit = unitForViewer();
+
   const [wanderingProfile, setWanderingProfile] = useState<any | null>(null);
   const [loadingWanderingProfile, setLoadingWanderingProfile] = useState(true);
 
@@ -68,6 +78,13 @@ export default function PillowSeedDetailPage() {
       if (error || !row) { setNotFound(true); setLoading(false); return; }
       setProduct(row);
       setLoading(false);
+
+      const { data: detail } = await supabase
+        .from('pillow_seed_details')
+        .select('*')
+        .eq('product_id', row.id)
+        .maybeSingle();
+      if (!cancelled) setPillow(detail ?? null);
     })();
     return () => { cancelled = true; };
   }, [id]);
@@ -113,11 +130,26 @@ export default function PillowSeedDetailPage() {
   const details = (product.service_details as Record<string, any>) ?? {};
   const rateUnit: string = details.rate_unit;
   const rateUnitLabel = RATE_UNIT_LABEL[rateUnit] ?? rateUnit;
-  const rateText = `$${Number(product.price ?? 0).toFixed(2)} ${rateUnitLabel}`;
+  // Rates show in the LISTING's own currency and are never converted.
+  const listingCurrency: string = pillow?.currency ?? 'USD';
+  const structuredRates = pillow ? pillowRatesOn(pillow) : [];
+  const rateText = structuredRates.length === 0
+    ? `${formatNativeAmount(Number(product.price ?? 0), listingCurrency)} ${rateUnitLabel ?? ''}`.trim()
+    : '';
+
+  const distanceM = (viewerLocation && pillow?.base_lat != null && pillow?.base_lng != null)
+    ? haversineMetres(viewerLocation.lat, viewerLocation.lng, Number(pillow.base_lat), Number(pillow.base_lng))
+    : null;
 
   const sowerName = product.sowers?.display_name ?? 'A Wandering Pillow';
   const sowerUserId: string | undefined = product.sowers?.user_id;
-  const amenityList: string[] = Array.isArray(details.amenities) ? details.amenities : [];
+  const amenityList: string[] = (pillow?.amenities ?? (Array.isArray(details.amenities) ? details.amenities : [])) as string[];
+  const sleepsCount = pillow?.sleeps ?? details.sleeps ?? null;
+  const placeLocation = pillow?.base_location ?? details.location ?? null;
+  const galleryUrls: string[] = [
+    pillow?.interior_image_url,
+    ...((pillow?.gallery_urls ?? []) as string[]),
+  ].filter(Boolean);
 
   const qty = Math.max(1, quantity ?? 1);
   const amount = Number(product.price ?? 0) * qty;
@@ -226,30 +258,66 @@ export default function PillowSeedDetailPage() {
             <p className="text-sm text-muted-foreground mt-0.5">by {sowerName}</p>
           </div>
 
-          <p className="text-lg font-semibold">{rateText}</p>
+          {pillow?.stay_type && (
+            <Badge variant="outline">{stayTypeLabel(pillow.stay_type)}</Badge>
+          )}
+
+          {distanceM != null && (
+            <p className="text-sm font-medium text-primary">
+              {formatDistance(distanceM, distanceUnit)}
+            </p>
+          )}
+
+          {structuredRates.length > 0 ? (
+            <div className="rounded-lg border p-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                Rates in {listingCurrency}
+              </p>
+              <ul className="space-y-1">
+                {structuredRates.map((r) => (
+                  <li key={r.short} className="flex items-baseline justify-between gap-4">
+                    <span className="text-sm text-muted-foreground">{r.label}</span>
+                    <span className="text-lg font-semibold">
+                      {formatNativeAmount(r.amount, listingCurrency)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-lg font-semibold">{rateText}</p>
+          )}
+
+          {galleryUrls.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {galleryUrls.map((u, i) => (
+                <SignedImg key={`${u}-${i}`} src={u} alt="" className="h-24 w-24 shrink-0 rounded-lg border object-cover" />
+              ))}
+            </div>
+          )}
 
           {product.description && (
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{product.description}</p>
           )}
 
-          {details.sleeps != null && (
+          {sleepsCount != null && (
             <div className="flex items-start gap-2 text-sm">
               <Users className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-              <span>Sleeps {details.sleeps}</span>
+              <span>Sleeps {sleepsCount}</span>
             </div>
           )}
 
-          {details.location && (
+          {placeLocation && (
             <div className="flex items-start gap-2 text-sm">
               <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-              <span>{details.location}</span>
+              <span>{placeLocation}</span>
             </div>
           )}
 
           {(amenityList.length > 0 || details.amenities_other) && (
             <div className="flex flex-wrap gap-1.5">
               {amenityList.map((a) => (
-                <Badge key={a} variant="outline">{AMENITY_LABEL[a] ?? a}</Badge>
+                <Badge key={a} variant="outline">{AMENITY_LABEL[a] ?? labelForAmenity(a)}</Badge>
               ))}
               {details.amenities_other && <Badge variant="outline">{details.amenities_other}</Badge>}
             </div>
@@ -315,6 +383,15 @@ export default function PillowSeedDetailPage() {
                     <span>${split ? split.total.toFixed(2) : '0.00'}</span>
                   </div>
                 </div>
+
+                {/*
+                  The listing prices in its own currency; the existing booking
+                  path charges in USD (PayPal) or ZAR (Paystack). Say so rather
+                  than showing a converted figure.
+                */}
+                <p className="text-xs text-muted-foreground">
+                  {paymentCurrencyNoteFor(listingCurrency, 'paypal')}
+                </p>
 
                 <Button
                   size="lg"

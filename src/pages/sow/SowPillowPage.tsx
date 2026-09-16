@@ -1,57 +1,32 @@
-import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { insertProduct } from '@/api/products';
+import { insertProduct, updateProduct } from '@/api/products';
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
-import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { launchConfetti } from '@/utils/confetti';
 import { toast } from 'sonner';
 
 import CoverDropZone, { type CoverResult } from '@/components/sowing/CoverDropZone';
-import OnePicker, { type OnePickerOption } from '@/components/sowing/OnePicker';
-import SeedPreviewCard from '@/components/sowing/SeedPreviewCard';
 import PlantButton from '@/components/sowing/PlantButton';
+import SignedImg from '@/components/media/SignedImg';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ArrowLeft, ChevronDown, Eye, ImagePlus, X, Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowLeft, ImagePlus, X, Loader2, Check, Minus, Plus } from 'lucide-react';
 import sowProductBanner from '@/assets/seeds-strip.jpg';
 import { getPreset } from '@/lib/store/presets';
 
-const PROPERTY_TYPE_OPTIONS: OnePickerOption[] = [
-  { value: 'room', label: 'Room' },
-  { value: 'guest-house', label: 'Guest house' },
-  { value: 'farm', label: 'Farm stay' },
-  { value: 'motel', label: 'Motel' },
-  { value: 'hotel', label: 'Hotel' },
-  { value: 'bush-camp', label: 'Bush camp' },
-  { value: 'other', label: 'Other' },
-];
+import {
+  AMENITIES, HOST_LEGAL_CONFIRMATION, PILLOW_LEGACY_RATE_UNIT,
+  PILLOW_PRIMARY_RATE_ORDER, PILLOW_RATE_PERIODS, STAY_BRANCH, STAY_TYPES,
+  type Amenity, type StayType,
+} from '@/lib/sleeping/pillowOptions';
 
-const AMENITY_OPTIONS = [
-  { value: 'wifi', label: 'Wifi' },
-  { value: 'breakfast', label: 'Breakfast included' },
-  { value: 'parking', label: 'Parking' },
-  { value: 'pool', label: 'Pool' },
-  { value: 'aircon', label: 'Air conditioning' },
-  { value: 'kitchen', label: 'Kitchen' },
-  { value: 'pet-friendly', label: 'Pet friendly' },
-];
-
-const RATE_UNITS = [
-  { value: 'per_night', label: 'Per night' },
-  { value: 'per_week', label: 'Per week' },
-] as const;
-
-const MAX_EXTRA_PHOTOS = 5;
+const MAX_GALLERY_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
 
 function SowBanner() {
@@ -68,7 +43,6 @@ function SowBanner() {
   );
 }
 
-/** Same crop-to-square-JPEG-then-upload CoverDropZone uses internally, for the "up to 5 more photos" field. */
 function cropToSquare(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -93,15 +67,36 @@ function cropToSquare(file: File): Promise<Blob> {
   });
 }
 
+type RateState = Record<string, string>;
+
+/**
+ * List a place to stay.
+ *
+ * ONE flow for every stay type, the same shape as SowWheelPage. Picking the
+ * type changes which amenities and rate periods lead; it never sends the
+ * person to a different form.
+ *
+ * A Pillow seed stays a row in `products` (type=service, kind=pillow) so the
+ * existing booking path and the 85/15 split keep working untouched. The
+ * structured detail lives alongside it in `pillow_seed_details`.
+ *
+ * /sow/pillow?edit=<product id> loads an existing listing into this same
+ * form. There is deliberately no second editor.
+ */
 export default function SowPillowPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Direct-URL guard -- the chooser only links here once wandering_roles
-  // has an active 'pillow' row, but a bookmark or a typed URL can reach
-  // this page without that. Redirect straight to the unlock screen if so.
+  const [params] = useSearchParams();
+  const editId = params.get('edit');
+  const isEdit = !!editId;
+  const [loadingExisting, setLoadingExisting] = useState(!!editId);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const [roleChecked, setRoleChecked] = useState(false);
   const [baseTown, setBaseTown] = useState('');
+  const [roleLat, setRoleLat] = useState<number | null>(null);
+  const [roleLng, setRoleLng] = useState<number | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -109,44 +104,163 @@ export default function SowPillowPage() {
     (async () => {
       const { data } = await supabase
         .from('wandering_roles')
-        .select('base_town, status')
+        .select('base_town, lat, lng, status')
         .eq('user_id', user.id)
         .eq('role', 'pillow')
         .maybeSingle();
       if (!alive) return;
-      if (!data || data.status !== 'active') {
+      if (!data || (data as any).status !== 'active') {
         navigate('/register-wandering?role=pillow', { replace: true });
         return;
       }
-      setBaseTown(data.base_town || '');
+      setBaseTown((data as any).base_town || '');
+      setRoleLat((data as any).lat ?? null);
+      setRoleLng((data as any).lng ?? null);
       setRoleChecked(true);
     })();
     return () => { alive = false; };
   }, [user, navigate]);
 
-  const [cover, setCover] = useState<CoverResult | null>(null);
-  const [extraPhotos, setExtraPhotos] = useState<CoverResult[]>([]);
-  const [uploadingExtra, setUploadingExtra] = useState(false);
+  // --- the form -------------------------------------------------------------
+  const [stayType, setStayType] = useState<StayType | null>(null);
+  const [front, setFront] = useState<CoverResult | null>(null);
+  const [interior, setInterior] = useState<CoverResult | null>(null);
+  const [gallery, setGallery] = useState<CoverResult[]>([]);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
   const [title, setTitle] = useState('');
-  const [propertyType, setPropertyType] = useState<string | null>(null);
-  const [customPropertyType, setCustomPropertyType] = useState('');
-  const [sleeps, setSleeps] = useState<number | null>(null);
-  const [amenities, setAmenities] = useState<string[]>([]);
-  const [location, setLocation] = useState('');
-  const [rateAmount, setRateAmount] = useState<number | null>(null);
-  const [rateUnit, setRateUnit] = useState<typeof RATE_UNITS[number]['value']>('per_night');
   const [description, setDescription] = useState('');
+  const [sleeps, setSleeps] = useState<number>(2);
+  const [amenities, setAmenities] = useState<Amenity[]>([]);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
+  const [rates, setRates] = useState<RateState>({});
+  const [showAllRates, setShowAllRates] = useState(false);
+  const [currency, setCurrency] = useState('');
+  const [currencyReady, setCurrencyReady] = useState(false);
+  const [baseLocation, setBaseLocation] = useState('');
+  const [available, setAvailable] = useState(true);
+  const [legalConfirmed, setLegalConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [celebrate, setCelebrate] = useState(false);
-
-  // More options -- none of these can block Plant seed.
-  const [moreOpen, setMoreOpen] = useState(false);
-  const [amenitiesOther, setAmenitiesOther] = useState('');
-  const [whispererPercent, setWhispererPercent] = useState<number | null>(null);
-  const [tags, setTags] = useState('');
-
-  const [businesses, setBusinesses] = useState<{ id: string; name: string; is_default: boolean }[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const [existingLat, setExistingLat] = useState<number | null>(null);
+  const [existingLng, setExistingLng] = useState<number | null>(null);
+  const [loadedLocation, setLoadedLocation] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isEdit && baseTown && !baseLocation) setBaseLocation(baseTown);
+  }, [isEdit, baseTown, baseLocation]);
+
+  // --- edit mode: load the existing listing -------------------------------
+  useEffect(() => {
+    let alive = true;
+    if (!editId || !user) return;
+    (async () => {
+      try {
+        const { data: product, error: pErr } = await supabase
+          .from('products')
+          .select('*, sowers!inner(user_id)')
+          .eq('id', editId)
+          .single();
+        if (pErr) throw pErr;
+        if (!alive) return;
+
+        const p = product as any;
+        if (p?.sowers?.user_id !== user.id) {
+          toast.error('That listing is not yours to edit.');
+          navigate('/my-listings', { replace: true });
+          return;
+        }
+        if (p.kind !== 'pillow') {
+          toast.error('That listing is not a place to stay.');
+          navigate('/my-listings', { replace: true });
+          return;
+        }
+
+        const { data: detail } = await supabase
+          .from('pillow_seed_details')
+          .select('*')
+          .eq('product_id', editId)
+          .maybeSingle();
+        if (!alive) return;
+        const d = (detail ?? {}) as any;
+
+        setTitle(p.title ?? '');
+        setDescription(p.description ?? '');
+
+        const frontUrl = d.front_image_url ?? p.cover_image_url ?? null;
+        if (frontUrl) setFront({ fileUrl: frontUrl, storagePath: '' });
+        const interiorUrl = d.interior_image_url ?? (p.image_urls ?? [])[1] ?? null;
+        if (interiorUrl) setInterior({ fileUrl: interiorUrl, storagePath: '' });
+        const rest: string[] = (d.gallery_urls?.length ? d.gallery_urls : (p.image_urls ?? []).slice(2)) as string[];
+        setGallery(rest.filter(Boolean).map((u) => ({ fileUrl: u, storagePath: '' })));
+
+        setStayType((d.stay_type ?? p.category ?? null) as StayType | null);
+        setSleeps(Number(d.sleeps ?? p.service_details?.sleeps ?? 2) || 2);
+        setAmenities((d.amenities ?? []) as Amenity[]);
+        if (d.currency) setCurrency(String(d.currency).toUpperCase());
+        setCurrencyReady(true);
+        const savedLocation = d.base_location ?? p.service_details?.location ?? p.service_details?.base_town ?? '';
+        setBaseLocation(savedLocation);
+        setLoadedLocation(savedLocation);
+        setExistingLat(d.base_lat ?? null);
+        setExistingLng(d.base_lng ?? null);
+        setAvailable(d.availability !== false);
+        // Given when the listing was created. Stays required and stays ticked,
+        // so an edit cannot quietly drop it.
+        setLegalConfirmed(true);
+
+        const loaded: RateState = {};
+        for (const col of ['rate_nightly', 'rate_weekly', 'rate_monthly']) {
+          if (d[col] != null) loaded[col] = String(Number(d[col]));
+        }
+        if (Object.keys(loaded).length === 0 && p.price != null) loaded.rate_nightly = String(Number(p.price));
+        setRates(loaded);
+        setShowAllRates(true);
+        setShowAllAmenities(true);
+      } catch (e: any) {
+        if (!alive) return;
+        console.error('[SowPillowPage] could not load listing for edit', e);
+        setLoadError(e?.message ?? 'Could not load that listing.');
+      } finally {
+        if (alive) setLoadingExisting(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [editId, user, navigate]);
+
+  // Currency default comes from the owner's country, and stays editable.
+  useEffect(() => {
+    let alive = true;
+    if (!user || isEdit) return;
+    (async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('country, preferred_currency')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!alive) return;
+
+      const preferred = (profile as any)?.preferred_currency?.trim();
+      if (preferred) { setCurrency(preferred.toUpperCase()); setCurrencyReady(true); return; }
+
+      const country = (profile as any)?.country?.trim();
+      if (country) {
+        const { data: match } = await supabase
+          .from('country_currency')
+          .select('currency_code')
+          .or(`alpha2.eq.${country.toUpperCase()},country_name.ilike.${country}`)
+          .limit(1)
+          .maybeSingle();
+        if (!alive) return;
+        if ((match as any)?.currency_code) {
+          setCurrency((match as any).currency_code);
+          setCurrencyReady(true);
+          return;
+        }
+      }
+      setCurrencyReady(true);
+    })();
+    return () => { alive = false; };
+  }, [user, isEdit]);
 
   useEffect(() => {
     let alive = true;
@@ -159,72 +273,87 @@ export default function SowPillowPage() {
         .order('created_at', { ascending: true });
       if (!alive) return;
       const list = (data as any) ?? [];
-      setBusinesses(list);
       setSelectedCompanyId((list.find((b: any) => b.is_default) ?? list[0])?.id ?? null);
     })();
     return () => { alive = false; };
   }, [user]);
 
-  // Location prefills from the sower's own Wandering base town, same as
-  // Hand's fulfilment-note prefill -- never overwrites a value already typed.
-  useEffect(() => {
-    if (baseTown && !location) setLocation(baseTown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baseTown]);
+  const branch = stayType ? STAY_BRANCH[stayType] : null;
 
-  const addExtraPhoto = async (file: File) => {
-    if (extraPhotos.length >= MAX_EXTRA_PHOTOS || !user) return;
-    setUploadingExtra(true);
+  const visibleAmenities = useMemo(() => {
+    if (!branch || showAllAmenities) return AMENITIES;
+    return AMENITIES.filter((a) => branch.suggestedAmenities.includes(a.value));
+  }, [branch, showAllAmenities]);
+
+  const visibleRates = useMemo(() => {
+    if (!branch || showAllRates) return PILLOW_RATE_PERIODS;
+    return PILLOW_RATE_PERIODS.filter((p) => branch.suggestedRates.includes(p.column));
+  }, [branch, showAllRates]);
+
+  const addGalleryPhoto = async (file: File) => {
+    if (gallery.length >= MAX_GALLERY_PHOTOS || !user) return;
+    setUploadingGallery(true);
     try {
       const cropped = await cropToSquare(file);
       if (cropped.size > MAX_PHOTO_SIZE_BYTES) {
         toast.error('That photo is too large — the limit is 10 MB.');
         return;
       }
-      const path = `covers/${user.id}/extra-${Date.now()}.jpg`;
+      const path = `covers/${user.id}/pillow-${Date.now()}.jpg`;
       const { error: uploadErr } = await supabase.storage.from('premium-room').upload(path, cropped, {
-        cacheControl: '3600',
-        contentType: 'image/jpeg',
-        upsert: false,
+        cacheControl: '3600', contentType: 'image/jpeg', upsert: false,
       });
       if (uploadErr) throw uploadErr;
       const { data: pub } = supabase.storage.from('premium-room').getPublicUrl(path);
-      setExtraPhotos((prev) => [...prev, { fileUrl: pub.publicUrl, storagePath: path }]);
+      setGallery((prev) => [...prev, { fileUrl: pub.publicUrl, storagePath: path }]);
     } catch (err) {
-      console.error('Extra photo upload failed:', err);
+      console.error('Gallery photo upload failed:', err);
       toast.error('Could not upload that photo. Please try again.');
     } finally {
-      setUploadingExtra(false);
+      setUploadingGallery(false);
     }
   };
 
-  const removeExtraPhoto = (index: number) => {
-    setExtraPhotos((prev) => prev.filter((_, i) => i !== index));
-  };
+  const numericRates = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const [col, raw] of Object.entries(rates)) {
+      const n = Number(raw);
+      if (raw !== '' && Number.isFinite(n) && n > 0) out[col] = n;
+    }
+    return out;
+  }, [rates]);
 
-  const coverReady = !!cover;
+  const typeReady = !!stayType;
+  const frontReady = !!front;
   const titleReady = title.trim().length > 0;
-  const propertyTypeReady = !!propertyType && (propertyType !== 'other' || customPropertyType.trim().length > 0);
-  const rateReady = rateAmount != null && rateAmount > 0;
-  const locationReady = location.trim().length > 0;
-  const descriptionReady = description.trim().length > 0;
+  const rateReady = Object.keys(numericRates).length > 0;
+  const currencyValid = /^[A-Z]{3}$/.test(currency.trim().toUpperCase());
+  const locationReady = baseLocation.trim().length > 0;
 
-  const completed = [coverReady, titleReady, propertyTypeReady, rateReady, locationReady, descriptionReady]
-    .filter(Boolean).length;
+  // The legal confirmation is a REQUIRED item, not a side condition:
+  // PlantButton derives its disabled state purely from the counts.
+  const requiredCount = 7;
+  const completed = [
+    typeReady, frontReady, titleReady, rateReady,
+    currencyValid, locationReady, legalConfirmed,
+  ].filter(Boolean).length;
 
   const missingReason = useMemo(() => {
-    if (!coverReady) return 'Add a photo of the property to continue.';
-    if (!titleReady) return 'Give it a title.';
-    if (!propertyTypeReady) return propertyType === 'other' ? 'Type in your property type.' : 'Pick a property type.';
-    if (!rateReady) return 'Set your rate.';
-    if (!locationReady) return 'Add your location.';
-    if (!descriptionReady) return 'Add a short description.';
+    if (!typeReady) return 'Pick what kind of place it is.';
+    if (!frontReady) return 'Add a photo of the outside.';
+    if (!titleReady) return 'Give it a short name.';
+    if (!rateReady) return 'Fill in at least one price.';
+    if (!currencyValid) return 'Choose the currency you charge in.';
+    if (!locationReady) return 'Say where the place is.';
+    if (!legalConfirmed) return 'Tick the confirmation to finish.';
     return undefined;
-  }, [coverReady, titleReady, propertyTypeReady, rateReady, locationReady, descriptionReady, propertyType]);
+  }, [typeReady, frontReady, titleReady, rateReady, currencyValid, locationReady, legalConfirmed]);
+
+  const canSubmit = completed === requiredCount && legalConfirmed;
 
   const handlePlant = async () => {
     if (!user) { toast.error('Please log in to sow.'); return; }
-    if (completed < 6 || !cover) return;
+    if (!canSubmit || !front || !stayType) return;
 
     setSubmitting(true);
     try {
@@ -243,51 +372,110 @@ export default function SowPillowPage() {
 
       const companyId = selectedCompanyId ?? (await getDefaultCompanyId(sowerId));
 
-      const finalPropertyType = propertyType === 'other' ? customPropertyType.trim() : propertyType;
-      const tagList = tags.split(',').map((t) => t.trim()).filter(Boolean);
+      // products.price stays populated so the existing booking path and the
+      // 85/15 split are untouched. It mirrors the first rate the host set.
+      const primaryColumn = PILLOW_PRIMARY_RATE_ORDER.find((c) => numericRates[c] != null) ?? null;
+      const primaryRate = primaryColumn ? numericRates[primaryColumn] : null;
+
+      const galleryUrls = gallery.map((g) => g.fileUrl);
+      const imageUrls = [front.fileUrl, interior?.fileUrl, ...galleryUrls].filter(Boolean) as string[];
 
       const service_details: Record<string, unknown> = {
-        property_type: finalPropertyType,
-        sleeps: sleeps,
+        property_type: stayType,
+        sleeps,
         amenities,
-        amenities_other: amenitiesOther.trim() || null,
-        location: location.trim(),
-        rate_unit: rateUnit,
-        base_town: baseTown,
+        location: baseLocation.trim(),
+        rate_unit: primaryColumn ? PILLOW_LEGACY_RATE_UNIT[primaryColumn] : null,
+        base_town: baseLocation.trim(),
       };
-      if (tagList.length) service_details.tags = tagList;
 
-      // No file_url, no preview_url -- a Pillow seed is a service, not a
-      // file. price is the rate amount; the unit lives in service_details.
-      const inserted = await insertProduct({
-        sower_id: sowerId,
-        company_id: companyId,
+      const productPayload = {
         title: title.trim(),
         description: description.trim(),
         type: 'service',
         kind: 'pillow',
-        category: finalPropertyType,
+        category: stayType,
         license_type: 'bestowal',
-        price: rateAmount,
-        cover_image_url: cover.fileUrl,
-        image_urls: [cover.fileUrl, ...extraPhotos.map((p) => p.fileUrl)],
+        price: primaryRate,
+        cover_image_url: front.fileUrl,
+        image_urls: imageUrls,
         file_url: null,
         preview_url: null,
         service_details,
-        has_whisperer: whispererPercent != null && whispererPercent > 0,
-        whisperer_commission_percent: whispererPercent,
-      });
+      };
 
-      try { await (supabase.rpc as any)('add_xp_to_current_user', { amount: 100 }); } catch { /* best-effort */ }
+      let productId: string;
+      if (isEdit && editId) {
+        await updateProduct(editId, { ...productPayload, updated_at: new Date().toISOString() });
+        productId = editId;
+      } else {
+        const inserted = await insertProduct({ sower_id: sowerId, company_id: companyId, ...productPayload });
+        productId = inserted.id;
+      }
 
-      setCelebrate(true);
-      launchConfetti();
-      toast.success('Seed planted! 🌱');
-      await new Promise((resolve) => setTimeout(resolve, 650));
-      navigate(`/seed/pillow/${inserted.id}`);
+      // Coordinates decide whether this listing is ever findable: the hub's
+      // proximity search skips a row with no lat/lng.
+      let baseLat: number | null = isEdit ? existingLat : roleLat;
+      let baseLng: number | null = isEdit ? existingLng : roleLng;
+      const locationChanged = baseLocation.trim() !== (loadedLocation ?? '').trim();
+      if (!isEdit || locationChanged || baseLat == null || baseLng == null) {
+        try {
+          const { data: geo } = await supabase.functions.invoke('geocode-place', {
+            body: { place: baseLocation.trim() },
+          });
+          const gLat = Number(geo?.lat);
+          const gLng = Number(geo?.lng);
+          if (Number.isFinite(gLat) && Number.isFinite(gLng)) { baseLat = gLat; baseLng = gLng; }
+        } catch {
+          // Keep the fallback. The warning below covers the no-coordinates case.
+        }
+      }
+
+      const detailPayload = {
+        product_id: productId,
+        stay_type: stayType,
+        sleeps,
+        amenities,
+        rate_nightly: numericRates.rate_nightly ?? null,
+        rate_weekly: numericRates.rate_weekly ?? null,
+        rate_monthly: numericRates.rate_monthly ?? null,
+        currency: currency.trim().toUpperCase(),
+        base_location: baseLocation.trim(),
+        base_lat: baseLat,
+        base_lng: baseLng,
+        availability: available,
+        front_image_url: front.fileUrl,
+        interior_image_url: interior?.fileUrl ?? null,
+        gallery_urls: galleryUrls,
+        operator_confirmed_legal: true,
+      };
+
+      const { error: detailErr } = await supabase
+        .from('pillow_seed_details')
+        .upsert(detailPayload as any, { onConflict: 'product_id' });
+
+      if (detailErr) {
+        console.error('pillow_seed_details save failed', detailErr);
+        toast.error(`Saved the listing, but the stay details did not save: ${detailErr.message}`);
+        navigate(`/seed/pillow/${productId}`);
+        return;
+      }
+
+      if (baseLat == null || baseLng == null) {
+        toast.warning(
+          (isEdit ? 'Saved, but we could not place "' : 'Listed, but we could not place "') + baseLocation.trim()
+          + '" on the map, so it will not show in Sleeping Seeds yet. Edit the location to a town or city name.',
+          { duration: 12000 },
+        );
+      }
+
+      if (!isEdit) launchConfetti();
+      toast.success(isEdit ? 'Changes saved.' : 'Your place is listed! 🌱');
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      navigate(isEdit ? '/my-listings' : `/seed/pillow/${productId}`);
     } catch (e: any) {
       console.error('Plant seed error', e);
-      toast.error(e?.message ?? 'Could not plant this seed. Please try again.');
+      toast.error(e?.message ?? 'Could not list this place. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -296,13 +484,13 @@ export default function SowPillowPage() {
   if (!user) {
     return (
       <div className="container max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-        <p className="text-muted-foreground">Please log in to sow a Pillow seed.</p>
+        <p className="text-muted-foreground">Please log in to list a place.</p>
         <Button onClick={() => navigate('/login')}>Log in</Button>
       </div>
     );
   }
 
-  if (!roleChecked) {
+  if (!roleChecked || loadingExisting) {
     return (
       <div className="container max-w-lg mx-auto px-4 py-16 text-center">
         <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
@@ -310,280 +498,302 @@ export default function SowPillowPage() {
     );
   }
 
-  const rateSplit = rateAmount != null && rateAmount > 0 ? priceBreakdown(rateAmount) : null;
-
-  const previewCard = (
-    <SeedPreviewCard
-      title={title}
-      description={description}
-      coverUrl={cover?.fileUrl ?? null}
-      price={rateAmount}
-      isFree={false}
-      type="service"
-      completedPieces={completed}
-      celebrate={celebrate}
-    />
-  );
+  if (loadError) {
+    return (
+      <div className="container max-w-lg mx-auto px-4 py-16 text-center space-y-4">
+        <p className="text-destructive">{loadError}</p>
+        <Button onClick={() => navigate('/my-listings')}>Back to My Listings</Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="container max-w-5xl mx-auto px-4 py-6 md:py-8 pb-28 md:pb-8">
-      <Button variant="ghost" size="sm" onClick={() => navigate('/sow')} className="mb-4 -ml-2">
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back
+    <div className="container max-w-2xl mx-auto px-4 py-6 pb-28">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate(isEdit ? '/my-listings' : '/sow')}
+        className="mb-4 -ml-2"
+      >
+        <ArrowLeft className="w-4 h-4 mr-1" />
+        {isEdit ? 'Back to My Listings' : 'Back to Sow'}
       </Button>
-
-      <h1 className="text-2xl font-bold mb-4">🛏️ Sow a Pillow seed</h1>
 
       <SowBanner />
 
-      <div className="grid md:grid-cols-[1fr_320px] gap-8">
-        <div className="space-y-5">
-          <div className="flex items-start gap-4">
-            <CoverDropZone bucket="premium-room" pathPrefix={`covers/${user.id}`} onChange={setCover} required />
-            <div className="flex-1">
-              <Label htmlFor="pillow-title">Title</Label>
+      <h1 className="text-2xl font-bold mb-1">{isEdit ? 'Edit your place' : 'List your place'}</h1>
+      <p className="text-sm text-muted-foreground mb-6">
+        Somewhere for a tribe member to rest. You host, they stay.
+      </p>
+
+      {/* 1. What kind of place ------------------------------------------ */}
+      <section className="mb-7">
+        <h2 className="text-lg font-semibold mb-3">1. What kind of place is it?</h2>
+        <div className="grid grid-cols-2 gap-3 auto-rows-fr">
+          {STAY_TYPES.map((t) => {
+            const on = stayType === t.value;
+            return (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => setStayType(t.value)}
+                aria-pressed={on}
+                /*
+                  flex-col is not optional. index.css:679 gives every bare
+                  <button> `inline-flex items-center justify-center`, which
+                  would lay the label and hint out side by side.
+                */
+                className={`flex h-full min-h-[5.5rem] flex-col items-start justify-start gap-0.5
+                  rounded-xl border-2 p-3 text-left transition ${
+                  on ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <span className="font-semibold leading-tight">{t.label}</span>
+                <span className="text-xs leading-snug text-muted-foreground">{t.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {stayType && (
+        <>
+          {/* 2. How many people ------------------------------------------ */}
+          <section className="mb-7">
+            <h2 className="text-lg font-semibold mb-3">2. {branch?.sleepsQuestion}</h2>
+            <div className="flex items-center gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-12 w-12"
+                onClick={() => setSleeps((n) => Math.max(1, n - 1))}
+                aria-label="Fewer people"
+              >
+                <Minus className="w-5 h-5" />
+              </Button>
+              <span className="text-2xl font-bold w-12 text-center" aria-live="polite">{sleeps}</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-12 w-12"
+                onClick={() => setSleeps((n) => Math.min(200, n + 1))}
+                aria-label="More people"
+              >
+                <Plus className="w-5 h-5" />
+              </Button>
+              <span className="text-sm text-muted-foreground">people</span>
+            </div>
+          </section>
+
+          {/* 3. Amenities ------------------------------------------------ */}
+          <section className="mb-7">
+            <h2 className="text-lg font-semibold mb-3">3. What do guests get?</h2>
+            <div className="flex flex-wrap gap-2">
+              {visibleAmenities.map((a) => {
+                const on = amenities.includes(a.value);
+                return (
+                  <button
+                    key={a.value}
+                    type="button"
+                    onClick={() => setAmenities((prev) => (on ? prev.filter((v) => v !== a.value) : [...prev, a.value]))}
+                    aria-pressed={on}
+                    className={`min-h-11 px-4 rounded-full border text-sm transition ${
+                      on ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted border-border'
+                    }`}
+                  >
+                    {on && <Check className="w-3.5 h-3.5 inline mr-1" />}
+                    {a.label}
+                  </button>
+                );
+              })}
+            </div>
+            {!showAllAmenities && (
+              <Button variant="link" size="sm" className="px-0 mt-2" onClick={() => setShowAllAmenities(true)}>
+                Show all options
+              </Button>
+            )}
+          </section>
+
+          {/* 4. Photos --------------------------------------------------- */}
+          <section className="mb-7">
+            <h2 className="text-lg font-semibold mb-3">4. Show it</h2>
+
+            <Label className="text-sm">The outside</Label>
+            <div className="mt-1 mb-4">
+              <CoverDropZone bucket="premium-room" pathPrefix={`covers/${user.id}`} onChange={setFront} required />
+            </div>
+
+            <Label className="text-sm">The inside</Label>
+            <div className="mt-1 mb-4">
+              <CoverDropZone bucket="premium-room" pathPrefix={`covers/${user.id}`} onChange={setInterior} />
+            </div>
+
+            <Label className="text-sm">More photos (up to {MAX_GALLERY_PHOTOS})</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {gallery.map((p, i) => (
+                <div key={`${p.fileUrl}-${i}`} className="relative">
+                  <SignedImg src={p.fileUrl} alt="" className="w-20 h-20 rounded-lg object-cover border" />
+                  <button
+                    type="button"
+                    onClick={() => setGallery((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                    aria-label="Remove photo"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              {gallery.length < MAX_GALLERY_PHOTOS && (
+                <label className="w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary">
+                  {uploadingGallery
+                    ? <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                    : <ImagePlus className="w-5 h-5 text-muted-foreground" />}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) void addGalleryPhoto(f); e.target.value = ''; }}
+                  />
+                </label>
+              )}
+            </div>
+
+            <div className="mt-4">
+              <Label htmlFor="pillow-title">Short name</Label>
               <Input
                 id="pillow-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="What are you offering?"
-                className="mt-1.5"
+                placeholder="Quiet cottage on the hill"
+                className="h-12 mt-1"
               />
             </div>
-          </div>
 
-          <OnePicker
-            label="Property type"
-            storageKey="sow:lastPropertyType"
-            options={PROPERTY_TYPE_OPTIONS}
-            value={propertyType}
-            onChange={setPropertyType}
-          />
-          {propertyType === 'other' && (
-            <Input
-              value={customPropertyType}
-              onChange={(e) => setCustomPropertyType(e.target.value)}
-              placeholder="Describe your property"
-              className="max-w-xs"
-            />
-          )}
-
-          <div>
-            <Label htmlFor="pillow-sleeps">Sleeps</Label>
-            <Input
-              id="pillow-sleeps"
-              type="number"
-              min="1"
-              step="1"
-              value={sleeps ?? ''}
-              onChange={(e) => setSleeps(e.target.value === '' ? null : Math.max(1, Number(e.target.value)))}
-              placeholder="Number of guests"
-              className="mt-1.5 max-w-[160px]"
-            />
-          </div>
-
-          <div>
-            <Label className="mb-1.5 block">Amenities</Label>
-            <ToggleGroup type="multiple" value={amenities} onValueChange={setAmenities} className="justify-start flex-wrap">
-              {AMENITY_OPTIONS.map((a) => (
-                <ToggleGroupItem key={a.value} value={a.value} size="sm" variant="outline" className="px-3">
-                  {a.label}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          </div>
-
-          <div>
-            <Label htmlFor="pillow-location">Location / area</Label>
-            <Input
-              id="pillow-location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Town or area guests will find you in"
-              className="mt-1.5 max-w-md"
-            />
-          </div>
-
-          <div>
-            <Label className="mb-1.5 block">Rate</Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1 max-w-[160px]">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  className="pl-6"
-                  value={rateAmount ?? ''}
-                  onChange={(e) => setRateAmount(e.target.value === '' ? null : Number(e.target.value))}
-                />
-              </div>
-              <Select value={rateUnit} onValueChange={(v) => setRateUnit(v as typeof rateUnit)}>
-                <SelectTrigger className="flex-1 max-w-[220px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {RATE_UNITS.map((u) => (
-                    <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="mt-4">
+              <Label htmlFor="pillow-desc">Anything else guests should know</Label>
+              <Textarea
+                id="pillow-desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Check in after 2pm. Gate code sent the morning you arrive."
+                rows={3}
+                className="mt-1"
+              />
             </div>
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              {rateSplit
-                ? `Bestowers pay $${rateSplit.total.toFixed(2)} (Sow2Grow's 15% fee is added on top, plus a small network fee). You receive the full $${rateSplit.base.toFixed(2)}.`
-                : 'Set a rate to see what bestowers will pay.'}
+          </section>
+
+          {/* 5. Where ---------------------------------------------------- */}
+          <section className="mb-7">
+            <h2 className="text-lg font-semibold mb-3">5. Where is it?</h2>
+            <Input
+              value={baseLocation}
+              onChange={(e) => setBaseLocation(e.target.value)}
+              placeholder="Town or area"
+              className="h-12"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              People search by how far away you are.
             </p>
-          </div>
+          </section>
 
-          <div>
-            <Label htmlFor="pillow-description">Description</Label>
-            <Textarea
-              id="pillow-description"
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What's it like to stay — a couple of lines."
-              className="mt-1.5"
-            />
-          </div>
+          {/* 6. Price ---------------------------------------------------- */}
+          <section className="mb-7">
+            <h2 className="text-lg font-semibold mb-3">6. What do you charge?</h2>
+            <p className="text-sm text-muted-foreground mb-3">
+              Fill in only the ones you offer. At least one.
+            </p>
 
-          <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="px-0 text-muted-foreground">
-                <ChevronDown className={`w-4 h-4 mr-1.5 transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
-                More options
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 pt-3">
-              <div>
-                <Label htmlFor="pillow-amenities-other">Other amenities</Label>
+            <div className="mb-4">
+              <Label htmlFor="pillow-currency">Currency</Label>
+              <div className="flex gap-2 mt-1">
                 <Input
-                  id="pillow-amenities-other"
-                  value={amenitiesOther}
-                  onChange={(e) => setAmenitiesOther(e.target.value)}
-                  placeholder="Anything not listed above"
-                  className="max-w-xs mt-1.5"
+                  id="pillow-currency"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value.toUpperCase().slice(0, 3))}
+                  placeholder={currencyReady ? 'e.g. USD' : ''}
+                  className="h-12 w-32 uppercase"
+                  maxLength={3}
                 />
-              </div>
-
-              <div>
-                <Label className="mb-1.5 block">More photos</Label>
-                <div className="flex flex-wrap gap-2">
-                  {extraPhotos.map((p, i) => (
-                    <div key={p.storagePath} className="relative w-20 h-20 rounded-lg overflow-hidden border">
-                      <SignedImg src={p.fileUrl} alt="" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeExtraPhoto(i)}
-                        className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5 hover:bg-destructive hover:text-destructive-foreground"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                  {extraPhotos.length < MAX_EXTRA_PHOTOS && (
-                    <label className="w-20 h-20 rounded-lg border-2 border-dashed border-border hover:border-primary/60 flex items-center justify-center cursor-pointer">
-                      {uploadingExtra ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      ) : (
-                        <ImagePlus className="w-4 h-4 text-muted-foreground" />
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={uploadingExtra}
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) addExtraPhoto(f); e.target.value = ''; }}
-                      />
-                    </label>
-                  )}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">Up to {MAX_EXTRA_PHOTOS} more, alongside the main photo.</p>
-              </div>
-
-              {businesses.length > 1 && (
-                <div>
-                  <Label htmlFor="pillow-books">Books</Label>
-                  <p className="text-xs text-muted-foreground mb-1.5">
-                    Which of your businesses this seed's bookings go into. Can be changed later, until its first booking.
-                  </p>
-                  <Select value={selectedCompanyId ?? undefined} onValueChange={setSelectedCompanyId}>
-                    <SelectTrigger id="pillow-books" className="max-w-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {businesses.map((b) => (
-                        <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div>
-                <Label htmlFor="pillow-whisperer">Whisperer commission %</Label>
-                <p className="text-xs text-muted-foreground mb-1.5">
-                  Comes out of your share, never added on top of what the buyer pays. Leave blank for none.
+                <p className="text-xs text-muted-foreground self-center">
+                  Three-letter code. Your prices always show in this currency.
                 </p>
-                <Input
-                  id="pillow-whisperer"
-                  type="number"
-                  min="0"
-                  max="30"
-                  step="1"
-                  value={whispererPercent ?? ''}
-                  onChange={(e) => setWhispererPercent(e.target.value === '' ? null : Number(e.target.value))}
-                  className="max-w-xs"
-                />
               </div>
+            </div>
 
-              <div>
-                <Label htmlFor="pillow-tags">Tags</Label>
-                <Input
-                  id="pillow-tags"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="Comma-separated"
-                  className="mt-1.5 max-w-xs"
+            <div className="space-y-3">
+              {visibleRates.map((p) => (
+                <div key={p.column} className="flex items-center gap-3">
+                  <Label htmlFor={p.column} className="w-28 shrink-0 text-sm">{p.label}</Label>
+                  <Input
+                    id={p.column}
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="0.01"
+                    value={rates[p.column] ?? ''}
+                    onChange={(e) => setRates((prev) => ({ ...prev, [p.column]: e.target.value }))}
+                    placeholder="—"
+                    className="h-12"
+                  />
+                </div>
+              ))}
+            </div>
+            {!showAllRates && (
+              <Button variant="link" size="sm" className="px-0 mt-2" onClick={() => setShowAllRates(true)}>
+                Show all rate options
+              </Button>
+            )}
+          </section>
+
+          {/* 7. Availability and the legal confirmation ------------------- */}
+          <section className="mb-7">
+            <h2 className="text-lg font-semibold mb-3">7. Last thing</h2>
+
+            <div className="flex items-center gap-3 mb-5">
+              <Checkbox
+                id="pillow-available"
+                checked={available}
+                onCheckedChange={(v) => setAvailable(v === true)}
+                className="w-6 h-6"
+              />
+              <Label htmlFor="pillow-available" className="text-base">
+                Taking bookings now
+              </Label>
+            </div>
+
+            <div className="rounded-xl border-2 border-amber-500/40 bg-amber-500/5 p-4">
+              <div className="flex gap-3">
+                <Checkbox
+                  id="pillow-legal"
+                  checked={legalConfirmed}
+                  onCheckedChange={(v) => setLegalConfirmed(v === true)}
+                  className="w-6 h-6 mt-0.5 shrink-0"
                 />
+                <Label htmlFor="pillow-legal" className="text-sm leading-relaxed cursor-pointer">
+                  {HOST_LEGAL_CONFIRMATION}
+                </Label>
               </div>
-            </CollapsibleContent>
-          </Collapsible>
+              {!legalConfirmed && (
+                <p className="text-xs text-muted-foreground mt-3 ml-9">
+                  You have to tick this before you can list the place.
+                </p>
+              )}
+            </div>
+          </section>
 
-          <div className="hidden md:block pt-2">
-            <PlantButton
-              requiredCount={6}
-              completedCount={completed}
-              missingReason={missingReason}
-              submitting={submitting}
-              onClick={handlePlant}
-            />
-          </div>
-        </div>
-
-        <div className="hidden md:block">
-          <div className="sticky top-6">{previewCard}</div>
-        </div>
-      </div>
-
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-background border-t px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-2">
-        <Sheet>
-          <SheetTrigger asChild>
-            <button type="button" className="w-full flex items-center gap-2 text-xs text-muted-foreground">
-              <Eye className="w-3.5 h-3.5" /> Preview how it will look
-            </button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
-            {previewCard}
-          </SheetContent>
-        </Sheet>
-        <PlantButton
-          requiredCount={6}
-          completedCount={completed}
-          missingReason={missingReason}
-          submitting={submitting}
-          onClick={handlePlant}
-        />
-      </div>
+          <PlantButton
+            requiredCount={requiredCount}
+            completedCount={completed}
+            missingReason={missingReason}
+            submitting={submitting}
+            onClick={handlePlant}
+            label={isEdit ? 'Save changes' : 'List my place'}
+            progressWord={isEdit ? 'ready' : undefined}
+          />
+        </>
+      )}
     </div>
   );
 }

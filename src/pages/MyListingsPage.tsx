@@ -11,6 +11,7 @@ import SignedImg from '@/components/media/SignedImg';
 import { toast } from 'sonner';
 import { ArrowLeft, Eye, Pencil, Trash2, Loader2, EyeOff, Share2 } from 'lucide-react';
 import { vehicleTypeLabel } from '@/lib/sleeping/wheelOptions';
+import { stayTypeLabel } from '@/lib/sleeping/pillowOptions';
 import ShareSeedDialog from '@/components/share/ShareSeedDialog';
 
 /**
@@ -56,6 +57,7 @@ export default function MyListingsPage() {
   /** product_id -> availability, loaded lazily for Wheel rows. */
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
   const [vehicleTypes, setVehicleTypes] = useState<Record<string, string>>({});
+  const [stayTypes, setStayTypes] = useState<Record<string, string>>({});
 
   const rows: Row[] = useMemo(() => {
     return ((seeds ?? []) as any[])
@@ -78,38 +80,56 @@ export default function MyListingsPage() {
   }, [seeds]);
 
   const wheelIds = useMemo(() => rows.filter((r) => r.kind === 'wheel').map((r) => r.id), [rows]);
+  const pillowIds = useMemo(() => rows.filter((r) => r.kind === 'pillow').map((r) => r.id), [rows]);
 
   // Availability and vehicle type live in wheel_seed_details, not in the
   // products row useMyContent returns, so they are fetched alongside.
   const wheelKey = wheelIds.join(',');
+  const pillowKey = pillowIds.join(',');
   useEffect(() => {
     let alive = true;
-    if (wheelIds.length === 0) return;
+    if (wheelIds.length === 0 && pillowIds.length === 0) return;
     (async () => {
-      const { data } = await supabase
-        .from('wheel_seed_details')
-        .select('product_id, availability, vehicle_type')
-        .in('product_id', wheelIds);
-      if (!alive) return;
       const avail: Record<string, boolean> = {};
-      const types: Record<string, string> = {};
-      for (const d of (data ?? []) as any[]) {
-        avail[d.product_id] = d.availability !== false;
-        types[d.product_id] = d.vehicle_type;
+      const vTypes: Record<string, string> = {};
+      const sTypes: Record<string, string> = {};
+
+      if (wheelIds.length) {
+        const { data } = await supabase
+          .from('wheel_seed_details')
+          .select('product_id, availability, vehicle_type')
+          .in('product_id', wheelIds);
+        for (const d of (data ?? []) as any[]) {
+          avail[d.product_id] = d.availability !== false;
+          vTypes[d.product_id] = d.vehicle_type;
+        }
       }
+      if (pillowIds.length) {
+        const { data } = await supabase
+          .from('pillow_seed_details')
+          .select('product_id, availability, stay_type')
+          .in('product_id', pillowIds);
+        for (const d of (data ?? []) as any[]) {
+          avail[d.product_id] = d.availability !== false;
+          sTypes[d.product_id] = d.stay_type;
+        }
+      }
+      if (!alive) return;
       setAvailability(avail);
-      setVehicleTypes(types);
+      setVehicleTypes(vTypes);
+      setStayTypes(sTypes);
     })();
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wheelKey]);
+  }, [wheelKey, pillowKey]);
 
   const toggleAvailability = async (row: Row) => {
     const next = !(availability[row.id] ?? true);
     setBusyId(row.id);
     try {
+      const table = row.kind === 'pillow' ? 'pillow_seed_details' : 'wheel_seed_details';
       const { data, error } = await supabase
-        .from('wheel_seed_details')
+        .from(table)
         .update({ availability: next, updated_at: new Date().toISOString() })
         .eq('product_id', row.id)
         .select('product_id, availability');
@@ -143,11 +163,13 @@ export default function MyListingsPage() {
   };
 
   const edit = (row: Row) => {
-    if (row.kind !== 'wheel') {
-      toast.info(`Editing a ${KIND_META[row.kind].label} listing is not built yet. You can delete it and sow it again.`);
+    // Each kind edits in its OWN sow form, in edit mode. Hand has no
+    // structured detail table yet, so it has no edit mode to send anyone to.
+    if (row.kind === 'hand') {
+      toast.info('Editing a Hand listing is not built yet. You can delete it and sow it again.');
       return;
     }
-    navigate(`${KIND_META.wheel.sowPath}?edit=${row.id}`);
+    navigate(`${KIND_META[row.kind].sowPath}?edit=${row.id}`);
   };
 
   return (
@@ -187,6 +209,7 @@ export default function MyListingsPage() {
           {rows.map((row) => {
             const meta = KIND_META[row.kind];
             const isWheel = row.kind === 'wheel';
+    const hasAvailability = row.kind === 'wheel' || row.kind === 'pillow';
             const isAvailable = availability[row.id] ?? true;
             const busy = busyId === row.id;
 
@@ -203,13 +226,16 @@ export default function MyListingsPage() {
                     <div className="flex items-start justify-between gap-2">
                       <h2 className="font-semibold leading-tight truncate">{row.title}</h2>
                       <Badge variant="secondary" className="shrink-0">
-                        {meta.emoji} {isWheel && vehicleTypes[row.id]
+                        {meta.emoji}{' '}
+                        {isWheel && vehicleTypes[row.id]
                           ? vehicleTypeLabel(vehicleTypes[row.id])
-                          : meta.label}
+                          : row.kind === 'pillow' && stayTypes[row.id]
+                            ? stayTypeLabel(stayTypes[row.id])
+                            : meta.label}
                       </Badge>
                     </div>
 
-                    {isWheel && (
+                    {hasAvailability && (
                       <p className={`text-xs mt-1 ${isAvailable ? 'text-primary' : 'text-muted-foreground'}`}>
                         {isAvailable ? 'Showing in Sleeping Seeds' : 'Hidden from Sleeping Seeds'}
                       </p>
@@ -232,7 +258,7 @@ export default function MyListingsPage() {
                     <Pencil className="w-4 h-4 mr-1" /> Edit
                   </Button>
 
-                  {isWheel && (
+                  {hasAvailability && (
                     <Button size="sm" variant="outline" onClick={() => toggleAvailability(row)} disabled={busy}>
                       {busy
                         ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />

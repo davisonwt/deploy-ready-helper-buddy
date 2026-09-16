@@ -16,6 +16,10 @@ import SignedImg from '@/components/media/SignedImg';
 import {
   RATE_PERIODS, USE_TAGS, VEHICLE_TYPES, ratesOn, vehicleTypeLabel,
 } from '@/lib/sleeping/wheelOptions';
+import {
+  AMENITIES, PILLOW_RATE_PERIODS, STAY_TYPES, labelForAmenity,
+  pillowRatesOn, stayTypeLabel,
+} from '@/lib/sleeping/pillowOptions';
 
 type TabKey = 'wheels' | 'pillows' | 'hands';
 
@@ -44,6 +48,26 @@ interface WheelRow {
   rate_hourly: number | null;
   rate_per_km: number | null;
   rate_daily: number | null;
+  rate_weekly: number | null;
+  rate_monthly: number | null;
+  base_location: string | null;
+  distance_m: number;
+  created_at: string;
+}
+
+interface PillowRow {
+  product_id: string;
+  title: string;
+  description: string | null;
+  cover_image_url: string | null;
+  front_image_url: string | null;
+  interior_image_url: string | null;
+  sower_name: string | null;
+  stay_type: string;
+  sleeps: number | null;
+  amenities: string[] | null;
+  currency: string;
+  rate_nightly: number | null;
   rate_weekly: number | null;
   rate_monthly: number | null;
   base_location: string | null;
@@ -90,6 +114,13 @@ export default function SleepingSeedsPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [wheels, setWheels] = useState<WheelRow[]>([]);
   const [others, setOthers] = useState<ServiceRow[]>([]);
+  const [pillows, setPillows] = useState<PillowRow[]>([]);
+
+  // Pillows filters
+  const [stayTypes, setStayTypes] = useState<string[]>([]);
+  const [amenityFilter, setAmenityFilter] = useState<string[]>([]);
+  const [pillowRates, setPillowRates] = useState<string[]>([]);
+  const [minSleeps, setMinSleeps] = useState<number | null>(null);
 
   // Wheels filters
   const [showFilters, setShowFilters] = useState(false);
@@ -123,6 +154,18 @@ export default function SleepingSeedsPage() {
         });
         if (error) throw error;
         setWheels((data ?? []) as WheelRow[]);
+      } else if (tab === 'pillows') {
+        const { data, error } = await supabase.rpc('sleeping_pillows_near', {
+          _lat: location.lat,
+          _lng: location.lng,
+          _radius_m: radiusM,
+          _stay_types: stayTypes.length ? stayTypes : null,
+          _amenities: amenityFilter.length ? amenityFilter : null,
+          _min_sleeps: minSleeps,
+          _rate_periods: pillowRates.length ? pillowRates : null,
+        });
+        if (error) throw error;
+        setPillows((data ?? []) as PillowRow[]);
       } else {
         const { data, error } = await supabase.rpc('sleeping_services_near', {
           _kind: TAB_TO_KIND[tab],
@@ -137,15 +180,18 @@ export default function SleepingSeedsPage() {
       setLoadError(e instanceof Error ? e.message : 'Could not load listings.');
       setWheels([]);
       setOthers([]);
+      setPillows([]);
     } finally {
       setLoading(false);
     }
-  }, [location, radiusM, tab, vehicleTypes, useTags, ratePeriods]);
+  }, [location, radiusM, tab, vehicleTypes, useTags, ratePeriods, stayTypes, amenityFilter, pillowRates, minSleeps]);
 
   useEffect(() => { void load(); }, [load]);
 
   const empty = EMPTY_COPY[tab];
   const activeFilterCount = vehicleTypes.length + useTags.length + ratePeriods.length;
+  const pillowFilterCount = stayTypes.length + amenityFilter.length + pillowRates.length
+    + (minSleeps != null ? 1 : 0);
 
   return (
     <div className="container max-w-5xl mx-auto px-4 py-6">
@@ -233,6 +279,78 @@ export default function SleepingSeedsPage() {
           </div>
         )}
 
+        {tab === 'pillows' && status === 'ready' && (
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters((v) => !v)}
+              className="gap-2"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filters
+              {pillowFilterCount > 0 && (
+                <Badge variant="secondary" className="ml-1">{pillowFilterCount}</Badge>
+              )}
+            </Button>
+
+            {showFilters && (
+              <div className="mt-3 rounded-xl border bg-card p-4 space-y-4">
+                <FilterGroup
+                  title="Kind of place"
+                  options={STAY_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+                  selected={stayTypes}
+                  onToggle={(v) => toggle(stayTypes, v, setStayTypes)}
+                />
+                <FilterGroup
+                  title="Must have"
+                  options={AMENITIES.map((a) => ({ value: a.value, label: a.label }))}
+                  selected={amenityFilter}
+                  onToggle={(v) => toggle(amenityFilter, v, setAmenityFilter)}
+                />
+                <FilterGroup
+                  title="Rate period"
+                  options={PILLOW_RATE_PERIODS.map((p) => ({ value: p.filterValue, label: p.label }))}
+                  selected={pillowRates}
+                  onToggle={(v) => toggle(pillowRates, v, setPillowRates)}
+                />
+                <div>
+                  <p className="text-sm font-medium mb-2">Sleeps at least</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 2, 4, 6, 8].map((n) => {
+                      const on = minSleeps === n;
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setMinSleeps(on ? null : n)}
+                          aria-pressed={on}
+                          className={`min-h-10 px-3 rounded-full border text-sm transition ${
+                            on
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-background hover:bg-muted border-border'
+                          }`}
+                        >
+                          {n}+
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {pillowFilterCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setStayTypes([]); setAmenityFilter([]); setPillowRates([]); setMinSleeps(null); }}
+                  >
+                    Clear filters
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         <TabsContent value={tab} forceMount>
           {status !== 'ready' && (
             <p className="text-sm text-muted-foreground py-8 text-center">
@@ -261,6 +379,14 @@ export default function SleepingSeedsPage() {
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
                     {wheels.map((w) => <WheelCard key={w.product_id} row={w} unit={unit} />)}
+                  </div>
+                )
+              ) : tab === 'pillows' ? (
+                pillows.length === 0 ? (
+                  <EmptyState {...empty} />
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {pillows.map((p) => <PillowCard key={p.product_id} row={p} unit={unit} />)}
                   </div>
                 )
               ) : (
@@ -371,6 +497,60 @@ function WheelCard({ row, unit }: { row: WheelRow; unit: ReturnType<typeof unitF
 
         <p className="text-xs text-muted-foreground pt-1">
           {row.sower_name ?? 'A sower'} · listed {localDate(row.created_at)}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+function PillowCard({ row, unit }: { row: PillowRow; unit: ReturnType<typeof unitForViewer> }) {
+  const rates = pillowRatesOn(row as unknown as Record<string, unknown>);
+  const list = row.amenities ?? [];
+  const cover = row.front_image_url || row.cover_image_url;
+
+  return (
+    <Link
+      to={`/seed/pillow/${row.product_id}`}
+      className="rounded-xl border bg-card overflow-hidden hover:border-primary transition block"
+    >
+      {cover && (
+        <SignedImg src={cover} alt="" className="w-full aspect-[16/10] object-cover" loading="lazy" />
+      )}
+      <div className="p-4 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold leading-tight">{row.title}</h3>
+          <Badge variant="secondary" className="shrink-0">{stayTypeLabel(row.stay_type)}</Badge>
+        </div>
+
+        <p className="text-sm text-primary font-medium">
+          {formatDistance(row.distance_m, unit)}
+          {row.base_location ? ` · ${row.base_location}` : ''}
+        </p>
+
+        {row.sleeps != null && (
+          <p className="text-xs text-muted-foreground">Sleeps {row.sleeps}</p>
+        )}
+
+        {list.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {list.slice(0, 4).map((a) => labelForAmenity(a)).join(', ')}
+            {list.length > 4 ? '…' : ''}
+          </p>
+        )}
+
+        {rates.length > 0 && (
+          <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1">
+            {rates.map((r) => (
+              <span key={r.short} className="text-sm">
+                <strong>{formatNativeAmount(r.amount, row.currency)}</strong>
+                <span className="text-muted-foreground"> / {r.short}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground pt-1">
+          {row.sower_name ?? 'A host'} · listed {localDate(row.created_at)}
         </p>
       </div>
     </Link>
