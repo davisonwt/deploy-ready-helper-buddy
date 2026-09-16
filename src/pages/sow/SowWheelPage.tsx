@@ -305,6 +305,24 @@ export default function SowWheelPage() {
         service_details,
       });
 
+      // Coordinates decide whether this listing is ever findable: the hub's
+      // proximity search skips a row with no lat/lng. wandering_roles only
+      // has them when the owner's profile happened to carry them, which is
+      // often not the case, so resolve the typed location instead and keep
+      // the role's own coordinates as the fallback.
+      let baseLat: number | null = roleLat;
+      let baseLng: number | null = roleLng;
+      try {
+        const { data: geo } = await supabase.functions.invoke('geocode-place', {
+          body: { place: baseLocation.trim() },
+        });
+        const gLat = Number(geo?.lat);
+        const gLng = Number(geo?.lng);
+        if (Number.isFinite(gLat) && Number.isFinite(gLng)) { baseLat = gLat; baseLng = gLng; }
+      } catch {
+        // Keep the fallback. The warning below covers the no-coordinates case.
+      }
+
       const { error: detailErr } = await supabase.from('wheel_seed_details').insert({
         product_id: inserted.id,
         vehicle_type: vehicleType,
@@ -318,8 +336,8 @@ export default function SowWheelPage() {
         rate_monthly: numericRates.rate_monthly ?? null,
         currency: currency.trim().toUpperCase(),
         base_location: baseLocation.trim(),
-        base_lat: roleLat,
-        base_lng: roleLng,
+        base_lat: baseLat,
+        base_lng: baseLng,
         availability: available,
         operator_confirmed_licensed: true,
       } as any);
@@ -331,6 +349,16 @@ export default function SowWheelPage() {
         toast.error(`Saved the listing, but the vehicle details did not save: ${detailErr.message}`);
         navigate(`/seed/wheel/${inserted.id}`);
         return;
+      }
+
+      if (baseLat == null || baseLng == null) {
+        // Registered, but it will not show in the directory. Say so plainly
+        // rather than letting the owner think they are listed.
+        toast.warning(
+          'Vehicle registered, but we could not place "' + baseLocation.trim()
+          + '" on the map, so it will not show in Sleeping Seeds yet. Edit the location to a town or city name.',
+          { duration: 12000 },
+        );
       }
 
       launchConfetti();
