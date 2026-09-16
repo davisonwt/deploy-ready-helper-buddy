@@ -154,7 +154,18 @@ export function buildVideoCard(v, handlers = {}) {
 }
 
 // Generic delete helper used by both pages.
+//
+// Returns the deleted rows so the caller can tell "deleted" from "matched
+// nothing". A delete that hits zero rows is NOT an error in PostgREST, so
+// without this check a wrong table or a wrong id reports success while the
+// row is still there -- which is exactly what happened to every Wheel,
+// Pillow and Hand listing, whose card ids carry the `seed-` prefix but
+// whose rows live in `products`.
 export async function deleteRow(supabase, table, id) {
-  const { error } = await supabase.from(table).delete().eq('id', id)
+  const { data, error } = await supabase.from(table).delete().eq('id', id).select('id')
   if (error) throw error
+  if (!data || data.length === 0) {
+    throw new Error(`nothing was deleted from ${table} -- the row was not found, or you do not have permission to remove it`)
+  }
+  return data
 }

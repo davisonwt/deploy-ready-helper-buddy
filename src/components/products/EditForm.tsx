@@ -14,6 +14,9 @@ import { Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 
+/** Wheel/Pillow/Hand listings have their own forms; this one would drop their fields. */
+const SERVICE_KINDS = new Set(['wheel', 'pillow', 'hand']);
+
 export default function EditForm() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -42,6 +45,19 @@ export default function EditForm() {
         if (data.sowers.user_id !== user.id) {
           toast.error('You do not have permission to edit this product');
           navigate('/my-products');
+          return;
+        }
+
+        // A service listing (Wheel/Pillow/Hand) must never be opened here.
+        // This form saves seven columns and knows nothing about
+        // wheel_seed_details, so it would drop the vehicle type, every rate,
+        // the currency, the location and the availability. Its own `type`
+        // dropdown has no "service" option either, so the control renders
+        // empty and invites the sower to convert their vehicle into Music.
+        // Adding the option would not help: the fields would still be lost.
+        if (data.type === 'service' || SERVICE_KINDS.has(data.kind)) {
+          toast.error('This is a service listing. Manage it from My Garden, where its own form knows every field.');
+          navigate('/my-orchards');
           return;
         }
 

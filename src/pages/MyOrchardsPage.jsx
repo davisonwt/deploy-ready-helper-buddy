@@ -54,6 +54,17 @@ const SOWER_TIER_LINKS = [
   { href: '/harvest-works', emoji: '🏭', label: 'Harvest Works' },
 ]
 
+/** Service listings: products rows, not legacy `seeds` rows, with their own forms. */
+const SERVICE_KINDS = new Set(['wheel', 'pillow', 'hand'])
+
+/**
+ * Park is only honest where there is a field to write. Today that is
+ * wheel_seed_details.availability, which exists for Wheel listings alone.
+ * Pillow and Hand have no structured detail table yet, so they are not
+ * offered the option rather than being told a lie about it.
+ */
+const canPark = (row) => row?.kind === 'wheel' && row?.__table === 'products'
+
 export default function MyOrchardsPage() {
   const { user } = useAuth()
   useBooksBusiness()
@@ -177,6 +188,12 @@ export default function MyOrchardsPage() {
   // ── Owner action handlers shared across all 5 sections ──
   const handleEditCard = (card) => {
     const rid = card.rawId ?? card.id?.replace(/^[a-z]+-/, '')
+    // A service listing (wheel/pillow/hand) is a products row that
+    // buildSeedCard stamps with the `seed-` prefix like everything else, so
+    // it used to fall into the `seed-` branch and open a LIVE SESSION ROOM.
+    // Service seeds have no correct editor yet, so they are not offered an
+    // Edit action at all (see canEdit below) and this guard is the backstop.
+    if (SERVICE_KINDS.has(card.seedRow?.kind)) return
     if (card.id.startsWith('orchard-')) navigate(`/edit-orchard/${rid}`)
     else if (card.id.startsWith('seed-'))   navigate(`/live/${rid}/room?edit=1`)
     else if (card.id.startsWith('music-')) {
@@ -190,7 +207,28 @@ export default function MyOrchardsPage() {
     else if (card.id.startsWith('video-'))  navigate(`/community-videos?edit=${rid}`)
   }
   const handleRepostCard = (card) => toast.success(`Reposted "${card.title}" to the tribe feed`)
-  const handleParkCard   = (card) => toast(`Parked "${card.title}" — hidden until you re-publish.`)
+
+  // Park used to be a toast and nothing else: it told the member their
+  // listing was hidden and wrote nothing at all. It is now a real write,
+  // and it is only OFFERED where there is something to write -- see
+  // canPark() below. Never claim an action that did not happen.
+  const handleParkCard = async (card) => {
+    const row = card.seedRow
+    if (!canPark(row)) return
+    try {
+      const { data, error } = await supabase
+        .from('wheel_seed_details')
+        .update({ availability: false, updated_at: new Date().toISOString() })
+        .eq('product_id', row.id)
+        .select('product_id')
+      if (error) throw error
+      if (!data || data.length === 0) throw new Error('the listing was not found, or you do not have permission to change it')
+      toast.success(`"${card.title}" is now unavailable — it will not show in Sleeping Seeds.`)
+      fetchAllMyContent()
+    } catch (e) {
+      toast.error(`Could not park this listing: ${e.message}`)
+    }
+  }
   const handleDeleteCard = async (card) => {
     if (!window.confirm(`Delete "${card.title}"? This cannot be undone.`)) return
     const tableMap = {
@@ -199,8 +237,13 @@ export default function MyOrchardsPage() {
     }
     const prefix = Object.keys(tableMap).find(p => card.id.startsWith(p))
     if (!prefix) return
-    // Music cards can come from either dj_music_tracks or products — honor seedRow.__table
-    const table = (prefix === 'music-' && card.seedRow?.__table) || tableMap[prefix]
+    // useMyContent unions the legacy `seeds` table with `products` and marks
+    // which one each row came from. Honour that marker for EVERY card, not
+    // just music: a Wheel/Pillow/Hand listing carries the `seed-` prefix but
+    // lives in `products`, so the old tableMap lookup fired at `seeds`,
+    // matched nothing, and still reported success. deleteRow now also throws
+    // when zero rows are removed.
+    const table = card.seedRow?.__table || tableMap[prefix]
     try {
       await deleteRow(supabase, table, card.rawId)
       toast.success(`"${card.title}" deleted`)
@@ -221,7 +264,23 @@ export default function MyOrchardsPage() {
   // `seeds` table (kind null) — split those apart here so Hand (and
   // Wheel/Pillow once their forms ship) get their own section per
   // spec-service-seeds.md §8, instead of hiding inside a generic bucket.
-  const allSeedCardsRaw = mySeeds.map(s => buildSeedCard(s, ownerHandlers))
+  // A menu item is only offered when this page can actually honour it.
+  //
+  // Park writes wheel_seed_details.availability, which exists for Wheel
+  // listings and nothing else, so only those get the option.
+  // Edit has no correct destination for a service listing yet -- the
+  // generic seed editor is a live session room and EditForm drops every
+  // wheel_seed_details field -- so it is withheld rather than pointed
+  // somewhere wrong. /my-listings is where that lands.
+  const withHonestActions = (card, row) => {
+    const next = { ...card }
+    if (!canPark(row)) delete next.onPark
+    if (SERVICE_KINDS.has(row?.kind)) delete next.onEdit
+    return next
+  }
+  const noPark = (card) => { const n = { ...card }; delete n.onPark; return n }
+
+  const allSeedCardsRaw = mySeeds.map(s => withHonestActions(buildSeedCard(s, ownerHandlers), s))
   const kindOf = (c) => c.seedRow?.kind || null
   const allSeedCards    = allSeedCardsRaw.filter(c => !kindOf(c))
   const allArtCards     = allSeedCardsRaw.filter(c => kindOf(c) === 'art')
@@ -229,10 +288,12 @@ export default function MyOrchardsPage() {
   const allHandCards    = allSeedCardsRaw.filter(c => kindOf(c) === 'hand')
   const allWheelCards   = allSeedCardsRaw.filter(c => kindOf(c) === 'wheel')
   const allPillowCards  = allSeedCardsRaw.filter(c => kindOf(c) === 'pillow')
-  const allOrchardCards = myOrchards.map(o => buildOrchardCard(o, ownerHandlers))
-  const allMusicCards   = myMusic.map(m    => buildMusicCard(m, ownerHandlers))
-  const allBookCards    = myBooks.map(b    => buildBookCard(b, ownerHandlers))
-  const allVideoCards   = myVideos.map(v   => buildVideoCard(v, ownerHandlers))
+  // None of these four have anything Park could write, so the option is
+  // withheld instead of lying about it.
+  const allOrchardCards = myOrchards.map(o => noPark(buildOrchardCard(o, ownerHandlers)))
+  const allMusicCards   = myMusic.map(m    => noPark(buildMusicCard(m, ownerHandlers)))
+  const allBookCards    = myBooks.map(b    => noPark(buildBookCard(b, ownerHandlers)))
+  const allVideoCards   = myVideos.map(v   => noPark(buildVideoCard(v, ownerHandlers)))
 
   // ── Garden search: look a seed up by name/description, category and brand ──
   const q = search.trim().toLowerCase()
