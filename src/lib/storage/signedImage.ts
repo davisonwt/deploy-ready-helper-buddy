@@ -18,6 +18,10 @@ const PUBLIC_BUCKETS = new Set([
   'radio_documents',
   'segment-documents',
   'service-provider-images',
+  // Public in Supabase (storage.buckets.public = true). Without it here every
+  // stall front and interior paid for a needless signing round trip on each
+  // view, and the URL came back as /object/sign/ for an image anyone can read.
+  'stalls',
   'stay-photos',
   'stream-thumbnails',
 ]);
@@ -66,15 +70,27 @@ export function useSignedImage(url?: string | null): string | null {
   return list[0] ?? null;
 }
 
-/** Sign a list of image URLs, preserving order. */
-export function useSignedImages(urls: string[]): string[] {
+/**
+ * Sign a list of image URLs, preserving order.
+ *
+ * A URL that NEEDS signing is withheld (null) until its signed form is
+ * ready, rather than being handed over raw for one render first. Handing
+ * over the raw form means the browser immediately requests a
+ * /object/public/ link to a private bucket, gets HTTP 400, and fires the
+ * <img>'s error event before the signed URL ever arrives. Callers with a
+ * destructive onError -- FilePreview flips to an error state, AdminSeedsPage
+ * hides the element -- would act on that phantom failure permanently.
+ * Public and non-storage URLs are still returned immediately.
+ */
+export function useSignedImages(urls: string[]): (string | null)[] {
   const key = urls.join('|');
-  const [resolved, setResolved] = useState<string[]>(urls);
+  const initial = (list: string[]) => list.map((u) => (parsePrivateStorageUrl(u) ? null : u));
+  const [resolved, setResolved] = useState<(string | null)[]>(() => initial(urls));
 
   useEffect(() => {
     let alive = true;
     const list = key ? key.split('|') : [];
-    setResolved(list);
+    setResolved(initial(list));
     if (!list.some((u) => parsePrivateStorageUrl(u))) return;
     Promise.all(list.map(signOne)).then((signed) => {
       if (alive) setResolved(signed);

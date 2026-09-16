@@ -267,6 +267,11 @@ export default function SeedCard({
   // displayCover was updated to a real, working signed URL. Reset it
   // whenever the URL actually changes so a freshly-resolved one gets its
   // own attempt.
+  //
+  // 2026-09-16: useSignedImages no longer hands over the raw URL for a
+  // private bucket at all -- it withholds it (null) until the signed form
+  // is ready -- so that race is gone at the source. This reset stays as
+  // belt and braces for a genuinely broken URL.
   useEffect(() => { setImageFailed(false); }, [displayCover]);
 
   // One shared player instance for the whole card -- music kind only.
