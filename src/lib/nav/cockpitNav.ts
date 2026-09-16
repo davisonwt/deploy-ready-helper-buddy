@@ -35,6 +35,10 @@ export const COCKPIT_NAV: CockpitNavItem[] = [
   // service kinds -- Wheels, Pillows, Hands. Open to every logged-in
   // member, not gated.
   { label: 'Sleeping Seeds', sub: 'Vehicles, stays & hands near you', emoji: '🛞', path: '/sleeping', color: '#f59e0b' },
+  // Directly under Sleeping Seeds on purpose: you find other people's
+  // listings there, and manage your own here. Someone who has just
+  // registered a vehicle looks in the same part of the nav for it.
+  { label: 'My Listings', sub: 'See, edit and pause your own', emoji: '📋', path: '/my-listings', color: '#f59e0b' },
   // Wandering Hearts now has its own stall (S2G-run, phase 1) -- points
   // there instead of /tribal-hearts for now; /tribal-hearts keeps working
   // on its own, phase 2 makes it the "Live circle" plaque's real target

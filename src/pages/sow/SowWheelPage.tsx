@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { insertProduct } from '@/api/products';
+import { insertProduct, updateProduct } from '@/api/products';
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
 import { launchConfetti } from '@/utils/confetti';
 import { toast } from 'sonner';
@@ -85,6 +85,15 @@ export default function SowWheelPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Edit mode. /sow/wheel?edit=<product id> loads an existing listing into
+  // this same form. There is deliberately no second editor: a separate form
+  // is how wheel_seed_details fields got silently dropped by EditForm.
+  const [params] = useSearchParams();
+  const editId = params.get('edit');
+  const isEdit = !!editId;
+  const [loadingExisting, setLoadingExisting] = useState(!!editId);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const [roleChecked, setRoleChecked] = useState(false);
   const [baseTown, setBaseTown] = useState('');
   const [roleLat, setRoleLat] = useState<number | null>(null);
@@ -131,8 +140,93 @@ export default function SowWheelPage() {
   const [licenceConfirmed, setLicenceConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  /** Edit mode: the coordinates already saved, reused when the town is unchanged. */
+  const [existingLat, setExistingLat] = useState<number | null>(null);
+  const [existingLng, setExistingLng] = useState<number | null>(null);
+  const [loadedLocation, setLoadedLocation] = useState<string | null>(null);
 
-  useEffect(() => { if (baseTown && !baseLocation) setBaseLocation(baseTown); }, [baseTown, baseLocation]);
+  useEffect(() => {
+    // Only prefill from the wandering role when creating. In edit mode the
+    // listing's own saved location wins.
+    if (!isEdit && baseTown && !baseLocation) setBaseLocation(baseTown);
+  }, [isEdit, baseTown, baseLocation]);
+
+  // --- edit mode: load the existing listing -------------------------------
+  useEffect(() => {
+    let alive = true;
+    if (!editId || !user) return;
+    (async () => {
+      try {
+        const { data: product, error: pErr } = await supabase
+          .from('products')
+          .select('*, sowers!inner(user_id)')
+          .eq('id', editId)
+          .single();
+        if (pErr) throw pErr;
+        if (!alive) return;
+
+        if ((product as any)?.sowers?.user_id !== user.id) {
+          toast.error('That listing is not yours to edit.');
+          navigate('/my-listings', { replace: true });
+          return;
+        }
+        if ((product as any).kind !== 'wheel') {
+          toast.error('That listing is not a vehicle.');
+          navigate('/my-listings', { replace: true });
+          return;
+        }
+
+        const { data: detail } = await supabase
+          .from('wheel_seed_details')
+          .select('*')
+          .eq('product_id', editId)
+          .maybeSingle();
+
+        if (!alive) return;
+        const p = product as any;
+        const d = (detail ?? {}) as any;
+
+        setTitle(p.title ?? '');
+        setDescription(p.description ?? '');
+        if (p.cover_image_url) setCover({ fileUrl: p.cover_image_url, storagePath: '' });
+        const extras: CoverResult[] = ((p.image_urls ?? []) as string[])
+          .filter((u) => u && u !== p.cover_image_url)
+          .map((u) => ({ fileUrl: u, storagePath: '' }));
+        setExtraPhotos(extras);
+
+        setVehicleType((d.vehicle_type ?? p.category ?? null) as VehicleType | null);
+        setTags((d.use_tags ?? []) as UseTag[]);
+        if (d.currency) setCurrency(String(d.currency).toUpperCase());
+        setCurrencyReady(true);
+        const savedLocation = d.base_location ?? p.service_details?.base_town ?? '';
+        setBaseLocation(savedLocation);
+        setLoadedLocation(savedLocation);
+        setExistingLat(d.base_lat ?? null);
+        setExistingLng(d.base_lng ?? null);
+        setAvailable(d.availability !== false);
+        // The confirmation was given when the listing was created. It stays
+        // required, and stays ticked, so an edit cannot quietly drop it.
+        setLicenceConfirmed(true);
+
+        const loaded: RateState = {};
+        for (const col of ['rate_per_trip', 'rate_hourly', 'rate_per_km', 'rate_daily', 'rate_weekly', 'rate_monthly']) {
+          if (d[col] != null) loaded[col] = String(Number(d[col]));
+        }
+        // A listing with no detail row still has its legacy single rate.
+        if (Object.keys(loaded).length === 0 && p.price != null) loaded.rate_per_trip = String(Number(p.price));
+        setRates(loaded);
+        setShowAllRates(true);
+        setShowAllTags(true);
+      } catch (e: any) {
+        if (!alive) return;
+        console.error('[SowWheelPage] could not load listing for edit', e);
+        setLoadError(e?.message ?? 'Could not load that listing.');
+      } finally {
+        if (alive) setLoadingExisting(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [editId, user, navigate]);
 
   // Currency default comes from the owner's country, and stays editable.
   useEffect(() => {
@@ -295,9 +389,7 @@ export default function SowWheelPage() {
       };
       if (tags.length) service_details.tags = tags;
 
-      const inserted = await insertProduct({
-        sower_id: sowerId,
-        company_id: companyId,
+      const productPayload = {
         title: title.trim(),
         description: description.trim(),
         type: 'service',
@@ -310,28 +402,45 @@ export default function SowWheelPage() {
         file_url: null,
         preview_url: null,
         service_details,
-      });
+      };
+
+      let productId: string;
+      if (isEdit && editId) {
+        await updateProduct(editId, { ...productPayload, updated_at: new Date().toISOString() });
+        productId = editId;
+      } else {
+        const inserted = await insertProduct({
+          sower_id: sowerId,
+          company_id: companyId,
+          ...productPayload,
+        });
+        productId = inserted.id;
+      }
 
       // Coordinates decide whether this listing is ever findable: the hub's
       // proximity search skips a row with no lat/lng. wandering_roles only
       // has them when the owner's profile happened to carry them, which is
       // often not the case, so resolve the typed location instead and keep
       // the role's own coordinates as the fallback.
-      let baseLat: number | null = roleLat;
-      let baseLng: number | null = roleLng;
-      try {
-        const { data: geo } = await supabase.functions.invoke('geocode-place', {
-          body: { place: baseLocation.trim() },
-        });
-        const gLat = Number(geo?.lat);
-        const gLng = Number(geo?.lng);
-        if (Number.isFinite(gLat) && Number.isFinite(gLng)) { baseLat = gLat; baseLng = gLng; }
-      } catch {
-        // Keep the fallback. The warning below covers the no-coordinates case.
+      let baseLat: number | null = isEdit ? existingLat : roleLat;
+      let baseLng: number | null = isEdit ? existingLng : roleLng;
+      const locationChanged = baseLocation.trim() !== (loadedLocation ?? '').trim();
+      // Only pay for a lookup when there is something new to resolve.
+      if (!isEdit || locationChanged || baseLat == null || baseLng == null) {
+        try {
+          const { data: geo } = await supabase.functions.invoke('geocode-place', {
+            body: { place: baseLocation.trim() },
+          });
+          const gLat = Number(geo?.lat);
+          const gLng = Number(geo?.lng);
+          if (Number.isFinite(gLat) && Number.isFinite(gLng)) { baseLat = gLat; baseLng = gLng; }
+        } catch {
+          // Keep the fallback. The warning below covers the no-coordinates case.
+        }
       }
 
-      const { error: detailErr } = await supabase.from('wheel_seed_details').insert({
-        product_id: inserted.id,
+      const detailPayload = {
+        product_id: productId,
         vehicle_type: vehicleType,
         use_tags: tags,
         driver_included: true,
@@ -347,14 +456,19 @@ export default function SowWheelPage() {
         base_lng: baseLng,
         availability: available,
         operator_confirmed_licensed: true,
-      } as any);
+      };
+
+      // upsert, not insert: an older listing may have no detail row at all.
+      const { error: detailErr } = await supabase
+        .from('wheel_seed_details')
+        .upsert(detailPayload as any, { onConflict: 'product_id' });
 
       if (detailErr) {
         // The listing exists but has no detail row, so it would be invisible
         // in the hub. Say so plainly rather than celebrating.
-        console.error('wheel_seed_details insert failed', detailErr);
+        console.error('wheel_seed_details save failed', detailErr);
         toast.error(`Saved the listing, but the vehicle details did not save: ${detailErr.message}`);
-        navigate(`/seed/wheel/${inserted.id}`);
+        navigate(`/seed/wheel/${productId}`);
         return;
       }
 
@@ -362,16 +476,16 @@ export default function SowWheelPage() {
         // Registered, but it will not show in the directory. Say so plainly
         // rather than letting the owner think they are listed.
         toast.warning(
-          'Vehicle registered, but we could not place "' + baseLocation.trim()
+          (isEdit ? 'Saved, but we could not place "' : 'Vehicle registered, but we could not place "') + baseLocation.trim()
           + '" on the map, so it will not show in Sleeping Seeds yet. Edit the location to a town or city name.',
           { duration: 12000 },
         );
       }
 
-      launchConfetti();
-      toast.success('Vehicle registered! 🌱');
+      if (!isEdit) launchConfetti();
+      toast.success(isEdit ? 'Changes saved.' : 'Vehicle registered! 🌱');
       await new Promise((resolve) => setTimeout(resolve, 600));
-      navigate(`/seed/wheel/${inserted.id}`);
+      navigate(isEdit ? '/my-listings' : `/seed/wheel/${productId}`);
     } catch (e: any) {
       console.error('Plant seed error', e);
       toast.error(e?.message ?? 'Could not register this vehicle. Please try again.');
@@ -389,7 +503,7 @@ export default function SowWheelPage() {
     );
   }
 
-  if (!roleChecked) {
+  if (!roleChecked || loadingExisting) {
     return (
       <div className="container max-w-lg mx-auto px-4 py-16 text-center">
         <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
@@ -397,16 +511,30 @@ export default function SowWheelPage() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="container max-w-lg mx-auto px-4 py-16 text-center space-y-4">
+        <p className="text-destructive">{loadError}</p>
+        <Button onClick={() => navigate('/my-listings')}>Back to My Listings</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="container max-w-2xl mx-auto px-4 py-6 pb-28">
-      <Button variant="ghost" size="sm" onClick={() => navigate('/sow')} className="mb-4 -ml-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate(isEdit ? '/my-listings' : '/sow')}
+        className="mb-4 -ml-2"
+      >
         <ArrowLeft className="w-4 h-4 mr-1" />
-        Back to Sow
+        {isEdit ? 'Back to My Listings' : 'Back to Sow'}
       </Button>
 
       <SowBanner />
 
-      <h1 className="text-2xl font-bold mb-1">Register your vehicle</h1>
+      <h1 className="text-2xl font-bold mb-1">{isEdit ? 'Edit your vehicle' : 'Register your vehicle'}</h1>
       <p className="text-sm text-muted-foreground mb-6">
         You drive, always. People book you and your vehicle together.
       </p>
@@ -644,7 +772,8 @@ export default function SowWheelPage() {
             missingReason={missingReason}
             submitting={submitting}
             onClick={handlePlant}
-            label="Register vehicle"
+            label={isEdit ? 'Save changes' : 'Register vehicle'}
+            progressWord={isEdit ? 'ready' : undefined}
           />
         </>
       )}

@@ -56,8 +56,8 @@ export default function EditForm() {
         // empty and invites the sower to convert their vehicle into Music.
         // Adding the option would not help: the fields would still be lost.
         if (data.type === 'service' || SERVICE_KINDS.has(data.kind)) {
-          toast.error('This is a service listing. Manage it from My Garden, where its own form knows every field.');
-          navigate('/my-orchards');
+          toast.error('This is a service listing. Manage it from My Listings, where its own form knows every field.');
+          navigate('/my-listings');
           return;
         }
 

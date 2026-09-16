@@ -191,9 +191,13 @@ export default function MyOrchardsPage() {
     // A service listing (wheel/pillow/hand) is a products row that
     // buildSeedCard stamps with the `seed-` prefix like everything else, so
     // it used to fall into the `seed-` branch and open a LIVE SESSION ROOM.
-    // Service seeds have no correct editor yet, so they are not offered an
-    // Edit action at all (see canEdit below) and this guard is the backstop.
-    if (SERVICE_KINDS.has(card.seedRow?.kind)) return
+    // Wheel listings edit in their own sow form; the rest go to My Listings,
+    // which is the one place that knows what can and cannot be edited yet.
+    if (SERVICE_KINDS.has(card.seedRow?.kind)) {
+      if (card.seedRow?.kind === 'wheel') navigate(`/sow/wheel?edit=${rid}`)
+      else navigate('/my-listings')
+      return
+    }
     if (card.id.startsWith('orchard-')) navigate(`/edit-orchard/${rid}`)
     else if (card.id.startsWith('seed-'))   navigate(`/live/${rid}/room?edit=1`)
     else if (card.id.startsWith('music-')) {
@@ -275,7 +279,6 @@ export default function MyOrchardsPage() {
   const withHonestActions = (card, row) => {
     const next = { ...card }
     if (!canPark(row)) delete next.onPark
-    if (SERVICE_KINDS.has(row?.kind)) delete next.onEdit
     return next
   }
   const noPark = (card) => { const n = { ...card }; delete n.onPark; return n }
