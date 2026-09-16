@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -161,7 +162,7 @@ const ChatFileManager = ({ roomId }) => {
             <CardContent className="p-3">
               <div className="aspect-square mb-3 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
                 {file.file_type === 'image' ? (
-                  <img 
+                  <SignedImg 
                     src={file.file_url} 
                     alt={file.file_name}
                     className="w-full h-full object-cover"

@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Factory, BadgeCheck, Search } from "lucide-react";
@@ -82,7 +83,7 @@ export default function FactoriesDirectoryPage() {
                 <div className="p-4 flex items-start gap-3">
                   <div className="-mt-10 h-16 w-16 rounded-xl bg-background border border-border overflow-hidden flex items-center justify-center shrink-0">
                     {c.logo_url ? (
-                      <img src={c.logo_url} alt={c.name} className="h-full w-full object-cover" />
+                      <SignedImg src={c.logo_url} alt={c.name} className="h-full w-full object-cover" />
                     ) : (
                       <Factory className="h-7 w-7 text-muted-foreground" />
                     )}

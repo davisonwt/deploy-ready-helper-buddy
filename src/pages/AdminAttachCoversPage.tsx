@@ -270,7 +270,7 @@ export default function AdminAttachCoversPage() {
                 >
                   <div className="h-12 w-12 rounded bg-muted flex items-center justify-center overflow-hidden shrink-0">
                     {t.cover_image_url ? (
-                      <img src={t.cover_image_url} alt="" className="h-full w-full object-cover" />
+                      <SignedImg src={t.cover_image_url} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <Music className="h-5 w-5 text-muted-foreground" />
                     )}

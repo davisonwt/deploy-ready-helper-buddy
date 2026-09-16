@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -136,7 +137,7 @@ const MessageRenderer = ({
           {/* Image Preview */}
           {message.file_type === 'image' && (
             <div className="mt-3">
-              <img 
+              <SignedImg 
                 src={message.file_url}
                 alt={message.file_name}
                 className="w-full max-h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"

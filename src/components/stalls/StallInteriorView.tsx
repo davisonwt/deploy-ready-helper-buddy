@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2, Radio } from 'lucide-react';
@@ -697,7 +698,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
             onPointerDown={() => setShowPanHint(false)}
           >
             <div ref={mobileContainerRef} className="relative h-full w-max mx-auto snap-center">
-              <img
+              <SignedImg
                 ref={mobileImgRef}
                 src={interiorImageUrl}
                 alt={stallName}
@@ -747,7 +748,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
         />
 
         <div ref={containerRef} className="relative flex-1 min-h-0">
-          <img
+          <SignedImg
             ref={imgRef}
             src={interiorImageUrl}
             alt={stallName}

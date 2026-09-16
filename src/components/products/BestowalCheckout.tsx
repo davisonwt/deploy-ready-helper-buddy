@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
@@ -203,7 +204,7 @@ export default function BestowalCheckout() {
               className="flex items-center gap-4 p-3 rounded-lg bg-muted/50"
             >
               {item.cover_image_url ? (
-                <img src={item.cover_image_url} alt={item.title} className="w-16 h-16 object-cover rounded" />
+                <SignedImg src={item.cover_image_url} alt={item.title} className="w-16 h-16 object-cover rounded" />
               ) : (
                 <GradientPlaceholder type={'product' as any} title={item.title} className="w-16 h-16 rounded" size="sm" />
               )}

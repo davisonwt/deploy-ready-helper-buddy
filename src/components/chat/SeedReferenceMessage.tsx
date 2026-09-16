@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Sprout } from 'lucide-react';
@@ -22,7 +23,7 @@ export function SeedReferenceMessage({ metadata }: { metadata: SeedReferenceMeta
       <Link to={metadata.href} className="flex items-center gap-3 p-2.5 hover:bg-amber-500/5 transition-colors">
         <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-amber-950/40">
           {metadata.cover ? (
-            <img src={metadata.cover} alt="" className="h-full w-full object-cover" />
+            <SignedImg src={metadata.cover} alt="" className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-amber-500/50">
               <Sprout className="h-5 w-5" />

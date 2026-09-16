@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -200,7 +201,7 @@ const ContentCreationWorkflow = () => {
                 Generated Image
               </label>
               {data.imageUrl ? (
-                <img 
+                <SignedImg 
                   src={data.imageUrl} 
                   alt="Generated" 
                   className="w-full h-48 object-cover rounded-lg" 

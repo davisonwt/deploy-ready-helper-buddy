@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, BadgeCheck, ExternalLink, Factory } from "lucide-react";
@@ -80,7 +81,7 @@ export default function FactoryDetailPage() {
         <div className="flex items-start gap-4 flex-wrap">
           <div className="h-24 w-24 rounded-2xl bg-background border border-border overflow-hidden flex items-center justify-center shrink-0">
             {company.logo_url ? (
-              <img src={company.logo_url} alt={company.name} className="h-full w-full object-cover" />
+              <SignedImg src={company.logo_url} alt={company.name} className="h-full w-full object-cover" />
             ) : (
               <Factory className="h-10 w-10 text-muted-foreground" />
             )}
@@ -127,7 +128,7 @@ export default function FactoryDetailPage() {
                 >
                   <div className="aspect-square bg-muted">
                     {(p.cover_image_url || p.image_urls?.[0]) && (
-                      <img src={p.cover_image_url || p.image_urls![0]} alt={p.title} className="h-full w-full object-cover" />
+                      <SignedImg src={p.cover_image_url || p.image_urls![0]} alt={p.title} className="h-full w-full object-cover" />
                     )}
                   </div>
                   <div className="p-2">

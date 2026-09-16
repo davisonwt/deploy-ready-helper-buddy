@@ -293,7 +293,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
                   <header className="flex items-center gap-3 p-4 border-b border-border">
                     <div className="h-12 w-12 rounded-lg bg-background border border-border overflow-hidden flex items-center justify-center shrink-0">
                       {c.logo_url ? (
-                        <img src={c.logo_url} alt={c.name} className="h-full w-full object-cover" />
+                        <SignedImg src={c.logo_url} alt={c.name} className="h-full w-full object-cover" />
                       ) : (
                         <Factory className="h-6 w-6 text-muted-foreground" />
                       )}

@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -386,7 +387,7 @@ export default function MusicTrackDetailPage() {
           <CardContent className="p-6 md:p-8 flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-64 aspect-square rounded-xl overflow-hidden bg-slate-800 flex-shrink-0">
               {coverUrl ? (
-                <img src={coverUrl} alt={track.title} className="w-full h-full object-cover" />
+                <SignedImg src={coverUrl} alt={track.title} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-6xl">🎵</div>
               )}

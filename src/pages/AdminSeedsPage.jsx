@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../integrations/supabase/client';
@@ -146,7 +147,7 @@ export default function AdminSeedsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {seed.images.map((imageUrl, index) => (
                             <div key={index} className="relative">
-                              <img
+                              <SignedImg
                                 src={imageUrl}
                                 alt={`${seed.title} - Image ${index + 1}`}
                                 className="w-full h-48 object-cover rounded-lg border border-border shadow-md hover:shadow-xl transition-shadow cursor-pointer"

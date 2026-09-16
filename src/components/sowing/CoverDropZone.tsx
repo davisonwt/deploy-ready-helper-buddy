@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useCallback, useRef, useState } from 'react';
 import { Loader2, ImagePlus, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -127,7 +128,7 @@ export default function CoverDropZone({ bucket, pathPrefix, onChange, required }
           <Loader2 className="w-5 h-5 animate-spin text-primary" />
         ) : previewUrl ? (
           <>
-            <img src={previewUrl} alt="Cover" className="w-full h-full object-cover" />
+            <SignedImg src={previewUrl} alt="Cover" className="w-full h-full object-cover" />
             <button
               type="button"
               onClick={(e) => { e.preventDefault(); clear(); }}

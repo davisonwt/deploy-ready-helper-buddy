@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -117,7 +118,7 @@ const FilePreview = ({
           );
         }
         return (
-          <img 
+          <SignedImg 
             src={fileUrl}
             alt={fileName}
             className="w-full max-h-48 object-cover rounded cursor-pointer hover:opacity-90 transition-opacity"
@@ -167,7 +168,7 @@ const FilePreview = ({
             <DialogTitle>{fileName}</DialogTitle>
           </DialogHeader>
           <div className="flex justify-center">
-            <img 
+            <SignedImg 
               src={fileUrl}
               alt={fileName}
               className="max-w-full max-h-[70vh] object-contain rounded"

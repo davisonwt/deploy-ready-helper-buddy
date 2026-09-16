@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -311,7 +312,7 @@ export default function S2GCommunityLibraryPage() {
                       <div className='relative mb-4 rounded-lg overflow-hidden'>
                         {item.cover_image_url ? (
                           <>
-                            <img
+                            <SignedImg
                               src={item.cover_image_url}
                               alt={item.title}
                               className='w-full h-48 object-cover'

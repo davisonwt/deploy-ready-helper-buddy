@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -208,7 +209,7 @@ export const GenerateThumbnailForm = () => {
           <CardContent>
             <div className="space-y-4">
               <div className="relative bg-checkered rounded-lg overflow-hidden">
-                <img
+                <SignedImg
                   src={result.imageUrl}
                   alt="Generated thumbnail"
                   className="w-full h-auto max-h-96 object-contain"

@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useRef, useState } from 'react';
 import { Trash2, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -225,7 +226,7 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <img ref={imgRef} src={imageUrl} alt="Your stall interior" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />
+        <SignedImg ref={imgRef} src={imageUrl} alt="Your stall interior" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />
         {rect && value.map((h) => {
           const isSelected = selectedId === h.id;
           return (

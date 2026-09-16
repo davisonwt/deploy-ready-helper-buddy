@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft, Eye, ImagePlus, X, Loader2, Plus, PartyPopper, Share2 } from 'lucide-react';
@@ -487,7 +488,7 @@ export default function RegisterWanderingPage() {
             <div className="flex flex-wrap gap-2">
               {galleryPhotos.map((p, i) => (
                 <div key={p.storagePath} className="relative w-20 h-20 rounded-lg overflow-hidden border">
-                  <img src={p.fileUrl} alt="" className="w-full h-full object-cover" />
+                  <SignedImg src={p.fileUrl} alt="" className="w-full h-full object-cover" />
                   <button
                     type="button"
                     onClick={() => removeGalleryPhoto(i)}

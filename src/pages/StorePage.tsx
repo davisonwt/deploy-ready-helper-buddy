@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Search, Settings2, BookOpen, Store as StoreIcon } from 'lucide-react';
@@ -211,7 +212,7 @@ export default function StorePage() {
         <div className="flex items-center gap-4 mb-6">
           <div className="w-16 h-16 rounded-2xl overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center border">
             {store.logo_url ? (
-              <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
+              <SignedImg src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
             ) : (
               <StoreIcon className="w-7 h-7 text-muted-foreground" />
             )}

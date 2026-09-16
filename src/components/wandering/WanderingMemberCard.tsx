@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { Link } from 'react-router-dom';
 
 export interface WanderingMemberCardProps {
@@ -48,7 +49,7 @@ export default function WanderingMemberCard({
         <div style={s.cardHeader}>
           <div style={s.avatar}>
             {photoUrl ? (
-              <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <SignedImg src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               roleEmoji
             )}

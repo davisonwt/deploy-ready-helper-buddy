@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -268,7 +269,7 @@ export default function BirchGenerationPanel({ plan, onArtifact }: Props) {
           </Button>
         </div>
       )}
-      {coverUrl && <img src={coverUrl} alt="cover" className="rounded max-w-[160px]" />}
+      {coverUrl && <SignedImg src={coverUrl} alt="cover" className="rounded max-w-[160px]" />}
       {busyVid && (
         <div className="text-xs text-muted-foreground flex items-center gap-1">
           <Loader2 className="h-3 w-3 animate-spin" /> Rendering reel… ~60–90s

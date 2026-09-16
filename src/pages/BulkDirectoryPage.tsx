@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -194,7 +195,7 @@ export default function BulkDirectoryPage() {
                       <div className="flex items-end gap-3">
                         <div className="h-14 w-14 rounded-full border-4 border-card bg-muted overflow-hidden shrink-0">
                           {s.logo_url ? (
-                            <img
+                            <SignedImg
                               src={s.logo_url}
                               alt={s.display_name}
                               className="h-full w-full object-cover"

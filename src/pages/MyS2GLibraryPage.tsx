@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -247,7 +248,7 @@ export default function MyS2GLibraryPage() {
                     {item.description}
                   </p>
                   {item.cover_image_url ? (
-                    <img
+                    <SignedImg
                       src={item.cover_image_url}
                       alt={item.title}
                       className="w-full h-48 object-cover rounded-lg mb-4"

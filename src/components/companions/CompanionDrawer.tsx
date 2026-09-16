@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -130,7 +131,7 @@ export default function CompanionDrawer({ open, onOpenChange, companion, onConsu
                 >
                   {m.role === "assistant" ? (
                     <>
-                      {m.image && <img src={m.image} alt="generated" className="rounded mb-2 max-w-full" />}
+                      {m.image && <SignedImg src={m.image} alt="generated" className="rounded mb-2 max-w-full" />}
                       {m.video && (
                         <video src={m.video} controls className="rounded mb-2 max-w-full" />
                       )}

@@ -435,7 +435,7 @@ export default function WheelSeedDetailPage() {
 
             <div className="flex items-start gap-3">
               {wanderingProfile.photo_url && (
-                <img
+                <SignedImg
                   src={wanderingProfile.photo_url}
                   alt={sowerName}
                   className="w-16 h-16 rounded-full object-cover border shrink-0"

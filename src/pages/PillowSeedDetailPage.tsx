@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchProductBySlugOrId } from '@/api/products';
@@ -209,7 +210,7 @@ export default function PillowSeedDetailPage() {
       <Card className="overflow-hidden">
         {product.cover_image_url && (
           <div className="aspect-video w-full overflow-hidden bg-muted">
-            <img src={product.cover_image_url} alt={product.title} className="w-full h-full object-cover" />
+            <SignedImg src={product.cover_image_url} alt={product.title} className="w-full h-full object-cover" />
           </div>
         )}
         <CardContent className="p-5 md:p-6 space-y-4">
@@ -340,7 +341,7 @@ export default function PillowSeedDetailPage() {
 
             <div className="flex items-start gap-3">
               {wanderingProfile.photo_url && (
-                <img
+                <SignedImg
                   src={wanderingProfile.photo_url}
                   alt={sowerName}
                   className="w-16 h-16 rounded-full object-cover border shrink-0"

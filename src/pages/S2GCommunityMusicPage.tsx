@@ -1,4 +1,5 @@
 ﻿import { useState, useRef, useEffect } from 'react';
+import SignedImg from '@/components/media/SignedImg';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -430,7 +431,7 @@ export default function S2GCommunityMusicPage() {
                       {/* Thumbnail/Album Art */}
                       <div className='relative flex-shrink-0'>
                         {item.cover_image_url ? (
-                          <img
+                          <SignedImg
                             src={item.cover_image_url}
                             alt={item.title}
                             className='w-40 h-40 object-cover rounded-lg'

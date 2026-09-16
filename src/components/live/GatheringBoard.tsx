@@ -6,6 +6,7 @@
  * area for the 'pdf' | 'clip' | 'seed' modes; camera/image/whiteboard/video
  * stay exactly as LiveStage.tsx already renders them.
  */
+import SignedImg from '@/components/media/SignedImg';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
@@ -435,7 +436,7 @@ export function SeedPinBoard({ isHost, stage, setStageMode }: BoardProps) {
             {options?.length === 0 && <div className="p-3 text-center text-xs text-white/40">No seeds found.</div>}
             {options?.map((o) => (
               <button key={o.id} type="button" onClick={() => pin(o)} className="flex w-full items-center gap-2 border-b border-white/5 p-2 text-left text-xs text-white/85 hover:bg-white/5">
-                {o.cover_image_url ? <img src={o.cover_image_url} alt="" className="h-8 w-8 rounded object-cover" /> : <div className="h-8 w-8 rounded bg-white/10" />}
+                {o.cover_image_url ? <SignedImg src={o.cover_image_url} alt="" className="h-8 w-8 rounded object-cover" /> : <div className="h-8 w-8 rounded bg-white/10" />}
                 <span className="flex-1 truncate">{o.title}</span>
               </button>
             ))}

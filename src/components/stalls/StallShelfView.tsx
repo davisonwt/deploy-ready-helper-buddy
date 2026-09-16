@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Loader2 } from 'lucide-react';
@@ -123,7 +124,7 @@ export default function StallShelfView({ ownerId, ownerName, tile, onClose }: Pr
                 className="text-left group"
               >
                 <div className={`${theme.cardShape} overflow-hidden bg-black/30 shadow-lg group-hover:scale-[1.03] transition-transform`}>
-                  <img src={card.image} alt={card.title} className="w-full h-full object-cover" />
+                  <SignedImg src={card.image} alt={card.title} className="w-full h-full object-cover" />
                 </div>
                 <p className="mt-1.5 text-sm font-medium text-white truncate">{card.title}</p>
                 <p className="text-xs text-white/60 truncate">{card.subtitle}</p>

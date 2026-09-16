@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { X } from 'lucide-react';
 
 interface Props {
@@ -35,7 +36,7 @@ export default function StallFrontGate({ frontImageUrl, stallName, onEnter, onCl
         aria-label={`Enter ${stallName}`}
         className="relative flex-1 min-h-0 w-full"
       >
-        <img src={frontImageUrl} alt={stallName} className="absolute inset-0 h-full w-full object-contain" />
+        <SignedImg src={frontImageUrl} alt={stallName} className="absolute inset-0 h-full w-full object-contain" />
         <span className="absolute inset-x-0 bottom-10 flex justify-center">
           <span className="inline-flex items-center gap-2 rounded-full bg-black/60 px-5 py-2.5 text-sm font-serif font-semibold tracking-wide text-amber-200 backdrop-blur-sm border border-amber-500/30 animate-pulse">
             Enter

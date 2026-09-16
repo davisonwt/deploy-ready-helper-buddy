@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -223,7 +224,7 @@ export default function BulkProductDetailPage() {
             <div className="aspect-square rounded-lg overflow-hidden bg-muted border">
               {images.length === 0
                 ? <div className="w-full h-full flex items-center justify-center text-muted-foreground"><ImageIcon className="h-12 w-12" /></div>
-                : <img src={images[activeImg]} alt={product.title} className="w-full h-full object-cover" />}
+                : <SignedImg src={images[activeImg]} alt={product.title} className="w-full h-full object-cover" />}
             </div>
             {images.length > 1 && (
               <div className="grid grid-cols-5 gap-2">

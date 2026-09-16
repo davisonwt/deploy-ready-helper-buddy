@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -204,7 +205,7 @@ export default function VideoPlayer({ videoId, className = "" }: VideoPlayerProp
           {/* Thumbnail overlay when not playing */}
           {!playing && video.thumbnail_url && (
             <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={handlePlay}>
-              <img
+              <SignedImg
                 src={video.thumbnail_url}
                 alt={video.title}
                 className="w-full h-full object-cover"

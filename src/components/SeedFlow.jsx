@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -244,7 +245,7 @@ export default function SeedFlow({
                 e.currentTarget.style.boxShadow = '0 0 12px rgba(234,179,8,0.35)';
               }}
             >
-              <img
+              <SignedImg
                 src={c.logo_url}
                 alt={c.name}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}

@@ -1,3 +1,4 @@
+import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -308,7 +309,7 @@ export default function BulkWhispererDashboardPage() {
               <Card key={s.id} className="p-3 flex items-center gap-3">
                 <div className="h-12 w-12 rounded bg-muted overflow-hidden shrink-0">
                   {s.cover_image_url ? (
-                    <img src={s.cover_image_url} alt={s.title} className="h-full w-full object-cover" loading="lazy" />
+                    <SignedImg src={s.cover_image_url} alt={s.title} className="h-full w-full object-cover" loading="lazy" />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center"><Sprout className="h-5 w-5 text-muted-foreground" /></div>
                   )}
@@ -358,7 +359,7 @@ export default function BulkWhispererDashboardPage() {
                   <Link to={`/bulk/products/${p?.slug ?? p?.id ?? ""}`} className="block">
                     <div className="aspect-video bg-muted overflow-hidden">
                       {p?.cover_image_url ? (
-                        <img
+                        <SignedImg
                           src={p.cover_image_url}
                           alt={p.title}
                           className="h-full w-full object-cover"
@@ -437,7 +438,7 @@ export default function BulkWhispererDashboardPage() {
                   <div className="flex items-center gap-2">
                     <div className="h-10 w-10 rounded-full bg-muted overflow-hidden shrink-0">
                       {s.logo_url ? (
-                        <img
+                        <SignedImg
                           src={s.logo_url}
                           alt={s.display_name}
                           className="h-full w-full object-cover"
