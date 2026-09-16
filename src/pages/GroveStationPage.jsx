@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useGroveStation } from '@/hooks/useGroveStation'
 import { useRoles } from '@/hooks/useRoles'
 import RadioSlotApplicationPage from '@/pages/RadioSlotApplicationPage'
@@ -14,10 +14,11 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
-import { 
-  Radio, 
-  Mic, 
-  Calendar, 
+import {
+  ArrowLeft,
+  Radio,
+  Mic,
+  Calendar,
   Users, 
   Play, 
   Pause, 
@@ -62,6 +63,7 @@ export default function GroveStationPage() {
   } = useGroveStation()
   const { isAdminOrGosat, hasRole } = useRoles()
   const canManageRadio = isAdminOrGosat || hasRole('radio_admin')
+  const navigate = useNavigate()
   // Flow v2 step 11: the 7 radio routes consolidate into tabs here --
   // `?tab=` lets the redirects from those old paths land on the right
   // one (StallBuildPage/StallsFeedPage already use this same pattern).
@@ -100,6 +102,22 @@ export default function GroveStationPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       <div className="container mx-auto py-6 space-y-6">
+        {/* Reached from many places (legacy /radio* redirects for any
+            member, the Boardroom's admin hotspot, etc.) -- a real in-app
+            back action here, not just the browser's own back button, same
+            convention as LiveNowPage.tsx. This was the actual missing
+            back/return control: the page's own "Back to Boardroom" button
+            only exists nested inside the admin-only Station Admin tab
+            (AdminRadioPage), invisible to anyone not on that exact tab. */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="gap-2 -mb-2"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </Button>
         {/* Compact Station Header */}
         <Card className="border-2 shadow-lg">
           <CardContent className="p-6">

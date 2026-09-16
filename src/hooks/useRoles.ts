@@ -41,7 +41,7 @@ export function useRoles(): UseRolesResult {
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await supabase
+      let { data, error: fetchError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
@@ -50,6 +50,29 @@ export function useRoles(): UseRolesResult {
         setError(fetchError.message)
         setRoles([])
         return
+      }
+
+      // A query that succeeds but returns zero rows looks identical to
+      // "this account genuinely has no roles" -- but a client-side SPA
+      // navigate() into a role-gated page (e.g. the Boardroom's Admin
+      // Dashboard hotspot) can reach this query before the session held in
+      // memory has caught up with a just-refreshed token, same stale-
+      // session race RoleChecker.jsx already retries for. This hook is a
+      // separate implementation RoleChecker's fix never touched, and
+      // AdminDashboardPage/GroveStationPage gate their own rendering on it
+      // directly (not through RoleChecker), so the race was still reachable
+      // here even after RoleChecker was hardened. One retry, only when the
+      // first attempt came back completely empty, before concluding a real
+      // "no roles."
+      if ((data ?? []).length === 0) {
+        await supabase.auth.refreshSession().catch(() => null)
+        const retry = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+        if (!retry.error && (retry.data ?? []).length > 0) {
+          data = retry.data
+        }
       }
 
       const nextRoles = (data || []).map((r: any) => r.role as string)

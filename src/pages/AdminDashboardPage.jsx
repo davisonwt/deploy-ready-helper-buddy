@@ -324,7 +324,10 @@ export default function AdminDashboardPage() {
           <CardContent className="pt-6 text-center">
             <Shield className="h-16 w-16 mx-auto text-destructive mb-4" />
             <h2 className="text-xl font-bold text-foreground mb-2">Access Denied</h2>
-            <p className="text-muted-foreground">You need gosat or admin privileges to access this page.</p>
+            <p className="text-muted-foreground mb-4">You need gosat or admin privileges to access this page.</p>
+            <Button variant="outline" onClick={() => navigate('/stall/gosatsboardroom')} className="gap-2">
+              <ArrowLeft className="h-4 w-4" /> Back to Boardroom
+            </Button>
           </CardContent>
         </Card>
       </div>
