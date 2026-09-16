@@ -68,7 +68,7 @@ interface StallCard {
   name: string;
   tagline: string | null;
   tier: StallTier;
-  category: StallCategory;
+  categories: StallCategory[];
   front_image_path: string;
 }
 
@@ -188,7 +188,7 @@ export default function StallsFeedPage() {
     (async () => {
       const { data: stallRows } = await supabase
         .from('stalls')
-        .select('id, user_id, name, tagline, tier, category, front_image_path')
+        .select('id, user_id, name, tagline, tier, categories, front_image_path')
         .in('user_id', PINNED_STALL_USER_IDS)
         .eq('published', true);
       const rows = (stallRows ?? []) as Omit<StallCard, 'username' | 'displayName'>[];
@@ -316,7 +316,7 @@ export default function StallsFeedPage() {
     (async () => {
       let q = supabase
         .from('stalls')
-        .select('id, user_id, name, tagline, tier, category, front_image_path')
+        .select('id, user_id, name, tagline, tier, categories, front_image_path')
         .eq('published', true)
         .not('front_image_path', 'is', null)
         .order('created_at', { ascending: false })
@@ -330,7 +330,9 @@ export default function StallsFeedPage() {
         // the normal Tribal Gardens feed -- only via ?village=<name>.
         q = q.is('village', null);
         if (chip !== 'for_you' && chip !== 'new') {
-          q = q.eq('category', chip);
+          // Multi-category: a stall shows up under a chip if that category
+          // is ANY of its categories, not just a single "primary" one.
+          q = q.contains('categories', [chip]);
         }
         if (tribeMine) {
           q = q.in('user_id', tribeUserIds!);
@@ -662,28 +664,34 @@ export default function StallsFeedPage() {
                   {/* Name bar: 40px overlay on mobile (portrait + landscape/
                       tablet), 48px on desktop -- tagline dropped at every
                       size now (no room in a 40px bar). "New seeds" pill
-                      (gold, hidden at 0) leads, then category badge (the
-                      STALL_CATEGORIES label, singular -- not CHIPS' own
-                      pluralized filter label) and tier -- all shrink-0 so
-                      the name truncates first if space is tight. Floats
-                      over the image instead of eating into its height,
-                      same treatment at every breakpoint now. */}
+                      (gold, hidden at 0) leads, then one small pill per
+                      category (STALL_CATEGORIES label, singular -- not
+                      CHIPS' own pluralized filter label; a stall can hold
+                      several now) and tier -- all shrink-0 and horizontally
+                      scrollable as a group so a 3-category stall never
+                      pushes the name (or the badges themselves) off-card.
+                      Floats over the image instead of eating into its
+                      height, same treatment at every breakpoint now. */}
                   <button
                     type="button"
                     onClick={() => openStall(card)}
                     className="absolute bottom-0 left-0 right-0 z-10 h-10 lg:h-12 px-4 flex items-center gap-2 text-left bg-gradient-to-t from-black/80 to-transparent lg:bg-[#140c06] lg:border-t lg:border-amber-500/15"
                   >
                     <h2 className="flex-1 min-w-0 font-bold text-sm truncate text-white lg:text-amber-50">{card.name}</h2>
-                    {(newSeedInfo.get(card.user_id)?.total ?? 0) > 0 && (
-                      <span className="shrink-0 text-[11px] font-bold rounded-full px-2 py-0.5 bg-gradient-to-b from-amber-400 to-amber-600 text-amber-950">
-                        🌱 {newSeedInfo.get(card.user_id)!.total} new seed{newSeedInfo.get(card.user_id)!.total === 1 ? '' : 's'}
+                    <span className="shrink-0 flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {(newSeedInfo.get(card.user_id)?.total ?? 0) > 0 && (
+                        <span className="shrink-0 text-[11px] font-bold rounded-full px-2 py-0.5 bg-gradient-to-b from-amber-400 to-amber-600 text-amber-950">
+                          🌱 {newSeedInfo.get(card.user_id)!.total} new seed{newSeedInfo.get(card.user_id)!.total === 1 ? '' : 's'}
+                        </span>
+                      )}
+                      {card.categories.map((cat) => (
+                        <span key={cat} className="shrink-0 text-[11px] font-medium rounded-full px-2 py-0.5 bg-white/15 text-white lg:bg-amber-500/10 lg:text-amber-300">
+                          {CATEGORY_LABEL[cat]}
+                        </span>
+                      ))}
+                      <span className="shrink-0 text-[11px] font-medium rounded-full px-2 py-0.5 bg-white/15 text-white lg:bg-amber-500/10 lg:text-amber-300">
+                        {STALL_TIER_LABEL[card.tier]}
                       </span>
-                    )}
-                    <span className="shrink-0 text-[11px] font-medium rounded-full px-2 py-0.5 bg-white/15 text-white lg:bg-amber-500/10 lg:text-amber-300">
-                      {CATEGORY_LABEL[card.category]}
-                    </span>
-                    <span className="shrink-0 text-[11px] font-medium rounded-full px-2 py-0.5 bg-white/15 text-white lg:bg-amber-500/10 lg:text-amber-300">
-                      {STALL_TIER_LABEL[card.tier]}
                     </span>
                   </button>
                 </article>

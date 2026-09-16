@@ -122,7 +122,11 @@ export default function StallBuildPage() {
   const [submitting, setSubmitting] = useState(false);
   const [stallId, setStallId] = useState<string | null>(null);
 
-  const [category, setCategory] = useState<StallCategory>('books_writing');
+  // Multi-category (2026-09-16): a stall can genuinely span more than one
+  // category (books, music, faith teachings all together) -- stalls.categories
+  // (text[]) is the source of truth now, stalls.category (single) is kept in
+  // sync DB-side by a trigger for any reader this migration didn't touch.
+  const [categories, setCategories] = useState<StallCategory[]>(['books_writing']);
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
   const [story, setStory] = useState('');
@@ -147,7 +151,11 @@ export default function StallBuildPage() {
       .catch(() => setTemplates(null));
   }, []);
 
-  const categoryTemplates: StallTemplate[] = templates?.[category] ?? [];
+  // Templates are keyed by a single category (templates.json's own shape) --
+  // the first ticked category picks which template set the Front/Interior
+  // steps offer, same as the old single-select behaviour for whichever
+  // category used to be "the" one.
+  const categoryTemplates: StallTemplate[] = templates?.[categories[0]] ?? [];
 
   // "template interiors ship with their boxes pre-marked": whenever the
   // interior image changes to a URL we haven't seeded boxes for yet, seed
@@ -184,7 +192,8 @@ export default function StallBuildPage() {
       const { data } = await supabase.from('stalls').select('*').eq('user_id', user.id).maybeSingle();
       if (data) {
         setStallId(data.id);
-        setCategory(data.category);
+        const savedCategories = Array.isArray(data.categories) ? (data.categories as StallCategory[]) : [];
+        setCategories(savedCategories.length > 0 ? savedCategories : [data.category]);
         setName(data.name ?? '');
         setTagline(data.tagline ?? '');
         setStory(data.story ?? '');
@@ -219,17 +228,18 @@ export default function StallBuildPage() {
   const validTiles = tiles.filter((t) => t.label.trim().length > 0 && tileTarget(t).length > 0);
 
   const canGoNext = useMemo(() => {
-    if (step === 0) return name.trim().length > 0;
+    if (step === 0) return name.trim().length > 0 && categories.length > 0;
     if (step === 1) return !!front;
     if (step === 2) return !!interior;
     if (step === 3) return hotspots.length >= MIN_HOTSPOTS;
     return true;
-  }, [step, name, front, interior, hotspots.length]);
+  }, [step, name, categories.length, front, interior, hotspots.length]);
 
   const handlePublish = async () => {
     if (!user) return;
     if (!front || !interior) { toast.error('Add both a front and interior image first.'); return; }
     if (hotspots.length < MIN_HOTSPOTS) { toast.error(`Mark at least ${MIN_HOTSPOTS} shelves.`); return; }
+    if (categories.length === 0) { toast.error('Pick at least one category.'); return; }
 
     // Captured before the upsert below sets stallId for good -- this is
     // the one moment "did a stall already exist when this page loaded"
@@ -250,7 +260,7 @@ export default function StallBuildPage() {
       const { error } = await supabase.from('stalls').upsert(
         {
           user_id: user.id,
-          category,
+          categories,
           name: name.trim(),
           tagline: tagline.trim() || null,
           story: story.trim() || null,
@@ -333,25 +343,32 @@ export default function StallBuildPage() {
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium mb-2 block text-amber-100/80">Category</label>
+            <p className="text-xs text-amber-100/50 mb-2">Tick as many as genuinely apply -- your stall shows up under each one.</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {STALL_CATEGORIES.map((c) => (
-                <Button
-                  key={c.id}
-                  type="button"
-                  variant={category === c.id ? 'default' : 'outline'}
-                  size="sm"
-                  aria-pressed={category === c.id}
-                  onClick={() => setCategory(c.id)}
-                  className={
-                    category === c.id
-                      ? 'bg-amber-500 text-amber-950 border-amber-500 hover:bg-amber-400'
-                      : 'border-amber-500/25 text-amber-100/70 hover:bg-amber-500/10'
-                  }
-                >
-                  {c.label}
-                </Button>
-              ))}
+              {STALL_CATEGORIES.map((c) => {
+                const checked = categories.includes(c.id);
+                return (
+                  <Button
+                    key={c.id}
+                    type="button"
+                    variant={checked ? 'default' : 'outline'}
+                    size="sm"
+                    aria-pressed={checked}
+                    onClick={() => setCategories((prev) => (checked ? prev.filter((id) => id !== c.id) : [...prev, c.id]))}
+                    className={
+                      checked
+                        ? 'bg-amber-500 text-amber-950 border-amber-500 hover:bg-amber-400'
+                        : 'border-amber-500/25 text-amber-100/70 hover:bg-amber-500/10'
+                    }
+                  >
+                    {c.label}
+                  </Button>
+                );
+              })}
             </div>
+            {categories.length === 0 && (
+              <p className="text-xs text-destructive mt-2">Pick at least one category.</p>
+            )}
           </div>
           <div>
             <label className="text-sm font-medium mb-2 block text-amber-100/80">Stall name</label>
