@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useId } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -35,6 +35,17 @@ export function RadioScheduleGrid({ schedule, compact = false, showLegend = true
   const [loading, setLoading] = useState(true)
   const currentHour = new Date().getHours()
   const currentSlotIndex = Math.floor(currentHour / 2)
+  // Stable per-mounted-instance id -- `supabase.channel(name)` returns the
+  // SAME already-registered channel for a repeated name instead of a new
+  // one (same gotcha src/lib/chat/roomRealtime.ts already documents/fixes
+  // for chat rooms). AdminRadioPage renders TWO <RadioScheduleGrid>s on one
+  // page (compact + full); both used to call .channel('schema-db-changes')
+  // with the identical literal name, so the second instance's .on() call
+  // landed on a channel the first had already .subscribe()'d to and threw
+  // "cannot add postgres_changes callbacks ... after subscribe()" --
+  // confirmed live (Error ID dlyhyo). useId() gives every instance its own
+  // topic so they can never collide, on any render count or remount.
+  const instanceId = useId()
 
   // Fetch schedule data directly if not provided via props
   const hasSchedule = Array.isArray(schedule) && schedule.length > 0;
@@ -50,7 +61,7 @@ export function RadioScheduleGrid({ schedule, compact = false, showLegend = true
   // Set up real-time subscription for schedule changes
   useEffect(() => {
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel(`radio-schedule-changes-${instanceId}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -64,7 +75,7 @@ export function RadioScheduleGrid({ schedule, compact = false, showLegend = true
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [instanceId])
 
   const fetchTodaySchedule = async () => {
     // Safety timeout to avoid perpetual loading UI
