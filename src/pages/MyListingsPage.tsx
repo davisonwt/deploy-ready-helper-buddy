@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import SignedImg from '@/components/media/SignedImg';
 import { toast } from 'sonner';
-import { ArrowLeft, Eye, Pencil, Trash2, Loader2, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, Pencil, Trash2, Loader2, EyeOff, Share2 } from 'lucide-react';
 import { vehicleTypeLabel } from '@/lib/sleeping/wheelOptions';
+import ShareSeedDialog from '@/components/share/ShareSeedDialog';
 
 /**
  * One place a member manages their own Sleeping Seeds.
@@ -49,6 +50,9 @@ export default function MyListingsPage() {
   const { seeds, loading, refetch } = useMyContent(user?.id) as any;
 
   const [busyId, setBusyId] = useState<string | null>(null);
+  /** The listing whose share dialog is open. The dialog itself is the one
+   *  ShareSeedDialog every other surface uses -- no second share path. */
+  const [shareRow, setShareRow] = useState<Row | null>(null);
   /** product_id -> availability, loaded lazily for Wheel rows. */
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
   const [vehicleTypes, setVehicleTypes] = useState<Record<string, string>>({});
@@ -239,6 +243,10 @@ export default function MyListingsPage() {
                     </Button>
                   )}
 
+                  <Button size="sm" variant="outline" onClick={() => setShareRow(row)} disabled={busy}>
+                    <Share2 className="w-4 h-4 mr-1" /> Share
+                  </Button>
+
                   <Button
                     size="sm"
                     variant="outline"
@@ -254,6 +262,25 @@ export default function MyListingsPage() {
             );
           })}
         </ul>
+      )}
+
+      {/*
+        One dialog for the whole list, driven by whichever row was tapped.
+        This is the same component the Wandering door and My Garden use, so
+        a share from here runs the identical chain:
+        get_or_create_direct_room -> send_chat_message -> notify_member.
+      */}
+      {shareRow && (
+        <ShareSeedDialog
+          open={!!shareRow}
+          onOpenChange={(open) => { if (!open) setShareRow(null); }}
+          seedId={shareRow.id}
+          title={shareRow.title}
+          subtitle={shareRow.description ?? KIND_META[shareRow.kind].label}
+          image={shareRow.cover ?? null}
+          openPath={`${KIND_META[shareRow.kind].seedPath}/${shareRow.id}`}
+          feedKind="photo"
+        />
       )}
     </div>
   );
