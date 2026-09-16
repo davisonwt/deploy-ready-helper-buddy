@@ -110,6 +110,11 @@ export default function ShareSeedDialog({
     if (!user?.id || selectedIds.length === 0) return;
     setBusy(true);
     let sent = 0;
+    let notifyFailed = 0;
+    const sharerName =
+      (user.user_metadata as Record<string, string> | undefined)?.display_name
+      || user.email?.split('@')[0]
+      || 'A tribe member';
     for (const memberId of selectedIds) {
       try {
         const { data: roomId, error } = await supabase.rpc('get_or_create_direct_room', {
@@ -127,6 +132,25 @@ export default function ShareSeedDialog({
           p_file_size: null,
         } as any);
         if (msgErr) throw msgErr;
+
+        // A chat message alone tells nobody. user_notifications only permits
+        // auth.uid() = user_id on INSERT, so a direct insert here is refused
+        // with 42501; notify_member() is the SECURITY DEFINER path that
+        // writes the same row into the same inbox.
+        const { error: noteErr } = await supabase.rpc('notify_member' as any, {
+          _recipient: memberId,
+          _type: 'seed_share',
+          _title: 'A seed was shared with you',
+          _message: `${sharerName} shared "${title}" with you.`,
+          _action_url: '/chatapp',
+        } as any);
+        if (noteErr) {
+          // The message landed, so this is not a failed share. Say so rather
+          // than counting it as a clean success.
+          console.warn('[ShareSeedDialog] notification failed for', memberId, noteErr);
+          notifyFailed++;
+        }
+
         sent++;
       } catch (e) {
         console.warn('[ShareSeedDialog] invite failed for', memberId, e);
@@ -135,7 +159,11 @@ export default function ShareSeedDialog({
     setBusy(false);
     toast({
       title: sent ? `Seed shared with ${sent} tribe member${sent === 1 ? '' : 's'}` : 'Nothing sent',
-      description: sent ? 'They will find it in their ChatApp inbox.' : 'Please try again.',
+      description: sent
+        ? (notifyFailed
+          ? `It is in their ChatApp inbox. ${notifyFailed} of them could not be notified, so they may not see it until they open ChatApp.`
+          : 'They will find it in their ChatApp inbox.')
+        : 'Please try again.',
       variant: sent ? undefined : 'destructive',
     });
     if (sent) onOpenChange(false);

@@ -181,6 +181,46 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         }));
       }
 
+      // A direct room is stored as "Direct Chat" with no counterpart on the
+      // row, so without this every DM renders as that literal string with a
+      // generic icon. Resolve who the OTHER person is, once, for all direct
+      // rooms in the list.
+      const directIds = combined.filter((r: any) => r.room_type === 'direct').map((r: any) => r.id);
+      const counterpartByRoom = new Map<string, { name: string; avatar: string | null }>();
+
+      if (directIds.length > 0) {
+        // Resolved by user_id, NOT by the profile_id foreign key: that column
+        // was never populated by any writer and is null on almost every
+        // existing row. Display must not depend on a column that is
+        // historically empty, or these rooms go back to being nameless.
+        const { data: others } = await supabase
+          .from('chat_participants')
+          .select('room_id, user_id')
+          .in('room_id', directIds)
+          .eq('is_active', true)
+          .neq('user_id', user.id);
+
+        const otherIds = Array.from(new Set((others || []).map((o: any) => o.user_id)));
+        const profileByUser = new Map<string, any>();
+
+        if (otherIds.length > 0) {
+          const { data: profs } = await supabase
+            .from('profiles_public')
+            .select('user_id, display_name, first_name, last_name, avatar_url')
+            .in('user_id', otherIds);
+          for (const p of (profs || []) as any[]) profileByUser.set(p.user_id, p);
+        }
+
+        for (const row of (others || []) as any[]) {
+          if (counterpartByRoom.has(row.room_id)) continue;
+          const p = profileByUser.get(row.user_id) || null;
+          const name = p?.display_name
+            || [p?.first_name, p?.last_name].filter(Boolean).join(' ').trim()
+            || null;
+          counterpartByRoom.set(row.room_id, { name: name || 'Tribe member', avatar: p?.avatar_url ?? null });
+        }
+      }
+
       // Annotate with participant count
       const enriched = await Promise.all(
         combined.map(async (room: any) => {
@@ -190,7 +230,13 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
             .eq('room_id', room.id)
             .eq('is_active', true);
 
-          return { ...room, participant_count: count || 0 };
+          const counterpart = counterpartByRoom.get(room.id);
+          return {
+            ...room,
+            participant_count: count || 0,
+            counterpart_name: counterpart?.name ?? null,
+            counterpart_avatar: counterpart?.avatar ?? null,
+          };
         })
       );
 
@@ -292,9 +338,14 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
   const filteredRooms = rooms
     .filter((room) => {
       // Filter by search query (trim to avoid accidental spaces hiding results)
+      // Search the name the viewer actually sees. For a direct room that is
+      // the counterpart, not the stored "Direct Chat".
       const q = (searchQuery || '').trim().toLowerCase();
-      if (q && !((room.name || '').toLowerCase().includes(q))) {
-        return false;
+      if (q) {
+        const shown = room.room_type === 'direct'
+          ? (room.counterpart_name || '')
+          : (room.name || '');
+        if (!shown.toLowerCase().includes(q)) return false;
       }
 
       // Robust type filtering using helper with participant_count fallback
@@ -376,9 +427,14 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3 flex-1">
                     <Avatar className="h-10 w-10">
+                      {room.room_type === 'direct' && room.counterpart_avatar && (
+                        <AvatarImage src={room.counterpart_avatar} alt="" />
+                      )}
                       <AvatarFallback className="bg-emerald-100 text-emerald-700">
                         {room.room_type === 'direct' ? (
-                          <MessageSquare className="h-5 w-5" />
+                          room.counterpart_name
+                            ? room.counterpart_name.charAt(0).toUpperCase()
+                            : <MessageSquare className="h-5 w-5" />
                         ) : (
                           <Users className="h-5 w-5" />
                         )}
@@ -387,17 +443,16 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                          {room.name}
+                          {/* A direct room's stored name is the literal "Direct Chat". Show the person instead. */}
+                          {room.room_type === 'direct'
+                            ? (room.counterpart_name || 'Direct message')
+                            : room.name}
                         </h3>
                         {room.is_premium && (
                           <Badge className="bg-amber-500 text-white text-xs">
                             Premium
                           </Badge>
                         )}
-                        {/* Temporary production proof badge - shows the declared type */}
-                        <Badge variant="outline" className="text-xs text-muted-foreground">
-                          type: {room.room_type}
-                        </Badge>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         {/* Show creator info */}

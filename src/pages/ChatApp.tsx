@@ -830,7 +830,19 @@ const ChatApp = () => {
 
             <ScrollArea className="h-[calc(100vh-300px)] pr-2">
               <div className="pb-72 sm:pb-80 md:pb-[calc(env(safe-area-inset-bottom)+18rem)]">
-                <ChatList searchQuery={searchQuery} roomType="group" hideFilterControls />
+                {/*
+                  roomType was hardcoded to "group" with the filter controls
+                  hidden, so ChatList.tsx's `effectiveType === 'group' &&
+                  isDirectRoom(room)` check dropped every direct room and no
+                  control existed to get them back. 205 direct messages across
+                  120 rooms had never been visible to their recipients.
+
+                  "all" plus the existing All / Private / Community toggle:
+                  nothing is hidden by default, and one list at a time keeps a
+                  phone screen readable. Two stacked sections would push direct
+                  chats below the fold behind the group list.
+                */}
+                <ChatList searchQuery={searchQuery} roomType="all" />
                 <div aria-hidden className="h-24 sm:h-28 md:h-32" />
               </div>
             </ScrollArea>
