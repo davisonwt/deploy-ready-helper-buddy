@@ -69,14 +69,27 @@ class RoleChecker extends React.Component {
       // query before the session held in memory has caught up with a
       // just-refreshed token, same stale-session class the retry above
       // already exists for on a hard error, just never extended to an
-      // empty-but-not-erroring result. One retry before concluding a
-      // real "no access" -- only when roles came back completely empty,
-      // so a user who legitimately has SOME roles but not the required
-      // one is never retried or delayed.
-      if (!hasAccess && roles.length === 0) {
+      // empty-but-not-erroring result.
+      //
+      // 2026-09-16: that first fix only retried when `roles` came back
+      // COMPLETELY empty, on the reasoning that "some roles, just not the
+      // required one" should never be retried or delayed -- but Davison's
+      // account genuinely holds THREE roles (admin/gosat/radio_admin), so
+      // the same stale-read race can also land a PARTIAL, non-empty set
+      // (e.g. only radio_admin) that still fails checkAllowedRole -- and
+      // because `roles.length` isn't 0, the old guard never fired, so a
+      // real multi-role gosat could still be denied with zero retry.
+      // checkAllowedRole's own has_role RPC fallback already re-checks the
+      // DB directly (bypassing RLS) before returning false, confirmed live
+      // to return true for Davison's account -- so `!hasAccess` here is
+      // itself already a fairly deliberate signal, not a hair-trigger.
+      // Retrying once on ANY denial (not just an empty roles array) closes
+      // this gap; the cost is one extra refresh+query round trip only for
+      // routes that already gate on a role, never for ordinary pages.
+      if (!hasAccess) {
         await supabase.auth.refreshSession().catch(() => null)
         const retry = await this.fetchRoles(session.user.id)
-        if (!retry.error && retry.roles.length > 0) {
+        if (!retry.error) {
           roles = retry.roles
           hasAccess = await this.checkAllowedRole(session.user.id, allowedRoles, roles)
         }
