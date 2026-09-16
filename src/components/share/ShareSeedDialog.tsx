@@ -245,14 +245,19 @@ export default function ShareSeedDialog({
     }
   };
 
+  // min-h-0 is load-bearing on every flex child in this chain. Without it a
+  // flex item refuses to shrink below its content height, the dialog grows
+  // past the viewport, and the action button is pushed out of reach with
+  // nothing scrollable to get it back.
   const MemberList = (
-    <div className="space-y-2">
+    <div className="flex min-h-0 flex-1 flex-col gap-2">
       <Input
         placeholder="Search your tribe…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        className="shrink-0"
       />
-      <ScrollArea className="h-56 rounded-md border border-border">
+      <ScrollArea className="min-h-[7rem] flex-1 rounded-md border border-border">
         {loading ? (
           <div className="flex h-full items-center justify-center py-10 text-sm text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading your tribe…
@@ -281,58 +286,86 @@ export default function ShareSeedDialog({
           </ul>
         )}
       </ScrollArea>
-      <p className="text-xs text-muted-foreground">{selectedIds.length} selected</p>
+      <p className="shrink-0 text-xs text-muted-foreground">{selectedIds.length} selected</p>
     </div>
   );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
+      {/*
+        Height-constrained on purpose. DialogContent carries no max-height of
+        its own, so the dialog previously rendered at its natural height (586px
+        on the Circle tab) and simply clipped on any shorter viewport, with the
+        action button unreachable and nothing scrollable. 85dvh rather than vh
+        so mobile browser chrome is accounted for.
+      */}
+      <DialogContent className="flex max-h-[85dvh] w-[calc(100vw-2rem)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:w-full">
+        <DialogHeader className="shrink-0 border-b px-6 pb-4 pt-6">
           <DialogTitle className="truncate">Share “{title}”</DialogTitle>
           <DialogDescription>Invite your tribe to this seed, open a circle around it, or send it to the feed.</DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="tribe">
-          <TabsList className="flex w-full overflow-x-auto justify-start">
+        <Tabs defaultValue="tribe" className="flex min-h-0 flex-1 flex-col">
+          <TabsList className="mx-6 mt-4 flex w-auto shrink-0 justify-start overflow-x-auto">
             <TabsTrigger value="tribe"><Users className="mr-1 h-4 w-4" />Tribe</TabsTrigger>
             <TabsTrigger value="room"><MessagesSquare className="mr-1 h-4 w-4" />Circle</TabsTrigger>
             <TabsTrigger value="feed"><Globe2 className="mr-1 h-4 w-4" />Feed</TabsTrigger>
             <TabsTrigger value="link"><Link2 className="mr-1 h-4 w-4" />Link</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="tribe" className="space-y-3 pt-3">
-            {MemberList}
-            <Button className="w-full" disabled={busy || selectedIds.length === 0} onClick={sendToMembers}>
-              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Invite {selectedIds.length || ''} to this seed
-            </Button>
+          <TabsContent value="tribe" className="mt-0 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
+            <div className="flex min-h-0 flex-1 flex-col gap-3 px-6 py-3">
+              {MemberList}
+            </div>
+            <div className="shrink-0 border-t bg-background px-6 py-4">
+              <Button className="w-full" disabled={busy || selectedIds.length === 0} onClick={sendToMembers}>
+                {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Invite {selectedIds.length || ''} to this seed
+              </Button>
+            </div>
           </TabsContent>
 
-          <TabsContent value="room" className="space-y-3 pt-3">
-            <Input value={roomName} onChange={(e) => setRoomName(e.target.value)} placeholder="Chatroom name" />
-            {MemberList}
-            <Button className="w-full" disabled={busy} onClick={createRoomAndShare}>
-              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Open chatroom & share this seed
-            </Button>
+          <TabsContent value="room" className="mt-0 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
+            <div className="flex min-h-0 flex-1 flex-col gap-3 px-6 py-3">
+              <Input
+                value={roomName}
+                onChange={(e) => setRoomName(e.target.value)}
+                placeholder="Chatroom name"
+                className="shrink-0"
+              />
+              {MemberList}
+            </div>
+            <div className="shrink-0 border-t bg-background px-6 py-4">
+              <Button className="w-full" disabled={busy} onClick={createRoomAndShare}>
+                {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Open chatroom & share this seed
+              </Button>
+            </div>
           </TabsContent>
 
-          <TabsContent value="feed" className="space-y-3 pt-3">
-            <p className="text-sm text-muted-foreground">
-              Post this seed to the tribal social feed so the whole tribe can see it.
-            </p>
-            <Button className="w-full" disabled={busy} onClick={shareToFeed}>
-              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Share to the tribal feed
-            </Button>
+          <TabsContent value="feed" className="mt-0 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-3">
+              <p className="text-sm text-muted-foreground">
+                Post this seed to the tribal social feed so the whole tribe can see it.
+              </p>
+            </div>
+            <div className="shrink-0 border-t bg-background px-6 py-4">
+              <Button className="w-full" disabled={busy} onClick={shareToFeed}>
+                {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Share to the tribal feed
+              </Button>
+            </div>
           </TabsContent>
 
-          <TabsContent value="link" className="space-y-3 pt-3">
-            <div className="rounded-md border border-border bg-muted/40 p-3 text-xs break-all">{shareUrl}</div>
-            <div className="flex gap-2">
-              <Button className="flex-1" variant="secondary" onClick={copyLink}>Copy invitation</Button>
-              <Button className="flex-1" onClick={nativeShare}>Share…</Button>
+          <TabsContent value="link" className="mt-0 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-3">
+              <div className="break-all rounded-md border border-border bg-muted/40 p-3 text-xs">{shareUrl}</div>
+            </div>
+            <div className="shrink-0 border-t bg-background px-6 py-4">
+              <div className="flex gap-2">
+                <Button className="flex-1" variant="secondary" onClick={copyLink}>Copy invitation</Button>
+                <Button className="flex-1" onClick={nativeShare}>Share…</Button>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
