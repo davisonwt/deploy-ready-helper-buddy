@@ -12,6 +12,7 @@ import {
   DEFAULT_RADIUS_M, formatDistance, unitForViewer,
 } from '@/lib/sleeping/units';
 import { formatNativeAmount } from '@/lib/sleeping/currency';
+import SignedImg from '@/components/media/SignedImg';
 import {
   RATE_PERIODS, USE_TAGS, VEHICLE_TYPES, ratesOn, vehicleTypeLabel,
 } from '@/lib/sleeping/wheelOptions';
@@ -337,7 +338,7 @@ function WheelCard({ row, unit }: { row: WheelRow; unit: ReturnType<typeof unitF
       className="rounded-xl border bg-card overflow-hidden hover:border-primary transition block"
     >
       {row.cover_image_url && (
-        <img src={row.cover_image_url} alt="" className="w-full aspect-[16/10] object-cover" loading="lazy" />
+        <SignedImg src={row.cover_image_url} alt="" className="w-full aspect-[16/10] object-cover" loading="lazy" />
       )}
       <div className="p-4 space-y-2">
         <div className="flex items-start justify-between gap-2">
@@ -389,7 +390,7 @@ function ServiceCard({
       className="rounded-xl border bg-card overflow-hidden hover:border-primary transition block"
     >
       {row.cover_image_url && (
-        <img src={row.cover_image_url} alt="" className="w-full aspect-[16/10] object-cover" loading="lazy" />
+        <SignedImg src={row.cover_image_url} alt="" className="w-full aspect-[16/10] object-cover" loading="lazy" />
       )}
       <div className="p-4 space-y-2">
         <h3 className="font-semibold leading-tight">{row.title}</h3>

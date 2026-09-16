@@ -19,6 +19,7 @@ import { ArrowLeft, ImagePlus, X, Loader2, Check } from 'lucide-react';
 import sowProductBanner from '@/assets/seeds-strip.jpg';
 import { getPreset } from '@/lib/store/presets';
 
+import SignedImg from '@/components/media/SignedImg';
 import {
   LEGACY_RATE_UNIT, OPERATOR_LICENCE_CONFIRMATION, PRIMARY_RATE_ORDER,
   RATE_PERIODS, USE_TAGS, VEHICLE_BRANCH, VEHICLE_TYPES,
@@ -413,7 +414,11 @@ export default function SowWheelPage() {
       {/* 1. What is it -------------------------------------------------- */}
       <section className="mb-7">
         <h2 className="text-lg font-semibold mb-3">1. What is it?</h2>
-        <div className="grid grid-cols-2 gap-3">
+        {/*
+          auto-rows-fr makes every row the same height, so a two-line label
+          like "Bakkie / pickup" does not leave its neighbour short.
+        */}
+        <div className="grid grid-cols-2 gap-3 auto-rows-fr">
           {VEHICLE_TYPES.map((t) => {
             const on = vehicleType === t.value;
             return (
@@ -422,12 +427,20 @@ export default function SowWheelPage() {
                 type="button"
                 onClick={() => setVehicleType(t.value)}
                 aria-pressed={on}
-                className={`min-h-20 rounded-xl border-2 p-3 text-left transition ${
+                /*
+                  flex-col is not optional. index.css:679 gives every bare
+                  <button> `inline-flex items-center justify-center`, which
+                  laid the label and its hint out side by side and read as
+                  "CarA normal car.". That base rule uses :where() so it has
+                  zero specificity and these utilities win.
+                */
+                className={`flex h-full min-h-[5.5rem] flex-col items-start justify-start gap-0.5
+                  rounded-xl border-2 p-3 text-left transition ${
                   on ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
                 }`}
               >
-                <span className="font-semibold block">{t.label}</span>
-                <span className="text-xs text-muted-foreground block mt-0.5">{t.hint}</span>
+                <span className="font-semibold leading-tight">{t.label}</span>
+                <span className="text-xs leading-snug text-muted-foreground">{t.hint}</span>
               </button>
             );
           })}
@@ -475,7 +488,7 @@ export default function SowWheelPage() {
               <div className="flex flex-wrap gap-2 mt-2">
                 {extraPhotos.map((p, i) => (
                   <div key={p.storagePath} className="relative">
-                    <img src={p.fileUrl} alt="" className="w-20 h-20 rounded-lg object-cover border" />
+                    <SignedImg src={p.fileUrl} alt="" className="w-20 h-20 rounded-lg object-cover border" />
                     <button
                       type="button"
                       onClick={() => setExtraPhotos((prev) => prev.filter((_, idx) => idx !== i))}

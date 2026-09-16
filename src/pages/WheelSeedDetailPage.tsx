@@ -17,6 +17,7 @@ import { formatNativeAmount, paymentCurrencyNoteFor } from '@/lib/sleeping/curre
 import { ratesOn, labelForUseTag, vehicleTypeLabel } from '@/lib/sleeping/wheelOptions';
 import { formatDistance, haversineMetres, unitForViewer } from '@/lib/sleeping/units';
 import { useWorldwideLocation } from '@/hooks/useWorldwideLocation';
+import SignedImg from '@/components/media/SignedImg';
 
 const RATE_UNIT_LABEL: Record<string, string> = {
   per_trip: 'per trip',
@@ -237,7 +238,7 @@ export default function WheelSeedDetailPage() {
       <Card className="overflow-hidden">
         {product.cover_image_url && (
           <div className="aspect-video w-full overflow-hidden bg-muted">
-            <img src={product.cover_image_url} alt={product.title} className="w-full h-full object-cover" />
+            <SignedImg src={product.cover_image_url} alt={product.title} className="w-full h-full object-cover" />
           </div>
         )}
         <CardContent className="p-5 md:p-6 space-y-4">
@@ -451,7 +452,7 @@ export default function WheelSeedDetailPage() {
             {!!wanderingProfile.gallery_urls?.length && (
               <div className="flex gap-2 overflow-x-auto">
                 {wanderingProfile.gallery_urls.map((url: string, i: number) => (
-                  <img key={i} src={url} alt="" className="w-24 h-24 rounded-lg object-cover border shrink-0" />
+                  <SignedImg key={i} src={url} alt="" className="w-24 h-24 rounded-lg object-cover border shrink-0" />
                 ))}
               </div>
             )}
