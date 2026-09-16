@@ -13,6 +13,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ArrowLeft, MapPin, Truck, Loader2 } from 'lucide-react';
+import { formatNativeAmount, paymentCurrencyNoteFor } from '@/lib/sleeping/currency';
+import { ratesOn, labelForUseTag, vehicleTypeLabel } from '@/lib/sleeping/wheelOptions';
+import { formatDistance, haversineMetres, unitForViewer } from '@/lib/sleeping/units';
+import { useWorldwideLocation } from '@/hooks/useWorldwideLocation';
 
 const RATE_UNIT_LABEL: Record<string, string> = {
   per_trip: 'per trip',
@@ -50,6 +54,12 @@ export default function WheelSeedDetailPage() {
   const [wanderingProfile, setWanderingProfile] = useState<any | null>(null);
   const [loadingWanderingProfile, setLoadingWanderingProfile] = useState(true);
 
+  // Structured vehicle detail. A listing registered before the Sleeping
+  // Wheels model has no row here; the page falls back to service_details.
+  const [wheel, setWheel] = useState<any | null>(null);
+  const { location: viewerLocation } = useWorldwideLocation();
+  const distanceUnit = unitForViewer();
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -61,6 +71,13 @@ export default function WheelSeedDetailPage() {
       if (error || !row) { setNotFound(true); setLoading(false); return; }
       setProduct(row);
       setLoading(false);
+
+      const { data: detail } = await supabase
+        .from('wheel_seed_details')
+        .select('*')
+        .eq('product_id', row.id)
+        .maybeSingle();
+      if (!cancelled) setWheel(detail ?? null);
     })();
     return () => { cancelled = true; };
   }, [id]);
@@ -106,8 +123,21 @@ export default function WheelSeedDetailPage() {
   const details = (product.service_details as Record<string, any>) ?? {};
   const rateUnit: string = details.rate_unit;
   const rateUnitLabel = RATE_UNIT_LABEL[rateUnit] ?? rateUnit;
-  const rateText = `$${Number(product.price ?? 0).toFixed(2)} ${rateUnitLabel}`;
   const isFixedQty = rateUnit === 'per_trip';
+
+  // Rates are shown in the LISTING's own currency and are never converted.
+  // A listing with no structured row falls back to the legacy single rate.
+  const listingCurrency: string = wheel?.currency ?? 'USD';
+  const structuredRates = wheel ? ratesOn(wheel) : [];
+  const rateText = structuredRates.length === 0
+    ? `${formatNativeAmount(Number(product.price ?? 0), listingCurrency)} ${rateUnitLabel ?? ''}`.trim()
+    : '';
+
+  const carryTags: string[] = (wheel?.use_tags ?? details.tags ?? []) as string[];
+
+  const distanceM = (viewerLocation && wheel?.base_lat != null && wheel?.base_lng != null)
+    ? haversineMetres(viewerLocation.lat, viewerLocation.lng, Number(wheel.base_lat), Number(wheel.base_lng))
+    : null;
 
   const areaText = details.area_mode === 'you_come_to_me'
     ? `You come to ${details.base_town || 'them'}`
@@ -215,7 +245,14 @@ export default function WheelSeedDetailPage() {
             <Badge variant="secondary" className="bg-orange-500/10 text-orange-700 border-orange-500/30">
               🚗 Wandering Wheel
             </Badge>
-            {product.category && <Badge variant="outline">{product.category}</Badge>}
+            {wheel?.vehicle_type
+              ? <Badge variant="outline">{vehicleTypeLabel(wheel.vehicle_type)}</Badge>
+              : product.category && <Badge variant="outline">{product.category}</Badge>}
+            {wheel && wheel.availability === false && (
+              <Badge variant="outline" className="border-destructive/40 text-destructive">
+                Not available right now
+              </Badge>
+            )}
           </div>
 
           <div>
@@ -223,7 +260,48 @@ export default function WheelSeedDetailPage() {
             <p className="text-sm text-muted-foreground mt-0.5">by {sowerName}</p>
           </div>
 
-          <p className="text-lg font-semibold">{rateText}</p>
+          {distanceM != null && (
+            <p className="text-sm font-medium text-primary">
+              {formatDistance(distanceM, distanceUnit)}
+            </p>
+          )}
+
+          {structuredRates.length > 0 ? (
+            <div className="rounded-lg border p-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                Rates in {listingCurrency}
+              </p>
+              <ul className="space-y-1">
+                {structuredRates.map((r) => (
+                  <li key={r.short} className="flex items-baseline justify-between gap-4">
+                    <span className="text-sm text-muted-foreground">{r.label}</span>
+                    <span className="text-lg font-semibold">
+                      {formatNativeAmount(r.amount, listingCurrency)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-lg font-semibold">{rateText}</p>
+          )}
+
+          {carryTags.length > 0 && (
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">
+                What it can carry
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {carryTags.map((t) => (
+                  <Badge key={t} variant="secondary">{labelForUseTag(t)}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <p className="text-sm text-muted-foreground">
+            The owner drives. You are booking the vehicle and its driver together.
+          </p>
 
           {product.description && (
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{product.description}</p>
@@ -321,6 +399,15 @@ export default function WheelSeedDetailPage() {
                     <span>${split ? split.total.toFixed(2) : '0.00'}</span>
                   </div>
                 </div>
+
+                {/*
+                  The listing prices in its own currency; the existing
+                  booking path charges in USD (PayPal) or ZAR (Paystack).
+                  Say so rather than showing a converted figure.
+                */}
+                <p className="text-xs text-muted-foreground">
+                  {paymentCurrencyNoteFor(listingCurrency, 'paypal')}
+                </p>
 
                 <Button
                   size="lg"

@@ -4,45 +4,26 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { insertProduct } from '@/api/products';
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
-import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { launchConfetti } from '@/utils/confetti';
 import { toast } from 'sonner';
 
 import CoverDropZone, { type CoverResult } from '@/components/sowing/CoverDropZone';
-import OnePicker, { type OnePickerOption } from '@/components/sowing/OnePicker';
-import SeedPreviewCard from '@/components/sowing/SeedPreviewCard';
 import PlantButton from '@/components/sowing/PlantButton';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ArrowLeft, ChevronDown, Eye, ImagePlus, X, Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowLeft, ImagePlus, X, Loader2, Check } from 'lucide-react';
 import sowProductBanner from '@/assets/seeds-strip.jpg';
 import { getPreset } from '@/lib/store/presets';
 
-// Same "service, not a self-drive rental" model as Hand -- a Wheel seed
-// is a vehicle-with-driver booked like a ride/delivery, never handed
-// over keys-first.
-const VEHICLE_TYPE_OPTIONS: OnePickerOption[] = [
-  { value: 'bakkie', label: 'Bakkie' },
-  { value: 'truck', label: 'Truck' },
-  { value: 'sedan', label: 'Sedan / family car' },
-  { value: 'farm-vehicle', label: 'Farm vehicle' },
-  { value: 'construction-vehicle', label: 'Construction vehicle' },
-  { value: 'other', label: 'Other' },
-];
-
-const RATE_UNITS = [
-  { value: 'per_trip', label: 'Per trip' },
-  { value: 'per_hour', label: 'Per hour' },
-  { value: 'per_km', label: 'Per km' },
-  { value: 'per_day', label: 'Per day' },
-] as const;
+import {
+  LEGACY_RATE_UNIT, OPERATOR_LICENCE_CONFIRMATION, PRIMARY_RATE_ORDER,
+  RATE_PERIODS, USE_TAGS, VEHICLE_BRANCH, VEHICLE_TYPES,
+  type UseTag, type VehicleType,
+} from '@/lib/sleeping/wheelOptions';
 
 const MAX_EXTRA_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
@@ -61,7 +42,6 @@ function SowBanner() {
   );
 }
 
-/** Same crop-to-square-JPEG-then-upload CoverDropZone uses internally, for the "up to 5 more photos" field. */
 function cropToSquare(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -86,15 +66,28 @@ function cropToSquare(file: File): Promise<Blob> {
   });
 }
 
+type RateState = Record<string, string>;
+
+/**
+ * Register a vehicle with a driver.
+ *
+ * ONE flow for every vehicle type. Picking the type changes which uses and
+ * which rate periods are offered first (see VEHICLE_BRANCH); it never
+ * sends the person to a different form. Everything else is identical for a
+ * car and for a harvester.
+ *
+ * A Wheel seed stays a row in `products` (type=service, kind=wheel) so the
+ * existing booking path and the 85/15 split keep working untouched. The
+ * structured detail lives alongside it in `wheel_seed_details`.
+ */
 export default function SowWheelPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Direct-URL guard -- the chooser only links here once wandering_roles
-  // has an active 'wheel' row, but a bookmark or a typed URL can reach
-  // this page without that. Redirect straight to the unlock screen if so.
   const [roleChecked, setRoleChecked] = useState(false);
   const [baseTown, setBaseTown] = useState('');
+  const [roleLat, setRoleLat] = useState<number | null>(null);
+  const [roleLng, setRoleLng] = useState<number | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -102,7 +95,7 @@ export default function SowWheelPage() {
     (async () => {
       const { data } = await supabase
         .from('wandering_roles')
-        .select('base_town, status')
+        .select('base_town, lat, lng, status')
         .eq('user_id', user.id)
         .eq('role', 'wheel')
         .maybeSingle();
@@ -111,36 +104,70 @@ export default function SowWheelPage() {
         navigate('/register-wandering?role=wheel', { replace: true });
         return;
       }
-      setBaseTown(data.base_town || '');
+      setBaseTown((data as any).base_town || '');
+      setRoleLat((data as any).lat ?? null);
+      setRoleLng((data as any).lng ?? null);
       setRoleChecked(true);
     })();
     return () => { alive = false; };
   }, [user, navigate]);
 
+  // --- the form -------------------------------------------------------------
+  const [vehicleType, setVehicleType] = useState<VehicleType | null>(null);
   const [cover, setCover] = useState<CoverResult | null>(null);
   const [extraPhotos, setExtraPhotos] = useState<CoverResult[]>([]);
   const [uploadingExtra, setUploadingExtra] = useState(false);
   const [title, setTitle] = useState('');
-  const [vehicleType, setVehicleType] = useState<string | null>(null);
-  const [customVehicleType, setCustomVehicleType] = useState('');
-  const [capacity, setCapacity] = useState('');
-  const [rateAmount, setRateAmount] = useState<number | null>(null);
-  const [rateUnit, setRateUnit] = useState<typeof RATE_UNITS[number]['value']>('per_trip');
-  const [areaMode, setAreaMode] = useState<'come_to_you' | 'you_come_to_me'>('come_to_you');
-  const [radiusKm, setRadiusKm] = useState<number>(30);
   const [description, setDescription] = useState('');
+  const [tags, setTags] = useState<UseTag[]>([]);
+  const [showAllTags, setShowAllTags] = useState(false);
+  const [rates, setRates] = useState<RateState>({});
+  const [showAllRates, setShowAllRates] = useState(false);
+  const [currency, setCurrency] = useState('');
+  const [currencyReady, setCurrencyReady] = useState(false);
+  const [baseLocation, setBaseLocation] = useState('');
+  const [available, setAvailable] = useState(true);
+  const [licenceConfirmed, setLicenceConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [celebrate, setCelebrate] = useState(false);
-
-  // More options -- none of these can block Plant seed.
-  const [moreOpen, setMoreOpen] = useState(false);
-  const [driverName, setDriverName] = useState('');
-  const [driverNotes, setDriverNotes] = useState('');
-  const [whispererPercent, setWhispererPercent] = useState<number | null>(null);
-  const [tags, setTags] = useState('');
-
-  const [businesses, setBusinesses] = useState<{ id: string; name: string; is_default: boolean }[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+
+  useEffect(() => { if (baseTown && !baseLocation) setBaseLocation(baseTown); }, [baseTown, baseLocation]);
+
+  // Currency default comes from the owner's country, and stays editable.
+  useEffect(() => {
+    let alive = true;
+    if (!user) return;
+    (async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('country, preferred_currency')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!alive) return;
+
+      const preferred = (profile as any)?.preferred_currency?.trim();
+      if (preferred) { setCurrency(preferred.toUpperCase()); setCurrencyReady(true); return; }
+
+      const country = (profile as any)?.country?.trim();
+      if (country) {
+        const { data: match } = await supabase
+          .from('country_currency')
+          .select('currency_code')
+          .or(`alpha2.eq.${country.toUpperCase()},country_name.ilike.${country}`)
+          .limit(1)
+          .maybeSingle();
+        if (!alive) return;
+        if ((match as any)?.currency_code) {
+          setCurrency((match as any).currency_code);
+          setCurrencyReady(true);
+          return;
+        }
+      }
+      // No country on file: the owner picks. No country is assumed.
+      setCurrencyReady(true);
+    })();
+    return () => { alive = false; };
+  }, [user]);
 
   useEffect(() => {
     let alive = true;
@@ -153,11 +180,22 @@ export default function SowWheelPage() {
         .order('created_at', { ascending: true });
       if (!alive) return;
       const list = (data as any) ?? [];
-      setBusinesses(list);
       setSelectedCompanyId((list.find((b: any) => b.is_default) ?? list[0])?.id ?? null);
     })();
     return () => { alive = false; };
   }, [user]);
+
+  const branch = vehicleType ? VEHICLE_BRANCH[vehicleType] : null;
+
+  const visibleTags = useMemo(() => {
+    if (!branch || showAllTags) return USE_TAGS;
+    return USE_TAGS.filter((t) => branch.suggestedTags.includes(t.value));
+  }, [branch, showAllTags]);
+
+  const visibleRates = useMemo(() => {
+    if (!branch || showAllRates) return RATE_PERIODS;
+    return RATE_PERIODS.filter((p) => branch.suggestedRates.includes(p.column));
+  }, [branch, showAllRates]);
 
   const addExtraPhoto = async (file: File) => {
     if (extraPhotos.length >= MAX_EXTRA_PHOTOS || !user) return;
@@ -170,9 +208,7 @@ export default function SowWheelPage() {
       }
       const path = `covers/${user.id}/extra-${Date.now()}.jpg`;
       const { error: uploadErr } = await supabase.storage.from('premium-room').upload(path, cropped, {
-        cacheControl: '3600',
-        contentType: 'image/jpeg',
-        upsert: false,
+        cacheControl: '3600', contentType: 'image/jpeg', upsert: false,
       });
       if (uploadErr) throw uploadErr;
       const { data: pub } = supabase.storage.from('premium-room').getPublicUrl(path);
@@ -185,32 +221,42 @@ export default function SowWheelPage() {
     }
   };
 
-  const removeExtraPhoto = (index: number) => {
-    setExtraPhotos((prev) => prev.filter((_, i) => i !== index));
-  };
+  const numericRates = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const [col, raw] of Object.entries(rates)) {
+      const n = Number(raw);
+      if (raw !== '' && Number.isFinite(n) && n > 0) out[col] = n;
+    }
+    return out;
+  }, [rates]);
 
+  const typeReady = !!vehicleType;
   const coverReady = !!cover;
   const titleReady = title.trim().length > 0;
-  const vehicleTypeReady = !!vehicleType && (vehicleType !== 'other' || customVehicleType.trim().length > 0);
-  const rateReady = rateAmount != null && rateAmount > 0;
-  const serviceAreaReady = true;
-  const descriptionReady = description.trim().length > 0;
+  const rateReady = Object.keys(numericRates).length > 0;
+  const currencyValid = /^[A-Z]{3}$/.test(currency.trim().toUpperCase());
+  const locationReady = baseLocation.trim().length > 0;
 
-  const completed = [coverReady, titleReady, vehicleTypeReady, rateReady, serviceAreaReady, descriptionReady]
+  const requiredCount = 6;
+  const completed = [typeReady, coverReady, titleReady, rateReady, currencyValid, locationReady]
     .filter(Boolean).length;
 
   const missingReason = useMemo(() => {
-    if (!coverReady) return 'Add a photo of the vehicle to continue.';
-    if (!titleReady) return 'Give it a title.';
-    if (!vehicleTypeReady) return vehicleType === 'other' ? 'Type in your vehicle type.' : 'Pick a vehicle type.';
-    if (!rateReady) return 'Set your rate.';
-    if (!descriptionReady) return 'Add a short description.';
+    if (!typeReady) return 'Pick what kind of vehicle it is.';
+    if (!coverReady) return 'Add one photo of the vehicle.';
+    if (!titleReady) return 'Give it a short name.';
+    if (!rateReady) return 'Fill in at least one price.';
+    if (!currencyValid) return 'Choose the currency you charge in.';
+    if (!locationReady) return 'Say where the vehicle is based.';
+    if (!licenceConfirmed) return 'Tick the licence confirmation to finish.';
     return undefined;
-  }, [coverReady, titleReady, vehicleTypeReady, rateReady, descriptionReady, vehicleType]);
+  }, [typeReady, coverReady, titleReady, rateReady, currencyValid, locationReady, licenceConfirmed]);
+
+  const canSubmit = completed === requiredCount && licenceConfirmed;
 
   const handlePlant = async () => {
     if (!user) { toast.error('Please log in to sow.'); return; }
-    if (completed < 6 || !cover) return;
+    if (!canSubmit || !cover || !vehicleType) return;
 
     setSubmitting(true);
     try {
@@ -229,23 +275,19 @@ export default function SowWheelPage() {
 
       const companyId = selectedCompanyId ?? (await getDefaultCompanyId(sowerId));
 
-      const finalVehicleType = vehicleType === 'other' ? customVehicleType.trim() : vehicleType;
-      const tagList = tags.split(',').map((t) => t.trim()).filter(Boolean);
+      // products.price stays populated so the existing booking path and the
+      // 85/15 split are untouched. It mirrors the first rate the owner set.
+      const primaryColumn = PRIMARY_RATE_ORDER.find((c) => numericRates[c] != null) ?? null;
+      const primaryRate = primaryColumn ? numericRates[primaryColumn] : null;
 
       const service_details: Record<string, unknown> = {
-        vehicle_type: finalVehicleType,
-        capacity: capacity.trim() || null,
-        rate_unit: rateUnit,
-        area_mode: areaMode,
-        radius_km: areaMode === 'come_to_you' ? radiusKm : null,
-        base_town: baseTown,
-        driver_name: driverName.trim() || null,
-        driver_notes: driverNotes.trim() || null,
+        vehicle_type: vehicleType,
+        rate_unit: primaryColumn ? LEGACY_RATE_UNIT[primaryColumn] : null,
+        base_town: baseLocation.trim(),
+        driver_included: true,
       };
-      if (tagList.length) service_details.tags = tagList;
+      if (tags.length) service_details.tags = tags;
 
-      // No file_url, no preview_url -- a Wheel seed is a service, not a
-      // file. price is the rate amount; the unit lives in service_details.
       const inserted = await insertProduct({
         sower_id: sowerId,
         company_id: companyId,
@@ -253,28 +295,51 @@ export default function SowWheelPage() {
         description: description.trim(),
         type: 'service',
         kind: 'wheel',
-        category: finalVehicleType,
+        category: vehicleType,
         license_type: 'bestowal',
-        price: rateAmount,
+        price: primaryRate,
         cover_image_url: cover.fileUrl,
         image_urls: [cover.fileUrl, ...extraPhotos.map((p) => p.fileUrl)],
         file_url: null,
         preview_url: null,
         service_details,
-        has_whisperer: whispererPercent != null && whispererPercent > 0,
-        whisperer_commission_percent: whispererPercent,
       });
 
-      try { await (supabase.rpc as any)('add_xp_to_current_user', { amount: 100 }); } catch { /* best-effort */ }
+      const { error: detailErr } = await supabase.from('wheel_seed_details').insert({
+        product_id: inserted.id,
+        vehicle_type: vehicleType,
+        use_tags: tags,
+        driver_included: true,
+        rate_per_trip: numericRates.rate_per_trip ?? null,
+        rate_hourly: numericRates.rate_hourly ?? null,
+        rate_per_km: numericRates.rate_per_km ?? null,
+        rate_daily: numericRates.rate_daily ?? null,
+        rate_weekly: numericRates.rate_weekly ?? null,
+        rate_monthly: numericRates.rate_monthly ?? null,
+        currency: currency.trim().toUpperCase(),
+        base_location: baseLocation.trim(),
+        base_lat: roleLat,
+        base_lng: roleLng,
+        availability: available,
+        operator_confirmed_licensed: true,
+      } as any);
 
-      setCelebrate(true);
+      if (detailErr) {
+        // The listing exists but has no detail row, so it would be invisible
+        // in the hub. Say so plainly rather than celebrating.
+        console.error('wheel_seed_details insert failed', detailErr);
+        toast.error(`Saved the listing, but the vehicle details did not save: ${detailErr.message}`);
+        navigate(`/seed/wheel/${inserted.id}`);
+        return;
+      }
+
       launchConfetti();
-      toast.success('Seed planted! 🌱');
-      await new Promise((resolve) => setTimeout(resolve, 650));
+      toast.success('Vehicle registered! 🌱');
+      await new Promise((resolve) => setTimeout(resolve, 600));
       navigate(`/seed/wheel/${inserted.id}`);
     } catch (e: any) {
       console.error('Plant seed error', e);
-      toast.error(e?.message ?? 'Could not plant this seed. Please try again.');
+      toast.error(e?.message ?? 'Could not register this vehicle. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -283,7 +348,7 @@ export default function SowWheelPage() {
   if (!user) {
     return (
       <div className="container max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-        <p className="text-muted-foreground">Please log in to sow a Wheel seed.</p>
+        <p className="text-muted-foreground">Please log in to register a vehicle.</p>
         <Button onClick={() => navigate('/login')}>Log in</Button>
       </div>
     );
@@ -297,295 +362,245 @@ export default function SowWheelPage() {
     );
   }
 
-  const rateSplit = rateAmount != null && rateAmount > 0 ? priceBreakdown(rateAmount) : null;
-
-  const previewCard = (
-    <SeedPreviewCard
-      title={title}
-      description={description}
-      coverUrl={cover?.fileUrl ?? null}
-      price={rateAmount}
-      isFree={false}
-      type="service"
-      completedPieces={completed}
-      celebrate={celebrate}
-    />
-  );
-
   return (
-    <div className="container max-w-5xl mx-auto px-4 py-6 md:py-8 pb-28 md:pb-8">
+    <div className="container max-w-2xl mx-auto px-4 py-6 pb-28">
       <Button variant="ghost" size="sm" onClick={() => navigate('/sow')} className="mb-4 -ml-2">
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back
+        <ArrowLeft className="w-4 h-4 mr-1" />
+        Back to Sow
       </Button>
-
-      <h1 className="text-2xl font-bold mb-4">🚗 Sow a Wheel seed</h1>
 
       <SowBanner />
 
-      <div className="grid md:grid-cols-[1fr_320px] gap-8">
-        <div className="space-y-5">
-          <div className="flex items-start gap-4">
+      <h1 className="text-2xl font-bold mb-1">Register your vehicle</h1>
+      <p className="text-sm text-muted-foreground mb-6">
+        You drive, always. People book you and your vehicle together.
+      </p>
+
+      {/* 1. What is it -------------------------------------------------- */}
+      <section className="mb-7">
+        <h2 className="text-lg font-semibold mb-3">1. What is it?</h2>
+        <div className="grid grid-cols-2 gap-3">
+          {VEHICLE_TYPES.map((t) => {
+            const on = vehicleType === t.value;
+            return (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => setVehicleType(t.value)}
+                aria-pressed={on}
+                className={`min-h-20 rounded-xl border-2 p-3 text-left transition ${
+                  on ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <span className="font-semibold block">{t.label}</span>
+                <span className="text-xs text-muted-foreground block mt-0.5">{t.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {vehicleType && (
+        <>
+          {/* 2. What it can do ------------------------------------------ */}
+          <section className="mb-7">
+            <h2 className="text-lg font-semibold mb-3">2. {branch?.loadQuestion}</h2>
+            <div className="flex flex-wrap gap-2">
+              {visibleTags.map((t) => {
+                const on = tags.includes(t.value);
+                return (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setTags((prev) => (on ? prev.filter((v) => v !== t.value) : [...prev, t.value]))}
+                    aria-pressed={on}
+                    className={`min-h-11 px-4 rounded-full border text-sm transition ${
+                      on ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted border-border'
+                    }`}
+                  >
+                    {on && <Check className="w-3.5 h-3.5 inline mr-1" />}
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+            {!showAllTags && (
+              <Button variant="link" size="sm" className="px-0 mt-2" onClick={() => setShowAllTags(true)}>
+                Show all options
+              </Button>
+            )}
+          </section>
+
+          {/* 3. Photos and name ----------------------------------------- */}
+          <section className="mb-7">
+            <h2 className="text-lg font-semibold mb-3">3. Show it</h2>
             <CoverDropZone bucket="premium-room" pathPrefix={`covers/${user.id}`} onChange={setCover} required />
-            <div className="flex-1">
-              <Label htmlFor="wheel-title">Title</Label>
+
+            <div className="mt-3">
+              <Label className="text-sm">More photos (up to {MAX_EXTRA_PHOTOS})</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {extraPhotos.map((p, i) => (
+                  <div key={p.storagePath} className="relative">
+                    <img src={p.fileUrl} alt="" className="w-20 h-20 rounded-lg object-cover border" />
+                    <button
+                      type="button"
+                      onClick={() => setExtraPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                      aria-label="Remove photo"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {extraPhotos.length < MAX_EXTRA_PHOTOS && (
+                  <label className="w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary">
+                    {uploadingExtra
+                      ? <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                      : <ImagePlus className="w-5 h-5 text-muted-foreground" />}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) void addExtraPhoto(f); e.target.value = ''; }}
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <Label htmlFor="wheel-title">Short name</Label>
               <Input
                 id="wheel-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="What are you offering?"
-                className="mt-1.5"
+                placeholder="Blue bakkie with canopy"
+                className="h-12 mt-1"
               />
             </div>
-          </div>
 
-          <OnePicker
-            label="Vehicle type"
-            storageKey="sow:lastVehicleType"
-            options={VEHICLE_TYPE_OPTIONS}
-            value={vehicleType}
-            onChange={setVehicleType}
-          />
-          {vehicleType === 'other' && (
-            <Input
-              value={customVehicleType}
-              onChange={(e) => setCustomVehicleType(e.target.value)}
-              placeholder="Describe your vehicle"
-              className="max-w-xs"
-            />
-          )}
-
-          <div>
-            <Label htmlFor="wheel-capacity">Capacity</Label>
-            <Input
-              id="wheel-capacity"
-              value={capacity}
-              onChange={(e) => setCapacity(e.target.value)}
-              placeholder="e.g. 5 passengers, or 2 tons + trailer"
-              className="mt-1.5 max-w-md"
-            />
-          </div>
-
-          <div>
-            <Label className="mb-1.5 block">Rate</Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1 max-w-[160px]">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  className="pl-6"
-                  value={rateAmount ?? ''}
-                  onChange={(e) => setRateAmount(e.target.value === '' ? null : Number(e.target.value))}
-                />
-              </div>
-              <Select value={rateUnit} onValueChange={(v) => setRateUnit(v as typeof rateUnit)}>
-                <SelectTrigger className="flex-1 max-w-[220px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {RATE_UNITS.map((u) => (
-                    <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="mt-4">
+              <Label htmlFor="wheel-desc">Anything else people should know</Label>
+              <Textarea
+                id="wheel-desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="I load and unload myself. Two helpers available on request."
+                rows={3}
+                className="mt-1"
+              />
             </div>
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              {rateSplit
-                ? `Bestowers pay $${rateSplit.total.toFixed(2)} (Sow2Grow's 15% fee is added on top, plus a small network fee). You receive the full $${rateSplit.base.toFixed(2)}.`
-                : 'Set a rate to see what bestowers will pay.'}
+          </section>
+
+          {/* 4. Where ---------------------------------------------------- */}
+          <section className="mb-7">
+            <h2 className="text-lg font-semibold mb-3">4. Where is it based?</h2>
+            <Input
+              value={baseLocation}
+              onChange={(e) => setBaseLocation(e.target.value)}
+              placeholder="Town or area"
+              className="h-12"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              People search by how far away you are.
             </p>
-          </div>
+          </section>
 
-          <div>
-            <Label className="mb-1.5 block">Service area</Label>
-            <RadioGroup value={areaMode} onValueChange={(v) => setAreaMode(v as typeof areaMode)} className="gap-2.5">
-              <div className="flex items-center gap-2.5">
-                <RadioGroupItem value="come_to_you" id="wheel-area-come" />
-                <Label htmlFor="wheel-area-come" className="font-normal cursor-pointer flex items-center gap-2">
-                  I come to you, within
-                  <Input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={radiusKm}
-                    onChange={(e) => setRadiusKm(Math.max(1, Number(e.target.value) || 30))}
-                    disabled={areaMode !== 'come_to_you'}
-                    className="w-16 h-8 px-2 inline-block"
-                  />
-                  km of {baseTown || 'your base town'}
-                </Label>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <RadioGroupItem value="you_come_to_me" id="wheel-area-you" />
-                <Label htmlFor="wheel-area-you" className="font-normal cursor-pointer">
-                  You come to me{baseTown ? ` (${baseTown})` : ''}
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
+          {/* 5. Price ---------------------------------------------------- */}
+          <section className="mb-7">
+            <h2 className="text-lg font-semibold mb-3">5. What do you charge?</h2>
+            <p className="text-sm text-muted-foreground mb-3">
+              Fill in only the ones you offer. At least one.
+            </p>
 
-          <div>
-            <Label htmlFor="wheel-description">Description</Label>
-            <Textarea
-              id="wheel-description"
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What you move, how you work — a couple of lines."
-              className="mt-1.5"
-            />
-          </div>
-
-          <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="px-0 text-muted-foreground">
-                <ChevronDown className={`w-4 h-4 mr-1.5 transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
-                More options
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 pt-3">
-              <div>
-                <Label htmlFor="wheel-driver-name">Driver name</Label>
+            <div className="mb-4">
+              <Label htmlFor="wheel-currency">Currency</Label>
+              <div className="flex gap-2 mt-1">
                 <Input
-                  id="wheel-driver-name"
-                  value={driverName}
-                  onChange={(e) => setDriverName(e.target.value)}
-                  placeholder="You, or who's driving"
-                  className="max-w-xs mt-1.5"
+                  id="wheel-currency"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value.toUpperCase().slice(0, 3))}
+                  placeholder={currencyReady ? 'e.g. USD' : ''}
+                  className="h-12 w-32 uppercase"
+                  maxLength={3}
                 />
-              </div>
-
-              <div>
-                <Label htmlFor="wheel-driver-notes">Driver notes</Label>
-                <Textarea
-                  id="wheel-driver-notes"
-                  rows={2}
-                  value={driverNotes}
-                  onChange={(e) => setDriverNotes(e.target.value)}
-                  placeholder="Anything else a booker should know"
-                  className="mt-1.5"
-                />
-              </div>
-
-              <div>
-                <Label className="mb-1.5 block">More photos</Label>
-                <div className="flex flex-wrap gap-2">
-                  {extraPhotos.map((p, i) => (
-                    <div key={p.storagePath} className="relative w-20 h-20 rounded-lg overflow-hidden border">
-                      <img src={p.fileUrl} alt="" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeExtraPhoto(i)}
-                        className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5 hover:bg-destructive hover:text-destructive-foreground"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                  {extraPhotos.length < MAX_EXTRA_PHOTOS && (
-                    <label className="w-20 h-20 rounded-lg border-2 border-dashed border-border hover:border-primary/60 flex items-center justify-center cursor-pointer">
-                      {uploadingExtra ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      ) : (
-                        <ImagePlus className="w-4 h-4 text-muted-foreground" />
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={uploadingExtra}
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) addExtraPhoto(f); e.target.value = ''; }}
-                      />
-                    </label>
-                  )}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">Up to {MAX_EXTRA_PHOTOS} more, alongside the main photo.</p>
-              </div>
-
-              {businesses.length > 1 && (
-                <div>
-                  <Label htmlFor="wheel-books">Books</Label>
-                  <p className="text-xs text-muted-foreground mb-1.5">
-                    Which of your businesses this seed's bookings go into. Can be changed later, until its first booking.
-                  </p>
-                  <Select value={selectedCompanyId ?? undefined} onValueChange={setSelectedCompanyId}>
-                    <SelectTrigger id="wheel-books" className="max-w-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {businesses.map((b) => (
-                        <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div>
-                <Label htmlFor="wheel-whisperer">Whisperer commission %</Label>
-                <p className="text-xs text-muted-foreground mb-1.5">
-                  Comes out of your share, never added on top of what the buyer pays. Leave blank for none.
+                <p className="text-xs text-muted-foreground self-center">
+                  Three-letter code. Your prices always show in this currency.
                 </p>
-                <Input
-                  id="wheel-whisperer"
-                  type="number"
-                  min="0"
-                  max="30"
-                  step="1"
-                  value={whispererPercent ?? ''}
-                  onChange={(e) => setWhispererPercent(e.target.value === '' ? null : Number(e.target.value))}
-                  className="max-w-xs"
-                />
               </div>
+            </div>
 
-              <div>
-                <Label htmlFor="wheel-tags">Tags</Label>
-                <Input
-                  id="wheel-tags"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="Comma-separated"
-                  className="mt-1.5 max-w-xs"
+            <div className="space-y-3">
+              {visibleRates.map((p) => (
+                <div key={p.column} className="flex items-center gap-3">
+                  <Label htmlFor={p.column} className="w-28 shrink-0 text-sm">{p.label}</Label>
+                  <Input
+                    id={p.column}
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="0.01"
+                    value={rates[p.column] ?? ''}
+                    onChange={(e) => setRates((prev) => ({ ...prev, [p.column]: e.target.value }))}
+                    placeholder="—"
+                    className="h-12"
+                  />
+                </div>
+              ))}
+            </div>
+            {!showAllRates && (
+              <Button variant="link" size="sm" className="px-0 mt-2" onClick={() => setShowAllRates(true)}>
+                Show all rate options
+              </Button>
+            )}
+          </section>
+
+          {/* 6. Availability and the licence confirmation ---------------- */}
+          <section className="mb-7">
+            <h2 className="text-lg font-semibold mb-3">6. Last thing</h2>
+
+            <div className="flex items-center gap-3 mb-5">
+              <Checkbox
+                id="wheel-available"
+                checked={available}
+                onCheckedChange={(v) => setAvailable(v === true)}
+                className="w-6 h-6"
+              />
+              <Label htmlFor="wheel-available" className="text-base">
+                Available for bookings now
+              </Label>
+            </div>
+
+            <div className="rounded-xl border-2 border-amber-500/40 bg-amber-500/5 p-4">
+              <div className="flex gap-3">
+                <Checkbox
+                  id="wheel-licence"
+                  checked={licenceConfirmed}
+                  onCheckedChange={(v) => setLicenceConfirmed(v === true)}
+                  className="w-6 h-6 mt-0.5 shrink-0"
                 />
+                <Label htmlFor="wheel-licence" className="text-sm leading-relaxed cursor-pointer">
+                  {OPERATOR_LICENCE_CONFIRMATION}
+                </Label>
               </div>
-            </CollapsibleContent>
-          </Collapsible>
+              {!licenceConfirmed && (
+                <p className="text-xs text-muted-foreground mt-3 ml-9">
+                  You have to tick this before you can register the vehicle.
+                </p>
+              )}
+            </div>
+          </section>
 
-          <div className="hidden md:block pt-2">
-            <PlantButton
-              requiredCount={6}
-              completedCount={completed}
-              missingReason={missingReason}
-              submitting={submitting}
-              onClick={handlePlant}
-            />
-          </div>
-        </div>
-
-        <div className="hidden md:block">
-          <div className="sticky top-6">{previewCard}</div>
-        </div>
-      </div>
-
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-background border-t px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-2">
-        <Sheet>
-          <SheetTrigger asChild>
-            <button type="button" className="w-full flex items-center gap-2 text-xs text-muted-foreground">
-              <Eye className="w-3.5 h-3.5" /> Preview how it will look
-            </button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
-            {previewCard}
-          </SheetContent>
-        </Sheet>
-        <PlantButton
-          requiredCount={6}
-          completedCount={completed}
-          missingReason={missingReason}
-          submitting={submitting}
-          onClick={handlePlant}
-        />
-      </div>
+          <PlantButton
+            requiredCount={requiredCount}
+            completedCount={completed}
+            missingReason={missingReason}
+            submitting={submitting}
+            onClick={handlePlant}
+            label="Register vehicle"
+          />
+        </>
+      )}
     </div>
   );
 }

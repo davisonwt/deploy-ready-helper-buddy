@@ -149,6 +149,7 @@ export const SowHandPage = lazy(() => import('@/pages/sow/SowHandPage'));
 export const HandSeedDetailPage = lazy(() => import('@/pages/HandSeedDetailPage'));
 export const SowWheelPage = lazy(() => import('@/pages/sow/SowWheelPage'));
 export const WheelSeedDetailPage = lazy(() => import('@/pages/WheelSeedDetailPage'));
+export const SleepingSeedsPage = lazy(() => import('@/pages/SleepingSeedsPage'));
 export const SowPillowPage = lazy(() => import('@/pages/sow/SowPillowPage'));
 export const PillowSeedDetailPage = lazy(() => import('@/pages/PillowSeedDetailPage'));
 export const RegisterWanderingPage = lazy(() => import('@/pages/RegisterWanderingPage'));

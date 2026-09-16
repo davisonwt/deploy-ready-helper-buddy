@@ -86,6 +86,7 @@ import {
   WheelSeedDetailPage,
   SowPillowPage,
   PillowSeedDetailPage,
+  SleepingSeedsPage,
   RegisterWanderingPage,
   StorePage,
   PrivacyPage,
@@ -235,6 +236,9 @@ const AppRoutes = () => (
     } />
     <Route path="/seed/wheel/:id" element={
       <Suspense fallback={<LoadingFallback />}><WheelSeedDetailPage /></Suspense>
+    } />
+    <Route path="/sleeping" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SleepingSeedsPage /></Suspense></ProtectedRoute>
     } />
     <Route path="/sow/pillow" element={
       <ProtectedRoute><RequireSettlementConsent><Suspense fallback={<LoadingFallback />}><SowPillowPage /></Suspense></RequireSettlementConsent></ProtectedRoute>

@@ -31,6 +31,10 @@ export const COCKPIT_NAV: CockpitNavItem[] = [
   // visible nav item, not buried under Tribal Gardens.
   { label: 'Live Now', sub: 'Join a live session happening now', emoji: '🔴', path: '/live-now', color: '#e11d48' },
   { label: 'Tribal Gardens', sub: 'All tribal seeds & orchards', emoji: '🌳', path: '/stalls-feed', color: '#0d9488' },
+  // Sleeping Seeds, 2026-09-16: the proximity directory for the three
+  // service kinds -- Wheels, Pillows, Hands. Open to every logged-in
+  // member, not gated.
+  { label: 'Sleeping Seeds', sub: 'Vehicles, stays & hands near you', emoji: '🛞', path: '/sleeping', color: '#f59e0b' },
   // Wandering Hearts now has its own stall (S2G-run, phase 1) -- points
   // there instead of /tribal-hearts for now; /tribal-hearts keeps working
   // on its own, phase 2 makes it the "Live circle" plaque's real target
