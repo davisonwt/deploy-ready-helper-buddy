@@ -237,9 +237,15 @@ export default function SowWheelPage() {
   const currencyValid = /^[A-Z]{3}$/.test(currency.trim().toUpperCase());
   const locationReady = baseLocation.trim().length > 0;
 
-  const requiredCount = 6;
-  const completed = [typeReady, coverReady, titleReady, rateReady, currencyValid, locationReady]
-    .filter(Boolean).length;
+  // The licence confirmation is a REQUIRED item, not a side condition.
+  // PlantButton derives its disabled state purely from completed vs
+  // required, so leaving it out of the count would leave the button
+  // clickable with the box unticked.
+  const requiredCount = 7;
+  const completed = [
+    typeReady, coverReady, titleReady, rateReady,
+    currencyValid, locationReady, licenceConfirmed,
+  ].filter(Boolean).length;
 
   const missingReason = useMemo(() => {
     if (!typeReady) return 'Pick what kind of vehicle it is.';
