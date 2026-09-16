@@ -33,6 +33,8 @@ const TYPES = [
 ] as const;
 
 const BASE_TOWN = 'Bethlehem, South Africa';
+/** Roughly 230 km from BASE_TOWN, so distance sorting has something to sort. */
+const FAR_TOWN = 'Bloemfontein, South Africa';
 const CURRENCY = 'EUR'; // deliberately not USD, so "native currency" is provable
 
 async function login(page: Page, email: string, pass: string) {
@@ -56,7 +58,7 @@ async function setLocationByTyping(page: Page, place: string) {
 async function registerVehicle(
   page: Page,
   t: typeof TYPES[number],
-  opts: { tickLicence: boolean; town?: string },
+  opts: { tickLicence: boolean; town?: string; title?: string },
 ) {
   await page.goto('/sow/wheel', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: /Register your vehicle/i })).toBeVisible({ timeout: 20000 });
@@ -65,7 +67,7 @@ async function registerVehicle(
 
   await page.locator('input[type="file"]').first().setInputFiles(COVER);
   await expect(page.locator('#wheel-title')).toBeVisible({ timeout: 20000 });
-  await page.fill('#wheel-title', `QA ${t.label} ${STAMP}`);
+  await page.fill('#wheel-title', opts.title ?? `QA ${t.label} ${STAMP}`);
   await page.fill('#wheel-desc', `QA Phase 1 listing for ${t.value}.`);
 
   await page.fill('input#wheel-currency', CURRENCY);
@@ -133,24 +135,54 @@ test.describe.serial('Phase 1 - Sleeping Seeds + Sleeping Wheels', () => {
     await expect(page.getByText('Payment is processed in USD', { exact: false })).toHaveCount(0);
   });
 
-  // --- 2 + 3. appear in the Wheels tab, nearest first -----------------------
-  test('2+3. all five appear in the Wheels tab, sorted nearest first', async ({ page }) => {
+  // --- 2. all five appear in the Wheels tab --------------------------------
+  test('2. all five appear in the Wheels tab', async ({ page }) => {
     await login(page, EMAIL, PASS);
     await setLocationByTyping(page, BASE_TOWN);
 
     for (const t of TYPES) {
       await expect(page.getByText(`QA ${t.label} ${STAMP}`)).toBeVisible({ timeout: 30000 });
     }
+  });
 
-    // Distance sort: read every "N km away" in DOM order and assert it is
-    // non-decreasing.
-    const texts = await page.locator('text=/away$/').allTextContents();
-    const km = texts
+  // --- 3. distance sort ----------------------------------------------------
+  // All five above share one town, so they all read 0.0 away and prove
+  // nothing about ordering. Register a sixth in a town roughly 230 km off
+  // and widen the radius, so there are genuinely different distances to sort.
+  test('3. distance sort is correct', async ({ page }) => {
+    await login(page, EMAIL, PASS);
+    const farTitle = `QA Far ${STAMP}`;
+    const btn = await registerVehicle(page, TYPES[0], {
+      tickLicence: true,
+      town: FAR_TOWN,
+      title: farTitle,
+    });
+    await expect(btn).toBeEnabled({ timeout: 20000 });
+    await btn.click();
+    await page.waitForURL(/\/seed\/wheel\/[0-9a-f-]+$/, { timeout: 60000 });
+
+    await setLocationByTyping(page, BASE_TOWN);
+
+    // Widen to the largest radius so the far listing is inside it.
+    await page.locator('#radius').click();
+    await page.getByRole('option').last().click();
+
+    await expect(page.getByText(farTitle)).toBeVisible({ timeout: 30000 });
+
+    // Read every distance line in DOM order; it must be non-decreasing and
+    // must contain more than one distinct value.
+    const texts = await page.locator('p', { hasText: /\d\s*(km|mi)\s*away/ }).allTextContents();
+    const dist = texts
       .map((s) => Number(/([\d.]+)\s*(km|mi)\s*away/.exec(s)?.[1]))
       .filter((n) => Number.isFinite(n));
-    expect(km.length).toBeGreaterThan(1);
-    const sorted = [...km].sort((a, b) => a - b);
-    expect(km).toEqual(sorted);
+
+    expect(dist.length).toBeGreaterThan(1);
+    expect(new Set(dist).size).toBeGreaterThan(1);
+    expect(dist).toEqual([...dist].sort((a, b) => a - b));
+
+    // And the far one is genuinely last.
+    const titles = await page.locator('h3').allTextContents();
+    expect(titles[titles.length - 1]).toContain(farTitle);
   });
 
   // --- 4. filters ----------------------------------------------------------
