@@ -55,13 +55,21 @@ export default function MyListingsPage() {
 
   const rows: Row[] = useMemo(() => {
     return ((seeds ?? []) as any[])
-      .filter((s) => SERVICE_KINDS.includes(s?.kind) && s?.__table === 'products')
+      // kind alone is enough: a legacy `seeds` row always has kind null, so
+      // anything tagged wheel/pillow/hand is a products row. Do NOT also
+      // require __table here -- splitDashboardRows only stamps that on music,
+      // so requiring it hid every listing.
+      .filter((s) => SERVICE_KINDS.includes(s?.kind))
       .map((s) => ({
         id: s.id,
         kind: s.kind as ServiceKind,
         title: s.title || 'Untitled listing',
         description: s.description,
-        cover: s.cover_image_url || (Array.isArray(s.image_urls) ? s.image_urls[0] : null),
+        // The two fetch paths name this differently: `images` on the RPC
+        // path, cover_image_url/image_urls on the direct one.
+        cover: (Array.isArray(s.images) ? s.images[0] : null)
+          || s.cover_image_url
+          || (Array.isArray(s.image_urls) ? s.image_urls[0] : null),
       }));
   }, [seeds]);
 

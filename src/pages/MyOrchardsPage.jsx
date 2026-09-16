@@ -63,7 +63,7 @@ const SERVICE_KINDS = new Set(['wheel', 'pillow', 'hand'])
  * Pillow and Hand have no structured detail table yet, so they are not
  * offered the option rather than being told a lie about it.
  */
-const canPark = (row) => row?.kind === 'wheel' && row?.__table === 'products'
+const canPark = (row) => row?.kind === 'wheel'
 
 export default function MyOrchardsPage() {
   const { user } = useAuth()
@@ -247,7 +247,12 @@ export default function MyOrchardsPage() {
     // lives in `products`, so the old tableMap lookup fired at `seeds`,
     // matched nothing, and still reported success. deleteRow now also throws
     // when zero rows are removed.
-    const table = card.seedRow?.__table || tableMap[prefix]
+    // A service listing always lives in `products`, whichever fetch path
+    // produced it. splitDashboardRows only stamps __table on music rows, so
+    // kind is the reliable signal here and __table is the fallback.
+    const table = (SERVICE_KINDS.has(card.seedRow?.kind) && 'products')
+      || card.seedRow?.__table
+      || tableMap[prefix]
     try {
       await deleteRow(supabase, table, card.rawId)
       toast.success(`"${card.title}" deleted`)
