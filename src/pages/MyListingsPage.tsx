@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, Eye, Pencil, Trash2, Loader2, EyeOff, Share2 } from 'lucide-react';
 import { vehicleTypeLabel } from '@/lib/sleeping/wheelOptions';
 import { stayTypeLabel } from '@/lib/sleeping/pillowOptions';
+import { serviceCategoryLabel } from '@/lib/sleeping/handOptions';
 import ShareSeedDialog from '@/components/share/ShareSeedDialog';
 
 /**
@@ -58,6 +59,7 @@ export default function MyListingsPage() {
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
   const [vehicleTypes, setVehicleTypes] = useState<Record<string, string>>({});
   const [stayTypes, setStayTypes] = useState<Record<string, string>>({});
+  const [handCategories, setHandCategories] = useState<Record<string, string>>({});
 
   const rows: Row[] = useMemo(() => {
     return ((seeds ?? []) as any[])
@@ -81,18 +83,21 @@ export default function MyListingsPage() {
 
   const wheelIds = useMemo(() => rows.filter((r) => r.kind === 'wheel').map((r) => r.id), [rows]);
   const pillowIds = useMemo(() => rows.filter((r) => r.kind === 'pillow').map((r) => r.id), [rows]);
+  const handIds = useMemo(() => rows.filter((r) => r.kind === 'hand').map((r) => r.id), [rows]);
 
   // Availability and vehicle type live in wheel_seed_details, not in the
   // products row useMyContent returns, so they are fetched alongside.
   const wheelKey = wheelIds.join(',');
   const pillowKey = pillowIds.join(',');
+  const handKey = handIds.join(',');
   useEffect(() => {
     let alive = true;
-    if (wheelIds.length === 0 && pillowIds.length === 0) return;
+    if (wheelIds.length === 0 && pillowIds.length === 0 && handIds.length === 0) return;
     (async () => {
       const avail: Record<string, boolean> = {};
       const vTypes: Record<string, string> = {};
       const sTypes: Record<string, string> = {};
+      const hCats: Record<string, string> = {};
 
       if (wheelIds.length) {
         const { data } = await supabase
@@ -114,20 +119,33 @@ export default function MyListingsPage() {
           sTypes[d.product_id] = d.stay_type;
         }
       }
+      if (handIds.length) {
+        const { data } = await supabase
+          .from('hand_seed_details')
+          .select('product_id, availability, service_category')
+          .in('product_id', handIds);
+        for (const d of (data ?? []) as any[]) {
+          avail[d.product_id] = d.availability !== false;
+          hCats[d.product_id] = d.service_category;
+        }
+      }
       if (!alive) return;
       setAvailability(avail);
       setVehicleTypes(vTypes);
       setStayTypes(sTypes);
+      setHandCategories(hCats);
     })();
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wheelKey, pillowKey]);
+  }, [wheelKey, pillowKey, handKey]);
 
   const toggleAvailability = async (row: Row) => {
     const next = !(availability[row.id] ?? true);
     setBusyId(row.id);
     try {
-      const table = row.kind === 'pillow' ? 'pillow_seed_details' : 'wheel_seed_details';
+      const table = row.kind === 'pillow' ? 'pillow_seed_details'
+        : row.kind === 'hand' ? 'hand_seed_details'
+        : 'wheel_seed_details';
       const { data, error } = await supabase
         .from(table)
         .update({ availability: next, updated_at: new Date().toISOString() })
@@ -163,12 +181,7 @@ export default function MyListingsPage() {
   };
 
   const edit = (row: Row) => {
-    // Each kind edits in its OWN sow form, in edit mode. Hand has no
-    // structured detail table yet, so it has no edit mode to send anyone to.
-    if (row.kind === 'hand') {
-      toast.info('Editing a Hand listing is not built yet. You can delete it and sow it again.');
-      return;
-    }
+    // Each kind edits in its OWN sow form, in edit mode. All three have one.
     navigate(`${KIND_META[row.kind].sowPath}?edit=${row.id}`);
   };
 
@@ -209,7 +222,7 @@ export default function MyListingsPage() {
           {rows.map((row) => {
             const meta = KIND_META[row.kind];
             const isWheel = row.kind === 'wheel';
-    const hasAvailability = row.kind === 'wheel' || row.kind === 'pillow';
+    const hasAvailability = true; // all three kinds now carry an availability flag
             const isAvailable = availability[row.id] ?? true;
             const busy = busyId === row.id;
 
@@ -231,7 +244,9 @@ export default function MyListingsPage() {
                           ? vehicleTypeLabel(vehicleTypes[row.id])
                           : row.kind === 'pillow' && stayTypes[row.id]
                             ? stayTypeLabel(stayTypes[row.id])
-                            : meta.label}
+                            : row.kind === 'hand' && handCategories[row.id]
+                              ? serviceCategoryLabel(handCategories[row.id])
+                              : meta.label}
                       </Badge>
                     </div>
 

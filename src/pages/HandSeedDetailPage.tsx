@@ -1,3 +1,8 @@
+import { formatNativeAmount, paymentCurrencyNoteFor } from '@/lib/sleeping/currency';
+import { handRatesOn, serviceCategoryLabel, BACKGROUND_CHECK_DISCLAIMER } from '@/lib/sleeping/handOptions';
+import { formatDistance, haversineMetres, unitForViewer } from '@/lib/sleeping/units';
+import { useWorldwideLocation } from '@/hooks/useWorldwideLocation';
+import SignedImg from '@/components/media/SignedImg';
 import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -53,6 +58,15 @@ export default function HandSeedDetailPage() {
   const [note, setNote] = useState('');
   const [submittingBooking, setSubmittingBooking] = useState(false);
 
+  // Structured service detail. Referee DETAILS are deliberately not fetched
+  // here: RLS would return zero rows to a browsing member anyway, and the
+  // count comes from a SECURITY DEFINER function that returns a number only.
+  const [hand, setHand] = useState<any | null>(null);
+  const [referenceCount, setReferenceCount] = useState<number | null>(null);
+  const [visibleReferences, setVisibleReferences] = useState<any[]>([]);
+  const { location: viewerLocation } = useWorldwideLocation();
+  const distanceUnit = unitForViewer();
+
   const [wanderingProfile, setWanderingProfile] = useState<any | null>(null);
   const [loadingWanderingProfile, setLoadingWanderingProfile] = useState(true);
 
@@ -67,6 +81,21 @@ export default function HandSeedDetailPage() {
       if (error || !row) { setNotFound(true); setLoading(false); return; }
       setProduct(row);
       setLoading(false);
+
+      const { data: detail } = await supabase
+        .from('hand_seed_details').select('*').eq('product_id', row.id).maybeSingle();
+      if (!cancelled) setHand(detail ?? null);
+
+      const { data: count } = await supabase.rpc('hand_reference_count', { _product_id: row.id });
+      if (!cancelled) setReferenceCount(typeof count === 'number' ? count : null);
+
+      // This returns rows ONLY for the owner or someone who has booked. For
+      // everyone else RLS gives back an empty set, which is the point.
+      const { data: refs } = await supabase
+        .from('hand_seed_references')
+        .select('id, referee_name, relationship, contact')
+        .eq('product_id', row.id);
+      if (!cancelled) setVisibleReferences((refs ?? []) as any[]);
     })();
     return () => { cancelled = true; };
   }, [id]);
@@ -112,7 +141,21 @@ export default function HandSeedDetailPage() {
   const details = (product.service_details as Record<string, any>) ?? {};
   const rateUnit: string = details.rate_unit;
   const rateUnitLabel = RATE_UNIT_LABEL[rateUnit] ?? rateUnit;
-  const rateText = `$${Number(product.price ?? 0).toFixed(2)} ${rateUnitLabel}`;
+  // Rates show in the LISTING's own currency and are never converted.
+  const listingCurrency: string = hand?.currency ?? 'USD';
+  const structuredRates = hand ? handRatesOn(hand) : [];
+  const rateText = structuredRates.length === 0
+    ? `${formatNativeAmount(Number(product.price ?? 0), listingCurrency)} ${rateUnitLabel ?? ''}`.trim()
+    : '';
+
+  const distanceM = (viewerLocation && hand?.base_lat != null && hand?.base_lng != null)
+    ? haversineMetres(viewerLocation.lat, viewerLocation.lng, Number(hand.base_lat), Number(hand.base_lng))
+    : null;
+
+  const handGallery: string[] = [
+    hand?.work_sample_image_url,
+    ...((hand?.gallery_urls ?? []) as string[]),
+  ].filter(Boolean);
   const isCallout = rateUnit === 'callout_quote';
 
   const areaText = details.area_mode === 'you_come_to_me'
@@ -230,7 +273,101 @@ export default function HandSeedDetailPage() {
             <p className="text-sm text-muted-foreground mt-0.5">by {sowerName}</p>
           </div>
 
-          <p className="text-lg font-semibold">{rateText}</p>
+          {hand?.service_category && (
+            <Badge variant="outline">{serviceCategoryLabel(hand.service_category)}</Badge>
+          )}
+
+          {distanceM != null && (
+            <p className="text-sm font-medium text-primary">
+              {formatDistance(distanceM, distanceUnit)}
+            </p>
+          )}
+
+          {structuredRates.length > 0 ? (
+            <div className="rounded-lg border p-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                Rates in {listingCurrency}
+              </p>
+              <ul className="space-y-1">
+                {structuredRates.map((r) => (
+                  <li key={r.short} className="flex items-baseline justify-between gap-4">
+                    <span className="text-sm text-muted-foreground">{r.label}</span>
+                    <span className="text-lg font-semibold">
+                      {formatNativeAmount(r.amount, listingCurrency)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-lg font-semibold">{rateText}</p>
+          )}
+
+          {hand && (
+            <div className="space-y-1.5 text-sm">
+              <p><span className="text-muted-foreground">Experience: </span>
+                {hand.years_experience} {hand.years_experience === 1 ? 'year' : 'years'}</p>
+              {hand.qualification && (
+                <p><span className="text-muted-foreground">Qualification: </span>{hand.qualification}</p>
+              )}
+              {hand.licence_number && (
+                <p><span className="text-muted-foreground">Licence no: </span>{hand.licence_number}</p>
+              )}
+              {(hand.languages ?? []).length > 0 && (
+                <p><span className="text-muted-foreground">Languages: </span>{(hand.languages as string[]).join(', ')}</p>
+              )}
+              {hand.service_radius_m != null && (
+                <p><span className="text-muted-foreground">Travels up to: </span>
+                  {Math.round(hand.service_radius_m / 1000)} km</p>
+              )}
+            </div>
+          )}
+
+          {hand?.background_check_declared && (
+            <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3">
+              <p className="text-sm font-medium">
+                Says they have had a background check
+                {hand.background_check_by ? `: ${hand.background_check_by}` : ''}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">{BACKGROUND_CHECK_DISCLAIMER}</p>
+            </div>
+          )}
+
+          {/*
+            A COUNT, not a list. Referee details sit behind RLS and only
+            appear below once this viewer actually has a booking.
+          */}
+          {referenceCount != null && referenceCount > 0 && visibleReferences.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              {referenceCount} {referenceCount === 1 ? 'reference' : 'references'} available.
+              Their details are shared once you have a booking with this person.
+            </p>
+          )}
+
+          {visibleReferences.length > 0 && (
+            <div className="rounded-lg border p-3 space-y-2">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">References</p>
+              {visibleReferences.map((r) => (
+                <div key={r.id} className="text-sm">
+                  <p className="font-medium">{r.referee_name}</p>
+                  {r.relationship && <p className="text-muted-foreground text-xs">{r.relationship}</p>}
+                  <p className="text-xs">{r.contact}</p>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground pt-1">
+                Shared with you because you have a booking. Please treat these
+                details as private.
+              </p>
+            </div>
+          )}
+
+          {handGallery.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {handGallery.map((u, i) => (
+                <SignedImg key={`${u}-${i}`} src={u} alt="" className="h-24 w-24 shrink-0 rounded-lg border object-cover" />
+              ))}
+            </div>
+          )}
 
           {product.description && (
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{product.description}</p>
@@ -328,6 +465,14 @@ export default function HandSeedDetailPage() {
                     <span>${split ? split.total.toFixed(2) : '0.00'}</span>
                   </div>
                 </div>
+
+                {/*
+                  The listing prices in its own currency; the existing booking
+                  path charges in USD (PayPal) or ZAR (Paystack).
+                */}
+                <p className="text-xs text-muted-foreground">
+                  {paymentCurrencyNoteFor(listingCurrency, 'paypal')}
+                </p>
 
                 <Button
                   size="lg"

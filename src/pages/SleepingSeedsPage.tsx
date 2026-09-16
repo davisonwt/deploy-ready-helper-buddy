@@ -20,6 +20,10 @@ import {
   AMENITIES, PILLOW_RATE_PERIODS, STAY_TYPES, labelForAmenity,
   pillowRatesOn, stayTypeLabel,
 } from '@/lib/sleeping/pillowOptions';
+import {
+  COMMON_LANGUAGES, HAND_RATE_PERIODS, HOUSEHOLD_CATEGORIES,
+  PROFESSIONAL_CATEGORIES, handRatesOn, serviceCategoryLabel,
+} from '@/lib/sleeping/handOptions';
 
 type TabKey = 'wheels' | 'pillows' | 'hands';
 
@@ -75,6 +79,32 @@ interface PillowRow {
   created_at: string;
 }
 
+interface HandRow {
+  product_id: string;
+  title: string;
+  description: string | null;
+  cover_image_url: string | null;
+  front_image_url: string | null;
+  sower_name: string | null;
+  service_category: string;
+  is_professional: boolean;
+  qualification: string | null;
+  years_experience: number;
+  languages: string[] | null;
+  service_radius_m: number | null;
+  currency: string;
+  rate_hourly: number | null;
+  rate_per_job: number | null;
+  rate_daily: number | null;
+  rate_weekly: number | null;
+  rate_monthly: number | null;
+  base_location: string | null;
+  background_check_declared: boolean;
+  reference_count: number;
+  distance_m: number;
+  created_at: string;
+}
+
 interface ServiceRow {
   product_id: string;
   title: string;
@@ -115,6 +145,14 @@ export default function SleepingSeedsPage() {
   const [wheels, setWheels] = useState<WheelRow[]>([]);
   const [others, setOthers] = useState<ServiceRow[]>([]);
   const [pillows, setPillows] = useState<PillowRow[]>([]);
+  const [hands, setHands] = useState<HandRow[]>([]);
+
+  // Hands filters
+  const [professional, setProfessional] = useState<boolean | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [minYears, setMinYears] = useState<number | null>(null);
+  const [handRates, setHandRates] = useState<string[]>([]);
+  const [langFilter, setLangFilter] = useState<string[]>([]);
 
   // Pillows filters
   const [stayTypes, setStayTypes] = useState<string[]>([]);
@@ -166,6 +204,19 @@ export default function SleepingSeedsPage() {
         });
         if (error) throw error;
         setPillows((data ?? []) as PillowRow[]);
+      } else if (tab === 'hands') {
+        const { data, error } = await supabase.rpc('sleeping_hands_near', {
+          _lat: location.lat,
+          _lng: location.lng,
+          _radius_m: radiusM,
+          _professional: professional,
+          _categories: categories.length ? categories : null,
+          _min_years: minYears,
+          _languages: langFilter.length ? langFilter : null,
+          _rate_periods: handRates.length ? handRates : null,
+        });
+        if (error) throw error;
+        setHands((data ?? []) as HandRow[]);
       } else {
         const { data, error } = await supabase.rpc('sleeping_services_near', {
           _kind: TAB_TO_KIND[tab],
@@ -181,10 +232,12 @@ export default function SleepingSeedsPage() {
       setWheels([]);
       setOthers([]);
       setPillows([]);
+      setHands([]);
     } finally {
       setLoading(false);
     }
-  }, [location, radiusM, tab, vehicleTypes, useTags, ratePeriods, stayTypes, amenityFilter, pillowRates, minSleeps]);
+  }, [location, radiusM, tab, vehicleTypes, useTags, ratePeriods, stayTypes, amenityFilter, pillowRates, minSleeps,
+      professional, categories, minYears, handRates, langFilter]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -192,6 +245,8 @@ export default function SleepingSeedsPage() {
   const activeFilterCount = vehicleTypes.length + useTags.length + ratePeriods.length;
   const pillowFilterCount = stayTypes.length + amenityFilter.length + pillowRates.length
     + (minSleeps != null ? 1 : 0);
+  const handFilterCount = categories.length + handRates.length + langFilter.length
+    + (minYears != null ? 1 : 0) + (professional != null ? 1 : 0);
 
   return (
     <div className="container max-w-5xl mx-auto px-4 py-6">
@@ -351,6 +406,108 @@ export default function SleepingSeedsPage() {
           </div>
         )}
 
+        {tab === 'hands' && status === 'ready' && (
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters((v) => !v)}
+              className="gap-2"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filters
+              {handFilterCount > 0 && (
+                <Badge variant="secondary" className="ml-1">{handFilterCount}</Badge>
+              )}
+            </Button>
+
+            {showFilters && (
+              <div className="mt-3 rounded-xl border bg-card p-4 space-y-4">
+                <div>
+                  <p className="text-sm font-medium mb-2">Kind of work</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { label: 'Trades & professions', value: true },
+                      { label: 'Around the home', value: false },
+                    ].map((o) => {
+                      const on = professional === o.value;
+                      return (
+                        <button
+                          key={o.label}
+                          type="button"
+                          onClick={() => setProfessional(on ? null : o.value)}
+                          aria-pressed={on}
+                          className={`min-h-10 px-3 rounded-full border text-sm transition ${
+                            on
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-background hover:bg-muted border-border'
+                          }`}
+                        >
+                          {o.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <FilterGroup
+                  title="Service"
+                  options={[...PROFESSIONAL_CATEGORIES, ...HOUSEHOLD_CATEGORIES]
+                    .map((c) => ({ value: c.value, label: c.label }))}
+                  selected={categories}
+                  onToggle={(v) => toggle(categories, v, setCategories)}
+                />
+                <FilterGroup
+                  title="Rate period"
+                  options={HAND_RATE_PERIODS.map((p) => ({ value: p.filterValue, label: p.label }))}
+                  selected={handRates}
+                  onToggle={(v) => toggle(handRates, v, setHandRates)}
+                />
+                <FilterGroup
+                  title="Language"
+                  options={COMMON_LANGUAGES.map((l) => ({ value: l, label: l }))}
+                  selected={langFilter}
+                  onToggle={(v) => toggle(langFilter, v, setLangFilter)}
+                />
+                <div>
+                  <p className="text-sm font-medium mb-2">At least this many years</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 3, 5, 10].map((n) => {
+                      const on = minYears === n;
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setMinYears(on ? null : n)}
+                          aria-pressed={on}
+                          className={`min-h-10 px-3 rounded-full border text-sm transition ${
+                            on
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-background hover:bg-muted border-border'
+                          }`}
+                        >
+                          {n}+
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {handFilterCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setProfessional(null); setCategories([]);
+                      setMinYears(null); setHandRates([]); setLangFilter([]);
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         <TabsContent value={tab} forceMount>
           {status !== 'ready' && (
             <p className="text-sm text-muted-foreground py-8 text-center">
@@ -379,6 +536,14 @@ export default function SleepingSeedsPage() {
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
                     {wheels.map((w) => <WheelCard key={w.product_id} row={w} unit={unit} />)}
+                  </div>
+                )
+              ) : tab === 'hands' ? (
+                hands.length === 0 ? (
+                  <EmptyState {...empty} />
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {hands.map((h) => <HandCard key={h.product_id} row={h} unit={unit} />)}
                   </div>
                 )
               ) : tab === 'pillows' ? (
@@ -551,6 +716,61 @@ function PillowCard({ row, unit }: { row: PillowRow; unit: ReturnType<typeof uni
 
         <p className="text-xs text-muted-foreground pt-1">
           {row.sower_name ?? 'A host'} · listed {localDate(row.created_at)}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+function HandCard({ row, unit }: { row: HandRow; unit: ReturnType<typeof unitForViewer> }) {
+  const rates = handRatesOn(row as unknown as Record<string, unknown>);
+  const langs = row.languages ?? [];
+  const cover = row.front_image_url || row.cover_image_url;
+
+  return (
+    <Link
+      to={`/seed/hand/${row.product_id}`}
+      className="rounded-xl border bg-card overflow-hidden hover:border-primary transition block"
+    >
+      {cover && (
+        <SignedImg src={cover} alt="" className="w-full aspect-[16/10] object-cover" loading="lazy" />
+      )}
+      <div className="p-4 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold leading-tight">{row.title}</h3>
+          <Badge variant="secondary" className="shrink-0">{serviceCategoryLabel(row.service_category)}</Badge>
+        </div>
+
+        <p className="text-sm text-primary font-medium">
+          {formatDistance(row.distance_m, unit)}
+          {row.base_location ? ` · ${row.base_location}` : ''}
+        </p>
+
+        <p className="text-xs text-muted-foreground">
+          {row.years_experience} {row.years_experience === 1 ? 'year' : 'years'} experience
+          {langs.length > 0 ? ` · ${langs.slice(0, 3).join(', ')}` : ''}
+        </p>
+
+        {/* A count only. Referee details are never in this payload. */}
+        {row.reference_count > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {row.reference_count} {row.reference_count === 1 ? 'reference' : 'references'} available
+          </p>
+        )}
+
+        {rates.length > 0 && (
+          <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1">
+            {rates.map((r) => (
+              <span key={r.short} className="text-sm">
+                <strong>{formatNativeAmount(r.amount, row.currency)}</strong>
+                <span className="text-muted-foreground"> / {r.short}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground pt-1">
+          {row.sower_name ?? 'A member'} · listed {localDate(row.created_at)}
         </p>
       </div>
     </Link>
