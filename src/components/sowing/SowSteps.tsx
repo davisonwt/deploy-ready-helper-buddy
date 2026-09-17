@@ -69,7 +69,11 @@ export default function SowSteps({ steps, current, startHint }: Props) {
       </ol>
 
       <p className="mt-2 text-xs text-muted-foreground">
-        {doneCount === 0 ? (
+        {!steps[0]?.done ? (
+          // Keyed on the first step, not on the count: the location field is
+          // prefilled from the member's wandering role, so a form nobody has
+          // touched can already show a step done. The sentence that has to
+          // survive that is the one naming the price step.
           <>
             {total} steps. {startHint}
             {rateStep > 0 && <> — we ask <strong>what you charge</strong> at step {rateStep}.</>}
