@@ -8,7 +8,9 @@ import { test, expect, type Page } from '@playwright/test';
 
 const E = process.env.TEST_GOSAT_EMAIL || '', P = process.env.TEST_GOSAT_PASSWORD || '';
 const VIEWPORTS = [{ w: 390, h: 844, n: 'mobile-390' }, { w: 1280, h: 720, n: 'desktop-1280' }];
-const FORMS = ['/sow/hand', '/sow/pillow', '/sow/wheel'];
+// /my-listings is not a form, but it is where a member reaches every
+// control on what they have listed, so the same rule applies.
+const FORMS = ['/sow/hand', '/sow/pillow', '/sow/wheel', '/my-listings'];
 const NAGS = /Enable Notifications|Enable sound|payout|Set up payouts/i;
 
 async function login(page: Page) {
@@ -114,7 +116,7 @@ test.describe.serial('Global overlays keep off the sow forms', () => {
     await login(page);
 
     const results: Record<string, boolean> = {};
-    for (const route of ['/my-listings', '/sleeping', '/dashboard']) {
+    for (const route of ['/sleeping', '/seed/wheel/819a5b71-48a4-40c5-9fc7-f516aa82c348']) {
       await page.goto(route, { waitUntil: 'domcontentloaded' });
       await page.evaluate(() => {
         try { localStorage.removeItem('notification-banner-dismissed'); } catch { /* ignore */ }
