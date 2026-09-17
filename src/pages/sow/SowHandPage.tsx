@@ -22,12 +22,13 @@ import { getPreset } from '@/lib/store/presets';
 
 import {
   COMMON_LANGUAGES, HAND_LEGACY_RATE_UNIT, HAND_LEGAL_CONFIRMATION,
-  HAND_PRIMARY_RATE_ORDER, HAND_RATE_PERIODS, HOUSEHOLD_CATEGORIES,
+  HAND_PRIMARY_RATE_ORDER, HAND_RATE_PERIODS, HAND_TRAVEL_CHARGES, HOUSEHOLD_CATEGORIES,
   PROFESSIONAL_CATEGORIES, QUALIFICATION_LABEL, REFERENCE_CONSENT_NOTE,
   isProfessionalCategory, type ServiceCategory,
 } from '@/lib/sleeping/handOptions';
 import { geocodeBaseLocation } from '@/lib/sleeping/geocodeBase';
 import SowSteps from '@/components/sowing/SowSteps';
+import { handTravelColumnsAvailable } from '@/lib/sleeping/handTravelSupport';
 
 const MAX_GALLERY_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
@@ -139,6 +140,10 @@ export default function SowHandPage() {
   const [languages, setLanguages] = useState<string[]>([]);
   const [radiusKm, setRadiusKm] = useState('30');
   const [rates, setRates] = useState<RateState>({});
+  /** Call-out and per-km. Kept apart from `rates` on purpose: neither one
+   *  satisfies "at least one rate", so they must not reach rateReady. */
+  const [travelRates, setTravelRates] = useState<RateState>({});
+  const [travelSupported, setTravelSupported] = useState(false);
   const [currency, setCurrency] = useState('');
   const [currencyReady, setCurrencyReady] = useState(false);
   const [baseLocation, setBaseLocation] = useState('');
@@ -231,6 +236,12 @@ export default function SowHandPage() {
         }
         if (Object.keys(loaded).length === 0 && p.price != null) loaded.rate_hourly = String(Number(p.price));
         setRates(loaded);
+
+        const loadedTravel: RateState = {};
+        for (const col of ['rate_callout', 'rate_per_km']) {
+          if (d[col] != null) loadedTravel[col] = String(Number(d[col]));
+        }
+        setTravelRates(loadedTravel);
       } catch (e: any) {
         if (!alive) return;
         console.error('[SowHandPage] could not load listing for edit', e);
@@ -304,6 +315,21 @@ export default function SowHandPage() {
       setUploadingGallery(false);
     }
   };
+
+  useEffect(() => {
+    let alive = true;
+    handTravelColumnsAvailable().then((ok) => { if (alive) setTravelSupported(ok); });
+    return () => { alive = false; };
+  }, []);
+
+  const numericTravel = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const [col, raw] of Object.entries(travelRates)) {
+      const n = Number(raw);
+      if (raw !== '' && Number.isFinite(n) && n > 0) out[col] = n;
+    }
+    return out;
+  }, [travelRates]);
 
   const numericRates = useMemo(() => {
     const out: Record<string, number> = {};
@@ -447,6 +473,12 @@ export default function SowHandPage() {
         rate_daily: numericRates.rate_daily ?? null,
         rate_weekly: numericRates.rate_weekly ?? null,
         rate_monthly: numericRates.rate_monthly ?? null,
+        // Only when the columns exist. Sending an unknown column fails the
+        // whole upsert, and the migration is applied by hand.
+        ...(travelSupported ? {
+          rate_callout: numericTravel.rate_callout ?? null,
+          rate_per_km: numericTravel.rate_per_km ?? null,
+        } : {}),
         currency: currency.trim().toUpperCase(),
         base_location: baseLocation.trim(),
         base_lat: baseLat,
@@ -803,6 +835,34 @@ export default function SowHandPage() {
                 </div>
               ))}
             </div>
+
+            {travelSupported && (
+              <div className="mt-5 rounded-xl border border-dashed p-3">
+                <p className="text-sm font-medium">Travel, if you charge for it</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Charged on top of the rate above, not instead of it. Leave blank if you do not charge for travel.
+                </p>
+                <div className="space-y-3">
+                  {HAND_TRAVEL_CHARGES.map((c) => (
+                    <div key={c.column} className="flex items-center gap-3">
+                      <Label htmlFor={c.column} className="w-28 shrink-0 text-sm">{c.label}</Label>
+                      <Input
+                        id={c.column}
+                        type="number"
+                        inputMode="decimal"
+                        min="0"
+                        step="0.01"
+                        value={travelRates[c.column] ?? ''}
+                        onChange={(e) => setTravelRates((prev) => ({ ...prev, [c.column]: e.target.value }))}
+                        placeholder="—"
+                        className="h-12"
+                      />
+                      <span className="hidden text-xs text-muted-foreground sm:inline">{c.hint}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
 
           {/* 6. References ------------------------------------------- */}

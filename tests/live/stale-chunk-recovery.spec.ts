@@ -1,60 +1,100 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
-// Verifies the stale-chunk auto-recovery path actually fires, against the
-// LIVE deployment -- not just "the code looks right by inspection." Two
-// independent listeners are supposed to catch this (see
-// src/lib/staleChunkReload.ts's own doc comment):
-//   1. main.tsx's `window.addEventListener('vite:preloadError', ...)`
-//   2. ErrorBoundary.tsx's componentDidCatch, for the same failure arriving
-//      through React's error-boundary path instead of the window event.
-// This test simulates path #1 directly (dispatching the exact event Vite's
-// own __vitePreload helper fires) -- the more realistic trigger, since it
-// doesn't require actually breaking a real chunk. A real stale chunk after
-// a genuine deploy exercises the identical two listeners either way.
-//
-// Run: npx playwright test --config=playwright.live.config.ts stale-chunk-recovery
+/**
+ * Does the stale-chunk recovery actually fire, or is it only present?
+ *
+ * Run: npx playwright test --config=playwright.live.config.ts stale-chunk-recovery
+ */
 
-test('stale chunk import triggers an automatic reload, not the crash screen', async ({ page }) => {
-  // NOTE on method: an earlier version of this test tried to spy on
-  // `window.location.reload` by patching `Location.prototype.reload` via
-  // `addInitScript`. Verified directly (throwaway diagnostic script) that
-  // Chromium does NOT let that patch intercept real `.reload()` calls --
-  // even a MANUAL `window.location.reload()` call after the same patch
-  // went unobserved. Location's operations are hardened against exactly
-  // this kind of spoofing. So this test lets a REAL reload happen and
-  // observes it via Playwright's own navigation/load events instead --
-  // the only way to actually prove the call fired, not just that the code
-  // leading up to it ran.
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(1500);
+const EMAIL = process.env.TEST_GOSAT_EMAIL || '';
+const PASS = process.env.TEST_GOSAT_PASSWORD || '';
+const HAND_ID = 'a81857e8-b6b9-4f42-b4ae-17be0eecdd1d';
+const GUARD = 'sow2grow:stale-chunk-reload-attempted';
 
-  const guardBefore = await page.evaluate(() => sessionStorage.getItem('sow2grow:stale-chunk-reload-attempted'));
-  expect(guardBefore, 'reload guard should be unset on a fresh tab').toBeNull();
+async function login(page: Page) {
+  for (let i = 0; i < 2; i++) {
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
+    await page.fill('input[type="email"]', EMAIL);
+    await page.fill('input[type="password"]', PASS);
+    await page.click('button[type="submit"]');
+    const ok = await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 30000 })
+      .then(() => true).catch(() => false);
+    if (ok) return;
+  }
+  throw new Error('login failed');
+}
 
-  const loadPromise = page.waitForEvent('load', { timeout: 15000 });
+/** Fail the first request for the hand detail chunk, like a stale deploy. */
+async function breakChunkOnce(page: Page, counter: { blocked: number }) {
+  await page.route(/HandSeedDetailPage-.*\.js/, async (route) => {
+    if (counter.blocked === 0) {
+      counter.blocked++;
+      await route.fulfill({ status: 404, contentType: 'text/plain', body: 'gone' });
+      return;
+    }
+    await route.continue();
+  });
+}
 
-  // The exact failure Vite's __vitePreload dispatches for a stale chunk --
-  // see staleChunkReload.ts's STALE_CHUNK_PATTERNS for the cross-browser
-  // message variants this must match.
-  await page.evaluate(() => {
-    const err = new Error('Failed to fetch dynamically imported module: https://sow2growapp.com/assets/SomePage-stalehash.js');
-    window.dispatchEvent(new CustomEvent('vite:preloadError', { detail: err, cancelable: true }));
+test.describe.serial('Stale chunk recovery', () => {
+  test.skip(!EMAIL || !PASS, 'The owner account is required.');
+  // Without this the app's service worker answers the chunk request itself
+  // and page.route never sees it, so the failure cannot be staged at all.
+  test.use({ serviceWorkers: 'block' });
+
+  test('1. with a clean tab it reloads and recovers', async ({ page }) => {
+    const counter = { blocked: 0 };
+    let loads = 0;
+    const consoleErrors: string[] = [];
+    page.on('load', () => loads++);
+    page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text().slice(0, 160)); });
+
+    await login(page);
+    await page.evaluate((k) => { try { sessionStorage.removeItem(k); } catch { /* ignore */ } }, GUARD);
+    await breakChunkOnce(page, counter);
+
+    loads = 0;
+    await page.goto(`/seed/hand/${HAND_ID}`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(12000);
+
+    const state = await page.evaluate((k) => ({
+      guard: (() => { try { return sessionStorage.getItem(k); } catch { return 'unreadable'; } })(),
+      bodyStart: (document.body.innerText || '').replace(/\s+/g, ' ').slice(0, 200),
+      url: location.pathname,
+    }), GUARD);
+
+    console.log('[CLEAN TAB] blocked=%d loads=%d %s', counter.blocked, loads, JSON.stringify(state));
+    console.log('[CLEAN TAB] console errors:', JSON.stringify(consoleErrors.slice(0, 4)));
+    await page.screenshot({ path: 'test-results/stale-chunk-clean-tab.png', fullPage: false });
+
+    expect(counter.blocked, 'the chunk was never requested').toBe(1);
+    expect(loads, 'the page did not reload after the failed chunk').toBeGreaterThanOrEqual(2);
+    expect(state.bodyStart, 'the error screen is still showing').not.toMatch(/Something went wrong/i);
   });
 
-  // A genuine `window.location.reload()` call -- if it fired -- causes a
-  // real navigation Playwright observes as a fresh 'load' event on this
-  // same page, with no `page.goto()`/`page.reload()` call of our own.
-  await loadPromise;
-  console.log('Page reloaded on its own after a simulated stale-chunk vite:preloadError -- automatic recovery confirmed (no crash screen).');
+  test('2. with the guard already set it does NOT recover', async ({ page }) => {
+    const counter = { blocked: 0 };
+    let loads = 0;
+    page.on('load', () => loads++);
 
-  const crashScreen = page.locator('text=Something went wrong');
-  await expect(crashScreen, 'the crash screen should never appear for a stale-chunk error').toHaveCount(0);
+    await login(page);
+    // One earlier stale-chunk reload in this tab is all it takes: the guard
+    // is written before the reload and never cleared afterwards.
+    await page.evaluate((k) => { try { sessionStorage.setItem(k, '1'); } catch { /* ignore */ } }, GUARD);
+    await breakChunkOnce(page, counter);
 
-  // Guard is per-tab (sessionStorage), survives the reload (same origin,
-  // same tab) -- proves it was this exact code path, not some unrelated
-  // navigation, and that a SECOND stale-chunk event in the same tab
-  // session would be a no-op rather than looping into a second reload.
-  const guardAfter = await page.evaluate(() => sessionStorage.getItem('sow2grow:stale-chunk-reload-attempted'));
-  console.log(`Reload guard after recovery: ${guardAfter} (expected '1' -- confirms this exact reload path, and blocks a second reload this tab session)`);
-  expect(guardAfter, 'the stale-chunk reload guard should be set after recovering, preventing a reload loop').toBe('1');
+    loads = 0;
+    await page.goto(`/seed/hand/${HAND_ID}`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(12000);
+
+    const state = await page.evaluate(() => ({
+      bodyStart: (document.body.innerText || '').replace(/\s+/g, ' ').slice(0, 220),
+      url: location.pathname,
+    }));
+
+    console.log('[GUARD ALREADY SET] blocked=%d loads=%d %s', counter.blocked, loads, JSON.stringify(state));
+    await page.screenshot({ path: 'test-results/stale-chunk-guard-set.png', fullPage: false });
+    // Recorded, not asserted as desirable: this documents the live behaviour.
+    console.log('[GUARD ALREADY SET] reloaded =', loads >= 2);
+  });
 });

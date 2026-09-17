@@ -63,6 +63,30 @@ export const HAND_RATE_PERIODS = [
   { column: 'rate_monthly', filterValue: 'monthly', label: 'Per month', short: 'month' },
 ] as const;
 
+/**
+ * Travel charges, kept out of HAND_RATE_PERIODS on purpose.
+ *
+ * A tradesman commonly charges a flat fee for coming out AND a distance
+ * charge on top, so these are two fields rather than one. Neither counts
+ * towards "at least one rate" in the form or in the database CHECK: a
+ * call-out fee is charged in addition to a price for the work, never
+ * instead of it.
+ *
+ * Kilometres, because every distance in this app is stored in metres and
+ * converted for display.
+ */
+export const HAND_TRAVEL_CHARGES = [
+  { column: 'rate_callout', label: 'Call-out fee',     hint: 'A flat fee for coming out at all.' },
+  { column: 'rate_per_km',  label: 'Per km travelled', hint: 'A distance charge on top of that.' },
+] as const;
+
+/** The travel charges a listing actually has, in reading order. */
+export function handTravelChargesOn(row: Record<string, unknown>): Array<{ label: string; column: string; amount: number }> {
+  return HAND_TRAVEL_CHARGES
+    .map((c) => ({ label: c.label, column: c.column, amount: Number(row[c.column]) }))
+    .filter((c) => Number.isFinite(c.amount) && c.amount > 0);
+}
+
 /** A short, non-exhaustive starter list. The field stays free-text too. */
 export const COMMON_LANGUAGES = [
   'English', 'Afrikaans', 'isiZulu', 'isiXhosa', 'Sesotho', 'Setswana',

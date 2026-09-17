@@ -1,5 +1,5 @@
 import { formatNativeAmount, paymentCurrencyNoteFor } from '@/lib/sleeping/currency';
-import { handRatesOn, serviceCategoryLabel, BACKGROUND_CHECK_DISCLAIMER } from '@/lib/sleeping/handOptions';
+import { handRatesOn, handTravelChargesOn, serviceCategoryLabel, BACKGROUND_CHECK_DISCLAIMER } from '@/lib/sleeping/handOptions';
 import { formatDistance, haversineMetres, unitForViewer } from '@/lib/sleeping/units';
 import { useWorldwideLocation } from '@/hooks/useWorldwideLocation';
 import SignedImg from '@/components/media/SignedImg';
@@ -144,6 +144,7 @@ export default function HandSeedDetailPage() {
   // Rates show in the LISTING's own currency and are never converted.
   const listingCurrency: string = hand?.currency ?? 'USD';
   const structuredRates = hand ? handRatesOn(hand) : [];
+  const travelCharges = hand ? handTravelChargesOn(hand) : [];
   const rateText = structuredRates.length === 0
     ? `${formatNativeAmount(Number(product.price ?? 0), listingCurrency)} ${rateUnitLabel ?? ''}`.trim()
     : '';
@@ -301,6 +302,24 @@ export default function HandSeedDetailPage() {
             </div>
           ) : (
             <p className="text-lg font-semibold">{rateText}</p>
+          )}
+
+          {travelCharges.length > 0 && (
+            <div className="rounded-lg border border-dashed p-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                Travel, on top of the rate
+              </p>
+              <ul className="space-y-1">
+                {travelCharges.map((c) => (
+                  <li key={c.column} className="flex items-baseline justify-between gap-4">
+                    <span className="text-sm text-muted-foreground">{c.label}</span>
+                    <span className="text-base font-semibold">
+                      {formatNativeAmount(c.amount, listingCurrency)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {hand && (

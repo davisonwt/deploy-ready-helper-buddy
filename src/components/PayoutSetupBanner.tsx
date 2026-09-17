@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppContext } from '@/contexts/AppContext';
+import { isFullPageFormRoute } from '@/lib/chrome/formRoutes';
 
 /**
  * Visible nudge for existing users who signed up before payout setup existed.
@@ -16,6 +17,7 @@ import { useAppContext } from '@/contexts/AppContext';
 export const PayoutSetupBanner = () => {
   const { user } = useAuth() as any;
   const { wizardOpen, stallInteriorOpen } = useAppContext();
+  const location = useLocation();
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -33,7 +35,8 @@ export const PayoutSetupBanner = () => {
   // Also hidden while a WizardContainer flow, or a stall interior, is on screen --
   // see NotificationBanner for why (same fixed bottom-right corner, same collision
   // with the wizard's own nav bar / a painted hotspot underneath).
-  if (!user || user.payout_setup_complete === true || dismissed || wizardOpen || stallInteriorOpen) {
+  if (!user || user.payout_setup_complete === true || dismissed || wizardOpen || stallInteriorOpen
+      || isFullPageFormRoute(location.pathname)) {
     return null;
   }
 

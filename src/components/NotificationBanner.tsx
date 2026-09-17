@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Bell, X } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppContext } from '@/contexts/AppContext';
+import { isFullPageFormRoute } from '@/lib/chrome/formRoutes';
 
 export const NotificationBanner = () => {
   const { user } = useAuth();
   const { isEnabled, isInitializing, initializeNotifications } = useNotifications();
   const { wizardOpen, stallInteriorOpen } = useAppContext();
+  const location = useLocation();
   const [dismissed, setDismissed] = useState(false);
 
   // Check if user has dismissed the banner
@@ -35,7 +38,10 @@ export const NotificationBanner = () => {
   // (found via the Gosat's Boardroom hotspot bug: GlobalChrome already hides its own
   // three fixed-bottom-right widgets for stallInteriorOpen, but this banner -- mounted
   // separately at the App root, not through GlobalChrome -- never got the same check).
-  if (!user || isEnabled || dismissed || wizardOpen || stallInteriorOpen) {
+  // A form route is the same collision as a stall interior: this card is
+  // wide enough to sit on several choice buttons at once.
+  if (!user || isEnabled || dismissed || wizardOpen || stallInteriorOpen
+      || isFullPageFormRoute(location.pathname)) {
     return null;
   }
 
