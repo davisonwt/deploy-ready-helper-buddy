@@ -114,6 +114,29 @@ function readSeedIdFromHash(): string | null {
 const TAP_PREVIEW_MS = 1500;
 
 /** Stable per-hotspot identity for React keys and tap-preview tracking -- `id` when a box has one (drawn in the wizard), else its array position, since stalls.hotspots may hold many entries sharing the same `kind`. */
+/** The smallest box a thumb can reliably hit. */
+const MIN_TAP_PX = 44;
+
+/**
+ * Pixel geometry for one hotspot, never smaller than MIN_TAP_PX.
+ *
+ * The portrait path gets this floor from minWidth/minHeight, which anchors
+ * at the top-left and slides a small box down and right off the object it
+ * marks. Here the box grows around its own centre instead, so a 30px mug
+ * stays centred on the mug. Measured on production before this: the Mugs
+ * hotspot was 39px on its short side at 844x390.
+ */
+function withTapFloor(left: number, top: number, width: number, height: number): CSSProperties {
+  const w = Math.max(width, MIN_TAP_PX);
+  const h = Math.max(height, MIN_TAP_PX);
+  return {
+    left: left - (w - width) / 2,
+    top: top - (h - height) / 2,
+    width: w,
+    height: h,
+  };
+}
+
 function hotspotKey(h: StallHotspot, i: number): string {
   return h.id ?? `${h.kind}-${i}`;
 }
@@ -726,12 +749,12 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
               key={hotspotKey(h, i)}
               h={h}
               hKey={hotspotKey(h, i)}
-              style={{
-                left: rect.offsetX + (h.x / 100) * rect.width,
-                top: rect.offsetY + (h.y / 100) * rect.height,
-                width: (h.w / 100) * rect.width,
-                height: (h.h / 100) * rect.height,
-              }}
+              style={withTapFloor(
+                rect.offsetX + (h.x / 100) * rect.width,
+                rect.offsetY + (h.y / 100) * rect.height,
+                (h.w / 100) * rect.width,
+                (h.h / 100) * rect.height,
+              )}
             />
           ))}
 
