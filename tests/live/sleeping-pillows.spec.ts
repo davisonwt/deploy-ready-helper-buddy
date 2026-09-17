@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { paceGeocode } from './support/geocodePacing';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -55,6 +56,9 @@ async function hubAt(page: Page, town: string, title?: string) {
   await expect(input.or(change).first()).toBeVisible({ timeout: 45000 });
   if (await change.count()) { await change.click(); await expect(input).toBeVisible({ timeout: 20000 }); }
   await input.fill(town);
+  // Setting the hub's location is a geocode-place call, and the limiter
+  // counts it even when the town is already cached.
+  await paceGeocode(`hub ${town}`);
   await page.getByRole('button', { name: /^Go$/ }).click();
   await expect(change).toBeVisible({ timeout: 45000 });
   await page.getByRole('tab', { name: 'Pillows' }).click();
@@ -100,6 +104,10 @@ async function fillPillowForm(
     await page.locator('#pillow-legal').click();
     await expect(page.locator('#pillow-legal')).toHaveAttribute('data-state', 'checked', { timeout: 5000 });
   }
+  // Submitting geocodes the typed base location. Spend the token here, so
+  // the wait happens before the click rather than the listing being saved
+  // with no coordinates and the failure surfacing three tests later.
+  await paceGeocode('pillow registration');
   return page.getByRole('button', { name: /^List my place$/ });
 }
 
@@ -211,7 +219,9 @@ test.describe.serial('Sleeping Pillows', () => {
     await expect(page.getByText(`QAP Farm stay ${STAMP}`)).toBeVisible({ timeout: 30000 });
     await expect(page.getByText(`QAP Bush camp ${STAMP}`)).toHaveCount(0);
     console.log('[EVIDENCE] stay type: Farm stay shown, Bush camp hidden');
-    await page.getByRole('button', { name: 'Farm stay', exact: true }).click();
+    // Deselect the same chip. It is "Cottage" now, not "Farm stay": the
+    // filter offers unit types since 20260917110000_pillow_units.
+    await page.getByRole('button', { name: 'Cottage', exact: true }).click();
 
     // Amenity (must have all)
     await page.getByRole('button', { name: 'Braai', exact: true }).click();
@@ -264,16 +274,17 @@ test.describe.serial('Sleeping Pillows', () => {
     await page.waitForURL(/\/sow\/pillow\?edit=/, { timeout: 30000 });
     await expect(page.getByRole('heading', { name: /Edit your place/i })).toBeVisible({ timeout: 25000 });
     const editUrl = page.url();
-    const before = await page.locator('#rate_nightly').inputValue();
+    // Rates live on units now, so the field is unit 1's own input.
+    const before = await page.locator('#rate_nightly-0').inputValue();
     const after = String(Number(before) + 1);
     console.log(`[EVIDENCE] editing rate_nightly ${before} -> ${after}`);
-    await page.locator('#rate_nightly').fill(after);
+    await page.locator('#rate_nightly-0').fill(after);
     await page.getByRole('button', { name: /^Save changes$/ }).click();
     await page.waitForURL(/\/my-listings/, { timeout: 40000 });
     await page.goto(editUrl, { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('#rate_nightly')).toHaveValue(after, { timeout: 25000 });
+    await expect(page.locator('#rate_nightly-0')).toHaveValue(after, { timeout: 25000 });
     console.log(`[EVIDENCE] rate persisted as ${after}`);
-    await page.locator('#rate_nightly').fill(before);
+    await page.locator('#rate_nightly-0').fill(before);
     await page.getByRole('button', { name: /^Save changes$/ }).click();
     await page.waitForURL(/\/my-listings/, { timeout: 40000 });
 

@@ -42,6 +42,47 @@ Then make the smallest correct fix. Don't stack fixes on top of each other or pa
 ## Protected areas
 Treat these as protected unless explicitly asked to change them: auth, user roles, Ambassador/Tribal tiers, RLS policies, existing tables, the Bestowal ledger, payments, messaging, notifications, live streaming, Jitsi calls, Orchard Companions, Tribal Hearts, navigation.
 
+## Golden rule: `npm run typecheck` is the only typecheck that counts
+Run **`npm run typecheck`** (`tsc -p tsconfig.app.json --noEmit`). Nothing else
+is evidence.
+
+- **`npx tsc --noEmit` checks NOTHING.** The root `tsconfig.json` has
+  `"files": []` and only project references, so it exits 0 having examined
+  zero files. Every "typecheck clean" claimed in the week to 2026-09-17 was
+  that command, and it meant nothing.
+- **`npm run build` does not typecheck.** It is `vite build`, which uses
+  esbuild; esbuild strips types rather than checking them. An undefined
+  identifier builds happily and crashes in the browser.
+- **ESLint does not catch undefined identifiers** in `.ts`/`.tsx` either; the
+  TypeScript ESLint config leaves that to `tsc`.
+- **Never pipe it.** `tsc … | head` reports the pipe's exit code, not tsc's,
+  so it always looks like 0, and `head` closing the pipe truncates the errors.
+  Redirect to a file instead: `npm run typecheck > out.log 2>&1; echo $?`.
+- **It takes roughly ten minutes on this machine.** That is normal. Run it in
+  the background and wait, rather than reaching for a faster command that
+  checks nothing.
+
+This is how a crash reached production on 2026-09-17: three "clean"
+typechecks, a successful build, and a clean lint, all blind to a call to a
+function that was never imported.
+
+## Golden rule: a patch asserts its anchor matched
+Any scripted edit to a file — a string replace, a regex substitution, a
+generated patch — must **assert that its anchor matched before proceeding**,
+and fail loudly when it does not. Never let a replace that matched nothing
+pass for a replace that worked.
+
+On 2026-09-17 an import was patched with a plain string replace written
+against a single-line form of an import that actually spans three lines. It
+matched nothing, changed nothing, reported nothing, and shipped a crash that
+took the Sleeping Seeds hub down for every member. The neighbouring edits in
+the same script all asserted; that one did not, which is the only reason it
+got through.
+
+Assert the count is exactly what you expect (usually 1), and when an edit
+applies to one of several similar blocks, slice the file to that block first
+rather than relying on a longer and more brittle match.
+
 ## Golden rule: icons are lucide-react, full stop
 This project uses **`lucide-react`** for icons. No skill, template, dataset or
 recommendation introduces Phosphor, Heroicons or any other icon set, and **no
@@ -121,6 +162,8 @@ nobody re-ran:
   - Don't touch payment/fee code as a side effect of an unrelated change.
 
 ## Testing
+- `npm run typecheck` — the real typecheck, ~10 min, never piped. See the
+  golden rule above; `npx tsc --noEmit` and `npm run build` check nothing.
 - `npm run lint` — ESLint
 - `npm test` — Vitest unit/integration tests
 - `npx cypress run` — e2e tests
