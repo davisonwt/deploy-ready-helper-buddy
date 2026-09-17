@@ -266,7 +266,11 @@ export default function HandSeedDetailPage() {
             <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/30">
               🤲 Wandering Hand
             </Badge>
-            {product.category && <Badge variant="outline">{product.category}</Badge>}
+            {/* The humanised service category already has its own badge just
+                below, so this one only earns its place when that is absent. */}
+            {!hand?.service_category && product.category && (
+              <Badge variant="outline">{serviceCategoryLabel(product.category)}</Badge>
+            )}
           </div>
 
           <div>

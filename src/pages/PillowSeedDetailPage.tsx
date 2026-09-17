@@ -274,7 +274,11 @@ export default function PillowSeedDetailPage() {
             <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-amber-500/30">
               🛏️ Wandering Pillow
             </Badge>
-            {product.category && <Badge variant="outline">{product.category}</Badge>}
+            {/* products.category holds the raw enum (bush_camp), which is a
+                database value, not something to show a member. */}
+            {product.category && (
+              <Badge variant="outline">{stayTypeLabel(product.category)}</Badge>
+            )}
           </div>
 
           <div>

@@ -248,7 +248,11 @@ export default function WheelSeedDetailPage() {
             </Badge>
             {wheel?.vehicle_type
               ? <Badge variant="outline">{vehicleTypeLabel(wheel.vehicle_type)}</Badge>
-              : product.category && <Badge variant="outline">{product.category}</Badge>}
+              : product.category && (
+                /* Same raw-enum leak as the pillow page, reachable whenever
+                   the detail row is missing. */
+                <Badge variant="outline">{vehicleTypeLabel(product.category)}</Badge>
+              )}
             {wheel && wheel.availability === false && (
               <Badge variant="outline" className="border-destructive/40 text-destructive">
                 Not available right now

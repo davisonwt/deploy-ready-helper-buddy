@@ -20,6 +20,10 @@ const SUPPRESSED_ROUTES: RegExp[] = [
   // the sound pill sat on Delete. This is where a member manages what they
   // have listed, so every control on it has to be reachable.
   /^\/my-listings(\/|$)/,
+  // A member reading a listing should not have a nag card over it. The
+  // Enable Notifications card sat on top of the seed detail pages, which are
+  // where someone decides whether to book.
+  /^\/seed\/(wheel|pillow|hand)\//,
 ];
 
 export function isOverlaySuppressedRoute(pathname: string): boolean {
