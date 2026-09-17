@@ -304,21 +304,20 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   const rect = useContainImageRect(containerRef, imgRef);
 
   // Mobile-portrait-only (<1024px, portrait -- see the layout split in the
-  // render below): the pannable interior's own image ref, for the
-  // scroll-to-center effect below. No rect measurement needed here (unlike
-  // the desktop/landscape image above) -- this image is `h-full w-auto`,
-  // so its wrapper (mobileContainerRef, `w-max`) is exactly the image's own
-  // rendered box with no letterboxing, and hotspots are positioned with
-  // plain x/y/w/h percentages straight off that wrapper (see the render
-  // below) rather than through useContainImageRect's offset math.
+  // render below). The interior used to be a strip far wider than the
+  // screen, panned sideways. Measured on production at 390x844, the
+  // hotspots spanned 1008px of a 1141px strip inside a 390px window, so no
+  // scroll position could ever show more than a third of them: three of
+  // five sat entirely off screen. Centring the scroll and a "pan" pill
+  // were both already there and neither helped, because you cannot pan
+  // towards something you have no idea exists.
+  //
+  // It fits the width instead. The image is `w-full h-auto` and its
+  // wrapper is exactly that box, so the hotspots' plain x/y/w/h
+  // percentages still land correctly with no offset math, and every one is
+  // on screen the moment the interior opens.
   const mobileContainerRef = useRef<HTMLDivElement>(null);
   const mobileImgRef = useRef<HTMLImageElement>(null);
-  const panScrollRef = useRef<HTMLDivElement>(null);
-  // "‹ pan ›" hint -- shown until the visitor's first touch/drag on the
-  // pannable interior, or a few seconds pass, whichever comes first (not
-  // persisted across visits -- see the render below for why that's fine
-  // for now).
-  const [showPanHint, setShowPanHint] = useState(true);
 
   // "New seeds" (supabase/migrations/20260912140000_stall_visits.sql) --
   // viewerCutoff is the viewer's own last_seen_at for THIS stall as of
@@ -367,25 +366,6 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
     })();
     return () => { alive = false; };
   }, [ownerId, user, effectiveIsOwner]);
-
-  // Starts the horizontal pan centered on the image rather than its left edge.
-  useEffect(() => {
-    const scrollEl = panScrollRef.current;
-    const img = mobileImgRef.current;
-    if (!scrollEl) return;
-    const center = () => { scrollEl.scrollLeft = (scrollEl.scrollWidth - scrollEl.clientWidth) / 2; };
-    if (img && !img.complete) {
-      img.addEventListener('load', center, { once: true });
-      return () => img.removeEventListener('load', center);
-    }
-    center();
-  }, [interiorImageUrl]);
-
-  useEffect(() => {
-    if (!showPanHint) return;
-    const t = setTimeout(() => setShowPanHint(false), 2500);
-    return () => clearTimeout(t);
-  }, [showPanHint]);
 
   useEffect(() => {
     if (!showRoomHint) return;
@@ -690,19 +670,13 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           </Button>
         </div>
 
-        <div className="relative w-full h-[calc(100dvh-48px)]">
-          <div
-            ref={panScrollRef}
-            className="relative w-full h-full overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            style={{ WebkitOverflowScrolling: 'touch' }}
-            onPointerDown={() => setShowPanHint(false)}
-          >
-            <div ref={mobileContainerRef} className="relative h-full w-max mx-auto snap-center">
+        <div className="relative w-full">
+          <div ref={mobileContainerRef} className="relative w-full">
               <SignedImg
                 ref={mobileImgRef}
                 src={interiorImageUrl}
                 alt={stallName}
-                className={`block h-full w-auto max-w-none transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
+                className={`block w-full h-auto transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
               />
               {visibleHotspots.map((h, i) => (
                 <HotspotButton
@@ -719,21 +693,13 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
                   }}
                 />
               ))}
-            </div>
           </div>
 
-          {(showPanHint || showRoomHint) && (
+          {showRoomHint && (
             <div className="pointer-events-none absolute inset-x-0 bottom-4 flex flex-col items-center gap-1.5">
-              {showRoomHint && (
-                <span className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm">
-                  👆 tap the things in the room
-                </span>
-              )}
-              {showPanHint && (
-                <span className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm">
-                  ‹ pan ›
-                </span>
-              )}
+              <span className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm">
+                👆 tap the things in the room
+              </span>
             </div>
           )}
         </div>
