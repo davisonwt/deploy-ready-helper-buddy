@@ -1,5 +1,5 @@
 /**
- * Routes where a full-page form owns the screen.
+ * Routes where the page's own controls own the screen.
  *
  * The app mounts several dismissible nag cards at the App root, each one
  * `fixed` in the bottom-right corner. On a page of prose that is harmless.
@@ -12,11 +12,16 @@
  * the same bug keeps arriving one surface at a time -- the stall interior
  * got a fix, the sow forms did not. One shared predicate instead.
  */
-const FORM_ROUTES: RegExp[] = [
+const SUPPRESSED_ROUTES: RegExp[] = [
   /^\/sow(\/|$)/,
   /^\/register-wandering(\/|$)/,
+  // Not a form, the same collision: measured on production, the card sat on
+  // "Silver Hyundai Venue" and its Edit and Make unavailable buttons, and
+  // the sound pill sat on Delete. This is where a member manages what they
+  // have listed, so every control on it has to be reachable.
+  /^\/my-listings(\/|$)/,
 ];
 
-export function isFullPageFormRoute(pathname: string): boolean {
-  return FORM_ROUTES.some((re) => re.test(pathname));
+export function isOverlaySuppressedRoute(pathname: string): boolean {
+  return SUPPRESSED_ROUTES.some((re) => re.test(pathname));
 }

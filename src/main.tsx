@@ -25,7 +25,11 @@ import { logInfo, logError } from "@/lib/logging";
 import { queryClient } from "./lib/queryPersistence";
 import { CryptoComProvider } from '@/providers/CryptoComProvider';
 import { clearRoleCache } from '@/hooks/useUserRoles';
-import { reloadOnceForStaleChunk } from '@/lib/staleChunkReload';
+import {
+  reloadOnceForStaleChunk,
+  noteModulePreloadFailure,
+  markAppLoadedSuccessfully,
+} from '@/lib/staleChunkReload';
 import "./index.css";
 import '@/utils/confetti';
 
@@ -64,9 +68,28 @@ window.addEventListener('unhandledrejection', (event) => {
 // by ErrorBoundary.tsx for the same failure arriving via React's own
 // error-boundary path instead of this window event.
 window.addEventListener('vite:preloadError', (event) => {
+  // Record it first, unconditionally. Even when the cooldown refuses the
+  // reload, this is what lets ErrorBoundary recognise the generic TypeError
+  // React.lazy raises moments later as the same failure.
+  noteModulePreloadFailure();
   if (reloadOnceForStaleChunk()) {
     event.preventDefault();
   }
+});
+
+// A chunk that fails as a plain <script> or <link> never reaches the Vite
+// helper, so catch it in the capture phase, where resource errors surface.
+window.addEventListener('error', (event) => {
+  const target = event.target as HTMLElement | null;
+  if (!target || !target.tagName) return;
+  if (target.tagName === 'SCRIPT' || target.tagName === 'LINK') noteModulePreloadFailure();
+}, true);
+
+// Once the app has been alive longer than any reload loop could survive,
+// forget the last reload so a later stale chunk recovers straight away.
+// A loop reloads within a second or two and never reaches this.
+window.addEventListener('load', () => {
+  window.setTimeout(markAppLoadedSuccessfully, 10_000);
 });
 
 logInfo('Application starting', {

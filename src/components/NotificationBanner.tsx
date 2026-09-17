@@ -6,7 +6,7 @@ import { Bell, X } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppContext } from '@/contexts/AppContext';
-import { isFullPageFormRoute } from '@/lib/chrome/formRoutes';
+import { isOverlaySuppressedRoute } from '@/lib/chrome/formRoutes';
 
 export const NotificationBanner = () => {
   const { user } = useAuth();
@@ -41,7 +41,7 @@ export const NotificationBanner = () => {
   // A form route is the same collision as a stall interior: this card is
   // wide enough to sit on several choice buttons at once.
   if (!user || isEnabled || dismissed || wizardOpen || stallInteriorOpen
-      || isFullPageFormRoute(location.pathname)) {
+      || isOverlaySuppressedRoute(location.pathname)) {
     return null;
   }
 

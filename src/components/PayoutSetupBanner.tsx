@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppContext } from '@/contexts/AppContext';
-import { isFullPageFormRoute } from '@/lib/chrome/formRoutes';
+import { isOverlaySuppressedRoute } from '@/lib/chrome/formRoutes';
 
 /**
  * Visible nudge for existing users who signed up before payout setup existed.
@@ -36,7 +36,7 @@ export const PayoutSetupBanner = () => {
   // see NotificationBanner for why (same fixed bottom-right corner, same collision
   // with the wizard's own nav bar / a painted hotspot underneath).
   if (!user || user.payout_setup_complete === true || dismissed || wizardOpen || stallInteriorOpen
-      || isFullPageFormRoute(location.pathname)) {
+      || isOverlaySuppressedRoute(location.pathname)) {
     return null;
   }
 

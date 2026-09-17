@@ -5,7 +5,7 @@ import { Volume2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { primeCallAudio } from '@/lib/callAudio';
 import { useAppContext } from '@/contexts/AppContext';
-import { isFullPageFormRoute } from '@/lib/chrome/formRoutes';
+import { isOverlaySuppressedRoute } from '@/lib/chrome/formRoutes';
 
 // A small, dismissible pill prompting users to enable sound once per
 // session. This helps iOS users receive ringtones without tapping at call
@@ -37,7 +37,7 @@ const SoundUnlockBanner: React.FC = () => {
   // (max-lg:hidden, not an unconditional hide).
   const hideOnMobileStallRoutes = location.pathname === '/stalls-feed' || location.pathname.startsWith('/stall/');
   // Small, but it still sat on two category buttons at 390x844.
-  const hideOnFormRoutes = isFullPageFormRoute(location.pathname);
+  const hideOnSuppressedRoutes = isOverlaySuppressedRoute(location.pathname);
 
   const shouldShow = useMemo(() => {
     try {
@@ -110,7 +110,7 @@ const SoundUnlockBanner: React.FC = () => {
   // whichever painted box happened to sit under its bottom-right corner.
   // stallInteriorOpen hides it unconditionally, any viewport, whenever an
   // interior is actually open (not just on these two known routes).
-  if (!visible || stallInteriorOpen || hideOnFormRoutes) return null;
+  if (!visible || stallInteriorOpen || hideOnSuppressedRoutes) return null;
 
   return (
     <div
