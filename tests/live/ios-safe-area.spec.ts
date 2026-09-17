@@ -41,8 +41,18 @@ const IPHONE = devices['iPhone 14 Pro'];
 const INSET_TOP = 59;
 const INSET_BOTTOM = 34;
 
-/** Full-height surfaces across the app, not just the page that was reported. */
-const ROUTES = ['/stalls-feed', '/dashboard', '/my-listings', '/sleeping-seeds', '/live-now'];
+/**
+ * Full-height surfaces across the app, not just the page that was reported.
+ * `scrolls` marks the ones whose content is legitimately taller than the
+ * screen -- a list of listings is supposed to scroll; a swipe feed is not.
+ */
+const ROUTES: { path: string; scrolls: boolean }[] = [
+  { path: '/stalls-feed', scrolls: false },
+  { path: '/dashboard', scrolls: false },
+  { path: '/my-listings', scrolls: true },
+  { path: '/sleeping-seeds', scrolls: false },
+  { path: '/live-now', scrolls: false },
+];
 
 async function login(page: Page) {
   for (let i = 0; i < 2; i++) {
@@ -71,28 +81,6 @@ async function applyInsets(page: Page) {
 async function measure(page: Page) {
   return page.evaluate(() => {
     const vh = window.innerHeight;
-    const overhang: { where: string; minHeight: string; bottom: number; overBy: number }[] = [];
-    const candidates = [
-      document.body,
-      ...Array.from(document.querySelectorAll('#root, #root > *, #root > * > *')),
-    ];
-    const seen = new Set<Element>();
-    for (const el of candidates) {
-      if (!el || seen.has(el)) continue;
-      seen.add(el);
-      const h = el as HTMLElement;
-      const s = getComputedStyle(h);
-      if (s.position === 'fixed') continue; // fixed chrome is placed deliberately
-      const r = h.getBoundingClientRect();
-      if (Math.round(r.bottom) > vh + 1) {
-        overhang.push({
-          where: `${h.tagName}.${(h.className?.toString() || '').slice(0, 60)}`,
-          minHeight: s.minHeight,
-          bottom: Math.round(r.bottom),
-          overBy: Math.round(r.bottom) - vh,
-        });
-      }
-    }
 
     // Non-visual <section>s must take up no room. This is the actual bug.
     const ghosts = Array.from(document.querySelectorAll('section'))
@@ -115,7 +103,6 @@ async function measure(page: Page) {
       scrollableBy: document.documentElement.scrollHeight - vh,
       shellMinHeight: shell ? getComputedStyle(shell).minHeight : null,
       shellTop: shell ? Math.round(shell.getBoundingClientRect().top) : null,
-      overhang,
       ghosts,
       sat: getComputedStyle(document.documentElement).getPropertyValue('--sat').trim(),
     };
@@ -156,7 +143,7 @@ test.describe('iOS Safari safe areas', () => {
     await ctx.close();
   });
 
-  for (const route of ROUTES) {
+  for (const { path: route, scrolls } of ROUTES) {
     test(`${route}: no ghost section, no band below the fold`, async ({ browser }) => {
       const ctx = await browser.newContext({ ...IPHONE });
       const page = await ctx.newPage();
@@ -174,7 +161,15 @@ test.describe('iOS Safari safe areas', () => {
 
       expect(m.ghosts, 'an empty <section> is taking up layout height').toEqual([]);
       expect(m.shellTop, 'the app shell does not start at the top of the page').toBe(0);
-      expect(m.overhang, 'a surface paints below the visible viewport').toEqual([]);
+      // A page that is meant to fill the screen must not scroll. This is what
+      // made the pills unreachable: 56px of scroll the feed never asked for,
+      // with its own inner scroller swallowing the swipe back up.
+      if (!scrolls) {
+        expect(
+          m.scrollableBy,
+          `${m.scrollableBy}px of document scroll on a page that should fill the screen exactly`,
+        ).toBe(0);
+      }
       await ctx.close();
     });
   }
