@@ -702,7 +702,7 @@ const AppRoutes = () => (
     } />
     {/* moderate-media's gosat alert links here (action_url) -- the queue
         itself lives in the "moderation" tab of the admin dashboard. */}
-    <Route path="/admin/moderation" element={<Navigate to="/admin/dashboard" replace />} />
+    <Route path="/admin/moderation" element={<Navigate to="/admin/dashboard?tab=moderation" replace />} />
     {/* Flow v2 step 1: duplicate route, same component as /admin/dashboard */}
     <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
     <Route path="/admin/radio" element={<Navigate to="/grove-station?tab=admin" replace />} />

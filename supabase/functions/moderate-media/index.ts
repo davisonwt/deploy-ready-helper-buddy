@@ -414,7 +414,7 @@ async function alertGosat(
     type: "moderation_incident",
     title: "URGENT: suspected minor in sexual content",
     message: `Uploader ${uploaderId} — ${target}. Blocked automatically, not deleted. Review immediately in the moderation queue.`,
-    action_url: "/admin/moderation",
+    action_url: "/admin/dashboard?tab=moderation",
     is_read: false,
   }));
   if (rows.length > 0) {

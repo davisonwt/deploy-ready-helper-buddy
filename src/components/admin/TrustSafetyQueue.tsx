@@ -22,7 +22,7 @@ interface ReportRow {
 interface ModRow {
   id: string; bucket_id: string | null; object_path: string | null; subject_type: string;
   subject_ref: string | null; uploader_user_id: string; verdict: string; minor_suspected: boolean;
-  reason: string | null; created_at: string;
+  reason: string | null; created_at: string; needs_review: boolean;
 }
 interface AbuseFlagRow {
   id: string; content_type: string; content_id: string | null; room_id: string | null;
@@ -34,6 +34,57 @@ const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2,
 const SEVERITY_VARIANT: Record<string, 'destructive' | 'secondary'> = {
   critical: 'destructive', high: 'destructive', medium: 'secondary', low: 'secondary',
 };
+
+
+/**
+ * The flagged image itself.
+ *
+ * The queue used to print "bucket/path" as text, so a reviewer could see that
+ * something needed a decision but not what it was -- and Allow / Remove /
+ * Suspend are not decisions anyone should make blind.
+ *
+ * Every affected bucket is private, so this signs a short-lived URL. A gosat
+ * is allowed to read even a blocked object: the storage SELECT policies carry
+ * an `is_admin_or_gosat(auth.uid())` branch that sits OR'd beside
+ * media_is_allowed(), which is precisely so review is possible after a block.
+ */
+function FlaggedThumb({ bucket, path }: { bucket: string | null; path: string | null }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    if (!bucket || !path) { setFailed(true); return; }
+    supabase.storage.from(bucket).createSignedUrl(path, 300)
+      .then(({ data, error }) => {
+        if (!alive) return;
+        if (error || !data?.signedUrl) setFailed(true);
+        else setUrl(data.signedUrl);
+      })
+      .catch(() => { if (alive) setFailed(true); });
+    return () => { alive = false; };
+  }, [bucket, path]);
+
+  if (failed || (!bucket || !path)) {
+    return (
+      <div className="w-20 h-20 shrink-0 rounded-md border bg-muted flex items-center justify-center" title={!bucket || !path ? 'No stored object (avatar row)' : 'Could not load'}>
+        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+      </div>
+    );
+  }
+  if (!url) {
+    return (
+      <div className="w-20 h-20 shrink-0 rounded-md border bg-muted flex items-center justify-center">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="shrink-0" title="Open full size">
+      <img src={url} alt="Flagged upload" className="w-20 h-20 rounded-md border object-cover" />
+    </a>
+  );
+}
 
 export default function TrustSafetyQueue() {
   const { user } = useAuth() as any;
@@ -48,7 +99,14 @@ export default function TrustSafetyQueue() {
     setLoading(true);
     const [{ data: r }, { data: m }, { data: a }] = await Promise.all([
       supabase.from('content_reports').select('*').eq('status', 'pending').order('created_at', { ascending: false }),
-      supabase.from('media_moderation').select('*').in('verdict', ['block', 'uncertain']).is('reviewed_at', null)
+      // Three things need a human, not two. A fail-open row (2026-09-17) has
+      // verdict 'allow' so the member was not blocked -- which is exactly why
+      // it has to be reviewed: that image is LIVE while it sits here.
+      // Worst first, then oldest first: the image that has been visible
+      // unscanned the longest is the one to look at next.
+      supabase.from('media_moderation').select('*')
+        .or('verdict.in.(block,uncertain),needs_review.eq.true')
+        .is('reviewed_at', null)
         .order('minor_suspected', { ascending: false }).order('created_at', { ascending: true }),
       supabase.from('abuse_flags').select('*').eq('status', 'pending_review').order('created_at', { ascending: false }),
     ]);
@@ -133,6 +191,23 @@ export default function TrustSafetyQueue() {
     if (!user?.id) return;
     setActing(row.id);
     try {
+      if (action === 'remove') {
+        // 'remove' used to stamp the row and nothing else, and the toast said
+        // "hidden now" regardless. That was true only because every queued row
+        // was already hidden by media_is_allowed(). A fail-open row is verdict
+        // 'allow' and LIVE, so removal has to actually delete the object --
+        // which the browser cannot do (every storage DELETE policy is
+        // owner-scoped, no admin branch on any bucket). Hence the function.
+        const { data, error } = await supabase.functions.invoke('moderation-remove-media', {
+          body: { moderationId: row.id },
+        });
+        if (error) throw error;
+        if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+        toast.success('Image deleted. The listing is untouched — the member can re-upload.');
+        setModRows((prev) => prev.filter((x) => x.id !== row.id));
+        return;
+      }
+
       const { error } = await supabase.from('media_moderation')
         .update({ reviewed_by: user.id, reviewed_at: new Date().toISOString(), review_action: action })
         .eq('id', row.id);
@@ -141,9 +216,7 @@ export default function TrustSafetyQueue() {
       if (action === 'suspend_uploader') {
         await supabase.from('profiles').update({ suspended: true } as any).eq('user_id', row.uploader_user_id);
       }
-      toast.success(
-        action === 'allow' ? 'Marked allowed' : action === 'remove' ? 'Marked removed -- hidden now' : 'Uploader suspended'
-      );
+      toast.success(action === 'allow' ? 'Marked allowed' : 'Uploader suspended');
       setModRows((prev) => prev.filter((x) => x.id !== row.id));
     } catch (e: any) {
       toast.error(e?.message ?? 'Could not resolve');
@@ -261,16 +334,27 @@ export default function TrustSafetyQueue() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Scan verdicts ({modRows.length})</CardTitle>
-              <CardDescription>Automated block/uncertain results awaiting review. Minor-suspected items are listed first.</CardDescription>
+              <CardDescription>
+                Blocked, uncertain, and accepted-but-unscanned uploads awaiting a human.
+                Minor-suspected first, then oldest first. &ldquo;live &middot; unscanned&rdquo; means
+                the scanner could not answer and the image is visible right now.
+                Deleting an image leaves the listing in place so the member can re-upload.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {modRows.length === 0 && <p className="text-sm text-muted-foreground py-4">Nothing waiting on review.</p>}
               {modRows.map((m) => (
                 <div key={m.id} className={`flex items-start justify-between gap-3 rounded-md border p-3 ${m.minor_suspected ? 'border-destructive bg-destructive/5' : ''}`}>
-                  <div className="min-w-0">
+                  <FlaggedThumb bucket={m.bucket_id} path={m.object_path} />
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       {m.minor_suspected && <Badge variant="destructive">SUSPECTED MINOR</Badge>}
                       <Badge variant={m.verdict === 'block' ? 'destructive' : 'secondary'}>{m.verdict}</Badge>
+                      {m.needs_review && (
+                        <Badge variant="outline" title="The scanner could not answer, so this was accepted and is visible right now.">
+                          live &middot; unscanned
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">{m.reason}</span>
                     </div>
                     <p className="text-xs text-muted-foreground font-mono truncate max-w-[24rem] mt-1">
@@ -285,7 +369,7 @@ export default function TrustSafetyQueue() {
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Allow
                     </Button>
                     <Button size="sm" variant="destructive" disabled={acting === m.id} onClick={() => resolveMod(m, 'remove')}>
-                      <XCircle className="h-3.5 w-3.5 mr-1" /> Remove
+                      <XCircle className="h-3.5 w-3.5 mr-1" /> Delete image
                     </Button>
                     <Button size="sm" variant="destructive" disabled={acting === m.id} onClick={() => resolveMod(m, 'suspend_uploader')}>
                       <UserX className="h-3.5 w-3.5 mr-1" /> Suspend uploader

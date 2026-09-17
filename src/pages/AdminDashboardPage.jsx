@@ -34,7 +34,7 @@ import { toast } from 'sonner'
 import { useRoles } from '../hooks/useRoles'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import AdminRadioManagement from '@/components/radio/AdminRadioManagement'
 import { RadioSlotApprovalInterface } from '@/components/radio/RadioSlotApprovalInterface'
 import { UserManagementDashboard } from '@/components/admin/UserManagementDashboard'
@@ -50,6 +50,12 @@ export default function AdminDashboardPage() {
   const { user } = useAuth()
   const { isAdmin, isAdminOrGosat, loading: rolesLoading, fetchAllUsers, grantRole, revokeRole } = useRoles()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  // Unknown or absent ?tab= falls back to analytics, so a stale link cannot
+  // render an empty dashboard.
+  const VALID_TABS = ['analytics', 'users', 'moderation', 'ghost-access', 'sentinel', 'treasury', 'orchards', 'legacy']
+  const requestedTab = searchParams.get('tab')
+  const activeTab = VALID_TABS.includes(requestedTab) ? requestedTab : 'analytics'
   const [users, setUsers] = useState([])
   const [seeds, setSeeds] = useState([])
   const [loading, setLoading] = useState(true)
@@ -362,8 +368,14 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Main Dashboard Tabs */}
-        <Tabs defaultValue="analytics" className="space-y-6">
+        {/* Main Dashboard Tabs. `?tab=` so an alert can land on the right one:
+            a "suspected minor" notification has to open the queue itself, not
+            a dashboard the reviewer then has to go hunting through. */}
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })}
+          className="space-y-6"
+        >
           <div className="flex justify-center mb-8">
             <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
               <TabsTrigger 
