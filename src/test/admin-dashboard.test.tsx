@@ -72,7 +72,7 @@ describe('AdminDashboardPage - Rules of Hooks Compliance', () => {
   })
 
   it('displays loading state while roles are loading', () => {
-    useRoles.mockReturnValueOnce({
+    vi.mocked(useRoles).mockReturnValueOnce({
       roles: [],
       loading: true,
       error: null,
@@ -98,7 +98,7 @@ describe('AdminDashboardPage - Rules of Hooks Compliance', () => {
   })
 
   it('displays access denied when user lacks permissions', () => {
-    useRoles.mockReturnValueOnce({
+    vi.mocked(useRoles).mockReturnValueOnce({
       roles: [],
       loading: false,
       error: null,

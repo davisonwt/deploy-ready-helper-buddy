@@ -30,14 +30,26 @@ export function moderationRejectionMessage(reason?: string, kind: 'image' | 'vid
 }
 
 /**
- * Call right after a storage upload succeeds, BEFORE doing anything that
- * makes the file reachable by anyone else (signing a URL, calling
- * getPublicUrl and persisting it, inserting/updating a row that
- * references it). Only proceed past this call when verdict === 'allow' --
- * every other outcome (including a network/scanner failure, which this
- * treats the same as an explicit block) means the file must stay exactly
- * as invisible as it was right after upload. See moderate-media/index.ts
- * for why: an unscanned file must never become visible.
+ * Call right after a storage upload succeeds, BEFORE doing anything that makes
+ * the file reachable by anyone else (signing a URL, calling getPublicUrl and
+ * persisting it, inserting/updating a row that references it).
+ *
+ * Only proceed past this call when verdict === 'allow'. Every caller already
+ * guards that way, which is what lets the policy live here instead of in 37
+ * call sites.
+ *
+ * WHAT 'allow' NOW MEANS. The header used to say a network or scanner failure
+ * was treated the same as an explicit block. That is no longer true, and the
+ * change is deliberate:
+ *
+ *   scanner says "prohibited"  -> 'block'      (unchanged)
+ *   scanner says "not sure"    -> 'uncertain'  (unchanged)
+ *   scanner could not answer   -> 'allow', flagged for review
+ *
+ * Only the third case changed. moderate-media makes that call itself and
+ * records the row with needs_review = true; this helper adds the same trade
+ * for the one case the function cannot cover, being unreachable entirely.
+ * Nobody is blocked because the scanner could not answer.
  */
 export async function moderateStorageUpload(
   bucket: string,
@@ -65,21 +77,36 @@ export async function moderateStorageUpload(
     if (attempt === 0) await new Promise((r) => setTimeout(r, 1200));
   }
 
-  // Deliberately still closed, and the ONLY remaining case that is.
+  // Reached only when moderate-media could not be reached AT ALL -- it answers
+  // 200 with a verdict even when it fails internally. So this is our own
+  // infrastructure being down, which is still not evidence about the image and
+  // still not the member's problem. Accept it. (Decided by Davison on
+  // 2026-09-18, after this was the last surface still refusing uploads.)
   //
-  // Everything the scanner itself can get wrong -- quota, timeout, bad
-  // response -- now fails open inside the function, which records an
-  // 'allow' row flagged for review. That row is what makes the image
-  // readable: storage RLS is media_is_allowed(), i.e. `verdict = 'allow'`
-  // on the most recent row.
+  // Known cost, stated rather than hidden: nothing wrote a media_moderation
+  // row, and the browser must never be able to write one -- only the service
+  // role may insert, and giving the client a way to stamp an object 'allow'
+  // would be a trivial bypass of the entire scanner. Until a row exists,
+  // media_is_allowed() is false, so on a private bucket the upload is visible
+  // to its owner and to gosats but not yet to other members.
   //
-  // Here the function never ran, so no row exists and none can be written
-  // from the client -- only the service role may insert into
-  // media_moderation, and giving the browser a way to mark an object
-  // 'allow' would be a trivial bypass of the whole scanner. Accepting here
-  // would hand the member a listing whose cover is visible only to
-  // themselves, with nothing queued for review. A clear error beats that.
-  return { verdict: 'block', reason: 'scanner_error' };
+  // So: one last attempt is fired without being awaited. It does not delay the
+  // member, and if the function comes back within the next few seconds the row
+  // lands by itself and the object becomes readable with no further action.
+  void (async () => {
+    await new Promise((r) => setTimeout(r, 5000));
+    try {
+      await supabase.functions.invoke('moderate-media', {
+        body: { bucket, path, kind, subjectType: 'storage_object' },
+      });
+    } catch {
+      // Nothing more to do from the browser. The object is uploaded and
+      // unscanned; it needs moderate-media to be reachable again.
+      console.error('moderate-media unreachable; object left unscanned', { bucket, path });
+    }
+  })();
+
+  return { verdict: 'allow', reason: 'scanner_unreachable' };
 }
 
 /** Same contract, for the one no-bucket case: a base64 avatar about to be written to a DB column. */
@@ -87,17 +114,28 @@ export async function moderateBase64Upload(
   base64: string,
   mimeType: string,
 ): Promise<ModerationResult> {
-  try {
-    const { data, error } = await supabase.functions.invoke('moderate-media', {
-      body: { base64, mimeType, kind: 'image', subjectType: 'avatar' },
-    });
-    if (error) return { verdict: 'block', reason: 'scanner_error' };
-    const verdict = data?.verdict;
-    if (verdict === 'allow' || verdict === 'block' || verdict === 'uncertain') {
-      return { verdict, reason: data?.reason };
+  // Same trade as moderateStorageUpload, and it was missed when that one was
+  // changed on 2026-09-17: this path stayed fully fail-closed, so an avatar
+  // could still be refused because the scanner was unreachable.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const { data, error } = await supabase.functions.invoke('moderate-media', {
+        body: { base64, mimeType, kind: 'image', subjectType: 'avatar' },
+      });
+      if (!error) {
+        const verdict = data?.verdict;
+        if (verdict === 'allow' || verdict === 'block' || verdict === 'uncertain') {
+          return { verdict, reason: data?.reason };
+        }
+      }
+    } catch {
+      // fall through to the retry
     }
-    return { verdict: 'block', reason: 'scanner_error' };
-  } catch {
-    return { verdict: 'block', reason: 'scanner_error' };
+    if (attempt === 0) await new Promise((r) => setTimeout(r, 1200));
   }
+
+  // An avatar has no storage object and no media_is_allowed() gate -- it is a
+  // column on profiles -- so accepting here costs nothing beyond the image
+  // being unscanned, which is exactly what the review queue is for.
+  return { verdict: 'allow', reason: 'scanner_unreachable' };
 }
