@@ -27,6 +27,10 @@ import {
 } from '@/lib/sleeping/pillowOptions';
 import { geocodeBaseLocation } from '@/lib/sleeping/geocodeBase';
 import SowSteps from '@/components/sowing/SowSteps';
+import {
+  PILLOW_UNIT_TYPES, UNIT_RATE_PERIODS, blankUnit, loadUnits,
+  pillowUnitsAvailable, type PillowUnit,
+} from '@/lib/sleeping/pillowUnits';
 
 const MAX_GALLERY_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
@@ -128,6 +132,10 @@ export default function SowPillowPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [sleeps, setSleeps] = useState<number>(2);
+  /** The bookable units. Always at least one, so the host is never asked to
+   *  declare what kind of place they are before they can start. */
+  const [units, setUnits] = useState<PillowUnit[]>([blankUnit(0)]);
+  const [unitsSupported, setUnitsSupported] = useState(false);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [rates, setRates] = useState<RateState>({});
@@ -312,6 +320,56 @@ export default function SowPillowPage() {
     }
   };
 
+  useEffect(() => {
+    let alive = true;
+    pillowUnitsAvailable().then((ok) => { if (alive) setUnitsSupported(ok); });
+    return () => { alive = false; };
+  }, []);
+
+  // Edit mode reuses this form rather than a second one, so it loads the
+  // listing's existing units straight into the same editor.
+  useEffect(() => {
+    let alive = true;
+    if (!editId) return;
+    loadUnits(editId).then((rows) => {
+      if (alive && rows.length > 0) setUnits(rows);
+    });
+    return () => { alive = false; };
+  }, [editId]);
+
+  /** A unit is usable when it is named, sleeps someone, and has a price. */
+  const unitsValid = useMemo(
+    () => units.length > 0 && units.every((u) =>
+      u.name.trim().length > 0
+      && Number(u.sleeps) >= 1
+      && UNIT_RATE_PERIODS.some((r) => Number(u[r.column]) > 0)),
+    [units],
+  );
+
+  // The pre-units columns on pillow_seed_details are still NOT NULL until
+  // 20260917120000_pillow_units_drop_legacy.sql runs, so they are derived
+  // from the units rather than asked for twice. Units remain the source of
+  // truth; these are a mirror that disappears with that migration.
+  const legacySleeps = useMemo(
+    () => Math.max(1, ...units.map((u) => Number(u.sleeps) || 1)),
+    [units],
+  );
+  const cheapestUnit = useMemo(() => {
+    const priced = units
+      .map((u) => ({ u, amount: UNIT_RATE_PERIODS.map((r) => Number(u[r.column])).find((n) => n > 0) }))
+      .filter((x) => Number.isFinite(x.amount));
+    if (priced.length === 0) return null;
+    return priced.reduce((a, b) => ((a.amount as number) <= (b.amount as number) ? a : b)).u;
+  }, [units]);
+  const legacyStayType = useMemo((): StayType => {
+    switch (units[0]?.unit_type) {
+      case 'room': return 'room_in_home';
+      case 'chalet': case 'cabin': case 'cottage': case 'apartment': return 'whole_place';
+      case 'geodesic_dome': case 'tent': case 'safari_tent': return 'bush_camp';
+      default: return 'other';
+    }
+  }, [units]);
+
   const numericRates = useMemo(() => {
     const out: Record<string, number> = {};
     for (const [col, raw] of Object.entries(rates)) {
@@ -321,41 +379,39 @@ export default function SowPillowPage() {
     return out;
   }, [rates]);
 
-  const typeReady = !!stayType;
+  // Units carry what the stay type, the sleeps counter and the rate step
+  // used to carry separately, so one check replaces three.
   const frontReady = !!front;
   const titleReady = title.trim().length > 0;
-  const rateReady = Object.keys(numericRates).length > 0;
   const currencyValid = /^[A-Z]{3}$/.test(currency.trim().toUpperCase());
   const locationReady = baseLocation.trim().length > 0;
 
   // The legal confirmation is a REQUIRED item, not a side condition:
   // PlantButton derives its disabled state purely from the counts.
-  const requiredCount = 7;
+  const requiredCount = 6;
   const completed = [
-    typeReady, frontReady, titleReady, rateReady,
+    unitsValid, frontReady, titleReady,
     currencyValid, locationReady, legalConfirmed,
   ].filter(Boolean).length;
 
   const missingReason = useMemo(() => {
-    if (!typeReady) return 'Pick what kind of place it is.';
+    if (!unitsValid) return 'Every unit needs a name, a size and a price.';
     if (!frontReady) return 'Add a photo of the outside.';
     if (!titleReady) return 'Give it a short name.';
-    if (!rateReady) return 'Fill in at least one price.';
     if (!currencyValid) return 'Choose the currency you charge in.';
     if (!locationReady) return 'Say where the place is.';
     if (!legalConfirmed) return 'Tick the confirmation to finish.';
     return undefined;
-  }, [typeReady, frontReady, titleReady, rateReady, currencyValid, locationReady, legalConfirmed]);
+  }, [unitsValid, frontReady, titleReady, currencyValid, locationReady, legalConfirmed]);
 
   // Listed before the first question is answered, so nobody reaches the end
   // of the form to discover a price was wanted. See SowSteps.
   const stepList = [
-    { label: 'What kind', done: typeReady },
-    { label: 'How many', done: typeReady && sleeps > 0 },
+    { label: 'Your units', done: unitsValid },
     { label: 'What guests get', done: amenities.length > 0 },
     { label: 'Photos and name', done: frontReady && titleReady },
     { label: 'Where', done: locationReady },
-    { label: 'What you charge', done: rateReady && currencyValid },
+    { label: 'What you charge', done: unitsValid && currencyValid },
     { label: 'Last thing', done: legalConfirmed },
   ];
 
@@ -363,7 +419,7 @@ export default function SowPillowPage() {
 
   const handlePlant = async () => {
     if (!user) { toast.error('Please log in to sow.'); return; }
-    if (!canSubmit || !front || !stayType) return;
+    if (!canSubmit || !front) return;
 
     setSubmitting(true);
     try {
@@ -384,15 +440,24 @@ export default function SowPillowPage() {
 
       // products.price stays populated so the existing booking path and the
       // 85/15 split are untouched. It mirrors the first rate the host set.
-      const primaryColumn = PILLOW_PRIMARY_RATE_ORDER.find((c) => numericRates[c] != null) ?? null;
-      const primaryRate = primaryColumn ? numericRates[primaryColumn] : null;
+      // The headline price is the cheapest unit, which is what the hub shows
+      // as "from". A trigger keeps products.price equal to this too, so the
+      // two cannot drift; writing it here just avoids a round trip.
+      const primaryColumn = UNIT_RATE_PERIODS
+        .map((r) => r.column)
+        .find((c) => cheapestUnit && Number(cheapestUnit[c]) > 0) ?? null;
+      const primaryRate = primaryColumn && cheapestUnit ? Number(cheapestUnit[primaryColumn]) : null;
 
       const galleryUrls = gallery.map((g) => g.fileUrl);
       const imageUrls = [front.fileUrl, interior?.fileUrl, ...galleryUrls].filter(Boolean) as string[];
 
       const service_details: Record<string, unknown> = {
-        property_type: stayType,
-        sleeps,
+        property_type: legacyStayType,
+        sleeps: legacySleeps,
+        units: units.map((u) => ({
+          unit_type: u.unit_type, name: u.name.trim(), sleeps: u.sleeps,
+          rate_nightly: u.rate_nightly, rate_weekly: u.rate_weekly, rate_monthly: u.rate_monthly,
+        })),
         amenities,
         location: baseLocation.trim(),
         rate_unit: primaryColumn ? PILLOW_LEGACY_RATE_UNIT[primaryColumn] : null,
@@ -404,7 +469,7 @@ export default function SowPillowPage() {
         description: description.trim(),
         type: 'service',
         kind: 'pillow',
-        category: stayType,
+        category: legacyStayType,
         license_type: 'bestowal',
         price: primaryRate,
         cover_image_url: front.fileUrl,
@@ -438,12 +503,14 @@ export default function SowPillowPage() {
 
       const detailPayload = {
         product_id: productId,
-        stay_type: stayType,
-        sleeps,
+        // Mirrors of the units, kept only until the drop-legacy migration
+        // removes these columns. Units are the source of truth.
+        stay_type: legacyStayType,
+        sleeps: legacySleeps,
         amenities,
-        rate_nightly: numericRates.rate_nightly ?? null,
-        rate_weekly: numericRates.rate_weekly ?? null,
-        rate_monthly: numericRates.rate_monthly ?? null,
+        rate_nightly: cheapestUnit?.rate_nightly ?? null,
+        rate_weekly: cheapestUnit?.rate_weekly ?? null,
+        rate_monthly: cheapestUnit?.rate_monthly ?? null,
         currency: currency.trim().toUpperCase(),
         base_location: baseLocation.trim(),
         base_lat: baseLat,
@@ -454,6 +521,39 @@ export default function SowPillowPage() {
         gallery_urls: galleryUrls,
         operator_confirmed_legal: true,
       };
+
+      // Units, replaced wholesale. The set is small and owner-only, so
+      // diffing would be more code for no benefit. New rows go in before the
+      // old ones come out, so the listing is never momentarily unit-less.
+      if (unitsSupported) {
+        const { data: oldUnits } = await supabase
+          .from('pillow_units').select('id').eq('product_id', productId);
+        const oldIds = ((oldUnits ?? []) as Array<{ id: string }>).map((u) => u.id);
+
+        const { error: unitErr } = await supabase.from('pillow_units').insert(
+          units.map((u, i) => ({
+            product_id: productId,
+            unit_type: u.unit_type,
+            name: u.name.trim(),
+            sleeps: Number(u.sleeps) || 1,
+            rate_nightly: u.rate_nightly ?? null,
+            rate_weekly: u.rate_weekly ?? null,
+            rate_monthly: u.rate_monthly ?? null,
+            sort_order: i,
+          })) as any,
+        );
+        if (unitErr) {
+          console.error('pillow_units save failed', unitErr);
+          toast.error(`Could not save your units: ${unitErr.message}`);
+          setSubmitting(false);
+          return;
+        }
+        if (oldIds.length > 0) {
+          const { error: delErr } = await supabase
+            .from('pillow_units').delete().in('id', oldIds);
+          if (delErr) console.warn('[SowPillowPage] could not clear old units', delErr);
+        }
+      }
 
       const { error: detailErr } = await supabase
         .from('pillow_seed_details')
@@ -534,69 +634,104 @@ export default function SowPillowPage() {
       <SowSteps
         steps={stepList}
         current={(stepList.findIndex((s) => !s.done) + 1) || stepList.length}
-        startHint="Pick what kind of place it is to start"
+        startHint="Name your first unit to start"
       />
 
-      {/* 1. What kind of place ------------------------------------------ */}
+      {/* 1. Units ------------------------------------------------------- */}
       <section className="mb-7">
-        <h2 className="text-lg font-semibold mb-3">1. What kind of place is it?</h2>
-        <div className="grid grid-cols-2 gap-3 auto-rows-fr">
-          {STAY_TYPES.map((t) => {
-            const on = stayType === t.value;
-            return (
-              <button
-                key={t.value}
-                type="button"
-                onClick={() => setStayType(t.value)}
-                aria-pressed={on}
-                /*
-                  flex-col is not optional. index.css:679 gives every bare
-                  <button> `inline-flex items-center justify-center`, which
-                  would lay the label and hint out side by side.
-                */
-                className={`flex h-full min-h-[5.5rem] flex-col items-start justify-start gap-0.5
-                  rounded-xl border-2 p-3 text-left transition ${
-                  on ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <span className="font-semibold leading-tight">{t.label}</span>
-                <span className="text-xs leading-snug text-muted-foreground">{t.hint}</span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
+        <h2 className="text-lg font-semibold mb-1">1. What can people book?</h2>
+        <p className="text-sm text-muted-foreground mb-3">
+          One place to stay is one unit. A resort adds several: a room, a chalet,
+          a dome. Each one has its own size and price.
+        </p>
 
-      {stayType && (
-        <>
-          {/* 2. How many people ------------------------------------------ */}
-          <section className="mb-7">
-            <h2 className="text-lg font-semibold mb-3">2. {branch?.sleepsQuestion}</h2>
-            <div className="flex items-center gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-12 w-12"
-                onClick={() => setSleeps((n) => Math.max(1, n - 1))}
-                aria-label="Fewer people"
-              >
-                <Minus className="w-5 h-5" />
-              </Button>
-              <span className="text-2xl font-bold w-12 text-center" aria-live="polite">{sleeps}</span>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-12 w-12"
-                onClick={() => setSleeps((n) => Math.min(200, n + 1))}
-                aria-label="More people"
-              >
-                <Plus className="w-5 h-5" />
-              </Button>
-              <span className="text-sm text-muted-foreground">people</span>
+        <div className="space-y-4">
+          {units.map((u, i) => (
+            <div key={i} className="rounded-xl border p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="text-sm font-medium">Unit {i + 1}</span>
+                {units.length > 1 && (
+                  <Button
+                    type="button" variant="ghost" size="sm"
+                    className="text-destructive hover:text-destructive"
+                    aria-label={`Remove unit ${i + 1}`}
+                    onClick={() => setUnits((prev) => prev.filter((_, n) => n !== i))}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {PILLOW_UNIT_TYPES.map((t) => {
+                  const on = u.unit_type === t.value;
+                  return (
+                    <button
+                      key={t.value}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setUnits((prev) => prev.map((x, n) => n === i ? { ...x, unit_type: t.value } : x))}
+                      className={`min-h-11 rounded-xl border-2 px-3 text-sm transition ${
+                        on ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-3">
+                <Label htmlFor={`unit-name-${i}`}>What do you call it?</Label>
+                <Input
+                  id={`unit-name-${i}`}
+                  value={u.name}
+                  onChange={(e) => setUnits((prev) => prev.map((x, n) => n === i ? { ...x, name: e.target.value } : x))}
+                  placeholder="Family chalet"
+                  className="h-12 mt-1"
+                />
+              </div>
+
+              <div className="mt-3 flex items-center gap-3">
+                <Label htmlFor={`unit-sleeps-${i}`} className="text-sm">Sleeps</Label>
+                <Input
+                  id={`unit-sleeps-${i}`}
+                  type="number" inputMode="numeric" min="1" max="200"
+                  value={u.sleeps}
+                  onChange={(e) => setUnits((prev) => prev.map((x, n) => n === i ? { ...x, sleeps: Number(e.target.value) || 1 } : x))}
+                  className="h-12 w-24"
+                />
+                <span className="text-sm text-muted-foreground">people</span>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                <p className="text-sm font-medium">What it costs</p>
+                {UNIT_RATE_PERIODS.map((r) => (
+                  <div key={r.column} className="flex items-center gap-3">
+                    <Label htmlFor={`${r.column}-${i}`} className="w-24 shrink-0 text-sm">{r.label}</Label>
+                    <Input
+                      id={`${r.column}-${i}`}
+                      type="number" inputMode="decimal" min="0" step="0.01"
+                      value={u[r.column] ?? ''}
+                      onChange={(e) => setUnits((prev) => prev.map((x, n) => n === i
+                        ? { ...x, [r.column]: e.target.value === '' ? null : Number(e.target.value) } : x))}
+                      placeholder="—"
+                      className="h-12"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-          </section>
+          ))}
+        </div>
+
+        <Button
+          type="button" variant="outline" className="mt-3"
+          onClick={() => setUnits((prev) => [...prev, blankUnit(prev.length)])}
+        >
+          Add another unit
+        </Button>
+      </section>
 
           {/* 3. Amenities ------------------------------------------------ */}
           <section className="mb-7">
@@ -711,9 +846,9 @@ export default function SowPillowPage() {
 
           {/* 6. Price ---------------------------------------------------- */}
           <section className="mb-7">
-            <h2 className="text-lg font-semibold mb-3">6. What do you charge?</h2>
+            <h2 className="text-lg font-semibold mb-3">6. What currency?</h2>
             <p className="text-sm text-muted-foreground mb-3">
-              Fill in only the ones you offer. At least one.
+              Each unit's price is set above. This is the currency they are all in.
             </p>
 
             <div className="mb-4">
@@ -732,30 +867,6 @@ export default function SowPillowPage() {
                 </p>
               </div>
             </div>
-
-            <div className="space-y-3">
-              {visibleRates.map((p) => (
-                <div key={p.column} className="flex items-center gap-3">
-                  <Label htmlFor={p.column} className="w-28 shrink-0 text-sm">{p.label}</Label>
-                  <Input
-                    id={p.column}
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="0.01"
-                    value={rates[p.column] ?? ''}
-                    onChange={(e) => setRates((prev) => ({ ...prev, [p.column]: e.target.value }))}
-                    placeholder="—"
-                    className="h-12"
-                  />
-                </div>
-              ))}
-            </div>
-            {!showAllRates && (
-              <Button variant="link" size="sm" className="px-0 mt-2" onClick={() => setShowAllRates(true)}>
-                Show all rate options
-              </Button>
-            )}
           </section>
 
           {/* 7. Availability and the legal confirmation ------------------- */}
@@ -803,8 +914,6 @@ export default function SowPillowPage() {
             label={isEdit ? 'Save changes' : 'List my place'}
             progressWord={isEdit ? 'ready' : undefined}
           />
-        </>
-      )}
     </div>
   );
 }

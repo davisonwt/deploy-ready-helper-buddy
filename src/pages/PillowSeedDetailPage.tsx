@@ -1,4 +1,5 @@
 import { formatNativeAmount, paymentCurrencyNoteFor } from '@/lib/sleeping/currency';
+import { loadUnits, ratesOnUnit, unitTypeLabel, type PillowUnit } from '@/lib/sleeping/pillowUnits';
 import { pillowRatesOn, labelForAmenity, stayTypeLabel } from '@/lib/sleeping/pillowOptions';
 import { formatDistance, haversineMetres, unitForViewer } from '@/lib/sleeping/units';
 import { useWorldwideLocation } from '@/hooks/useWorldwideLocation';
@@ -52,6 +53,10 @@ export default function PillowSeedDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [product, setProduct] = useState<any | null>(null);
 
+  const [units, setUnits] = useState<PillowUnit[]>([]);
+  /** Which unit the guest is booking. Null until they pick, and for a
+   *  single-unit listing it is selected for them. */
+  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingDate, setBookingDate] = useState('');
   const [quantity, setQuantity] = useState<number | null>(1);
@@ -87,6 +92,19 @@ export default function PillowSeedDetailPage() {
       if (!cancelled) setPillow(detail ?? null);
     })();
     return () => { cancelled = true; };
+  }, [id]);
+
+  // The bookable units. A single-unit listing selects itself, so the guest
+  // is not asked to choose between one thing.
+  useEffect(() => {
+    let alive = true;
+    if (!id) return;
+    loadUnits(id).then((rows) => {
+      if (!alive) return;
+      setUnits(rows);
+      if (rows.length === 1) setSelectedUnitId(rows[0].id ?? null);
+    });
+    return () => { alive = false; };
   }, [id]);
 
   // "About this Wandering Pillow" -- fetched from the sower's own role
@@ -151,10 +169,15 @@ export default function PillowSeedDetailPage() {
     ...((pillow?.gallery_urls ?? []) as string[]),
   ].filter(Boolean);
 
+  const selectedUnit = units.find((u) => u.id === selectedUnitId) ?? (units.length === 1 ? units[0] : null);
   const qty = Math.max(1, quantity ?? 1);
-  const amount = Number(product.price ?? 0) * qty;
+  // The guest pays the unit's rate, not the listing's headline number. The
+  // split itself is untouched: priceBreakdown still does the 85/15.
+  const unitRate = selectedUnit ? ratesOnUnit(selectedUnit)[0]?.amount : undefined;
+  const amount = Number(unitRate ?? product.price ?? 0) * qty;
   const split = amount > 0 ? priceBreakdown(amount) : null;
-  const canSubmitBooking = !!bookingDate && quantity != null && quantity > 0;
+  const canSubmitBooking = !!bookingDate && quantity != null && quantity > 0
+    && (units.length === 0 || !!selectedUnit);
 
   const handleRequestBooking = async () => {
     if (!user) { toast.error('Please log in to request a booking.'); return; }
@@ -173,6 +196,7 @@ export default function PillowSeedDetailPage() {
         .from('bookings')
         .insert({
           product_id: product.id,
+          pillow_unit_id: selectedUnit?.id ?? null,
           grower_user_id: user.id,
           sower_user_id: sowerUserId,
           company_id: product.company_id,
@@ -268,7 +292,50 @@ export default function PillowSeedDetailPage() {
             </p>
           )}
 
-          {structuredRates.length > 0 ? (
+          {units.length > 0 && (
+            <div className="rounded-lg border p-3">
+              <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+                {units.length === 1 ? 'What you can book' : `${units.length} units to choose from`}
+              </p>
+              <ul className="space-y-2">
+                {units.map((u) => {
+                  const on = (selectedUnitId ?? (units.length === 1 ? u.id : null)) === u.id;
+                  const unitRates = ratesOnUnit(u);
+                  return (
+                    <li key={u.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUnitId(u.id ?? null)}
+                        aria-pressed={on}
+                        className={`w-full rounded-lg border-2 p-3 text-left transition ${
+                          on ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="font-semibold">{u.name}</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {unitTypeLabel(u.unit_type)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Sleeps {u.sleeps}</p>
+                        <div className="mt-1 flex flex-wrap gap-x-3">
+                          {unitRates.map((r) => (
+                            <span key={r.short} className="text-sm">
+                              <strong>{formatNativeAmount(r.amount, listingCurrency)}</strong>
+                              <span className="text-muted-foreground"> / {r.short}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-2 text-xs text-muted-foreground">Rates in {listingCurrency}</p>
+            </div>
+          )}
+
+          {units.length === 0 && structuredRates.length > 0 ? (
             <div className="rounded-lg border p-3">
               <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
                 Rates in {listingCurrency}

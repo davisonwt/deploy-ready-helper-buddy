@@ -77,6 +77,12 @@ interface PillowRow {
   base_location: string | null;
   distance_m: number;
   created_at: string;
+  // Added by 20260917110000_pillow_units: a listing holds many units, so the
+  // card quotes the cheapest rate and the capacity of the largest unit.
+  unit_count: number | null;
+  from_rate: number | null;
+  max_sleeps: number | null;
+  unit_types: string[] | null;
 }
 
 interface HandRow {
@@ -672,6 +678,12 @@ function PillowCard({ row, unit }: { row: PillowRow; unit: ReturnType<typeof uni
   const rates = pillowRatesOn(row as unknown as Record<string, unknown>);
   const list = row.amenities ?? [];
   const cover = row.front_image_url || row.cover_image_url;
+  const unitCount = row.unit_count ?? 0;
+  // from_rate is the cheapest rate across every unit, computed server-side.
+  // Falling back to the listing's own rates keeps a not-yet-converted row
+  // readable rather than blank.
+  const fromAmount = row.from_rate ?? null;
+  const sleepsShown = row.max_sleeps ?? row.sleeps;
 
   return (
     <Link
@@ -684,7 +696,11 @@ function PillowCard({ row, unit }: { row: PillowRow; unit: ReturnType<typeof uni
       <div className="p-4 space-y-2">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold leading-tight">{row.title}</h3>
-          <Badge variant="secondary" className="shrink-0">{stayTypeLabel(row.stay_type)}</Badge>
+          <Badge variant="secondary" className="shrink-0">
+            {unitCount > 1
+              ? `${unitCount} units`
+              : (row.unit_types?.[0] ? unitTypeLabel(row.unit_types[0]) : stayTypeLabel(row.stay_type))}
+          </Badge>
         </div>
 
         <p className="text-sm text-primary font-medium">
@@ -692,8 +708,10 @@ function PillowCard({ row, unit }: { row: PillowRow; unit: ReturnType<typeof uni
           {row.base_location ? ` · ${row.base_location}` : ''}
         </p>
 
-        {row.sleeps != null && (
-          <p className="text-xs text-muted-foreground">Sleeps {row.sleeps}</p>
+        {sleepsShown != null && (
+          <p className="text-xs text-muted-foreground">
+            {unitCount > 1 ? `Sleeps up to ${sleepsShown}` : `Sleeps ${sleepsShown}`}
+          </p>
         )}
 
         {list.length > 0 && (
@@ -703,7 +721,12 @@ function PillowCard({ row, unit }: { row: PillowRow; unit: ReturnType<typeof uni
           </p>
         )}
 
-        {rates.length > 0 && (
+        {fromAmount != null ? (
+          <p className="pt-1 text-sm">
+            <span className="text-muted-foreground">from </span>
+            <strong>{formatNativeAmount(fromAmount, row.currency)}</strong>
+          </p>
+        ) : rates.length > 0 && (
           <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1">
             {rates.map((r) => (
               <span key={r.short} className="text-sm">
