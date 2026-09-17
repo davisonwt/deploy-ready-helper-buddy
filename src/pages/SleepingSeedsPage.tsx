@@ -12,7 +12,7 @@ import {
   DEFAULT_RADIUS_M, formatDistance, unitForViewer,
 } from '@/lib/sleeping/units';
 import { formatNativeAmount } from '@/lib/sleeping/currency';
-import { unitTypeLabel } from '@/lib/sleeping/pillowUnits';
+import { PILLOW_UNIT_TYPES, unitTypeLabel } from '@/lib/sleeping/pillowUnits';
 import SignedImg from '@/components/media/SignedImg';
 import {
   RATE_PERIODS, USE_TAGS, VEHICLE_TYPES, ratesOn, vehicleTypeLabel,
@@ -360,7 +360,11 @@ export default function SleepingSeedsPage() {
               <div className="mt-3 rounded-xl border bg-card p-4 space-y-4">
                 <FilterGroup
                   title="Kind of place"
-                  options={STAY_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+                  // Unit types, not the pre-units stay types. A listing's
+                  // kind now comes from its units, so filtering on the old
+                  // vocabulary silently matched nothing: a host who picks
+                  // "Cottage" could never be found under "Farm stay".
+                  options={PILLOW_UNIT_TYPES.map((t) => ({ value: t.value, label: t.label }))}
                   selected={stayTypes}
                   onToggle={(v) => toggle(stayTypes, v, setStayTypes)}
                 />

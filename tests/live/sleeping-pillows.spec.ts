@@ -204,8 +204,10 @@ test.describe.serial('Sleeping Pillows', () => {
     await hubAt(page, TOWN);
     await page.getByRole('button', { name: /^Filters/ }).click();
 
-    // Stay type
-    await page.getByRole('button', { name: 'Farm stay', exact: true }).click();
+    // Kind of place is now the unit type, not the pre-units stay type.
+    // Farm stay and The whole place are both Cottage units; Bush camp is a
+    // Tent, so it must drop out.
+    await page.getByRole('button', { name: 'Cottage', exact: true }).click();
     await expect(page.getByText(`QAP Farm stay ${STAMP}`)).toBeVisible({ timeout: 30000 });
     await expect(page.getByText(`QAP Bush camp ${STAMP}`)).toHaveCount(0);
     console.log('[EVIDENCE] stay type: Farm stay shown, Bush camp hidden');
