@@ -12,6 +12,7 @@ import {
   DEFAULT_RADIUS_M, formatDistance, unitForViewer,
 } from '@/lib/sleeping/units';
 import { formatNativeAmount } from '@/lib/sleeping/currency';
+import { unitTypeLabel } from '@/lib/sleeping/pillowUnits';
 import SignedImg from '@/components/media/SignedImg';
 import {
   RATE_PERIODS, USE_TAGS, VEHICLE_TYPES, ratesOn, vehicleTypeLabel,
