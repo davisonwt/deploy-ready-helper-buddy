@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { paceGeocode } from './support/geocodePacing';
+import { waitForCoverAccepted } from './support/coverUpload';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -84,17 +85,32 @@ async function fillPillowForm(
   if (await unitTypeBtn.count()) await unitTypeBtn.first().click();
 
   // Photos: the first CoverDropZone is the outside, the second the inside.
-  const files = page.locator('input[type="file"]');
-  await files.nth(0).setInputFiles(PHOTO);
-  await expect(page.locator('#pillow-title')).toBeVisible({ timeout: 25000 });
-  await files.nth(1).setInputFiles(PHOTO);
+  // Address each dropzone by its own label, not by index. Index broke when
+  // the units editor changed what renders before the photo step, and a photo
+  // landing in the wrong zone leaves `front` unset with no visible error.
+  const outside = page.locator('label:text-is("The outside") + div input[type="file"]');
+  const inside = page.locator('label:text-is("The inside") + div input[type="file"]');
+  await outside.setInputFiles(PHOTO);
+  // #pillow-title used to appear only once a photo had been accepted, so its
+  // visibility was a usable "upload finished" signal. Since the stay-type
+  // gate was removed every step renders immediately, so it proves nothing.
+  // Wait for the uploaded image itself instead: crop plus upload can take
+  // longer than a fixed sleep, and carrying on early leaves front unset and
+  // the submit button correctly disabled.
+  // The form's own readiness is the only signal that cannot drift: it stops
+  // naming the photo the moment `front` is set.
+  await waitForCoverAccepted(page, 'Add a photo of the outside');
+  await inside.setInputFiles(PHOTO);
   await page.waitForTimeout(3000);
 
   await page.fill('#pillow-title', opts.title ?? `QAP ${t.label} ${STAMP}`);
   await page.fill('#pillow-desc', `QA pillow listing for ${t.value}.`);
 
   const amenity = page.getByRole('button', { name: t.amenity, exact: true });
-  if (await amenity.count()) await amenity.first().click();
+  // Not conditional. `if (await count())` turned a missing chip into a silent
+  // skip, and the only symptom was a disabled submit button much later.
+  await expect(amenity, `no amenity chip labelled "${t.amenity}"`).toHaveCount(1);
+  await amenity.click();
 
   await page.fill('#pillow-currency', CURRENCY);
 

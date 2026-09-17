@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { waitForCoverAccepted } from './support/coverUpload';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -78,8 +79,9 @@ test.describe.serial('A pillow listing is made of units', () => {
       console.log('[FORM] three units entered');
 
       await page.locator('input[type="file"]').nth(0).setInputFiles(PHOTO);
-      await expect(page.locator('#pillow-title')).toBeVisible({ timeout: 30000 });
-      await page.waitForTimeout(2500);
+      // #pillow-title is always visible now, so it proved nothing. Wait for the
+      // cover to be accepted, and say so plainly when it is rejected instead.
+      await waitForCoverAccepted(page, 'Add a photo of the outside');
       await page.fill('#pillow-title', TITLE);
       await page.fill('#pillow-desc', 'QA: multi-unit listing.');
       await page.fill('#pillow-currency', 'ZAR');
