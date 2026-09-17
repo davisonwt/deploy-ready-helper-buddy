@@ -166,6 +166,21 @@ comment on column public.bookings.pillow_unit_id is
 -- --- the hub query, now unit-aware ---------------------------------------
 -- from_rate is the cheapest nightly-or-any rate across the listing's units.
 -- max_sleeps lets the sleeps filter match ANY unit rather than the listing.
+--
+-- DROP first, deliberately. This adds four OUT columns, and CREATE OR REPLACE
+-- cannot change a function's return shape: it fails with 42P13, "cannot
+-- change return type of existing function". That is what happened on the
+-- first attempt at this migration.
+--
+-- Dropped by its EXACT argument list, never by bare name. A bare
+-- DROP FUNCTION would be ambiguous the moment an overload exists, and could
+-- take the wrong one. No CASCADE: nothing depends on this function today
+-- (checked: no view, no other function references it), and if that ever
+-- changes the drop should fail loudly rather than quietly remove whatever
+-- was depending on it.
+drop function if exists public.sleeping_pillows_near(
+  numeric, numeric, integer, text[], text[], integer, text[], integer, integer);
+
 create or replace function public.sleeping_pillows_near(
   _lat numeric, _lng numeric, _radius_m integer default 50000,
   _stay_types text[] default null, _amenities text[] default null,
@@ -247,5 +262,30 @@ language sql stable set search_path to 'public' as $function$
   limit greatest(1, least(coalesce(_limit, 60), 200))
   offset greatest(0, coalesce(_offset, 0));
 $function$;
+
+-- A dropped function takes its grants with it. The old one carried explicit
+-- EXECUTE for anon, authenticated and service_role, so without these the hub
+-- would fail for every member with a permission error instead of returning an
+-- empty list -- a far more confusing failure than no results.
+--
+-- Supabase's default privileges for functions in public would re-grant these
+-- anyway when postgres creates the function, but relying on that means the
+-- hub's access depends on a setting nobody in this repo controls. Two
+-- idempotent lines remove the dependency.
+grant execute on function public.sleeping_pillows_near(
+  numeric, numeric, integer, text[], text[], integer, text[], integer, integer)
+  to anon, authenticated, service_role;
+
+-- Proof, so a failed grant is visible in the migration output rather than at
+-- the first member request.
+select
+  p.proname,
+  pg_get_function_identity_arguments(p.oid) as args,
+  has_function_privilege('anon',          p.oid, 'execute') as anon_can_execute,
+  has_function_privilege('authenticated', p.oid, 'execute') as authenticated_can_execute,
+  has_function_privilege('service_role',  p.oid, 'execute') as service_role_can_execute
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public' and p.proname = 'sleeping_pillows_near';
 
 notify pgrst, 'reload schema';
