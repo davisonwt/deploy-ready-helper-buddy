@@ -63,6 +63,36 @@ template's hotspots instead. The intent was reasonable and the change was
 small. His own placements were unrecoverable, and he discovered it six days
 later. A snapshot would have made it a one-line fix.
 
+## Golden rule: regression check before claiming done
+Before reporting any change as verified, re-run the existing live specs in
+`tests/live/` for anything the change could plausibly touch. A new test for
+the thing you just built proves that thing works. It proves nothing about
+what you broke on the way.
+
+**When this is mandatory**, not optional: the change touches a shared
+component or helper, a database constraint or trigger, or more than a
+handful of files. In those cases the report must **name which existing specs
+you re-ran and their results**. "My new test passes" is not evidence that
+nothing else broke, and must not be offered as though it were.
+
+**Test the real path, not a convenient approximation of it.** A rehearsal
+inside a single transaction does not prove behaviour through PostgREST,
+which gives every request its own transaction. A database-level probe does
+not prove the form works. If the thing that can break is a live form
+submission, submit the form.
+
+Two outages came through this gap, both with a test already written that
+nobody re-ran:
+
+- **2026-09-16** — a cosmetic image-loading sweep across 38 files took down
+  every stall interior, because one converted tag carried a React ref the
+  new component silently dropped. `tests/live/stall-hotspots.spec.ts`
+  existed and would have caught it.
+- **2026-09-17** — a deferred constraint trigger blocked every household
+  Hand listing. Only an in-transaction rehearsal was run, and a transaction
+  is exactly the condition that does not hold in production. One live form
+  submission would have caught it.
+
 ## TypeScript migration ratchet
 (see `CONTRIBUTING.md` for full detail)
 - All new files must be `.ts`/`.tsx` — no new `.js`/`.jsx`.
@@ -87,7 +117,12 @@ later. A snapshot would have made it a one-line fix.
 ## Speed rules
 1. Never stash/revert source to prove a test fails before restoring it. Trust the diff.
 2. No hermetic fixtures when `.env.test` creds exist — test against the live `TEST_BASE_URL` instead.
-3. Run only the spec you touched, not the whole suite.
+3. Run only the spec you touched, not the whole suite — **unless the
+   regression rule above applies** (shared component or helper, database
+   constraint, or more than a handful of files), in which case the
+   regression rule wins and you re-run the affected specs too. Speed
+   never overrides it; the two outages it names both cost more time than
+   every skipped spec has ever saved.
 4. Reports are ≤ 10 lines: hash, what changed, what's verified, what's not.
 5. Don't rewrite comments or explain history in code — say it in the commit message instead.
 6. One commit per task, pushed immediately.
