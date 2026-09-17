@@ -9,8 +9,10 @@ import { test, expect, type Page } from '@playwright/test';
 const E = process.env.TEST_GOSAT_EMAIL || '', P = process.env.TEST_GOSAT_PASSWORD || '';
 const VIEWPORTS = [{ w: 390, h: 844, n: 'mobile-390' }, { w: 1280, h: 720, n: 'desktop-1280' }];
 // /my-listings is not a form, but it is where a member reaches every
-// control on what they have listed, so the same rule applies.
-const FORMS = ['/sow/hand', '/sow/pillow', '/sow/wheel', '/my-listings'];
+// control on what they have listed, so the same rule applies. /stalls-feed
+// is one stall photo filling the screen and the card sat in the middle of
+// it -- the image is the content, there is nothing to scroll past it to.
+const FORMS = ['/sow/hand', '/sow/pillow', '/sow/wheel', '/my-listings', '/stalls-feed'];
 const NAGS = /Enable Notifications|Enable sound|payout|Set up payouts/i;
 
 async function login(page: Page) {
@@ -131,7 +133,10 @@ test.describe.serial('Global overlays keep off the sow forms', () => {
     await login(page);
 
     const results: Record<string, boolean> = {};
-    for (const route of ['/sleeping', '/seed/wheel/819a5b71-48a4-40c5-9fc7-f516aa82c348']) {
+    // Both must be routes the list does NOT suppress, or this proves nothing.
+    // /seed/wheel/ used to be here and was suppressed on 2026-09-17, which
+    // left the control group unable to fail.
+    for (const route of ['/sleeping', '/dashboard']) {
       await page.goto(route, { waitUntil: 'domcontentloaded' });
       await page.evaluate(() => {
         try { localStorage.removeItem('notification-banner-dismissed'); } catch { /* ignore */ }

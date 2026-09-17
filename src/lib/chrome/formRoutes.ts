@@ -24,6 +24,11 @@ const SUPPRESSED_ROUTES: RegExp[] = [
   // Enable Notifications card sat on top of the seed detail pages, which are
   // where someone decides whether to book.
   /^\/seed\/(wheel|pillow|hand)\//,
+  // The stalls feed is one stall photo filling the screen, and the card sat
+  // in the middle of it. The image IS the content here -- there is nothing
+  // to scroll past it to. /search, /let-it-rain and /browse-orchards all
+  // redirect here, so they are covered by the resolved path.
+  /^\/stalls-feed(\/|$)/,
 ];
 
 export function isOverlaySuppressedRoute(pathname: string): boolean {
