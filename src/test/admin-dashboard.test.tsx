@@ -3,6 +3,8 @@ import { render } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AdminDashboardPage from '@/pages/AdminDashboardPage'
+import { useAuth } from '@/hooks/useAuth'
+import { useRoles } from '@/hooks/useRoles'
 
 // Mock hooks
 vi.mock('@/hooks/useAuth', () => ({
@@ -53,7 +55,6 @@ describe('AdminDashboardPage - Rules of Hooks Compliance', () => {
   })
 
   it('renders without crashing and calls useRoles exactly once at top level', () => {
-    const { useRoles } = require('@/hooks/useRoles')
     
     const { getByText } = render(
       <BrowserRouter>
@@ -71,7 +72,6 @@ describe('AdminDashboardPage - Rules of Hooks Compliance', () => {
   })
 
   it('displays loading state while roles are loading', () => {
-    const { useRoles } = require('@/hooks/useRoles')
     useRoles.mockReturnValueOnce({
       roles: [],
       loading: true,
@@ -98,7 +98,6 @@ describe('AdminDashboardPage - Rules of Hooks Compliance', () => {
   })
 
   it('displays access denied when user lacks permissions', () => {
-    const { useRoles } = require('@/hooks/useRoles')
     useRoles.mockReturnValueOnce({
       roles: [],
       loading: false,
@@ -126,8 +125,6 @@ describe('AdminDashboardPage - Rules of Hooks Compliance', () => {
   })
 
   it('does not conditionally call hooks based on loading state', () => {
-    const { useAuth } = require('@/hooks/useAuth')
-    const { useRoles } = require('@/hooks/useRoles')
 
     render(
       <BrowserRouter>

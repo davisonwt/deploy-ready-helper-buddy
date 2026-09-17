@@ -93,6 +93,27 @@ test.describe.serial('Trust & Safety queue', () => {
     await page.screenshot({ path: 'test-results/moderation-queue-thumbs.png', fullPage: false });
   });
 
+  test('2b. nothing renders as a broken image', async ({ page }) => {
+    await login(page);
+    await openQueue(page);
+
+    // 34 chat-media and 3 orchard-videos rows in the live queue are video or
+    // audio. Before the fallback they rendered through <img> and showed a
+    // broken icon, which tells a reviewer nothing. Every <img> that survives
+    // must have decoded; everything else must be a labelled tile.
+    const state = await page.evaluate(() => {
+      const imgs = Array.from(document.querySelectorAll<HTMLImageElement>('img[alt="Flagged upload"]'));
+      const broken = imgs.filter((i) => !(i.complete && i.naturalWidth > 0)).length;
+      const tiles = Array.from(document.querySelectorAll('span'))
+        .filter((e) => /^(not an image|no file)$/.test((e.textContent || '').trim())).length;
+      return { imgs: imgs.length, broken, tiles };
+    });
+    console.log(`[EVIDENCE] decoded images: ${state.imgs - state.broken}/${state.imgs}, fallback tiles: ${state.tiles}`);
+    expect(state.broken, 'a flagged row rendered as a broken image').toBe(0);
+    expect(state.tiles, 'no fallback tiles, yet the queue holds non-image rows').toBeGreaterThan(0);
+    await page.screenshot({ path: 'test-results/moderation-queue-fallbacks.png', fullPage: false });
+  });
+
   test('3. Allow resolves the row and clears it from the queue', async ({ page }) => {
     test.skip(!ALLOW_ID, 'needs a seeded row');
     await login(page);
