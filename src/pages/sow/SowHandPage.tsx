@@ -27,6 +27,7 @@ import {
   isProfessionalCategory, type ServiceCategory,
 } from '@/lib/sleeping/handOptions';
 import { geocodeBaseLocation } from '@/lib/sleeping/geocodeBase';
+import SowSteps from '@/components/sowing/SowSteps';
 
 const MAX_GALLERY_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
@@ -44,7 +45,7 @@ function SowBanner() {
   const accent = preset?.accent ?? '#16a34a';
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl mb-6 border aspect-[3.9/1]"
+      className="relative hidden w-full overflow-hidden rounded-2xl border aspect-[3.9/1] sm:mb-6 sm:block"
       style={{ borderColor: `${accent}73`, boxShadow: `0 0 40px ${accent}40` }}
     >
       <img src={bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top" loading="eager" />
@@ -350,6 +351,18 @@ export default function SowHandPage() {
   }, [categoryReady, frontReady, titleReady, qualificationReady, yearsReady,
       rateReady, currencyValid, locationReady, referencesReady, legalConfirmed]);
 
+  // Listed before the first question is answered, so nobody reaches the end
+  // of the form to discover a price was wanted. See SowSteps.
+  const stepList = [
+    { label: 'What you do', done: categoryReady },
+    { label: 'Background', done: categoryReady && yearsReady && qualificationReady },
+    { label: 'Photos and name', done: frontReady && titleReady },
+    { label: 'Where', done: locationReady },
+    { label: 'What you charge', done: rateReady && currencyValid },
+    { label: 'References', done: categoryReady && referencesReady },
+    { label: 'Last thing', done: legalConfirmed },
+  ];
+
   const canSubmit = completed === requiredCount;
 
   const handlePlant = async () => {
@@ -546,12 +559,12 @@ export default function SowHandPage() {
   );
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 py-6 pb-28">
+    <div className="container max-w-2xl mx-auto px-4 pt-3 pb-28 sm:pt-6">
       <Button
         variant="ghost"
         size="sm"
         onClick={() => navigate(isEdit ? '/my-listings' : '/sow')}
-        className="mb-4 -ml-2"
+        className="mb-2 -ml-2 sm:mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
         {isEdit ? 'Back to My Listings' : 'Back to Sow'}
@@ -564,6 +577,12 @@ export default function SowHandPage() {
         You do the work. People book you for it.
       </p>
 
+      <SowSteps
+        steps={stepList}
+        current={(stepList.findIndex((s) => !s.done) + 1) || stepList.length}
+        startHint="Pick what you do to start"
+      />
+
       {/* 1. What do you do -------------------------------------------- */}
       <section className="mb-7">
         <h2 className="text-lg font-semibold mb-3">1. What do you do?</h2>
@@ -574,13 +593,6 @@ export default function SowHandPage() {
         <p className="text-sm font-medium mb-2 mt-5">Work in and around the home</p>
         <CategoryGrid list={HOUSEHOLD_CATEGORIES} />
       </section>
-
-      {!category && (
-        <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-          Pick one to carry on. Next we ask about your background, for photos,
-          where you work, and <strong>what you charge</strong>.
-        </p>
-      )}
 
       {category && (
         <>

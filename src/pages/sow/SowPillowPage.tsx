@@ -26,6 +26,7 @@ import {
   type Amenity, type StayType,
 } from '@/lib/sleeping/pillowOptions';
 import { geocodeBaseLocation } from '@/lib/sleeping/geocodeBase';
+import SowSteps from '@/components/sowing/SowSteps';
 
 const MAX_GALLERY_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
@@ -36,7 +37,7 @@ function SowBanner() {
   const accent = preset?.accent ?? '#d4af37';
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl mb-6 border aspect-[3.9/1]"
+      className="relative hidden w-full overflow-hidden rounded-2xl border aspect-[3.9/1] sm:mb-6 sm:block"
       style={{ borderColor: `${accent}73`, boxShadow: `0 0 40px ${accent}40` }}
     >
       <img src={bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top" loading="eager" />
@@ -346,6 +347,18 @@ export default function SowPillowPage() {
     return undefined;
   }, [typeReady, frontReady, titleReady, rateReady, currencyValid, locationReady, legalConfirmed]);
 
+  // Listed before the first question is answered, so nobody reaches the end
+  // of the form to discover a price was wanted. See SowSteps.
+  const stepList = [
+    { label: 'What kind', done: typeReady },
+    { label: 'How many', done: typeReady && sleeps > 0 },
+    { label: 'What guests get', done: amenities.length > 0 },
+    { label: 'Photos and name', done: frontReady && titleReady },
+    { label: 'Where', done: locationReady },
+    { label: 'What you charge', done: rateReady && currencyValid },
+    { label: 'Last thing', done: legalConfirmed },
+  ];
+
   const canSubmit = completed === requiredCount && legalConfirmed;
 
   const handlePlant = async () => {
@@ -500,12 +513,12 @@ export default function SowPillowPage() {
   }
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 py-6 pb-28">
+    <div className="container max-w-2xl mx-auto px-4 pt-3 pb-28 sm:pt-6">
       <Button
         variant="ghost"
         size="sm"
         onClick={() => navigate(isEdit ? '/my-listings' : '/sow')}
-        className="mb-4 -ml-2"
+        className="mb-2 -ml-2 sm:mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
         {isEdit ? 'Back to My Listings' : 'Back to Sow'}
@@ -517,6 +530,12 @@ export default function SowPillowPage() {
       <p className="text-sm text-muted-foreground mb-6">
         Somewhere for a tribe member to rest. You host, they stay.
       </p>
+
+      <SowSteps
+        steps={stepList}
+        current={(stepList.findIndex((s) => !s.done) + 1) || stepList.length}
+        startHint="Pick what kind of place it is to start"
+      />
 
       {/* 1. What kind of place ------------------------------------------ */}
       <section className="mb-7">
@@ -547,13 +566,6 @@ export default function SowPillowPage() {
           })}
         </div>
       </section>
-
-      {!stayType && (
-        <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-          Pick one to carry on. Next we ask how many people it sleeps, for
-          photos, where it is, and <strong>what you charge</strong>.
-        </p>
-      )}
 
       {stayType && (
         <>

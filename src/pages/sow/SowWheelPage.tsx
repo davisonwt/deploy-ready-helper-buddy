@@ -26,6 +26,7 @@ import {
   type UseTag, type VehicleType,
 } from '@/lib/sleeping/wheelOptions';
 import { geocodeBaseLocation } from '@/lib/sleeping/geocodeBase';
+import SowSteps from '@/components/sowing/SowSteps';
 
 const MAX_EXTRA_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
@@ -36,7 +37,7 @@ function SowBanner() {
   const accent = preset?.accent ?? '#ea580c';
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl mb-6 border aspect-[3.9/1]"
+      className="relative hidden w-full overflow-hidden rounded-2xl border aspect-[3.9/1] sm:mb-6 sm:block"
       style={{ borderColor: `${accent}73`, boxShadow: `0 0 40px ${accent}40` }}
     >
       <img src={bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top" loading="eager" />
@@ -350,6 +351,17 @@ export default function SowWheelPage() {
     return undefined;
   }, [typeReady, coverReady, titleReady, rateReady, currencyValid, locationReady, licenceConfirmed]);
 
+  // Listed before the first question is answered, so nobody reaches the end
+  // of the form to discover a price was wanted. See SowSteps.
+  const stepList = [
+    { label: 'What is it', done: typeReady },
+    { label: 'What it can do', done: tags.length > 0 },
+    { label: 'Photos and name', done: coverReady && titleReady },
+    { label: 'Where', done: locationReady },
+    { label: 'What you charge', done: rateReady && currencyValid },
+    { label: 'Last thing', done: licenceConfirmed },
+  ];
+
   const canSubmit = completed === requiredCount && licenceConfirmed;
 
   const handlePlant = async () => {
@@ -509,12 +521,12 @@ export default function SowWheelPage() {
   }
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 py-6 pb-28">
+    <div className="container max-w-2xl mx-auto px-4 pt-3 pb-28 sm:pt-6">
       <Button
         variant="ghost"
         size="sm"
         onClick={() => navigate(isEdit ? '/my-listings' : '/sow')}
-        className="mb-4 -ml-2"
+        className="mb-2 -ml-2 sm:mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
         {isEdit ? 'Back to My Listings' : 'Back to Sow'}
@@ -526,6 +538,12 @@ export default function SowWheelPage() {
       <p className="text-sm text-muted-foreground mb-6">
         You drive, always. People book you and your vehicle together.
       </p>
+
+      <SowSteps
+        steps={stepList}
+        current={(stepList.findIndex((s) => !s.done) + 1) || stepList.length}
+        startHint="Pick what kind of vehicle it is to start"
+      />
 
       {/* 1. What is it -------------------------------------------------- */}
       <section className="mb-7">
@@ -562,13 +580,6 @@ export default function SowWheelPage() {
           })}
         </div>
       </section>
-
-      {!vehicleType && (
-        <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-          Pick one to carry on. Next we ask what it can carry, for photos,
-          where it is based, and <strong>what you charge</strong>.
-        </p>
-      )}
 
       {vehicleType && (
         <>
