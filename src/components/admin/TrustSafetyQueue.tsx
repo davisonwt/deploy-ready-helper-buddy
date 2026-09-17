@@ -65,10 +65,21 @@ function FlaggedThumb({ bucket, path }: { bucket: string | null; path: string | 
     return () => { alive = false; };
   }, [bucket, path]);
 
-  if (failed || (!bucket || !path)) {
+  // Not everything queued is an image. chat-media and orchard-videos rows are
+  // video/audio, and an avatar row has no stored object at all -- rendering
+  // those as <img> just shows a broken icon. Fall back to a labelled tile with
+  // a link, so the reviewer still knows what they are deciding about.
+  if (failed || !bucket || !path) {
+    const label = !bucket || !path ? 'no file' : 'not an image';
     return (
-      <div className="w-20 h-20 shrink-0 rounded-md border bg-muted flex items-center justify-center" title={!bucket || !path ? 'No stored object (avatar row)' : 'Could not load'}>
-        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+      <div className="w-20 h-20 shrink-0 rounded-md border bg-muted flex flex-col items-center justify-center gap-1 p-1 text-center">
+        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-[10px] leading-tight text-muted-foreground">{label}</span>
+        {url && (
+          <a href={url} target="_blank" rel="noreferrer" className="text-[10px] underline text-muted-foreground">
+            open
+          </a>
+        )}
       </div>
     );
   }
@@ -81,7 +92,12 @@ function FlaggedThumb({ bucket, path }: { bucket: string | null; path: string | 
   }
   return (
     <a href={url} target="_blank" rel="noreferrer" className="shrink-0" title="Open full size">
-      <img src={url} alt="Flagged upload" className="w-20 h-20 rounded-md border object-cover" />
+      <img
+        src={url}
+        alt="Flagged upload"
+        className="w-20 h-20 rounded-md border object-cover"
+        onError={() => setFailed(true)}
+      />
     </a>
   );
 }
