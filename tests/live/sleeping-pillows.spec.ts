@@ -332,7 +332,13 @@ test.describe.serial('Sleeping Pillows', () => {
     await page.getByRole('button', { name: /Request booking/i }).click();
     const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
     await page.fill('#booking-date', tomorrow);
-    await expect(page.getByText(/Payment is processed in USD/i)).toBeVisible({ timeout: 10000 });
+    // The guest must be told the charge currency BEFORE paying. The wording
+    // changed in da82fbb9 (a booking now carries the currency it was priced
+    // in), so assert the disclosure's substance -- both currencies named --
+    // rather than a sentence that has already moved once.
+    await expect(
+      page.getByText(/priced in [A-Z]{3}, but your card will be charged in [A-Z]{3}/i),
+    ).toBeVisible({ timeout: 10000 });
     await page.getByRole('button', { name: /^Send request$/ }).click();
     await expect(page.getByText(/Booking request sent/i)).toBeVisible({ timeout: 30000 });
     console.log('[EVIDENCE] booking request sent, charge currency disclosed first');

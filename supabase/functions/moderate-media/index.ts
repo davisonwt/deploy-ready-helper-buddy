@@ -14,11 +14,29 @@
 // function's job is only to produce that row correctly -- it never grants
 // access itself.
 //
-// FAIL CLOSED (images only): any error scanning an image (missing
-// secrets, network failure, non-200, unparseable response) returns
-// verdict:'block', reason:'scanner_error'. An unscanned image must never
-// become visible -- see spec in wh-moderation.txt point 1. Minor-detection
-// logic is untouched and only ever runs on images.
+// FAIL OPEN, WITH A REVIEW QUEUE (changed 2026-09-17). The distinction
+// that matters is whether the scanner ANSWERED or could not answer:
+//
+//   answered "prohibited"   -> verdict 'block'      (unchanged)
+//   answered "not sure"     -> verdict 'uncertain'  (unchanged)
+//   could not answer at all -> verdict 'allow' + needs_review = true
+//
+// "Could not answer" means missing secrets, network failure, non-200,
+// unparseable response -- none of which is evidence about the image. It
+// used to return verdict:'block', reason:'scanner_error'. On 2026-09-17
+// Sightengine's free-plan daily quota ran out and that policy stopped
+// every member in S2G from adding a photo to any listing for the rest of
+// the day, while the storage upload kept returning 200 so nothing looked
+// broken. An unscanned image waiting on a human is the smaller risk.
+//
+// The verdict must stay 'allow' for the fail-open case: storage RLS is
+// media_is_allowed(), i.e. `verdict = 'allow'`, so any other value would
+// leave the member with a listing whose cover is broken for everyone but
+// themselves. needs_review is what carries it to the Trust & Safety queue
+// (src/components/admin/TrustSafetyQueue.tsx).
+//
+// Minor-detection logic is untouched and only ever runs on images. A
+// suspected minor is a verdict, not a failure, and still blocks.
 //
 // VIDEO/AUDIO POLICY (founder decision, Davison, 2026-09-10): S2G does
 // not pre-scan recorded video or audio -- Sightengine's plan has no Video
@@ -67,6 +85,8 @@ interface Verdict {
   verdict: "allow" | "block" | "uncertain";
   reason: string;
   minorSuspected: boolean;
+  /** Accepted without a successful scan; a human still has to look at it. */
+  needsReview?: boolean;
   scores: unknown;
   modelVersion: string;
 }
@@ -302,16 +322,31 @@ Deno.serve(async (req) => {
         modelVersion: "sightengine:nudity-2.1,face-attributes",
       };
     } catch (scanErr) {
-      // Scanner unavailable or errored -- reject, never let it through unscanned.
+      // FAIL OPEN (2026-09-17). The scanner could not ANSWER -- quota
+      // exhausted, timeout, network error, unparseable response. That is not
+      // evidence about this image, and it is not the member's problem to
+      // solve. Accept it, let them carry on, and flag it for a human.
+      //
+      // This branch is only reached when Sightengine failed to return a
+      // usable result. A real "prohibited" answer is a verdict, not an
+      // exception, and still blocks above -- as does "uncertain", which is
+      // the scanner answering rather than failing.
+      //
+      // verdict stays 'allow' deliberately: storage RLS is media_is_allowed(),
+      // i.e. `verdict = 'allow'`, so anything else would leave the member with
+      // a listing whose cover is broken for everyone but themselves. The
+      // needs_review flag is what carries it to the Trust & Safety queue.
+      //
       // The error message carries Sightengine's own response body (see
       // callSightengine) so this log line alone is enough to diagnose a
       // wrong-credentials / bad-request / non-200 failure without needing
       // another temporary diagnostic round-trip.
-      console.error("moderate-media: scan failed", scanErr);
+      console.error("moderate-media: scan failed, accepting for review", scanErr);
       verdict = {
-        verdict: "block",
-        reason: "scanner_error",
+        verdict: "allow",
+        reason: "scanner_unavailable",
         minorSuspected: false,
+        needsReview: true,
         scores: null,
         modelVersion: "sightengine:nudity-2.1,face-attributes",
       };
@@ -321,6 +356,7 @@ Deno.serve(async (req) => {
       bucket_id: bucketId, object_path: objectPath, subject_type: subjectType, subject_ref: subjectRef,
       uploader_user_id: uploaderId, verdict: verdict.verdict, minor_suspected: verdict.minorSuspected,
       reason: verdict.reason, scores: verdict.scores, model_version: verdict.modelVersion,
+      needs_review: verdict.needsReview === true,
     });
 
     // Highest-severity path: suspected minor in sexual context. The
@@ -336,9 +372,10 @@ Deno.serve(async (req) => {
     return json({ verdict: verdict.verdict, reason: verdict.reason });
   } catch (err) {
     console.error("moderate-media error", err);
-    // Still fail closed even on an unexpected top-level error, and still
-    // try to log it so the object stays permanently unreadable rather than
-    // just erroring the request with nothing recorded.
+    // Same trade as the scan-failure branch: this is our own fault, not
+    // evidence about the image, so accept and flag rather than blocking a
+    // member on it. Still logged, so the object is queued for a human and
+    // the failure is not silent.
     try {
       const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
       await logVerdict(service, {
@@ -347,14 +384,14 @@ Deno.serve(async (req) => {
         subject_type: payload?.subjectType === "avatar" ? "avatar" : "storage_object",
         subject_ref: payload?.subjectType === "avatar" ? uploaderId : null,
         uploader_user_id: uploaderId ?? "00000000-0000-0000-0000-000000000000",
-        verdict: "block", minor_suspected: false, reason: "scanner_error", scores: null,
-        model_version: "sightengine:nudity-2.1,face-attributes",
+        verdict: "allow", minor_suspected: false, reason: "scanner_unavailable", scores: null,
+        model_version: "sightengine:nudity-2.1,face-attributes", needs_review: true,
       });
     } catch (logErr) {
       console.error("moderate-media: failed to log fallback verdict", logErr);
     }
     await logFunctionFailure("moderate-media", err);
-    return json({ verdict: "block", reason: "scanner_error" }, 200);
+    return json({ verdict: "allow", reason: "scanner_unavailable" }, 200);
   }
 });
 

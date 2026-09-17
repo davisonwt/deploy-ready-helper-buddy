@@ -125,7 +125,9 @@ test.describe.serial('Private-bucket images render', () => {
       await expect(page.getByRole('button', { name: new RegExp(`^${name}$`) }).or(
         page.getByRole('link', { name: new RegExp(`^${name}$`) })).first()).toBeVisible({ timeout: 20000 });
     }
-    await expect(page.getByRole('button', { name: /Make unavailable|Make available/ })).toBeVisible();
+    // .first(): the owner account has several real listings now, so this
+    // matches one button per card. The loop above already does the same.
+    await expect(page.getByRole('button', { name: /Make unavailable|Make available/ }).first()).toBeVisible();
 
     // And the listing's own photo decodes here too.
     const img = page.locator('li img').first();

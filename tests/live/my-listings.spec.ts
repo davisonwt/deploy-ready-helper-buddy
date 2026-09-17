@@ -46,7 +46,44 @@ async function carVisibleInHub(page: Page): Promise<boolean> {
   return (await page.getByText(CAR).count()) > 0;
 }
 
+/**
+ * The card for the test car specifically.
+ *
+ * Every action on /my-listings renders once per listing. While the owner
+ * account had a single listing, `.first()` was unambiguous; it now has a
+ * wheel, a pillow and a hand, and "first" is not the car. An unscoped
+ * `.first()` here took one of Davison's real listings offline on
+ * 2026-09-17. Always scope a destructive action to its own card.
+ */
+function carCardOf(page: Page) {
+  return page.locator('li').filter({ hasText: CAR }).first();
+}
+
 test.describe.serial('My Listings', () => {
+  // Test 4 toggles a REAL listing's availability against production. If it
+  // fails between the two clicks, the car is left hidden from the Wheels hub
+  // and the next run fails on its very first assertion -- which is exactly
+  // what happened on 2026-09-17. Put it back whatever the outcome.
+  test.afterAll(async ({ browser }) => {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    try {
+      await login(page);
+      await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
+      await page.getByText(CAR).first().waitFor({ timeout: 20000 });
+      const restore = carCardOf(page).getByRole('button', { name: 'Make available' });
+      if (await restore.count()) {
+        await restore.click();
+        await page.waitForTimeout(2000);
+        console.log('[CLEANUP] the car was left unavailable; put back');
+      }
+    } catch (e) {
+      console.log(`[CLEANUP] could not verify the car's availability: ${(e as Error).message}`);
+    } finally {
+      await ctx.close();
+    }
+  });
+
   test.skip(!EMAIL || !PASS, 'The owner account is required in .env.test.');
 
   test('1. the car is listed on /my-listings', async ({ page }) => {
@@ -54,7 +91,9 @@ test.describe.serial('My Listings', () => {
     await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'My Listings' })).toBeVisible({ timeout: 30000 });
     await expect(page.getByText(CAR)).toBeVisible({ timeout: 30000 });
-    await expect(page.getByRole('button', { name: /Make unavailable|Make available/ })).toBeVisible();
+    // .first(): the owner account has several real listings now, so this
+    // matches one button per card. The loop above already does the same.
+    await expect(page.getByRole('button', { name: /Make unavailable|Make available/ }).first()).toBeVisible();
     await page.screenshot({ path: 'test-results/ml-1-list.png' });
   });
 
@@ -62,7 +101,11 @@ test.describe.serial('My Listings', () => {
     await login(page);
     await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText(CAR)).toBeVisible({ timeout: 30000 });
-    await page.getByRole('button', { name: /^Edit$/ }).first().click();
+    // Scope Edit to the CAR's own card. .first() picked whichever listing
+    // rendered first, which stopped being the car once the owner account had
+    // a pillow and a hand listing too -- it then opened the wrong sow form.
+    const carCard = page.locator('li').filter({ hasText: CAR }).first();
+    await carCard.getByRole('button', { name: /^Edit$/ }).first().click();
 
     await page.waitForURL(/\/sow\/wheel\?edit=/, { timeout: 30000 });
     await expect(page.getByRole('heading', { name: /Edit your vehicle/i })).toBeVisible({ timeout: 30000 });
@@ -122,7 +165,10 @@ test.describe.serial('My Listings', () => {
 
     await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText(CAR)).toBeVisible({ timeout: 30000 });
-    await page.getByRole('button', { name: 'Make unavailable' }).first().click();
+    // Scope to the CAR's card. Unscoped, .first() hit whichever listing
+    // rendered first and on 2026-09-17 that took a REAL listing offline
+    // (scripts/studio/restore_s2g_electricians_availability_20260917.sql).
+    await carCardOf(page).getByRole('button', { name: 'Make unavailable' }).click();
     await expect(page.getByText(/is now unavailable/i)).toBeVisible({ timeout: 20000 });
     await expect(page.getByText('Hidden from Sleeping Seeds')).toBeVisible({ timeout: 20000 });
     await page.screenshot({ path: 'test-results/ml-4-unavailable.png' });
@@ -131,7 +177,7 @@ test.describe.serial('My Listings', () => {
     console.log('[EVIDENCE] after toggle: car is GONE from the Wheels tab');
 
     await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('button', { name: 'Make available' }).first().click();
+    await carCardOf(page).getByRole('button', { name: 'Make available' }).click();
     await expect(page.getByText(/is available again/i)).toBeVisible({ timeout: 20000 });
 
     expect(await carVisibleInHub(page), 'car should be back after re-enabling').toBe(true);

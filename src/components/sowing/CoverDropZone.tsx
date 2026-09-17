@@ -86,7 +86,9 @@ export default function CoverDropZone({ bucket, pathPrefix, onChange, required }
 
       const { verdict, reason } = await moderateStorageUpload(bucket, path, 'image');
       if (verdict !== 'allow') {
-        setError(moderationRejectionMessage(reason));
+        // 'image', not the default 'file' -- a member rejecting a photo should
+        // read about a photo.
+        setError(moderationRejectionMessage(reason, 'image'));
         onChange(null);
         return;
       }
