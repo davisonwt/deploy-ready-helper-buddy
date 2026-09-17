@@ -49,13 +49,26 @@ export function paymentCurrencyNote(provider: 'paypal' | 'paystack' | null | und
   return 'Payment is processed in USD.';
 }
 
-/** Shown when the listing currency differs from the charge currency. */
+/**
+ * Shown when the listing currency differs from the charge currency.
+ *
+ * This wording is deliberately not neutral. The old line read "Rates are
+ * shown in ZAR. Payment is processed in USD", which describes the situation
+ * accurately and therefore makes it sound intended. It is not: the charge
+ * currency does not follow the listing, so the guest's card is debited in a
+ * different currency from the one they agreed to, at a rate neither they nor
+ * the host sets. Until the rails carry the listing's own currency, a guest
+ * is entitled to know the number on their statement may not match the number
+ * they just read.
+ */
 export function paymentCurrencyNoteFor(
   listingCurrency: string,
   provider: 'paypal' | 'paystack' | null | undefined,
 ): string {
   const charge = provider === 'paystack' ? 'ZAR' : 'USD';
   const listing = (listingCurrency || '').toUpperCase();
-  if (listing === charge) return `Payment is processed in ${charge}.`;
-  return `Rates are shown in ${listing}. Payment is processed in ${charge}.`;
+  if (listing === charge) return `You will be charged in ${charge}.`;
+  return `This listing is priced in ${listing}, but your card will be charged `
+    + `in ${charge}. The amount is converted at your bank's rate, so what you `
+    + `pay may differ from the ${listing} price shown.`;
 }

@@ -156,6 +156,28 @@ nobody re-ran:
 - Only convert an existing `.jsx` file to `.tsx` when you're already touching it for a real change. No standalone "convert to TS" PRs.
 - Existing `.jsx` files are grandfathered — leave them alone until naturally touched.
 
+## Decided: currency, conversion and disclosure
+When a listing's currency and the guest's card currency differ, **the rail
+converts and the rate is disclosed before the guest pays.** We do not restrict
+who can pay. Decided by the user on 2026-09-17; build toward it.
+
+Context, so the shape of the work is clear:
+
+- A listing carries its own currency (`pillow_seed_details.currency` and the
+  wheel and hand equivalents) and always has. `bookings.currency` now carries
+  it too, set from the listing by a trigger that ignores anything the client
+  sends, because a guest's browser must not choose what it is charged in.
+- **PayPal cannot charge ZAR.** ZAR is not among PayPal's 28 supported
+  currencies, and that is not an account setting. Any rand listing paid by
+  PayPal is converted by definition.
+- The Paystack helper converts *from* USD (`amountUsd * fxRate`), so it is
+  correct only when the stored amount really is dollars. A rand listing sent
+  through it today would be multiplied by the rate, not divided.
+- Still to do, and deliberately not done yet: carry the currency into the
+  rails, the capture path, the ledger, `sower_balances`, Books and the
+  treasury. Several of those columns default to `'USD'`, which is how the
+  original bug survived.
+
 ## Payment code
 - Payment/fee logic (Cryptomus, Binance Pay, bestowal distribution, wallet balances) is the most incident-prone part of this codebase — recent commit history shows repeated fee-bypass and payment-flow bugs. Changes here need extra care:
   - Trace the full money path (client → edge function → Supabase tables) before changing fee or distribution math.
