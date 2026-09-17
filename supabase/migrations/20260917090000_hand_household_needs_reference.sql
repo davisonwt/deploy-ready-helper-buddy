@@ -8,10 +8,29 @@
 -- safeguard a member has when letting a stranger into their home, so the
 -- rule belongs where it cannot be skipped.
 --
--- DEFERRABLE INITIALLY DEFERRED, checked at COMMIT, because the write order
--- is detail row first and references second. An immediate trigger would fire
--- on the detail insert, before the references it is asking about exist, and
--- would reject every legitimate household listing.
+-- DEFERRABLE INITIALLY DEFERRED. Be precise about what that buys, because
+-- the first version of this comment was wrong and cost a production outage.
+--
+-- It buys ONE thing: within a single transaction, the detail row and its
+-- references may be written in either order, and the check runs once at
+-- COMMIT when both are present.
+--
+-- It does NOT buy anything across separate requests. PostgREST gives every
+-- HTTP request its own transaction, so "deferred" defers only to the end of
+-- that one request. A client that POSTs the detail row and then POSTs the
+-- references is making two transactions, and this trigger fires at the end
+-- of the first one, sees zero references, and rejects it. That is exactly
+-- what happened on 2026-09-17: every household registration was refused
+-- until SowHandPage was reordered to write references first.
+--
+-- So the client contract is: write the references BEFORE the detail row, or
+-- write both inside one transaction via an RPC. Do not assume deferral
+-- rescues a client that writes them in separate calls in the wrong order.
+--
+-- The same applies in reverse to trg_hand_reference_delete_guard below:
+-- replacing a household listing's references must INSERT the new set before
+-- DELETING the old one, or the delete's own commit sees a household listing
+-- with zero references and is refused.
 --
 -- It reads `is_professional`, not the category list: that column is already
 -- derived from the category by trg_hand_seed_details_group, so there is one

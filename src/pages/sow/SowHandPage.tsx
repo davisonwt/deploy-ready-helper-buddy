@@ -492,21 +492,24 @@ export default function SowHandPage() {
         operator_confirmed_legal: true,
       };
 
-      const { error: detailErr } = await supabase
-        .from('hand_seed_details')
-        .upsert(detailPayload as any, { onConflict: 'product_id' });
-      if (detailErr) {
-        console.error('hand_seed_details save failed', detailErr);
-        toast.error(`Saved the listing, but the service details did not save: ${detailErr.message}`);
-        navigate(`/seed/hand/${productId}`);
-        return;
-      }
+      // References are written BEFORE the detail row, and the new ones before
+      // the old ones are removed. Both orderings are load-bearing.
+      //
+      // trg_hand_household_needs_reference fires at the end of whichever
+      // transaction touched the detail row, and PostgREST gives every request
+      // its own transaction. Writing the detail row first therefore commits a
+      // household listing with zero references and is rejected outright, which
+      // is what broke every household registration on 2026-09-17.
+      //
+      // Deleting the old set before inserting the new one has the same
+      // problem from the other side: the delete's own commit would see zero
+      // references on a household listing and trip trg_hand_reference_delete_guard.
+      // Adding first and removing afterwards means the count never reaches
+      // zero, so neither trigger ever sees an empty household listing.
+      const { data: oldRefRows } = await supabase
+        .from('hand_seed_references').select('id').eq('product_id', productId);
+      const oldRefIds = ((oldRefRows ?? []) as Array<{ id: string }>).map((r) => r.id);
 
-      // Referees: replace the set wholesale. Simpler and safer than diffing,
-      // and the owner is the only one who can touch these rows anyway.
-      const { error: delErr } = await supabase
-        .from('hand_seed_references').delete().eq('product_id', productId);
-      if (delErr) console.warn('[SowHandPage] could not clear old references', delErr);
       if (filledReferences.length > 0) {
         const { error: refErr } = await supabase.from('hand_seed_references').insert(
           filledReferences.map((r) => ({
@@ -518,8 +521,26 @@ export default function SowHandPage() {
         );
         if (refErr) {
           console.error('hand_seed_references save failed', refErr);
-          toast.error(`Saved the listing, but the references did not save: ${refErr.message}`);
+          toast.error(`Could not save your references: ${refErr.message}`);
+          setSubmitting(false);
+          return;
         }
+      }
+
+      if (oldRefIds.length > 0) {
+        const { error: delErr } = await supabase
+          .from('hand_seed_references').delete().in('id', oldRefIds);
+        if (delErr) console.warn('[SowHandPage] could not clear old references', delErr);
+      }
+
+      const { error: detailErr } = await supabase
+        .from('hand_seed_details')
+        .upsert(detailPayload as any, { onConflict: 'product_id' });
+      if (detailErr) {
+        console.error('hand_seed_details save failed', detailErr);
+        toast.error(`Saved the listing, but the service details did not save: ${detailErr.message}`);
+        navigate(`/seed/hand/${productId}`);
+        return;
       }
 
       if (baseLat == null || baseLng == null) {
