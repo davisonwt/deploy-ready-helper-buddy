@@ -307,18 +307,37 @@ export default function PillowSeedDetailPage() {
                         type="button"
                         onClick={() => setSelectedUnitId(u.id ?? null)}
                         aria-pressed={on}
-                        className={`w-full rounded-lg border-2 p-3 text-left transition ${
+                        /*
+                          flex-col is not optional. index.css gives every bare
+                          <button> `inline-flex items-center justify-center` at
+                          zero specificity, which laid the name, the capacity
+                          and the price out side by side and read as
+                          "TentSleeps 4". Same cause as the vehicle cards'
+                          "CarA normal car".
+                        */
+                        className={`flex w-full flex-col items-stretch gap-1 rounded-lg
+                          border-2 p-3 text-left transition ${
                           on ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
                         }`}
                       >
                         <div className="flex items-baseline justify-between gap-3">
-                          <span className="font-semibold">{u.name}</span>
-                          <span className="shrink-0 text-xs text-muted-foreground">
-                            {unitTypeLabel(u.unit_type)}
-                          </span>
+                          <span className="font-semibold leading-tight">{u.name}</span>
+                          {/*
+                            The type earns its place only when it tells the
+                            guest something. With one unit the listing's own
+                            badge already says the kind, and repeating it
+                            beside a unit named after the listing is noise.
+                            With several it is what separates the dome from
+                            the garden room.
+                          */}
+                          {units.length > 1 && (
+                            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                              {unitTypeLabel(u.unit_type)}
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground">Sleeps {u.sleeps}</p>
-                        <div className="mt-1 flex flex-wrap gap-x-3">
+                        <div className="flex flex-wrap gap-x-3 gap-y-1">
                           {unitRates.map((r) => (
                             <span key={r.short} className="text-sm">
                               <strong>{formatNativeAmount(r.amount, listingCurrency)}</strong>
