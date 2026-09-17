@@ -42,6 +42,27 @@ Then make the smallest correct fix. Don't stack fixes on top of each other or pa
 ## Protected areas
 Treat these as protected unless explicitly asked to change them: auth, user roles, Ambassador/Tribal tiers, RLS policies, existing tables, the Bestowal ledger, payments, messaging, notifications, live streaming, Jitsi calls, Orchard Companions, Tribal Hearts, navigation.
 
+## Golden rule: snapshot member content before overwriting it
+Before ANY script or migration that overwrites or nulls a column holding
+member-created content, first write a snapshot of the affected rows to
+`scripts/studio/` as an executable restore script, and give the user its full
+path. No exceptions, no matter how small the change looks.
+
+Member-created content is anything a member placed or typed themselves:
+`stalls.hotspots` and `stalls.tiles`, the `*_seed_details` rows behind a
+listing, profile fields, stall names, taglines and stories, references,
+rates. If you are unsure whether a column qualifies, it qualifies.
+
+The restore script must be runnable on its own and must name the rows it
+restores explicitly, not by a `WHERE` clause that could match differently
+later.
+
+Why: on 2026-09-11 `scripts/studio/use-template-interior.sql` set one
+member's `stalls.hotspots` to NULL so his stall would inherit a shared
+template's hotspots instead. The intent was reasonable and the change was
+small. His own placements were unrecoverable, and he discovered it six days
+later. A snapshot would have made it a one-line fix.
+
 ## TypeScript migration ratchet
 (see `CONTRIBUTING.md` for full detail)
 - All new files must be `.ts`/`.tsx` — no new `.js`/`.jsx`.
