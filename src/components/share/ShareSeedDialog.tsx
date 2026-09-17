@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useReferralCode } from '@/hooks/useReferralCode';
 import SignedImg from '@/components/media/SignedImg';
+import { buildSeedShareUrl } from '@/lib/share/seedShareUrl';
 
 export interface ShareSeedDialogProps {
   open: boolean;
@@ -22,6 +23,9 @@ export interface ShareSeedDialogProps {
   openPath: string;
   /** photo | video | music — used when posting to the tribal feed */
   feedKind?: 'photo' | 'video' | 'music';
+  /** Which tab to open on. My Listings sends 'link' when a one-tap copy
+   *  could not reach the clipboard, so the member can copy it by hand. */
+  initialTab?: 'tribe' | 'room' | 'feed' | 'link';
 }
 
 interface TribeMember {
@@ -33,6 +37,7 @@ interface TribeMember {
 
 export default function ShareSeedDialog({
   open, onOpenChange, seedId, title, subtitle, image, openPath, feedKind = 'photo',
+  initialTab = 'tribe',
 }: ShareSeedDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -46,14 +51,10 @@ export default function ShareSeedDialog({
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [roomName, setRoomName] = useState('');
 
-  const shareUrl = useMemo(() => {
-    const origin = typeof window !== 'undefined' && window.location.origin.includes('localhost')
-      ? window.location.origin
-      : 'https://sow2growapp.com';
-    const url = new URL(openPath, origin);
-    if (referralCode) url.searchParams.set('ref', referralCode);
-    return url.toString();
-  }, [openPath, referralCode]);
+  const shareUrl = useMemo(
+    () => buildSeedShareUrl(openPath, referralCode),
+    [openPath, referralCode],
+  );
 
   const message = `🌿 "${title}" is alive in my Sow2Grow orchard${subtitle ? ` — ${subtitle}` : ''}.\nStep in: ${shareUrl}`;
 
@@ -315,7 +316,7 @@ export default function ShareSeedDialog({
           <DialogDescription>Invite your tribe to this seed, open a circle around it, or send it to the feed.</DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="tribe" className="flex min-h-0 flex-1 flex-col">
+        <Tabs defaultValue={initialTab} className="flex min-h-0 flex-1 flex-col">
           <TabsList className="mx-6 mt-4 flex w-auto shrink-0 justify-start overflow-x-auto">
             <TabsTrigger value="tribe"><Users className="mr-1 h-4 w-4" />Tribe</TabsTrigger>
             <TabsTrigger value="room"><MessagesSquare className="mr-1 h-4 w-4" />Circle</TabsTrigger>

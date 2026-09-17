@@ -9,11 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import SignedImg from '@/components/media/SignedImg';
 import { toast } from 'sonner';
-import { ArrowLeft, Eye, Pencil, Trash2, Loader2, EyeOff, Share2 } from 'lucide-react';
+import { ArrowLeft, Eye, Pencil, Trash2, Loader2, EyeOff, Share2, Link2, Check } from 'lucide-react';
 import { vehicleTypeLabel } from '@/lib/sleeping/wheelOptions';
 import { stayTypeLabel } from '@/lib/sleeping/pillowOptions';
 import { serviceCategoryLabel } from '@/lib/sleeping/handOptions';
 import ShareSeedDialog from '@/components/share/ShareSeedDialog';
+import { useReferralCode } from '@/hooks/useReferralCode';
+import { buildSeedShareUrl, copyTextWithFallback } from '@/lib/share/seedShareUrl';
 
 /**
  * One place a member manages their own Sleeping Seeds.
@@ -50,11 +52,18 @@ export default function MyListingsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { seeds, loading, refetch } = useMyContent(user?.id) as any;
+  // Once for the page, not once per row: the same code goes into every link.
+  const { code: referralCode } = useReferralCode();
 
   const [busyId, setBusyId] = useState<string | null>(null);
   /** The listing whose share dialog is open. The dialog itself is the one
    *  ShareSeedDialog every other surface uses -- no second share path. */
   const [shareRow, setShareRow] = useState<Row | null>(null);
+  /** Which tab the share dialog opens on. 'link' when a copy could not reach
+   *  the clipboard and the member has to take the URL by hand. */
+  const [shareTab, setShareTab] = useState<'tribe' | 'link'>('tribe');
+  /** The row whose link was just copied, so the button can say so. */
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   /** product_id -> availability, loaded lazily for Wheel rows. */
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
   const [vehicleTypes, setVehicleTypes] = useState<Record<string, string>>({});
@@ -187,6 +196,26 @@ export default function MyListingsPage() {
     }
   };
 
+  const copyLink = async (row: Row) => {
+    const url = buildSeedShareUrl(`${KIND_META[row.kind].seedPath}/${row.id}`, referralCode);
+    const outcome = await copyTextWithFallback(url);
+
+    if (outcome === 'failed') {
+      // Never claim a copy that did not happen. Hand them the Link tab and
+      // say why, rather than a green tick over an empty clipboard.
+      setShareTab('link');
+      setShareRow(row);
+      toast.error('Your browser would not let us reach the clipboard. Here is the link to copy by hand.');
+      return;
+    }
+
+    setCopiedId(row.id);
+    window.setTimeout(() => {
+      setCopiedId((current) => (current === row.id ? null : current));
+    }, 2500);
+    toast.success('Link copied. Your referral code is in it.');
+  };
+
   const remove = async (row: Row) => {
     if (!window.confirm(`Delete "${row.title}"? This cannot be undone.`)) return;
     setBusyId(row.id);
@@ -294,7 +323,7 @@ export default function MyListingsPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 border-t p-3">
+                <div className="grid grid-cols-2 gap-2 border-t p-3 sm:flex sm:flex-wrap">
                   <Button size="sm" variant="outline" asChild>
                     <Link to={`${meta.seedPath}/${row.id}`}>
                       <Eye className="w-4 h-4 mr-1" /> Open
@@ -316,14 +345,32 @@ export default function MyListingsPage() {
                     </Button>
                   )}
 
-                  <Button size="sm" variant="outline" onClick={() => setShareRow(row)} disabled={busy}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => copyLink(row)}
+                    disabled={busy}
+                    aria-label={`Copy the link to ${row.title}`}
+                  >
+                    {copiedId === row.id
+                      ? <Check className="w-4 h-4 mr-1 text-primary" />
+                      : <Link2 className="w-4 h-4 mr-1" />}
+                    {copiedId === row.id ? 'Copied' : 'Copy link'}
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => { setShareTab('tribe'); setShareRow(row); }}
+                    disabled={busy}
+                  >
                     <Share2 className="w-4 h-4 mr-1" /> Share
                   </Button>
 
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-destructive hover:text-destructive ml-auto"
+                    className="text-destructive hover:text-destructive sm:ml-auto"
                     onClick={() => remove(row)}
                     disabled={busy}
                   >
@@ -353,6 +400,7 @@ export default function MyListingsPage() {
           image={shareRow.cover ?? null}
           openPath={`${KIND_META[shareRow.kind].seedPath}/${shareRow.id}`}
           feedKind="photo"
+          initialTab={shareTab}
         />
       )}
     </div>
