@@ -26,6 +26,7 @@ import {
   PROFESSIONAL_CATEGORIES, QUALIFICATION_LABEL, REFERENCE_CONSENT_NOTE,
   isProfessionalCategory, type ServiceCategory,
 } from '@/lib/sleeping/handOptions';
+import { geocodeBaseLocation } from '@/lib/sleeping/geocodeBase';
 
 const MAX_GALLERY_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
@@ -101,8 +102,6 @@ export default function SowHandPage() {
 
   const [roleChecked, setRoleChecked] = useState(false);
   const [baseTown, setBaseTown] = useState('');
-  const [roleLat, setRoleLat] = useState<number | null>(null);
-  const [roleLng, setRoleLng] = useState<number | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -110,7 +109,7 @@ export default function SowHandPage() {
     (async () => {
       const { data } = await supabase
         .from('wandering_roles')
-        .select('base_town, lat, lng, status')
+        .select('base_town, status')
         .eq('user_id', user.id)
         .eq('role', 'hand')
         .maybeSingle();
@@ -120,8 +119,6 @@ export default function SowHandPage() {
         return;
       }
       setBaseTown((data as any).base_town || '');
-      setRoleLat((data as any).lat ?? null);
-      setRoleLng((data as any).lng ?? null);
       setRoleChecked(true);
     })();
     return () => { alive = false; };
@@ -411,18 +408,17 @@ export default function SowHandPage() {
         productId = inserted.id;
       }
 
-      let baseLat: number | null = isEdit ? existingLat : roleLat;
-      let baseLng: number | null = isEdit ? existingLng : roleLng;
+      // A listing is placed by its OWN typed location. The member's profile
+      // and role coordinates describe where they live -- often just a country
+      // default -- so inheriting them drops the listing into the wrong town
+      // and offers it to the wrong people. No coordinates is the honest
+      // outcome of a failed lookup, and the card says so.
       const locationChanged = baseLocation.trim() !== (loadedLocation ?? '').trim();
-      if (!isEdit || locationChanged || baseLat == null || baseLng == null) {
-        try {
-          const { data: geo } = await supabase.functions.invoke('geocode-place', {
-            body: { place: baseLocation.trim() },
-          });
-          const gLat = Number(geo?.lat);
-          const gLng = Number(geo?.lng);
-          if (Number.isFinite(gLat) && Number.isFinite(gLng)) { baseLat = gLat; baseLng = gLng; }
-        } catch { /* keep the fallback; the warning below covers it */ }
+      let baseLat: number | null = isEdit && !locationChanged ? existingLat : null;
+      let baseLng: number | null = isEdit && !locationChanged ? existingLng : null;
+      if (baseLat == null || baseLng == null) {
+        const geo = await geocodeBaseLocation(baseLocation.trim());
+        if (geo) { baseLat = geo.lat; baseLng = geo.lng; }
       }
 
       const detailPayload = {

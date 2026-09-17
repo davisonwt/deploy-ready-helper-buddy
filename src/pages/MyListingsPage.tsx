@@ -23,10 +23,10 @@ import ShareSeedDialog from '@/components/share/ShareSeedDialog';
  * form rather than a second editor -- a second form is exactly how EditForm
  * came to silently drop every wheel_seed_details field.
  *
- * Availability is Wheel-only today, because wheel_seed_details.availability
- * is the only such field that exists. Pillow and Hand have no structured
- * detail table yet, so they get Open and Delete and are told plainly that
- * editing is not wired rather than being pointed at something wrong.
+ * A card never claims a listing is showing without checking the one thing
+ * that decides it: whether the listing has coordinates. The proximity search
+ * skips a row with a null lat/lng in silence, so the card is the only place
+ * an owner can learn their listing is invisible.
  */
 
 const SERVICE_KINDS = ['wheel', 'pillow', 'hand'] as const;
@@ -60,6 +60,9 @@ export default function MyListingsPage() {
   const [vehicleTypes, setVehicleTypes] = useState<Record<string, string>>({});
   const [stayTypes, setStayTypes] = useState<Record<string, string>>({});
   const [handCategories, setHandCategories] = useState<Record<string, string>>({});
+  /** product_id -> whether it has coordinates, and the location it was given. */
+  const [placement, setPlacement] = useState<Record<string, { located: boolean; location: string | null }>>({});
+  const [placementLoaded, setPlacementLoaded] = useState(false);
 
   const rows: Row[] = useMemo(() => {
     return ((seeds ?? []) as any[])
@@ -95,6 +98,19 @@ export default function MyListingsPage() {
     if (wheelIds.length === 0 && pillowIds.length === 0 && handIds.length === 0) return;
     (async () => {
       const avail: Record<string, boolean> = {};
+      // Every listing starts un-placed: a products row with no detail row at
+      // all cannot show either, and saying nothing would be the same lie.
+      const place: Record<string, { located: boolean; location: string | null }> = {};
+      for (const id of [...wheelIds, ...pillowIds, ...handIds]) {
+        place[id] = { located: false, location: null };
+      }
+      const recordPlace = (d: any) => {
+        place[d.product_id] = {
+          located: Number.isFinite(Number(d.base_lat)) && Number.isFinite(Number(d.base_lng))
+            && d.base_lat !== null && d.base_lng !== null,
+          location: d.base_location ?? null,
+        };
+      };
       const vTypes: Record<string, string> = {};
       const sTypes: Record<string, string> = {};
       const hCats: Record<string, string> = {};
@@ -102,31 +118,34 @@ export default function MyListingsPage() {
       if (wheelIds.length) {
         const { data } = await supabase
           .from('wheel_seed_details')
-          .select('product_id, availability, vehicle_type')
+          .select('product_id, availability, vehicle_type, base_lat, base_lng, base_location')
           .in('product_id', wheelIds);
         for (const d of (data ?? []) as any[]) {
           avail[d.product_id] = d.availability !== false;
           vTypes[d.product_id] = d.vehicle_type;
+          recordPlace(d);
         }
       }
       if (pillowIds.length) {
         const { data } = await supabase
           .from('pillow_seed_details')
-          .select('product_id, availability, stay_type')
+          .select('product_id, availability, stay_type, base_lat, base_lng, base_location')
           .in('product_id', pillowIds);
         for (const d of (data ?? []) as any[]) {
           avail[d.product_id] = d.availability !== false;
           sTypes[d.product_id] = d.stay_type;
+          recordPlace(d);
         }
       }
       if (handIds.length) {
         const { data } = await supabase
           .from('hand_seed_details')
-          .select('product_id, availability, service_category')
+          .select('product_id, availability, service_category, base_lat, base_lng, base_location')
           .in('product_id', handIds);
         for (const d of (data ?? []) as any[]) {
           avail[d.product_id] = d.availability !== false;
           hCats[d.product_id] = d.service_category;
+          recordPlace(d);
         }
       }
       if (!alive) return;
@@ -134,6 +153,8 @@ export default function MyListingsPage() {
       setVehicleTypes(vTypes);
       setStayTypes(sTypes);
       setHandCategories(hCats);
+      setPlacement(place);
+      setPlacementLoaded(true);
     })();
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -222,8 +243,9 @@ export default function MyListingsPage() {
           {rows.map((row) => {
             const meta = KIND_META[row.kind];
             const isWheel = row.kind === 'wheel';
-    const hasAvailability = true; // all three kinds now carry an availability flag
+            const hasAvailability = true; // all three kinds carry an availability flag
             const isAvailable = availability[row.id] ?? true;
+            const place = placement[row.id];
             const busy = busyId === row.id;
 
             return (
@@ -250,9 +272,19 @@ export default function MyListingsPage() {
                       </Badge>
                     </div>
 
-                    {hasAvailability && (
-                      <p className={`text-xs mt-1 ${isAvailable ? 'text-primary' : 'text-muted-foreground'}`}>
-                        {isAvailable ? 'Showing in Sleeping Seeds' : 'Hidden from Sleeping Seeds'}
+                    {!isAvailable ? (
+                      <p className="text-xs mt-1 text-muted-foreground">Hidden from Sleeping Seeds</p>
+                    ) : !placementLoaded ? (
+                      <p className="text-xs mt-1 text-muted-foreground">Checking where this shows…</p>
+                    ) : place?.located ? (
+                      <p className="text-xs mt-1 text-primary">
+                        Showing in Sleeping Seeds{place.location ? ` near ${place.location}` : ''}
+                      </p>
+                    ) : (
+                      <p className="text-xs mt-1 text-destructive">
+                        Not showing in Sleeping Seeds: we could not place{' '}
+                        {place?.location ? `“${place.location}”` : 'this listing'} on the map.
+                        Tap Edit and give a town or city with its country, like “Mossel Bay, South Africa”.
                       </p>
                     )}
 
