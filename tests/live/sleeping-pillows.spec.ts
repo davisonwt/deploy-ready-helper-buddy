@@ -25,13 +25,13 @@ const CURRENCY = 'EUR'; // deliberately not USD, so "native currency" is provabl
 
 /** The seven stay types, each with a distinct rate column and amenity. */
 const TYPES = [
-  { label: 'Room in my home',  value: 'room_in_home',     rate: 'rate_nightly', amount: '30.00', amenity: 'Own bathroom', sleeps: 2 },
-  { label: 'The whole place',  value: 'whole_place',      rate: 'rate_weekly',  amount: '420.00', amenity: 'Kitchen access', sleeps: 6 },
-  { label: 'Guest house',      value: 'guest_house',      rate: 'rate_nightly', amount: '55.00', amenity: 'Breakfast', sleeps: 4 },
-  { label: 'Hotel or motel',   value: 'hotel_motel_room', rate: 'rate_nightly', amount: '75.00', amenity: 'Wifi', sleeps: 2 },
-  { label: 'Farm stay',        value: 'farm_stay',        rate: 'rate_monthly', amount: '900.00', amenity: 'Braai', sleeps: 8 },
-  { label: 'Bush camp',        value: 'bush_camp',        rate: 'rate_nightly', amount: '20.00', amenity: 'Parking', sleeps: 4 },
-  { label: 'Something else',   value: 'other',            rate: 'rate_weekly',  amount: '300.00', amenity: 'Wifi', sleeps: 3 },
+  { label: 'Room in my home',  value: 'room_in_home',     rate: 'rate_nightly', amount: '30.00', amenity: 'Own bathroom', sleeps: 2, unitType: 'Room' },
+  { label: 'The whole place',  value: 'whole_place',      rate: 'rate_weekly',  amount: '420.00', amenity: 'Kitchen access', sleeps: 6, unitType: 'Cottage' },
+  { label: 'Guest house',      value: 'guest_house',      rate: 'rate_nightly', amount: '55.00', amenity: 'Breakfast', sleeps: 4, unitType: 'Room' },
+  { label: 'Hotel or motel',   value: 'hotel_motel_room', rate: 'rate_nightly', amount: '75.00', amenity: 'Wifi', sleeps: 2, unitType: 'Room' },
+  { label: 'Farm stay',        value: 'farm_stay',        rate: 'rate_monthly', amount: '900.00', amenity: 'Braai', sleeps: 8, unitType: 'Cottage' },
+  { label: 'Bush camp',        value: 'bush_camp',        rate: 'rate_nightly', amount: '20.00', amenity: 'Parking', sleeps: 4, unitType: 'Tent' },
+  { label: 'Something else',   value: 'other',            rate: 'rate_weekly',  amount: '300.00', amenity: 'Wifi', sleeps: 3, unitType: 'Something else' },
 ] as const;
 
 async function login(page: Page, email = EMAIL, pass = PASS) {
@@ -70,7 +70,14 @@ async function fillPillowForm(
   await page.goto('/sow/pillow', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: /List your place/i })).toBeVisible({ timeout: 25000 });
 
-  await page.getByRole('button', { name: new RegExp(`^${t.label}`) }).click();
+  // Units replaced the stay-type grid, the sleeps counter and the
+  // listing-level rate step (20260917110000_pillow_units). The form opens
+  // with unit 1 present, so this fills it rather than picking a type first.
+  await page.locator('#unit-name-0').fill(`${t.label} ${STAMP}`);
+  await page.locator('#unit-sleeps-0').fill(String(t.sleeps));
+  await page.locator(`#${t.rate}-0`).fill(t.amount);
+  const unitTypeBtn = page.getByRole('button', { name: t.unitType, exact: true });
+  if (await unitTypeBtn.count()) await unitTypeBtn.first().click();
 
   // Photos: the first CoverDropZone is the outside, the second the inside.
   const files = page.locator('input[type="file"]');
@@ -82,20 +89,10 @@ async function fillPillowForm(
   await page.fill('#pillow-title', opts.title ?? `QAP ${t.label} ${STAMP}`);
   await page.fill('#pillow-desc', `QA pillow listing for ${t.value}.`);
 
-  // Sleeps: start at 2, step to the wanted number.
-  const target = t.sleeps;
-  for (let i = 2; i < target; i++) await page.getByRole('button', { name: 'More people' }).click();
-  for (let i = 2; i > target; i--) await page.getByRole('button', { name: 'Fewer people' }).click();
-
   const amenity = page.getByRole('button', { name: t.amenity, exact: true });
   if (await amenity.count()) await amenity.first().click();
 
   await page.fill('#pillow-currency', CURRENCY);
-
-  if (await page.locator(`#${t.rate}`).count() === 0) {
-    await page.getByRole('button', { name: /Show all rate options/i }).click();
-  }
-  await page.locator(`#${t.rate}`).fill(t.amount);
 
   await page.locator('input[placeholder="Town or area"]').fill(opts.town ?? TOWN);
 
@@ -113,12 +110,16 @@ test.describe.serial('Sleeping Pillows', () => {
   test('5. the legal checkbox blocks submission when unticked', async ({ page }) => {
     await login(page);
     const btn = await fillPillowForm(page, TYPES[0], { tickLegal: false });
-    await expect(page.getByText(/6 of 7/)).toBeVisible({ timeout: 25000 });
+    // Six required items now, not seven: one units check replaced the
+    // separate stay-type, sleeps and rate checks (20260917110000_pillow_units).
+    // .first(): the count appears on the step indicator and on the plant
+    // button, and either one being visible is the point.
+    await expect(page.getByText(/5 of 6/).first()).toBeVisible({ timeout: 25000 });
     await expect(btn).toBeDisabled();
     await expect(page.getByText(/You have to tick this before you can list/i)).toBeVisible();
     await page.locator('#pillow-legal').click();
     await expect(btn).toBeEnabled({ timeout: 10000 });
-    console.log('[EVIDENCE] disabled at 6 of 7, enabled the moment the box is ticked');
+    console.log('[EVIDENCE] disabled at 5 of 6, enabled the moment the box is ticked');
   });
 
   // --- 1. register one of each of the 7 stay types -------------------------

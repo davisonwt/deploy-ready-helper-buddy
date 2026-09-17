@@ -149,7 +149,10 @@ test.describe.serial('A pillow listing is placed where it actually is', () => {
     test.setTimeout(240_000);
     await login(page, OWNER_EMAIL, OWNER_PASS);
     await page.goto('/sow/pillow', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('button', { name: /^Room in my home/ }).click();
+    // Units replaced the stay-type grid: the form opens with unit 1 ready.
+    await page.locator('#unit-name-0').fill('QA unit');
+    await page.locator('#unit-sleeps-0').fill('2');
+    await page.locator('#rate_nightly-0').fill('100.00');
 
     await page.locator('input[type="file"]').nth(0)
       .setInputFiles(path.resolve(__dirname, '../../src/assets/tier-grove.jpg'));
@@ -159,7 +162,6 @@ test.describe.serial('A pillow listing is placed where it actually is', () => {
     await page.fill('#pillow-title', QA_TITLE);
     await page.fill('#pillow-desc', 'QA: three-part location must not fall back to the profile default.');
     await page.fill('#pillow-currency', 'ZAR');
-    await page.locator('#rate_nightly').fill('100.00');
     // The exact string that used to save Johannesburg coordinates.
     await page.locator('input[placeholder="Town or area"]').fill('Mossel Bay, Seven Bells, Western Cape');
     await page.locator('#pillow-legal').click();
