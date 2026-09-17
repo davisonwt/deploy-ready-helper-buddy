@@ -1,10 +1,12 @@
 import React, { Suspense } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
 import { TileErrorBoundary } from "@/components/error/TileErrorBoundary";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { isOverlaySuppressedRoute } from '@/lib/chrome/formRoutes';
 import ResponsiveLayout from "./components/layout/ResponsiveLayout";
 import AccessibilityChecker from "./components/accessibility/AccessibilityChecker";
 import IncomingCallOverlay from "./components/chat/IncomingCallOverlay";
@@ -48,10 +50,18 @@ function ReferralCaptureMount() {
  * pine-tree GroundskeeperWidget) -- hidden while a stall interior is open
  * (AppContext.stallInteriorOpen) since its own fixed bottom tile strip has
  * no room to coexist with them. Farm-Stalls batch 2, item 1.
+ *
+ * Also hidden on the routes where the page's own controls have to be
+ * reachable. These are small and rounded, which is exactly why they were
+ * missed: a hit test 2px inside the overlap lands in a transparent corner
+ * and reports clear. Sampling across the overlap instead, the wallet chip
+ * and the pine tree cover "Pet sitting" and "Cleaning" on /sow/hand and
+ * the Delete button on /my-listings, both at 390x844.
  */
 function GlobalChrome() {
   const { stallInteriorOpen } = useAppContext();
-  if (stallInteriorOpen) return null;
+  const location = useLocation();
+  if (stallInteriorOpen || isOverlaySuppressedRoute(location.pathname)) return null;
   return (
     <>
       <FloatingBasketButton />

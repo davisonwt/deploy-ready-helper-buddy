@@ -46,8 +46,23 @@ async function overlays(page: Page) {
         if (el.contains(c)) return; // its own buttons do not count
         const overlaps = !(cr.right < r.left || cr.left > r.right || cr.bottom < r.top || cr.top > r.bottom);
         if (!overlaps) return;
-        const hit = document.elementFromPoint(Math.max(cr.left, r.left) + 2, Math.max(cr.top, r.top) + 2);
-        if (hit && el.contains(hit)) covered.push((c.textContent || c.tagName).replace(/\s+/g, ' ').trim().slice(0, 30));
+        // Sample across the overlap, not one inset corner. These widgets are
+        // rounded pills and circles, so a point 2px inside the intersection's
+        // top-left often lands in a transparent corner and reports "clear"
+        // while the middle of the same overlap is solidly covered.
+        const x0 = Math.max(cr.left, r.left), x1 = Math.min(cr.right, r.right);
+        const y0 = Math.max(cr.top, r.top), y1 = Math.min(cr.bottom, r.bottom);
+        const pts: Array<[number, number]> = [];
+        for (const fx of [0.5, 0.25, 0.75]) {
+          for (const fy of [0.5, 0.25, 0.75]) {
+            pts.push([x0 + (x1 - x0) * fx, y0 + (y1 - y0) * fy]);
+          }
+        }
+        const covering = pts.some(([x, y]) => {
+          const hit = document.elementFromPoint(x, y);
+          return !!hit && el.contains(hit);
+        });
+        if (covering) covered.push((c.textContent || c.tagName).replace(/\s+/g, ' ').trim().slice(0, 30));
       });
       out.push({
         text: (el.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 45),
