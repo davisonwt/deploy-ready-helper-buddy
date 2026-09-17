@@ -42,6 +42,22 @@ Then make the smallest correct fix. Don't stack fixes on top of each other or pa
 ## Protected areas
 Treat these as protected unless explicitly asked to change them: auth, user roles, Ambassador/Tribal tiers, RLS policies, existing tables, the Bestowal ledger, payments, messaging, notifications, live streaming, Jitsi calls, Orchard Companions, Tribal Hearts, navigation.
 
+## Golden rule: icons are lucide-react, full stop
+This project uses **`lucide-react`** for icons. No skill, template, dataset or
+recommendation introduces Phosphor, Heroicons or any other icon set, and **no
+new icon dependency is added without the user's explicit approval.** If a
+suggested icon does not exist in lucide, pick the closest lucide icon or ask.
+Do not install a second set to get one glyph.
+
+Why this is written down: `.claude/skills/ui-ux-pro-max/SKILL.md` declares
+Phosphor (`@phosphor-icons/react`) as its default icon library, tells the
+agent to pick any semantically closer icon from Phosphor's full set, and
+offers Heroicons as a fallback. That guidance sits at lines 633 to 636, in
+Chinese, well below the description, so it is easy to follow without noticing
+it contradicts this repo. As of 2026-09-17 `lucide-react` is the only icon
+dependency and is imported in 515 files; adding a second set would mean two
+icon languages in one interface for no gain.
+
 ## Golden rule: snapshot member content before overwriting it
 Before ANY script or migration that overwrites or nulls a column holding
 member-created content, first write a snapshot of the affected rows to
