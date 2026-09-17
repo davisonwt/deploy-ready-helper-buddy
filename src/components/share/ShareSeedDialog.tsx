@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Link2, Users, MessagesSquare, Globe2 } from 'lucide-react';
@@ -257,7 +256,18 @@ export default function ShareSeedDialog({
         onChange={(e) => setSearch(e.target.value)}
         className="shrink-0"
       />
-      <ScrollArea className="min-h-[7rem] flex-1 rounded-md border border-border">
+      {/*
+        A plain overflow container, NOT Radix ScrollArea. ScrollArea's inner
+        viewport is `h-full`, i.e. height:100%, and a percentage height only
+        resolves against a parent with a definite height. Here the parent is
+        a flex item sized by `flex-1`, whose computed height stays `auto`, so
+        the viewport grew to its content (measured live: root bounded at
+        284px, viewport 2057px) and 36 of 42 member rows rendered underneath
+        the footer button with nothing scrollable. `min-h-0 + flex-1 +
+        overflow-y-auto` needs no percentage to resolve and cannot fail that
+        way.
+      */}
+      <div className="min-h-[7rem] flex-1 overflow-y-auto overscroll-contain rounded-md border border-border">
         {loading ? (
           <div className="flex h-full items-center justify-center py-10 text-sm text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading your tribe…
@@ -285,7 +295,7 @@ export default function ShareSeedDialog({
             ))}
           </ul>
         )}
-      </ScrollArea>
+      </div>
       <p className="shrink-0 text-xs text-muted-foreground">{selectedIds.length} selected</p>
     </div>
   );

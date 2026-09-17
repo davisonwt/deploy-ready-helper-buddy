@@ -575,6 +575,13 @@ export default function SowWheelPage() {
         </div>
       </section>
 
+      {!vehicleType && (
+        <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
+          Pick one to carry on. Next we ask what it can carry, for photos,
+          where it is based, and <strong>what you charge</strong>.
+        </p>
+      )}
+
       {vehicleType && (
         <>
           {/* 2. What it can do ------------------------------------------ */}

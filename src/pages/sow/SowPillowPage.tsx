@@ -556,6 +556,13 @@ export default function SowPillowPage() {
         </div>
       </section>
 
+      {!stayType && (
+        <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
+          Pick one to carry on. Next we ask how many people it sleeps, for
+          photos, where it is, and <strong>what you charge</strong>.
+        </p>
+      )}
+
       {stayType && (
         <>
           {/* 2. How many people ------------------------------------------ */}

@@ -579,6 +579,13 @@ export default function SowHandPage() {
         <CategoryGrid list={HOUSEHOLD_CATEGORIES} />
       </section>
 
+      {!category && (
+        <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
+          Pick one to carry on. Next we ask about your background, for photos,
+          where you work, and <strong>what you charge</strong>.
+        </p>
+      )}
+
       {category && (
         <>
           {/* 2. Your background -------------------------------------- */}
