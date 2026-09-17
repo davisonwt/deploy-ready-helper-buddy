@@ -350,7 +350,12 @@ export default function MyListingsPage() {
                     variant="outline"
                     onClick={() => copyLink(row)}
                     disabled={busy}
-                    aria-label={`Copy the link to ${row.title}`}
+                    // The accessible name must contain the visible label
+                    // ("Copy link"), or a voice user asking for the button
+                    // they can see does not get this one. WCAG 2.5.3.
+                    aria-label={copiedId === row.id
+                      ? `Copied the link to ${row.title}`
+                      : `Copy link to ${row.title}`}
                   >
                     {copiedId === row.id
                       ? <Check className="w-4 h-4 mr-1 text-primary" />
