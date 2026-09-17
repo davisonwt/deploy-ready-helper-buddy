@@ -330,7 +330,7 @@ input::placeholder, textarea::placeholder, select::placeholder {
   body {
     @apply text-foreground;
     background: hsl(var(--background));
-    min-height: 100vh;
+    min-height: 100dvh;
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
         "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
@@ -701,7 +701,11 @@ input::placeholder, textarea::placeholder, select::placeholder {
 
     /* Reduce padding/gaps globally */
     .container { @apply px-3; }
-    section { @apply py-8; }
+    /* Bare element selector: it hits EVERY <section>, including ones no
+       visitor sees. Sonner's toast live region is an empty <section> and
+       the first child of #root, so this gave every mobile page a 56px
+       blank block at the top. See the 2026-09-17 note below. */
+    section:not([aria-live]) { @apply py-8; }
 
     /* Stack form elements vertically */
     form { @apply flex-col gap-3; }
@@ -844,6 +848,30 @@ body {
   font-size: clamp(16px, 0.95rem + 0.15vw, 17px);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+/* iOS Safari viewport, 2026-09-17.
+   index.html sets viewport-fit=cover, so the layout viewport extends under the
+   status bar and the home indicator and env(safe-area-inset-*) is non-zero.
+   These variables exist so a layout can inset itself without repeating the
+   env() call, and so a test can force real iPhone values (Chromium reports 0).
+   :root gets them unconditionally -- 0px costs nothing where there is no notch. */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+/* On iOS Safari 100vh is the LARGE viewport, measured as though the toolbars
+   were retracted, so a 100vh box is always taller than what you can see and
+   its background paints down past the fold. dvh is the visible height and
+   tracks the toolbars. Redefining the two utilities covers all 195 uses at
+   once rather than rewriting 195 call sites; @supports keeps the vh value for
+   anything that does not know dvh. */
+@supports (height: 100dvh) {
+  .min-h-screen { min-height: 100dvh; }
+  .h-screen     { height:     100dvh; }
 }
 
 /* Safe-area utilities — opt-in per component */
