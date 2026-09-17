@@ -198,7 +198,7 @@ export default function StallsFeedPage() {
         .select('user_id, username, display_name')
         .in('user_id', PINNED_STALL_USER_IDS);
       const profileByOwner = new Map<string, { username: string | null; display_name: string | null }>(
-        ((profileRows ?? []) as { user_id: string; username: string | null; display_name: string | null }[]).map((p) => [
+        ((profileRows ?? []) as unknown as { user_id: string; username: string | null; display_name: string | null }[]).map((p) => [
           p.user_id,
           { username: p.username, display_name: p.display_name },
         ]),
@@ -348,7 +348,7 @@ export default function StallsFeedPage() {
         .select('user_id, username, display_name')
         .in('user_id', ownerIds);
       const profileByOwner = new Map<string, { username: string | null; display_name: string | null }>(
-        ((profileRows ?? []) as { user_id: string; username: string | null; display_name: string | null }[]).map((p) => [
+        ((profileRows ?? []) as unknown as { user_id: string; username: string | null; display_name: string | null }[]).map((p) => [
           p.user_id,
           { username: p.username, display_name: p.display_name },
         ]),

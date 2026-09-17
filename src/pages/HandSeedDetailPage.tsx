@@ -3,7 +3,6 @@ import { handRatesOn, handTravelChargesOn, serviceCategoryLabel, BACKGROUND_CHEC
 import { formatDistance, haversineMetres, unitForViewer } from '@/lib/sleeping/units';
 import { useWorldwideLocation } from '@/hooks/useWorldwideLocation';
 import SignedImg from '@/components/media/SignedImg';
-import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchProductBySlugOrId } from '@/api/products';

@@ -68,13 +68,13 @@ describe('partySendAllowed: the guardrail on the fresh row', () => {
   it('never sends twice: a reference parks the row', () => {
     const d = server.partySendAllowed(row({ reference: 'SIG' }), ctx);
     expect(d.ok).toBe(false);
-    if (!d.ok) expect(d.action).toBe('park');
+    if (d.ok === false) expect(d.action).toBe('park');
   });
   it('parks a row that is not sending, not USDC, not positive, or not a Solana address', () => {
     for (const bad of [row({ status: 'paid' }), row({ rail: 'paypal' }), row({ amount: 0 }), row({ destination: 'nope' }), row({ environment: 'sandbox' })]) {
       const d = server.partySendAllowed(bad, ctx);
       expect(d.ok).toBe(false);
-      if (!d.ok) expect(d.action).toBe('park');
+      if (d.ok === false) expect(d.action).toBe('park');
     }
   });
   it('defers when the cluster does not match the row environment', () => {

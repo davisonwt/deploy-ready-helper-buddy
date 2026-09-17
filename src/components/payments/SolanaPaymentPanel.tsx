@@ -11,7 +11,7 @@ import type { SolanaPaymentResponse, SolanaPaymentResolution } from '@/lib/payme
 import { useSolanaWalletPay, type WalletPayError } from '@/hooks/useSolanaWalletPay';
 import { PHANTOM_INSTALL_URL, isMobileDevice } from '@/lib/payments/solanaWallet';
 import { cn } from '@/lib/utils';
-import { initialWatchState, nextWatchState, type WatchState } from '@/lib/payments/paymentWatch';
+import { initialWatchState, nextWatchState, type WatchState, type WatchEvent } from '@/lib/payments/paymentWatch';
 
 interface CheckResponse {
   status: 'pending' | 'paid' | 'underpaid' | 'expired' | 'failed';
@@ -163,7 +163,7 @@ export default function SolanaPaymentPanel({ payment, onResolved }: SolanaPaymen
         watchRef.current,
         data.status === 'expired'
           ? { type: 'expired', hasSignature: !!walletSignatureRef.current }
-          : { type: data.status },
+          : { type: data.status as Exclude<WatchEvent, { type: 'expired' }>['type'] },
       );
       watchRef.current = next;
       if (next.done === 'paid') {

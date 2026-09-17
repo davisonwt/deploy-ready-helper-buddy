@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { Json } from '@/integrations/supabase/types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { WizardContainer } from '@/components/wizard/WizardContainer';
@@ -192,8 +193,8 @@ export default function StallBuildPage() {
       const { data } = await supabase.from('stalls').select('*').eq('user_id', user.id).maybeSingle();
       if (data) {
         setStallId(data.id);
-        const savedCategories = Array.isArray(data.categories) ? (data.categories as StallCategory[]) : [];
-        setCategories(savedCategories.length > 0 ? savedCategories : [data.category]);
+        const savedCategories = Array.isArray(data.categories) ? (data.categories as unknown as StallCategory[]) : [];
+        setCategories(savedCategories.length > 0 ? savedCategories : [data.category as StallCategory]);
         setName(data.name ?? '');
         setTagline(data.tagline ?? '');
         setStory(data.story ?? '');
@@ -203,14 +204,14 @@ export default function StallBuildPage() {
         }
         if (data.front_image_path) setFront({ url: data.front_image_path, storagePath: null });
         if (data.interior_image_path) setInterior({ url: data.interior_image_path, storagePath: null });
-        const savedHotspots = Array.isArray(data.hotspots) ? (data.hotspots as StallHotspot[]) : [];
+        const savedHotspots = Array.isArray(data.hotspots) ? (data.hotspots as unknown as StallHotspot[]) : [];
         if (savedHotspots.length > 0) {
           setHotspots(savedHotspots.map((h) => (h.id ? h : { ...h, id: newHotspotId() })));
           seededForUrl.current = data.interior_image_path ?? null;
         }
         const savedTiles = Array.isArray(data.tiles) ? data.tiles : [];
         if (savedTiles.length > 0) {
-          setTiles(savedTiles.map((t: StallTile) => ({
+          setTiles((savedTiles as unknown as StallTile[]).map((t: StallTile) => ({
             label: t.label ?? '',
             kind: t.kind ?? 'products',
             image: t.image_path ? { url: t.image_path, storagePath: null } : null,
@@ -257,6 +258,12 @@ export default function StallBuildPage() {
         link_target: tileTarget(t),
       }));
 
+      // `category` is deliberately absent from this payload. The column is
+      // NOT NULL with no default, so the generated Insert type demands it,
+      // but trg_stalls_sync_category (BEFORE INSERT OR UPDATE OF categories)
+      // fills it from categories -- the source of truth since 2026-09-16.
+      // The type generator cannot see triggers. Sending a category here
+      // would be the client second-guessing the database.
       const { error } = await supabase.from('stalls').upsert(
         {
           user_id: user.id,
@@ -267,10 +274,10 @@ export default function StallBuildPage() {
           story_pdf_path: storyPdf?.url ?? null,
           front_image_path: front.url,
           interior_image_path: interior.url,
-          tiles: tilesPayload,
-          hotspots,
+          tiles: tilesPayload as unknown as Json,
+          hotspots: hotspots as unknown as Json,
           published: true,
-        },
+        } as never,
         { onConflict: 'user_id' },
       );
       if (error) throw error;

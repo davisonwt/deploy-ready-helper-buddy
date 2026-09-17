@@ -55,7 +55,7 @@ export default function CockpitPage() {
       .select('name, tier, front_image_path, interior_image_path, hotspots, published')
       .eq('user_id', user.id)
       .maybeSingle()
-      .then(({ data }) => { if (alive) setStall((data as StallRow | null) ?? null) })
+      .then(({ data }) => { if (alive) setStall((data as unknown as StallRow | null) ?? null) })
     return () => { alive = false }
   }, [user])
 

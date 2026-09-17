@@ -426,7 +426,7 @@ function IndexContent() {
         .select("user_id, username")
         .in("user_id", ownerIds);
       const usernameByOwner = new Map<string, string | null>(
-        ((profileRows ?? []) as { user_id: string; username: string | null }[]).map((p) => [p.user_id, p.username]),
+        ((profileRows ?? []) as unknown as { user_id: string; username: string | null }[]).map((p) => [p.user_id, p.username]),
       );
       const withUsername = (r: Omit<GardenCard, "username">, pinnedFlag: boolean): GardenCard => ({
         ...r, username: usernameByOwner.get(r.user_id) ?? null, pinned: pinnedFlag,

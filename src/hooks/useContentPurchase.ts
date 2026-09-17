@@ -15,7 +15,12 @@ export type ContentType =
   | 'premium_item'
   | 'premium_room_access';
 
-export type PurchaseProvider = 'solana' | 'paypal' | 'balance';
+// Must match create-content-purchase-order's own Provider union, which
+// accepts paystack and initialises a Paystack transaction for it. This
+// list had gone stale: every picker here yields PayoutProviderId, which
+// includes 'paystack', so six call sites were passing a value this type
+// said was impossible. The server handled it; only the type was wrong.
+export type PurchaseProvider = 'solana' | 'paypal' | 'balance' | 'paystack';
 
 interface PurchaseArgs {
   contentType: ContentType;

@@ -75,11 +75,11 @@ describe('Radio Station Features', () => {
   });
 
   it('should mock react-query hooks correctly', () => {
-    const queryResult = useQuery();
+    const queryResult = useQuery({ queryKey: ['test'] });
     expect(queryResult.data).toEqual([]);
     expect(queryResult.isLoading).toBe(false);
     
-    const mutationResult = useMutation();
+    const mutationResult = useMutation({ mutationFn: async () => undefined });
     expect(mutationResult.mutate).toBeDefined();
     expect(typeof mutationResult.mutate).toBe('function');
     

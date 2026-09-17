@@ -25,6 +25,10 @@ interface ChatRoom {
   updated_at: string;
   created_by: string;
   chat_participants?: any[];
+  /** Set at the direct-room mapping below; the interface had never declared
+   *  them, so every read of these two was an error. */
+  counterpart_name?: string | null;
+  counterpart_avatar?: string | null;
   profiles?: {
     display_name?: string;
     first_name?: string;

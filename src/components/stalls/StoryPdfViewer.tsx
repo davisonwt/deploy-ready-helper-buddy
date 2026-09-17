@@ -133,7 +133,14 @@ export default function StoryPdfViewer({ url, maxPages }: Props) {
     pdfjsLib.getDocument({ url }).promise
       .then((d) => {
         if (!alive) {
-          try { d?.destroy?.(); } catch (e) { console.error('StoryPdfViewer: doc.destroy() threw (load-then-unmount)', e); }
+          // pdfjs-dist v6 moved destroy() to PDFDocumentLoadingTask, so it is
+          // no longer on PDFDocumentProxy's type. The optional call is kept
+          // exactly as it was -- this file's comments below record a live
+          // TypeError from pdf.js's own internals, so the defensive `?.` and
+          // the try/catch are load-bearing. Cast only so the type stops
+          // claiming the property cannot exist.
+          try { (d as { destroy?: () => void })?.destroy?.(); }
+          catch (e) { console.error('StoryPdfViewer: doc.destroy() threw (load-then-unmount)', e); }
           return;
         }
         setPdf(d);

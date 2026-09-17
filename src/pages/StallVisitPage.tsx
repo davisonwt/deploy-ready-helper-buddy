@@ -87,7 +87,7 @@ export default function StallVisitPage() {
         .select('id, user_id, name, tagline, tier, front_image_path, interior_image_path, hotspots, published, enter_via_front')
         .eq('user_id', ownerId)
         .maybeSingle();
-      if (alive) setStall((data as StallRow | null) ?? null);
+      if (alive) setStall((data as unknown as StallRow | null) ?? null);
     })();
     return () => { alive = false; };
   }, [username]);

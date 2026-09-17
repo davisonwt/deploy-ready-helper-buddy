@@ -83,13 +83,13 @@ export default function PaymentSuccessPage() {
         .filter((c): c is string => !!c)
         .join(', ');
       const { data, error } = await supabase
-        .from(active.table)
+        .from(active.table as never)
         .select(cols)
         .eq('id', active.id)
         .maybeSingle();
 
       if (!cancelled && data) {
-        const row = data as Record<string, unknown>;
+        const row = data as unknown as Record<string, unknown>;
         const rowStatus = row[active.statusColumn] as OrderStatus;
         setStatus(rowStatus);
         const rowProcessorFee = active.processorFeeColumn ? row[active.processorFeeColumn] : null;

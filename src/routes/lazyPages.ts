@@ -35,7 +35,9 @@ export { default as OnboardingPayoutPage } from '@/pages/OnboardingPayoutPage';
 export { default as ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 
 // Admin / lazy dashboards
-export const EnhancedAnalyticsDashboard = lazy(() => import('@/components/admin/EnhancedAnalyticsDashboard'));
+export const EnhancedAnalyticsDashboard = lazy(() =>
+  import('@/components/admin/EnhancedAnalyticsDashboard')
+    .then((m) => ({ default: m.EnhancedAnalyticsDashboard })));
 export const UserManagementDashboard = lazy(() => import('@/components/admin/UserManagementDashboard'));
 export const ContentModerationDashboard = lazy(() => import('@/components/admin/ContentModerationDashboard'));
 export const GamificationDashboard = lazy(() => import('@/components/gamification/GamificationDashboard'));

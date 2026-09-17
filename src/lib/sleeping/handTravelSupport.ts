@@ -14,12 +14,12 @@ let cached: Promise<boolean> | null = null;
 
 export function handTravelColumnsAvailable(): Promise<boolean> {
   if (!cached) {
-    cached = supabase
+    cached = Promise.resolve(supabase
       .from('hand_seed_details')
       .select('rate_callout')
       .limit(1)
       .then(({ error }) => !error)
-      .then(undefined, () => false);
+      .then(undefined, () => false));
   }
   return cached;
 }

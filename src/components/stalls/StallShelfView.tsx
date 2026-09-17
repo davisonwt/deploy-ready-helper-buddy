@@ -25,7 +25,19 @@ interface ShelfCard {
   openPath: string;
 }
 
-const SHELF_THEME: Record<TileKind, { label: string; bg: string; cardShape: string }> = {
+interface ShelfTheme { label: string; bg: string; cardShape: string }
+
+/** The shelf kinds only. TileKind also covers hotspot kinds that never open
+ *  this view ('nav', 'raise_hand', 'gift', ...), so this is deliberately
+ *  Partial -- declaring it total was a lie the compiler could not see past
+ *  once those kinds were added, and theme.bg below would have thrown. */
+const SHELF_FALLBACK: ShelfTheme = {
+  label: 'Shelf',
+  bg: 'bg-gradient-to-b from-stone-900/90 via-stone-800/80 to-stone-950',
+  cardShape: 'aspect-square rounded-lg',
+};
+
+const SHELF_THEME: Partial<Record<TileKind, ShelfTheme>> = {
   books: { label: 'Wooden shelf', bg: 'bg-gradient-to-b from-amber-900/90 via-amber-800/80 to-amber-950', cardShape: 'aspect-[2/3] rounded-t-md rounded-b-sm' },
   music: { label: 'Record crate', bg: 'bg-gradient-to-b from-stone-900/90 via-stone-800/80 to-stone-950', cardShape: 'aspect-square rounded-lg' },
   lyrics: { label: 'Notebook stack', bg: 'bg-gradient-to-b from-orange-100/10 via-orange-950/40 to-stone-950', cardShape: 'aspect-[3/4] rounded-md' },
@@ -66,7 +78,7 @@ export default function StallShelfView({ ownerId, ownerName, tile, onClose }: Pr
     return () => { alive = false; };
   }, [tile.kind, ownerId]);
 
-  const theme = SHELF_THEME[tile.kind];
+  const theme = SHELF_THEME[tile.kind] ?? SHELF_FALLBACK;
 
   const goTo = (path: string) => {
     onClose();

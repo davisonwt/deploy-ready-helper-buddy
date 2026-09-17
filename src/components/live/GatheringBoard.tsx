@@ -171,7 +171,7 @@ export function PdfBoard({ isHost, stage, setStageMode }: BoardProps) {
     if (!stage.pdfUrl) { setPdf(null); return; }
     let alive = true;
     pdfjsLib.getDocument({ url: stage.pdfUrl }).promise.then((doc) => {
-      if (!alive) { doc.destroy(); return; }
+      if (!alive) { doc.loadingTask.destroy(); return; }
       setPdf(doc);
       if (isHost && !stage.pdfPageCount) setStageMode({ ...stage, pdfPageCount: doc.numPages });
     }).catch((e) => console.error('board pdf load failed', e));

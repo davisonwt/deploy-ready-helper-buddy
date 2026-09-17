@@ -489,7 +489,7 @@ export default function ProductsPage() {
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
-                {product.type === 'music' && !isAlbum(product) && (
+                {product.type === 'music' && !isAlbum(product as Parameters<typeof isAlbum>[0]) && (
                   <PreviewPlayer id={product.id} previewUrl={product.preview_url ?? null} productId={product.id} />
                 )}
               </div>

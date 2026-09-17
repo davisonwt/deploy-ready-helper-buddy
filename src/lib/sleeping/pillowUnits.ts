@@ -96,12 +96,12 @@ let cached: Promise<boolean> | null = null;
 
 export function pillowUnitsAvailable(): Promise<boolean> {
   if (!cached) {
-    cached = supabase
+    cached = Promise.resolve(supabase
       .from('pillow_units')
       .select('id')
       .limit(1)
       .then(({ error }) => !error)
-      .then(undefined, () => false);
+      .then(undefined, () => false));
   }
   return cached;
 }

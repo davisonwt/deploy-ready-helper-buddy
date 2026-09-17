@@ -49,7 +49,7 @@ export default function TribeFollowingSheetContent() {
         .select('user_id, username, display_name')
         .in('user_id', stalls.map((s) => s.user_id));
       const profileByOwner = new Map(
-        ((profileRows ?? []) as { user_id: string; username: string | null; display_name: string | null }[])
+        ((profileRows ?? []) as unknown as { user_id: string; username: string | null; display_name: string | null }[])
           .filter((p) => !!p.username)
           .map((p) => [p.user_id, p]),
       );

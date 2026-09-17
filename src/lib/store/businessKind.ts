@@ -35,6 +35,6 @@ export async function saveBusinessKind(companyId: string, kind: BusinessKind): P
     patch.store_theme = { ...(theme || {}), preset: kind };
   }
 
-  const { error } = await supabase.from('companies').update(patch).eq('id', companyId);
+  const { error } = await supabase.from('companies').update(patch as never).eq('id', companyId);
   if (error) throw error;
 }
