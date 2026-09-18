@@ -65,15 +65,29 @@ export type TileKind =
   // to Davison, not guessed here.
   | 'go_live' | 'share' | 'raise_hand' | 'queue' | 'gift';
 
-export const TILE_KINDS: { id: TileKind; label: string }[] = [
-  { id: 'books', label: 'Books & Research' },
-  { id: 'music', label: 'Music & Videos' },
-  { id: 'lyrics', label: 'Lyrics' },
-  { id: 'story', label: 'My Story' },
-  { id: 'products', label: 'Products' },
-  { id: 'services', label: 'Services' },
-  { id: 'orchard', label: 'My Orchard' },
-  { id: 'custom', label: 'Custom link' },
+/**
+ * What a sower picks when they make a shelf.
+ *
+ * `label` is the display name of the KIND, shown only while choosing. `holds`
+ * says in plain words what lands on that shelf, because the sower is choosing
+ * contents, not a database value -- an enum name tells them nothing.
+ *
+ * The sower's own shelf name is a separate, free-text field (StallHotspot.label)
+ * and is what every visitor sees. This choice is what drives discovery, which
+ * sow form the "+" opens, and what the bulk wizard writes -- so it is fixed to
+ * these kinds on purpose: one sower's "Family Albums", another's "Foto's" and a
+ * third's "Memories" are all photos, and a browser must be able to find them
+ * together. (Decided by Davison, 2026-09-18.)
+ */
+export const TILE_KINDS: { id: TileKind; label: string; holds: string }[] = [
+  { id: 'books', label: 'Books & Research', holds: 'Books, e-books and written research' },
+  { id: 'music', label: 'Music & Videos', holds: 'Tracks, albums and video' },
+  { id: 'lyrics', label: 'Lyrics', holds: 'Written lyrics and words to songs' },
+  { id: 'story', label: 'My Story', holds: 'Your own story, in your words — not a list of seeds' },
+  { id: 'products', label: 'Products', holds: 'Things you make or sell — prints, crafts, goods' },
+  { id: 'services', label: 'Services', holds: 'Work you do for someone — a skill or a helping hand' },
+  { id: 'orchard', label: 'My Orchard', holds: 'Your orchard and what grows in it' },
+  { id: 'custom', label: 'Something else', holds: 'A shelf of your own — name it whatever you like' },
 ];
 
 /**

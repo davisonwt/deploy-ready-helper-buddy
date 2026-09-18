@@ -6,7 +6,7 @@ import StoryPdfViewer from './StoryPdfViewer';
 import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
 import { deleteRow } from '@/components/garden/seedCardBuilders';
 import { toast } from 'sonner';
-import type { TileKind } from '@/lib/stalls/stallTypes';
+import { TILE_KINDS, type TileKind } from '@/lib/stalls/stallTypes';
 
 interface Props {
   ownerId: string;
@@ -206,7 +206,14 @@ function bulkUploadAppliesTo(kind: TileKind): boolean {
 const STATIC_TEXT_KINDS = new Set<TileKind>(['companion_info', 'passes', 'activate', 'reviews', 'raise_hand', 'queue', 'gift']);
 
 export default function StallHotspotSheet({ ownerId, ownerName, kind, label, text, isOwner, onClose, scrollToItemId, viewerCutoff }: Props) {
-  const displayLabel = label?.trim() || KIND_LABEL[kind] || kind;
+  // The sower's own name wins. Falling through to the raw `kind` would show a
+  // visitor a database value -- "custom", "orchard" -- on any shelf whose owner
+  // never named it, so the last resort is a human word instead.
+  const displayLabel =
+    label?.trim()
+    || KIND_LABEL[kind]
+    || TILE_KINDS.find((k) => k.id === kind)?.label
+    || 'Shelf';
   // Owner "+": where a single new seed comes from, and whether the bulk
   // wizard can actually land seeds on this shelf. Both withheld rather than
   // offered-and-broken -- see addOnePathFor / bulkUploadAppliesTo.

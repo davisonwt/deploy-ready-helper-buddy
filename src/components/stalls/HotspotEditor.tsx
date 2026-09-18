@@ -285,30 +285,58 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
                 <SheetTitle className="font-serif text-amber-100">What's here?</SheetTitle>
               </SheetHeader>
               <div className="mt-4 space-y-3">
-                <Input
-                  autoFocus
-                  placeholder="Label (e.g. my books)"
-                  value={editingHotspot.label}
-                  onChange={(e) => updateLabel(editingHotspot.id!, e.target.value)}
-                  maxLength={40}
-                  className="h-11 bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30"
-                />
-                <div className="flex flex-wrap gap-1.5">
+                {/* Two separate decisions, in the order a sower makes them:
+                    what to CALL the shelf (theirs, free text, the only thing a
+                    visitor ever sees), then what it HOLDS (one of the fixed
+                    kinds, which drives discovery, the sow form and the bulk
+                    wizard -- see TILE_KINDS' own comment). */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium uppercase tracking-wider text-amber-200/70">
+                    Name this shelf
+                  </label>
+                  <Input
+                    autoFocus
+                    placeholder="e.g. Family Albums"
+                    value={editingHotspot.label}
+                    onChange={(e) => updateLabel(editingHotspot.id!, e.target.value)}
+                    maxLength={40}
+                    className="h-11 bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30"
+                  />
+                  <p className="text-[11px] text-amber-100/45">
+                    Call it whatever you like — this is what visitors see. You can rename it later and
+                    nothing on the shelf moves.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium uppercase tracking-wider text-amber-200/70">
+                    What does it hold?
+                  </label>
+                  <p className="text-[11px] text-amber-100/45">
+                    This is how people find your seeds when they search — and what the shelf's “+” opens.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                   {TILE_KINDS.map((k) => (
                     <Button
                       key={k.id}
                       type="button"
-                      size="sm"
                       variant={editingHotspot.kind === k.id ? 'default' : 'outline'}
                       aria-pressed={editingHotspot.kind === k.id}
                       onClick={() => chooseKind(editingHotspot.id!, k.id)}
-                      className={`min-h-[44px] ${
+                      className={`min-h-[56px] h-auto flex-col items-start gap-0.5 whitespace-normal py-2 text-left ${
                         editingHotspot.kind === k.id
                           ? 'bg-amber-500 text-amber-950 border-amber-500 hover:bg-amber-400'
                           : 'border-amber-500/25 text-amber-100/70 hover:bg-amber-500/10'
                       }`}
                     >
-                      {k.label}
+                      <span className="text-sm font-semibold">{k.label}</span>
+                      <span
+                        className={`text-[11px] font-normal leading-snug ${
+                          editingHotspot.kind === k.id ? 'text-amber-950/75' : 'text-amber-100/45'
+                        }`}
+                      >
+                        {k.holds}
+                      </span>
                     </Button>
                   ))}
                 </div>
