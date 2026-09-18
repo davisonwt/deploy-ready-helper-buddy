@@ -3,7 +3,7 @@
  * Allows users to add, edit, and delete birthdays that repeat every year
  */
 
-import { useState, useEffect } from 'react'
+import { useId, useState, useEffect } from 'react'
 import { Plus, X, Edit2, Trash2, Gift } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -36,6 +36,10 @@ const YHWH_MONTHS = [
 
 export function BirthdayManager({ selectedYhwhMonth, selectedYhwhDay, onBirthdaySelect }: BirthdayManagerProps) {
   const { user } = useAuth()
+  // CalendarGrid renders this component and watches the same table -- see the
+  // matching comment there. A literal topic shared by both meant the second
+  // mount added callbacks to an already-subscribed channel and threw.
+  const instanceId = useId()
   const [birthdays, setBirthdays] = useState<Birthday[]>([])
   const [isAdding, setIsAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -72,7 +76,7 @@ export function BirthdayManager({ selectedYhwhMonth, selectedYhwhDay, onBirthday
 
     // Listen for changes
     const channel = supabase
-      .channel('birthdays_changes')
+      .channel(`birthdays_changes-${instanceId}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'birthdays', filter: `user_id=eq.${user.id}` },
         () => loadBirthdays()
@@ -82,7 +86,7 @@ export function BirthdayManager({ selectedYhwhMonth, selectedYhwhDay, onBirthday
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user])
+  }, [user, instanceId])
 
   // Set form data when selecting a date
   useEffect(() => {

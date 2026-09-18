@@ -39,8 +39,8 @@ async function openBooksHotspot(page: Page) {
     for (let i = 0; i < c; i++) {
       if (await books.nth(i).isVisible()) {
         await books.nth(i).click({ force: true });
-        await page.waitForTimeout(3500);
-        return;
+        await page.waitForTimeout(2500);
+        return books.nth(i);
       }
     }
     await page.waitForTimeout(1500);
@@ -49,11 +49,51 @@ async function openBooksHotspot(page: Page) {
 }
 
 /** Go Live (host) or Step In (viewer) -- the same rail control, relabelled. */
-async function enterLive(page: Page, who: string) {
-  await openBooksHotspot(page);
-  const btn = page.getByRole('button', { name: /^(go live|step in)$/i }).first();
-  await expect(btn, `${who} should have a way into the live`).toHaveCount(1);
-  await btn.click({ force: true });
+async function findLiveEntryButton(page: Page, booksBtn: ReturnType<Page['locator']>) {
+  let btn = page.locator('button[aria-label="Go Live"]').first();
+  if (await btn.count() === 0) btn = page.locator('button[aria-label="Step In"]').first();
+  if (await btn.count() === 0) {
+    await booksBtn.click({ force: true }).catch(() => {});
+    await page.waitForTimeout(1200);
+    btn = page.locator('button[aria-label="Go Live"]').first();
+    if (await btn.count() === 0) btn = page.locator('button[aria-label="Step In"]').first();
+  }
+  return btn;
+}
+
+/**
+ * End whatever session is already running on this seed, then start a clean one.
+ *
+ * A previous run that closed its browser contexts can leave the seed still
+ * showing "Step In": presence is gone but the session row is not, and the host
+ * re-entering that half-dead session never reaches "You are hosting". Same
+ * shape as capacity-4-participants' own helper, which is why that one is
+ * reliable and the first version of this spec was not.
+ */
+async function hostStartFreshLiveSession(page: Page) {
+  const books1 = await openBooksHotspot(page);
+  const first = await findLiveEntryButton(page, books1);
+  if (await first.count()) {
+    await first.click({ force: true });
+    await page.waitForTimeout(2500);
+    const endLive = page.locator('button:has-text("End live")').first();
+    if (await endLive.count()) {
+      await endLive.click();
+      await page.waitForTimeout(2000);
+    }
+  }
+  const books2 = await openBooksHotspot(page);
+  const second = await findLiveEntryButton(page, books2);
+  await expect(second, 'host should have a way to go live').toHaveCount(1);
+  await second.click({ force: true });
+  await page.waitForTimeout(4000);
+}
+
+async function guestStepIntoLive(page: Page) {
+  const books = await openBooksHotspot(page);
+  const stepIn = await findLiveEntryButton(page, books);
+  await expect(stepIn, 'the watcher should find a way into the live').toHaveCount(1);
+  await stepIn.click({ force: true });
   await page.waitForTimeout(6000);
 }
 
@@ -96,8 +136,8 @@ test('a viewer who never raised a hand still shows up, under Watching', async ({
   const watcher = await newPage();
 
   await login(hostPage, HOST_EMAIL, HOST_PASS);
-  await enterLive(hostPage, 'host');
-  await expect(hostPage.locator('text=/You are hosting/')).toBeVisible({ timeout: 20000 });
+  await hostStartFreshLiveSession(hostPage);
+  await expect(hostPage.locator('text=/You are hosting/')).toBeVisible({ timeout: 25000 });
 
   // Before: the host is alone, and the sheet should say so honestly.
   const before = await readSheet(hostPage);
@@ -110,7 +150,7 @@ test('a viewer who never raised a hand still shows up, under Watching', async ({
   // The watcher steps in and does NOTHING else -- no hand raised, ever. This is
   // exactly the person who was invisible.
   await login(watcher, WATCHER_EMAIL, WATCHER_PASS);
-  await enterLive(watcher, 'watcher');
+  await guestStepIntoLive(watcher);
   await hostPage.waitForTimeout(8000);
 
   const after = await readSheet(hostPage);

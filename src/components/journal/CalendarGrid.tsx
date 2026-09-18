@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useId, useMemo, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, BookOpen, Sparkles } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -39,6 +39,14 @@ interface GridYhwhDate {
 
 export default function CalendarGrid({ entries: propEntries, onDateSelect }: CalendarGridProps) {
   const { user } = useAuth();
+  // This component renders <BirthdayManager/>, which watches the same table.
+  // Both used the literal topic 'birthdays_changes', so the one mounting
+  // second called .on() on a channel the first had already subscribed to and
+  // threw "cannot add postgres_changes callbacks ... after subscribe()" --
+  // the RadioScheduleGrid fault of 2026-09-16, one page over. Its cleanup
+  // removeChannel() also tore down the other's subscription. useId() gives
+  // each instance its own topic.
+  const instanceId = useId();
   const { location } = useUserLocation();
   const sacred = useSacredNow();
   const [entries, setEntries] = useState<JournalEntry[]>(propEntries || []);
@@ -142,7 +150,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
 
     // Listen for changes
     const channel = supabase
-      .channel('birthdays_changes')
+      .channel(`birthdays_changes-${instanceId}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'birthdays', filter: `user_id=eq.${user.id}` },
         () => loadBirthdays()
@@ -152,7 +160,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user])
+  }, [user, instanceId])
 
   // Calculate calendar days for the YHWH month
   const calendarDays = useMemo(() => {
