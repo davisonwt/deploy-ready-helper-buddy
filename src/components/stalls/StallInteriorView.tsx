@@ -403,13 +403,18 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
     setOpenLabel(h.label);
   }
 
-  // Fine-pointer devices get the glow + label pill on hover already, so a
-  // click there just opens directly. Touch devices have no hover: the
-  // first tap on a box shows its glow + pill for TAP_PREVIEW_MS (same
-  // visual the mouse gets on hover) without opening anything; a second tap
-  // on that same box while it's showing opens the sheet. Tapping a
-  // DIFFERENT box always restarts the preview on the new one rather than
-  // opening it, since "already previewing" only ever means the same box.
+  // One tap opens, on every pointer type and every hotspot kind.
+  //
+  // Touch used to take TWO taps: the first only showed the box's glow + label
+  // pill for TAP_PREVIEW_MS, standing in for the hover a mouse gets, and a
+  // second tap within that window opened it. The window was 1500ms, so tap,
+  // read the label, tap again and you had already missed it -- the box then
+  // just re-previewed, forever. It read as a dead control, not a deliberate
+  // two-step: a member could not get into her own stall's My Story on
+  // 2026-09-18 and concluded she had no access at all.
+  //
+  // The discovery problem it solved is already solved by the room hint
+  // ("tap the things in the room"), which every first-time visitor sees.
   function handleHotspotTap(h: StallHotspot, key: string) {
     if (!user) {
       setShowJoinSheet(true);
@@ -451,19 +456,15 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
     // "New seeds" gold dot disappears the moment this kind's sheet opens
     // -- a one-way dismissal, not a re-fetch (see dismissedKinds above).
     setDismissedKinds((prev) => (prev.has(h.kind) ? prev : new Set(prev).add(h.kind)));
-    if (isFinePointer) {
-      openHotspot(h);
-      return;
-    }
-    if (previewKey === key) {
-      if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
-      setPreviewKey(null);
-      openHotspot(h);
-      return;
-    }
+    // Show the glow/pill for this box on the way in, so a touch visitor still
+    // gets the same confirmation of WHAT they tapped that a mouse gets from
+    // hover -- it just no longer gates the opening.
     if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
-    setPreviewKey(key);
-    previewTimerRef.current = setTimeout(() => setPreviewKey(null), TAP_PREVIEW_MS);
+    if (!isFinePointer) {
+      setPreviewKey(key);
+      previewTimerRef.current = setTimeout(() => setPreviewKey(null), TAP_PREVIEW_MS);
+    }
+    openHotspot(h);
   }
 
   /** Gold dot + per-kind count -- rendered on a painted hotspot button when it has unseen new seeds. */
