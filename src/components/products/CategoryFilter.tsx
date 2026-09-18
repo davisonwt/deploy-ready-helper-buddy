@@ -21,8 +21,9 @@ export default function CategoryFilter({
 }: CategoryFilterProps) {
   const types = [
     { value: 'all', label: 'All', icon: Grid3x3 },
-    { value: 'music', label: 'Music', icon: Music },
-    { value: 'art', label: 'Art', icon: Palette },
+    // Labels only -- `value` is what filters the query and must not change.
+    { value: 'music', label: 'Music & Videos', icon: Music },
+    { value: 'art', label: 'Art & Photography', icon: Palette },
     { value: 'file', label: 'Files', icon: FileText }
   ];
 

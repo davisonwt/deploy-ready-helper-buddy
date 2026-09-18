@@ -397,12 +397,12 @@ export default function TierSeedFlowPage({ tier }: Props) {
                     }
                     const labelFor = (k: string) => {
                       const map: Record<string, string> = {
-                        music: 'Music',
-                        book: 'Books',
-                        books: 'Books',
+                        music: 'Music & Videos',
+                        book: 'Books & Research',
+                        books: 'Books & Research',
                         video: 'Videos',
                         videos: 'Videos',
-                        art: 'Art',
+                        art: 'Art & Photography',
                         course: 'Courses',
                         physical: 'Physical Goods',
                         digital: 'Digital Goods',

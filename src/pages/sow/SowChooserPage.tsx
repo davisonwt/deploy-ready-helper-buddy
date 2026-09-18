@@ -27,9 +27,11 @@ interface Card {
 }
 
 const CREATIONS: Card[] = [
-  { key: 'music', label: 'Music', icon: musicIcon, live: true, route: '/sow/music' },
-  { key: 'art', label: 'Art', icon: artIcon, live: true, route: '/sow/art' },
-  { key: 'books', label: 'Books', icon: booksIcon, live: true, route: '/sow/book' },
+  // Labels only. `key` and `route` are unchanged on purpose -- they are what
+  // the forms, the stored seed kinds and every existing row are keyed on.
+  { key: 'music', label: 'Music & Videos', icon: musicIcon, live: true, route: '/sow/music' },
+  { key: 'art', label: 'Art & Photography', icon: artIcon, live: true, route: '/sow/art' },
+  { key: 'books', label: 'Books & Research', icon: booksIcon, live: true, route: '/sow/book' },
 ];
 
 const SERVICES: Card[] = [

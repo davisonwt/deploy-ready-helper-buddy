@@ -66,8 +66,8 @@ export type TileKind =
   | 'go_live' | 'share' | 'raise_hand' | 'queue' | 'gift';
 
 export const TILE_KINDS: { id: TileKind; label: string }[] = [
-  { id: 'books', label: 'Books' },
-  { id: 'music', label: 'Music' },
+  { id: 'books', label: 'Books & Research' },
+  { id: 'music', label: 'Music & Videos' },
   { id: 'lyrics', label: 'Lyrics' },
   { id: 'story', label: 'My Story' },
   { id: 'products', label: 'Products' },
@@ -149,6 +149,10 @@ export interface StallTemplate {
  * repositions them for their own uploaded image.
  */
 export const DEFAULT_HOTSPOTS: StallHotspot[] = [
+  // Deliberately NOT renamed with the display labels: this template is WRITTEN
+  // into stalls.hotspots, so changing it changes a stored value for every new
+  // stall -- and the hotspot button's aria-label is that stored string, which
+  // twelve live specs locate by. Display labels live in TILE_KINDS/KIND_LABEL.
   { kind: 'books', label: 'Books', x: 2, y: 70, w: 22, h: 25 },
   { kind: 'music', label: 'Music', x: 26, y: 70, w: 22, h: 25 },
   { kind: 'lyrics', label: 'Lyrics', x: 50, y: 70, w: 22, h: 25 },

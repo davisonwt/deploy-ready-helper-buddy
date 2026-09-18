@@ -14,7 +14,7 @@ interface Tile {
 }
 
 const TILES: Tile[] = [
-  { key: 'music', label: 'Music', icon: Music, route: '/sow/music' },
+  { key: 'music', label: 'Music & Videos', icon: Music, route: '/sow/music' },
   { key: 'artwork', label: 'Artwork / image', icon: Palette, route: null },
   { key: 'document', label: 'Document / e-book', icon: FileText, route: null },
   { key: 'physical', label: 'Physical product', icon: Package, route: '/sow/product' },

@@ -83,8 +83,8 @@ function editPathForSource(source: ItemSource, id: string, kind: TileKind): stri
 }
 
 const KIND_LABEL: Partial<Record<TileKind, string>> = {
-  books: 'Books',
-  music: 'Music',
+  books: 'Books & Research',
+  music: 'Music & Videos',
   lyrics: 'Lyrics',
   story: 'My Story',
   mugs: 'Mugs',
