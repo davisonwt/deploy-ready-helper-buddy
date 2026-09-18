@@ -1502,11 +1502,45 @@ function ParticipantAudio({ track, retryKey, onBlocked, userId }: { track: Media
     if (!el) return;
     el.srcObject = track ? new MediaStream([track]) : null;
     if (!track) return;
-    el.play().catch((err: unknown) => {
-      const name = (err as { name?: string } | undefined)?.name;
-      if (name === 'NotAllowedError') onBlocked?.();
-      else console.error('ParticipantAudio: play() failed', err);
-    });
+
+    const attempt = () => {
+      el.play().catch((err: unknown) => {
+        const name = (err as { name?: string } | undefined)?.name;
+        if (name === 'NotAllowedError') onBlocked?.();
+        else console.error('ParticipantAudio: play() failed', err);
+      });
+    };
+    attempt();
+
+    // SELF-HEALING. Nothing here is ever paused on purpose: these elements are
+    // hidden, have no controls, and exist only to play a live remote track. So
+    // ANY pause is something else taking the audio away, and until now nothing
+    // resumed it -- .play() ran once per track and the only retry was the
+    // member tapping the "enable sound" banner.
+    //
+    // The specific worry was Clip/Media mode: those render <video controls
+    // autoPlay> / <audio controls autoPlay> (this file, Media mode above), and
+    // a browser with a single audio session -- iOS Safari -- can pause other
+    // media when one starts. That is a receive-side way for a view change to
+    // cut someone's sound, and it could not be reproduced in Chromium, which
+    // happily mixes concurrent audio.
+    //
+    // Rather than chase that one instance, close the class: a pause, a stall,
+    // or the tab coming back to the foreground all just resume. Covers OS
+    // interruptions (an incoming phone call) and backgrounding too.
+    const onPause = () => { if (!el.ended && track.readyState === 'live') attempt(); };
+    const onStalled = () => { if (track.readyState === 'live') attempt(); };
+    const onVisible = () => { if (!document.hidden && el.paused && track.readyState === 'live') attempt(); };
+    el.addEventListener('pause', onPause);
+    el.addEventListener('stalled', onStalled);
+    el.addEventListener('suspend', onStalled);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      el.removeEventListener('pause', onPause);
+      el.removeEventListener('stalled', onStalled);
+      el.removeEventListener('suspend', onStalled);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [track, retryKey]);
   // data-user-id: no runtime purpose -- lets an E2E test attribute this

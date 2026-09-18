@@ -45,6 +45,31 @@ export interface LiveStageOverlayProps {
   onClose: () => void;
 }
 
+/**
+ * Read-only status for one row of the participants sheet: who is host, who is
+ * a moderator, who currently holds the live mic, and who is on the big screen.
+ * Deliberately has no actions -- the moderator controls stay where they are.
+ */
+function StatusBadges({ isHost, isModerator, hasMic, isSharing }: {
+  isHost: boolean; isModerator: boolean; hasMic: boolean; isSharing: boolean;
+}) {
+  const pills: { key: string; label: string; className: string }[] = [];
+  if (isHost) pills.push({ key: 'host', label: 'Host', className: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' });
+  if (isModerator && !isHost) pills.push({ key: 'mod', label: 'Moderator', className: 'bg-sky-500/20 text-sky-200 border-sky-400/30' });
+  if (hasMic) pills.push({ key: 'mic', label: 'Live mic', className: 'bg-amber-500/20 text-amber-200 border-amber-400/30' });
+  if (isSharing) pills.push({ key: 'share', label: 'Sharing', className: 'bg-fuchsia-500/20 text-fuchsia-200 border-fuchsia-400/30' });
+  if (pills.length === 0) return null;
+  return (
+    <span className="ml-auto flex shrink-0 flex-wrap items-center gap-1">
+      {pills.map((p) => (
+        <span key={p.key} className={`rounded-full border px-1.5 py-0.5 text-[10px] font-bold leading-none ${p.className}`}>
+          {p.label}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export default function LiveStageOverlay({
   seedId, title, subtitle, jitsiRoom, isHost, hostSessionId,
   isRadio = false, sowerUserId,
@@ -59,7 +84,7 @@ export default function LiveStageOverlay({
   // Part 2: host or a session moderator can delete a chat message -- own
   // instance of the hook (see useGatheringModerators.ts's own doc comment
   // on why LiveStage.tsx and this overlay each resolve it independently).
-  const { isHostOrMod } = useGatheringModerators(seedId, isHost, hostSessionId);
+  const { isHostOrMod, hostId, moderatorUserIds } = useGatheringModerators(seedId, isHost, hostSessionId);
 
   // "See everyone" bug fix (root cause: this button used to navigate() to
   // /live/:seedId/room -- a real route change, which unmounts whichever
@@ -72,8 +97,32 @@ export default function LiveStageOverlay({
   // runs the host-only "close the session row on unmount" cleanup (that
   // path is gated on hostSessionId being set), so it can't interfere with
   // <LiveStage>'s own instance of this same hook.
-  const { approved: everyoneApproved, hands: everyoneHands } = useLiveStage(seedId, { isHost: false, enabled: true });
+  const {
+    approved: everyoneApproved,
+    hands: everyoneHands,
+    // Read-only, for the participants sheet's per-row status below.
+    liveSpeakerUserId: everyoneSpeakerUserId,
+    stage: everyoneStage,
+  } = useLiveStage(seedId, { isHost: false, enabled: true });
   const [participantsSheetOpen, setParticipantsSheetOpen] = useState(false);
+  // The approved list is guests only (useLiveStage builds it from approve_hand),
+  // so the host would otherwise be missing from a sheet titled "Everyone here".
+  const [hostName, setHostName] = useState<string | null>(null);
+  useEffect(() => {
+    if (!hostId) { setHostName(null); return; }
+    let alive = true;
+    supabase
+      .from('public_profiles' as any)
+      .select('username, display_name')
+      .eq('user_id', hostId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!alive) return;
+        const p = data as { username?: string; display_name?: string } | null;
+        setHostName(p?.display_name || p?.username || null);
+      });
+    return () => { alive = false; };
+  }, [hostId]);
 
   const imgList = (images || []).filter(Boolean) as string[];
   const [overlayImgIdx, setOverlayImgIdx] = useState(0);
@@ -377,10 +426,33 @@ export default function LiveStageOverlay({
               <div>
                 <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-400">In the pocket · {everyoneApproved.length}</div>
                 {everyoneApproved.length === 0 && <div className="rounded-md bg-black/20 p-2 text-center text-xs italic text-white/40">Empty seats.</div>}
+                {/* Host row: the approved list is guests only, so without this the
+                    one person always in the session would be missing from a sheet
+                    called "Everyone here". Read-only, like every row here. */}
+                {hostId && (
+                  <div className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1.5 text-xs">
+                    <div className="h-6 w-6 rounded-full bg-emerald-900/40" />
+                    <span className="truncate font-bold">
+                      {isHost ? 'You' : hostName || 'Host'}
+                    </span>
+                    <StatusBadges
+                      isHost
+                      isModerator={false}
+                      hasMic={everyoneSpeakerUserId === hostId}
+                      isSharing={(everyoneStage?.spotlightUserId ?? null) === hostId}
+                    />
+                  </div>
+                )}
                 {everyoneApproved.map((g) => (
                   <div key={g.user_id} className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1.5 text-xs">
                     {g.avatar ? <img src={g.avatar} alt="" className="h-6 w-6 rounded-full object-cover" /> : <div className="h-6 w-6 rounded-full bg-emerald-900/40" />}
                     <span className="truncate font-bold">{g.name}</span>
+                    <StatusBadges
+                      isHost={g.user_id === hostId}
+                      isModerator={moderatorUserIds.has(g.user_id)}
+                      hasMic={everyoneSpeakerUserId === g.user_id}
+                      isSharing={(everyoneStage?.spotlightUserId ?? null) === g.user_id}
+                    />
                   </div>
                 ))}
               </div>

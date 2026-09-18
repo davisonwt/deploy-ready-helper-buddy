@@ -38,16 +38,43 @@ export function useGatheringModerators(seedId: string | null, isHost: boolean, h
 
   // Resolve whose room this actually is -- trivial for the host's own
   // client, one lookup for anyone else.
+  // A FAILED LOOKUP IS NOT A DEMOTION.
+  //
+  // This used to do `setHostId(data?.host_id ?? null)` and swallow the error,
+  // so any transient failure resolved the host to null. The effect below then
+  // cleared EVERY moderator, which flipped isHostOrMod false for a real
+  // moderator -- and until 2026-09-18 that was a dependency of
+  // useDailyCallObject's join effect, so their call was tore down and rebuilt
+  // and the host's reconciliation force-muted them on the way back. An error
+  // in one query silenced people.
+  //
+  // .maybeSingle() is error-prone here specifically: it returns an error, not
+  // a row, when MORE THAN ONE un-ended session exists for a seed -- which is
+  // exactly the state a crashed or double-started session leaves behind. That
+  // is now handled by taking the newest row instead of failing.
   useEffect(() => {
     if (!seedId) { setHostId(null); return; }
     if (isHost && user) { setHostId(user.id); return; }
     let cancelled = false;
     (async () => {
       const query = hostSessionId
-        ? supabase.from('gathering_sessions' as any).select('host_id').eq('id', hostSessionId).maybeSingle()
-        : supabase.from('gathering_sessions' as any).select('host_id').eq('seed_id', seedId).is('ended_at', null).maybeSingle();
-      const { data } = await query;
-      if (!cancelled) setHostId((data as any)?.host_id ?? null);
+        ? supabase.from('gathering_sessions' as any).select('host_id').eq('id', hostSessionId).limit(1)
+        : supabase.from('gathering_sessions' as any).select('host_id')
+            .eq('seed_id', seedId).is('ended_at', null)
+            .order('created_at', { ascending: false }).limit(1);
+      const { data, error } = await query;
+      if (cancelled) return;
+      if (error) {
+        // Keep whatever host we already resolved. Losing it would demote every
+        // moderator on this client over a network blip.
+        console.error('useGatheringModerators: host lookup failed, keeping last known host', error);
+        return;
+      }
+      const resolved = (data as any[])?.[0]?.host_id ?? null;
+      // A genuinely empty result is only meaningful before we have a host. Once
+      // one is known, an empty read is far more likely to be a race (the row
+      // being written, RLS catching up) than the session ceasing to exist.
+      setHostId((prev) => (resolved ?? prev));
     })();
     return () => { cancelled = true; };
   }, [seedId, isHost, hostSessionId, user]);
@@ -55,7 +82,10 @@ export function useGatheringModerators(seedId: string | null, isHost: boolean, h
   // Hydrate current moderators + subscribe for live add/remove, once the
   // host is known.
   useEffect(() => {
-    if (!hostId) { setModeratorUserIds(new Set()); return; }
+    // No host known YET -- not the same as "there are no moderators". Leave the
+    // set alone rather than clearing it; clearing is what turned a failed
+    // lookup into a demotion.
+    if (!hostId) return;
     let cancelled = false;
 
     supabase

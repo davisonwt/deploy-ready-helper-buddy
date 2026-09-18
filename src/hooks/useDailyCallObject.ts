@@ -157,6 +157,16 @@ export function useDailyCallObject(
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [audioOn, setAudioOn] = useState(hasOwnerGrant);
+  // Read at join time, NOT dependencies of the join effect. Keying the join on
+  // these meant a moderator promotion (or any displayName change) destroyed the
+  // call and rebuilt it -- the participant went silent to everyone for the
+  // length of a rejoin. Reported live 2026-09-18 from a 4-person session where
+  // two guests were promoted mid-call. One call object per session; grant and
+  // name changes are applied in place below.
+  const hasOwnerGrantRef = useRef(hasOwnerGrant);
+  const displayNameRef = useRef(displayName);
+  useEffect(() => { hasOwnerGrantRef.current = hasOwnerGrant; }, [hasOwnerGrant]);
+  useEffect(() => { displayNameRef.current = displayName; }, [displayName]);
   const [videoOn, setVideoOn] = useState(false);
   const [localMicSilent, setLocalMicSilent] = useState(false);
   const stopSilenceMonitorRef = useRef<(() => void) | null>(null);
@@ -170,7 +180,7 @@ export function useDailyCallObject(
 
     (async () => {
       try {
-        const { room_url, token } = await fetchDailyMeetingToken({ roomKind, roomId, displayName, gatheringSessionId });
+        const { room_url, token } = await fetchDailyMeetingToken({ roomKind, roomId, displayName: displayNameRef.current, gatheringSessionId });
         if (cancelled) return;
 
         const call = DailyIframe.createCallObject({ subscribeToTracksAutomatically: true });
@@ -291,7 +301,7 @@ export function useDailyCallObject(
           // client-side too means there's no in-between instant where a
           // fresh joiner is briefly publishing audio before the host's
           // updateParticipant call lands.
-          startAudioOff: !hasOwnerGrant,
+          startAudioOff: !hasOwnerGrantRef.current,
         });
         if (cancelled) { teardownDailyCall(call); return; }
       } catch (e: any) {
@@ -314,11 +324,53 @@ export function useDailyCallObject(
       setJoined(false);
       setConnecting(false);
       setParticipants({});
-      setAudioOn(hasOwnerGrant);
+      setAudioOn(hasOwnerGrantRef.current);
       setVideoOn(false);
       setLocalMicSilent(false);
     };
-  }, [enabled, roomKind, roomId, displayName, hasOwnerGrant, gatheringSessionId]);
+  }, [enabled, roomKind, roomId, gatheringSessionId]);
+
+  // ---- grant and name changes applied IN PLACE, never by rejoining --------
+  //
+  // These used to sit in the join effect's dependency array, so a mid-session
+  // moderator promotion destroyed the call and built a new one. The promoted
+  // participant went silent to everyone for the length of that rejoin, and
+  // came back with a NEW session_id -- which the host's speaker reconciliation
+  // then treats as a fresh participant to apply a verdict to. Two guests were
+  // promoted mid-call in the 4-person session reported on 2026-09-18.
+  const appliedGrantRef = useRef(hasOwnerGrant);
+  useEffect(() => {
+    const call = callRef.current;
+    if (!joined || !call) { appliedGrantRef.current = hasOwnerGrant; return; }
+    if (appliedGrantRef.current === hasOwnerGrant) return;
+    appliedGrantRef.current = hasOwnerGrant;
+    // Newly granted: their mic becomes theirs to manage from now on, so open
+    // it once. A DEMOTION is deliberately not acted on here -- the host's own
+    // reconciliation (LiveStage's speaker effect) owns muting, and racing it
+    // from two places is how a mic ends up fighting itself.
+    if (hasOwnerGrant) {
+      try {
+        call.setLocalAudio(true);
+        setAudioOn(true);
+        checkedLocalTrackIdRef.current = null;
+        setLocalMicSilent(false);
+      } catch (e) {
+        console.error('useDailyCallObject: could not apply owner grant in place', e);
+      }
+    }
+  }, [hasOwnerGrant, joined]);
+
+  // Same idea for the display name: Daily can rename a participant on a live
+  // call, so a name change never needs to cost anyone their connection.
+  useEffect(() => {
+    const call = callRef.current;
+    if (!joined || !call) return;
+    try {
+      call.setUserName(displayName);
+    } catch (e) {
+      console.error('useDailyCallObject: could not apply display name in place', e);
+    }
+  }, [displayName, joined]);
 
   const toggleAudio = useCallback(() => {
     const call = callRef.current;
