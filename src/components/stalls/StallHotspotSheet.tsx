@@ -405,7 +405,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
         </div>
         <div className="shrink-0 flex items-center justify-between px-5 pb-3 border-b border-amber-500/15">
           <h2 className="font-serif text-xl text-amber-200 tracking-wide">{displayLabel}</h2>
-          <button type="button" onClick={handleClose} aria-label="Close" className="text-amber-100/60 hover:text-amber-100 transition-colors">
+          <button type="button" onClick={handleClose} aria-label="Close shelf" className="text-amber-100/60 hover:text-amber-100 transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>

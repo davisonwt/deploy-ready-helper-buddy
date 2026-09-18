@@ -681,17 +681,24 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
               <Share2 className="h-4 w-4" />
             </button>
           )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={hideClose ? handleLogout : onClose}
-            className="shrink-0 text-white hover:bg-white/20 rounded-full"
-            aria-label={hideClose ? 'Log out' : 'Close'}
-            title={hideClose ? 'Log out' : undefined}
-          >
-            {hideClose ? <LogOut className="h-4 w-4" /> : <X className="h-6 w-6" />}
-          </Button>
+          {/* Hidden while a shelf sheet is open. The sheet is modal, so nothing
+              behind it should be reachable -- and at 390px this X sat 114px
+              above the sheet's own close, in the same thumb's reach. A member
+              aiming to shut the shelf hit this instead and was thrown out of
+              the stall (or back to the front gate, where one exists). */}
+          {!openKind && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={hideClose ? handleLogout : onClose}
+              className="shrink-0 text-white hover:bg-white/20 rounded-full"
+              aria-label={hideClose ? 'Log out' : 'Leave stall'}
+              title={hideClose ? 'Log out' : undefined}
+            >
+              {hideClose ? <LogOut className="h-4 w-4" /> : <X className="h-6 w-6" />}
+            </Button>
+          )}
         </div>
 
         <div className="relative w-full">
@@ -787,17 +794,19 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
                 <Share2 className="h-4 w-4" />
               </button>
             )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={hideClose ? handleLogout : onClose}
-              className="text-white hover:bg-white/20 rounded-full"
-              aria-label={hideClose ? 'Log out' : 'Close'}
-              title={hideClose ? 'Log out' : undefined}
-            >
-              {hideClose ? <LogOut className="h-4 w-4" /> : <X className="h-6 w-6" />}
-            </Button>
+            {!openKind && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={hideClose ? handleLogout : onClose}
+                className="text-white hover:bg-white/20 rounded-full"
+                aria-label={hideClose ? 'Log out' : 'Leave stall'}
+                title={hideClose ? 'Log out' : undefined}
+              >
+                {hideClose ? <LogOut className="h-4 w-4" /> : <X className="h-6 w-6" />}
+              </Button>
+            )}
           </div>
 
           <div className="absolute top-4 left-4 flex items-center gap-2">

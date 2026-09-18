@@ -110,7 +110,7 @@ export default function StallShelfView({ ownerId, ownerName, tile, onClose }: Pr
           <h2 className="text-white font-bold text-lg">{tile.label}</h2>
           <p className="text-white/60 text-xs">{theme.label} — {ownerName}</p>
         </div>
-        <Button type="button" variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-white/20 rounded-full" aria-label="Close">
+        <Button type="button" variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-white/20 rounded-full" aria-label="Close shelf">
           <X className="h-6 w-6" />
         </Button>
       </div>
