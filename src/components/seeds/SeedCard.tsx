@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Heart, MessageCircle, Phone, Video as VideoIcon, Share2, BookOpen, X, UserPlus, UserCheck, Radio, ChevronLeft, ChevronRight, Volume2, VolumeX, Gift, Play, Pause, Loader2, MoreHorizontal } from 'lucide-react';
+import { Heart, MessageCircle, Phone, Video as VideoIcon, Share2, BookOpen, X, UserPlus, UserCheck, Radio, ChevronLeft, ChevronRight, Volume2, VolumeX, Gift, Play, Pause, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Popover, PopoverTrigger, PopoverClose, PopoverContent } from '@/components/ui/popover';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -120,6 +120,22 @@ export interface SeedCardProps {
    * letting SeedCard run its own per-card follow-status query.
    */
   isFollowingOverride?: boolean;
+  /**
+   * Owner actions in the "..." menu (Edit / Delete).
+   *
+   * `mine` is passed explicitly rather than reusing SeedCard's own
+   * viewerIsOwner: a stall owner can "view as visitor" (StallInteriorView's
+   * effectiveIsOwner), and in that mode they must see exactly what a visitor
+   * sees. viewerIsOwner would still be true there, so it is the wrong gate.
+   *
+   * Each action renders ONLY when `mine` AND its handler is set. A caller
+   * that has no correct destination for a kind passes no handler and the
+   * item is withheld -- offering an action that cannot be honoured is its
+   * own bug (see MyOrchardsPage's canPark, and 4fc90f5c).
+   */
+  mine?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
   /** An extra rail action distinct from Heart (Heart is itself a small gift now -- see below). Rail button only renders when this is set. */
   onGift?: () => void;
   /** An extra rail action, unconditional (unlike Step In/Go Live, which only ever shows on an actually-live orchard card). Rail button only renders when this is set. */
@@ -210,6 +226,7 @@ export default function SeedCard({
   price, openPath, isProductRow = true, previewUrl, productId, pdfUrl,
   hideSowerLine, className = '', fullDescription, tapBehavior = 'navigate', forceViewerIsOwner,
   variant = 'compact', images, videoUrl, resolveVideoUrl, ownerUsername, chip, isActive,
+  mine, onEdit, onDelete,
   onMessageOverride, onVoiceOverride, onVideoOverride, onShareOverride, onBestowOverride,
   onFollowOverride, isFollowingOverride,
   onGift, onGoLiveExtra, reportTarget, isNew,
@@ -1114,7 +1131,31 @@ export default function SeedCard({
                           </button>
                         </PopoverClose>
                       )}
-                      {effectiveReportTarget && (
+                      {mine && onEdit && (
+                        <PopoverClose asChild>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onEdit(); }}
+                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+                          >
+                            <Pencil className="h-4 w-4" /> Edit
+                          </button>
+                        </PopoverClose>
+                      )}
+                      {mine && onDelete && (
+                        <PopoverClose asChild>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onDelete(); }}
+                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" /> Delete
+                          </button>
+                        </PopoverClose>
+                      )}
+                      {/* Reporting your own seed is meaningless -- the owner
+                          gets Edit/Delete/Share, everyone else Share/Report. */}
+                      {!mine && effectiveReportTarget && (
                         <ReportButton
                           targetType={effectiveReportTarget.type}
                           targetId={effectiveReportTarget.id}

@@ -4,6 +4,8 @@ import { X, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import StoryPdfViewer from './StoryPdfViewer';
 import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
+import { deleteRow } from '@/components/garden/seedCardBuilders';
+import { toast } from 'sonner';
 import type { TileKind } from '@/lib/stalls/stallTypes';
 
 interface Props {
@@ -62,6 +64,23 @@ const SHEET_KIND_TO_SEED_KIND: Partial<Record<TileKind, SeedCardKind>> = {
 };
 
 const PDF_RE = /\.pdf(\?|$)/i;
+
+/**
+ * Where an item's real editor lives, or null when there isn't one.
+ *
+ * Returning null is the point: the services shelf is products with
+ * type='service', and EditForm (/products/edit/:id) refuses those outright --
+ * "This is a service listing. Manage it from My Listings" (EditForm.tsx:58).
+ * Pointing Edit there would be offering an action that cannot be honoured,
+ * so it is withheld and the menu simply does not show Edit on that shelf.
+ */
+function editPathForSource(source: ItemSource, id: string, kind: TileKind): string | null {
+  if (kind === 'services') return null;
+  if (source === 'products') return `/products/edit/${id}`;
+  if (source === 'sower_books') return `/my-s2g-library?edit=${id}`;
+  if (source === 'dj_music_tracks') return `/music-library?edit=${id}`;
+  return null;
+}
 
 const KIND_LABEL: Partial<Record<TileKind, string>> = {
   books: 'Books',
@@ -159,6 +178,27 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
   const [bio, setBio] = useState<string | null | undefined>(undefined);
   const [storyPdfUrl, setStoryPdfUrl] = useState<string | null | undefined>(undefined);
   const [visible, setVisible] = useState(false);
+  const sheetNavigate = useNavigate();
+
+  // Owner actions. Only ever wired when `isOwner` -- StallInteriorView passes
+  // effectiveIsOwner, so a stall owner who is "viewing as visitor" gets the
+  // visitor menu, and a real visitor never receives these handlers at all.
+  const editPathFor = (item: Item) => editPathForSource(item.source, item.id, kind);
+
+  const removeItem = async (item: Item) => {
+    if (!isOwner) return;
+    if (!window.confirm(`Delete "${item.title}"? This cannot be undone.`)) return;
+    try {
+      // deleteRow throws when zero rows are removed -- a delete that matches
+      // nothing is not an error in PostgREST and would otherwise report
+      // success while the seed stayed on the shelf.
+      await deleteRow(supabase, item.source, item.id);
+      setItems((prev) => (prev ? prev.filter((x) => x.id !== item.id) : prev));
+      toast.success(`"${item.title}" deleted`);
+    } catch (e) {
+      toast.error(`Could not delete: ${(e as Error).message}`);
+    }
+  };
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true));
@@ -419,6 +459,9 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
                       hideSowerLine
                       tapBehavior="inline"
                       forceViewerIsOwner={isOwner ? undefined : false}
+                      mine={!!isOwner}
+                      onEdit={editPathFor(item) ? () => sheetNavigate(editPathFor(item)!) : undefined}
+                      onDelete={() => removeItem(item)}
                       isNew={!!viewerCutoff && new Date(item.createdAt).getTime() > new Date(viewerCutoff).getTime()}
                     />
                   </div>

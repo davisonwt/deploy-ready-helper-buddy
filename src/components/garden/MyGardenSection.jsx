@@ -103,9 +103,16 @@ function GardenCard({ card, accent, navigate, brands = [], brand = null, onAssig
             <button type="button" onClick={() => setMenuOpen(!menuOpen)} style={styles.menuBtn} aria-label="Actions">⋯</button>
             {menuOpen && (
               <div style={styles.menu} onMouseLeave={() => setMenuOpen(false)}>
-                <MenuItem label="✏️ Edit"   onClick={() => { setMenuOpen(false); card.onEdit?.(card) }} />
-                <MenuItem label="♻️ Repost" onClick={() => { setMenuOpen(false); card.onRepost?.(card) }} />
-                <MenuItem label="⏸ Park"   onClick={() => { setMenuOpen(false); card.onPark?.(card) }} />
+                {/* Each item renders ONLY when its handler exists. MyOrchardsPage
+                    strips onPark from music, book, orchard and video cards
+                    (noPark) because there is nothing those could write --
+                    but this menu offered Park on all four anyway, and the
+                    click did nothing at all. Same class as the toast that
+                    said a listing was hidden while nothing was written
+                    (4fc90f5c). An action that is offered has to work. */}
+                {card.onEdit   && <MenuItem label="✏️ Edit"   onClick={() => { setMenuOpen(false); card.onEdit(card) }} />}
+                {card.onRepost && <MenuItem label="♻️ Repost" onClick={() => { setMenuOpen(false); card.onRepost(card) }} />}
+                {card.onPark   && <MenuItem label="⏸ Park"   onClick={() => { setMenuOpen(false); card.onPark(card) }} />}
                 {onAssignBrand && (
                   <>
                     <div style={{ padding: '6px 12px 2px', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(226,232,240,0.5)' }}>Brand</div>
@@ -121,7 +128,7 @@ function GardenCard({ card, accent, navigate, brands = [], brand = null, onAssig
                     ))}
                   </>
                 )}
-                <MenuItem label="🗑 Delete" onClick={() => { setMenuOpen(false); card.onDelete?.(card) }} danger />
+                {card.onDelete && <MenuItem label="🗑 Delete" onClick={() => { setMenuOpen(false); card.onDelete(card) }} danger />}
 
               </div>
             )}
