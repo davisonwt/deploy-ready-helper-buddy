@@ -57,10 +57,23 @@ test('the owner can drop the Mugs box and it overrides the template', async ({ p
   console.log('[EDITOR] delete controls found: ' + JSON.stringify(before));
   await page.screenshot({ path: 'test-results/editor-step3.png', fullPage: true });
 
-  // 4. Remove Mugs. Its "Delete Mugs" control opens an AlertDialog whose
-  //    confirm button is the one inside the dialog, not another row's.
-  const del = page.getByRole('button', { name: 'Delete Mugs', exact: true });
-  await expect(del.first(), 'no Delete Mugs control').toBeVisible({ timeout: 20000 });
+  // 4. Remove the mugs shelf. Its "Delete <name>" control opens an AlertDialog
+  //    whose confirm button is the one inside the dialog, not another row's.
+  //
+  //    The name is NOT hardcoded any more. Sowers name their own shelves, so a
+  //    spec that pins one to "Mugs" fails the day the owner renames it -- which
+  //    is exactly what happened on 2026-09-18: his shelf now reads "Coffee
+  //    Mugs" and this spec went red over a rename, not a defect. Match on the
+  //    part that is the sower's own wording as loosely as the feature allows.
+  const mugsLabel = await page.evaluate(() => {
+    const labels = Array.from(document.querySelectorAll('[aria-label^="Delete "]'))
+      .map((b) => b.getAttribute('aria-label') ?? '');
+    return labels.find((l) => /mug/i.test(l)) ?? null;
+  });
+  console.log(`[EDITOR] mugs shelf control: ${JSON.stringify(mugsLabel)}`);
+  expect(mugsLabel, 'no mugs shelf on this stall to delete').toBeTruthy();
+  const del = page.getByRole('button', { name: mugsLabel!, exact: true });
+  await expect(del.first(), `no ${mugsLabel} control`).toBeVisible({ timeout: 20000 });
   await del.first().click();
   const dialog = page.getByRole('alertdialog');
   await expect(dialog).toBeVisible({ timeout: 15000 });
@@ -73,7 +86,7 @@ test('the owner can drop the Mugs box and it overrides the template', async ({ p
     Array.from(document.querySelectorAll('[aria-label^="Delete "]'))
       .map((b) => b.getAttribute('aria-label')));
   console.log('[EDITOR] boxes left: ' + JSON.stringify(after));
-  expect(after, 'Mugs was not removed').not.toContain('Delete Mugs');
+  expect(after, `${mugsLabel} was not removed`).not.toContain(mugsLabel!);
   await page.screenshot({ path: 'test-results/editor-after-delete.png', fullPage: true });
 
   // 5. Publish. "Save & publish" only exists on the wizard's last step, so

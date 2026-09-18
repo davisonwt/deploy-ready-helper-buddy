@@ -211,6 +211,25 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
   };
 
   const editingHotspot = value.find((h) => h.id === editingId) ?? null;
+  // Duplicate shelf names are ALLOWED -- a sower may well want two shelves
+  // called the same thing, and refusing would be us overruling them about
+  // their own stall. It is worth saying out loud though, because two shelves
+  // of the same KIND show identical contents (contents come from the seed's
+  // kind, not from the shelf), so a duplicate name on a duplicate kind looks
+  // like a bug from the outside. Soft warning, never a block.
+  const duplicateNameCount = editingHotspot?.label?.trim()
+    ? value.filter(
+        (h) => h.id !== editingHotspot.id
+          && (h.label ?? '').trim().toLowerCase() === editingHotspot.label.trim().toLowerCase(),
+      ).length
+    : 0;
+  const duplicateSameKind = editingHotspot?.label?.trim()
+    ? value.some(
+        (h) => h.id !== editingHotspot.id
+          && h.kind === editingHotspot.kind
+          && (h.label ?? '').trim().toLowerCase() === editingHotspot.label.trim().toLowerCase(),
+      )
+    : false;
   const confirmDeleteHotspot = value.find((h) => h.id === confirmDeleteId) ?? null;
 
   return (
@@ -306,6 +325,15 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
                     Call it whatever you like — this is what visitors see. You can rename it later and
                     nothing on the shelf moves.
                   </p>
+                  {duplicateNameCount > 0 && (
+                    <p className="text-[11px] leading-snug text-amber-300/80">
+                      You already have {duplicateNameCount === 1 ? 'another shelf' : `${duplicateNameCount} other shelves`}
+                      {' '}called “{editingHotspot.label.trim()}”. That's allowed —
+                      {duplicateSameKind
+                        ? ' but both hold the same thing, so they will show the same seeds.'
+                        : ' visitors will just see the name twice.'}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium uppercase tracking-wider text-amber-200/70">
