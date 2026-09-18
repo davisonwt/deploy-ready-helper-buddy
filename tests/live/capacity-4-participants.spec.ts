@@ -215,7 +215,15 @@ test('Capacity: 4 simultaneous participants (host + guest on 3 devices) -- ALL m
     // The host must have exactly 3 remote participants (the 3 guest
     // devices) -- fewer than that IS the reported bug (silently dropped
     // beyond a small number).
-    expect(hostResult.found, 'HOST must have a live remote-audio element for ALL 3 guest devices, not just one or two').toBe(3);
+    // NOTE (2026-09-18): this asserts the requirement as stated -- everyone
+    // hears everyone, always. It currently fails BY DESIGN, not by defect:
+    // LiveStage forces each regular participant's audio on iff they are
+    // liveSpeakerUserId, so exactly one approved guest is audible at a time
+    // and the host hears nobody until they hand over the floor. Measured
+    // 2026-09-18: host 0/3, each guest 1/3 (the host). Resolving this is a
+    // product decision -- open the mics, or restate the requirement -- and
+    // until it is made this failure is the honest reading.
+    expect(hostResult.found, 'HOST must have a live remote-audio element for ALL 3 guest devices -- the speaker queue currently allows only one').toBe(3);
     expect(hostResult.energy, 'host must hear real audio energy (capacity bug: audio silently drops beyond a small participant count)').toBeGreaterThan(0.001);
 
     for (const [label, r] of [['guest1', g1Result], ['guest2', g2Result], ['guest3', g3Result]] as const) {
@@ -289,14 +297,27 @@ test('Views: everyone still hears everyone through EVERY view in the tab strip',
       await approveBtn.click();
       await hostPage.waitForTimeout(3000);
     }
+    // Approval alone does NOT make a guest audible. LiveStage runs a
+    // host-side reconciliation loop that forces every regular participant's
+    // Daily audio on iff they are liveSpeakerUserId, off otherwise -- so at
+    // most one approved guest holds the floor at a time, and until someone
+    // does, the host hears nobody. Hand the floor to the first guest, or the
+    // baseline below measures the speaker queue rather than a view change.
+    const nextSpeaker = hostPage.locator('button[title*="hand the floor"]').first();
+    await expect(nextSpeaker, 'host has no way to hand the floor to an approved guest').toHaveCount(1);
+    await nextSpeaker.click();
+
     // Three browsers each establishing their own join to Daily's SFU takes
     // longer than the capacity test's original 5s, and a baseline measured
     // too early reads as "nobody is audible" rather than "not connected yet".
     await hostPage.waitForTimeout(15000);
 
     const baseline = await measureAudioEnergyWithRetry(hostPage, 12);
+    const gBase = await measureAudioEnergyWithRetry(g1, 12);
     console.log(`[BASELINE] host hears ${baseline.found} remote streams, energy ${baseline.energy.toFixed(4)}`);
-    expect(baseline.found, 'baseline: host must hear the guest devices before any view change').toBeGreaterThan(0);
+    console.log(`[BASELINE] guest1 hears ${gBase.found} remote streams, energy ${gBase.energy.toFixed(4)}`);
+    expect(baseline.found, 'baseline: the host must hear the guest holding the floor before any view change').toBeGreaterThan(0);
+    expect(gBase.found, 'baseline: a guest must hear the host before any view change').toBeGreaterThan(0);
   });
 
   const failures: string[] = [];
