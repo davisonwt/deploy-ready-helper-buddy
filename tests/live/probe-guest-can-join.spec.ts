@@ -59,6 +59,50 @@ async function findLiveEntryButton(page: Page, booksBtn: ReturnType<Page['locato
   return btn;
 }
 
+/** Real RMS energy off every received track -- same technique as
+ *  capacity-4-participants, so "can hear" means sound, not a mounted element. */
+async function measureAudioEnergy(page: Page): Promise<{ found: number; energy: number }> {
+  return page.evaluate(async () => {
+    const els = Array.from(document.querySelectorAll('audio')) as HTMLAudioElement[];
+    const live = els.filter(
+      (el) => el.srcObject instanceof MediaStream && (el.srcObject as MediaStream).getAudioTracks().length > 0,
+    );
+    if (live.length === 0) return { found: 0, energy: 0 };
+    const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new AC();
+    let max = 0;
+    for (const el of live) {
+      try {
+        const src = ctx.createMediaStreamSource(el.srcObject as MediaStream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 2048;
+        src.connect(analyser);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        for (let i = 0; i < 6; i++) {
+          analyser.getByteTimeDomainData(data);
+          let sumSq = 0;
+          for (const v of data) { const n = (v - 128) / 128; sumSq += n * n; }
+          max = Math.max(max, Math.sqrt(sumSq / data.length));
+          await new Promise((r) => setTimeout(r, 120));
+        }
+      } catch { /* one element failing must not hide the others */ }
+    }
+    await ctx.close().catch(() => undefined);
+    return { found: live.length, energy: max };
+  });
+}
+
+async function measureAudioEnergyWithRetry(page: Page, attempts: number) {
+  let best = { found: 0, energy: 0 };
+  for (let i = 0; i < attempts; i++) {
+    const r = await measureAudioEnergy(page);
+    if (r.found > best.found || r.energy > best.energy) best = r;
+    if (best.energy > 0.001) return best;
+    await page.waitForTimeout(1500);
+  }
+  return best;
+}
+
 test('a second account joins a running session with no realtime crash', async ({ browser }) => {
   test.skip(!HOST_EMAIL || !HOST_PASS || !GUEST_EMAIL || !GUEST_PASS, 'needs two identities');
   test.setTimeout(8 * 60_000);
@@ -114,6 +158,13 @@ test('a second account joins a running session with no realtime crash', async ({
   }));
   console.log(`[GUEST] ${JSON.stringify(guestState)}`);
 
+  // THE REQUIREMENT: this guest never raised a hand and never will. They must
+  // still hear the host. Measured as real RMS energy off the received track,
+  // not merely "an <audio> element exists" -- an element with a silent or
+  // unattached track would otherwise read as success.
+  const heard = await measureAudioEnergyWithRetry(guest, 10);
+  console.log(`[GUEST HEARS] found=${heard.found} energy=${heard.energy.toFixed(4)}`);
+
   const presenceErrors = errors.filter((e) => /presence.*after.*subscribe/i.test(e));
   console.log(`[ERRORS] ${errors.length} total, ${presenceErrors.length} presence-after-subscribe`);
   for (const e of errors.slice(0, 15)) console.log('  ' + e);
@@ -124,6 +175,14 @@ test('a second account joins a running session with no realtime crash', async ({
   expect(guestState.crashScreen, 'the guest landed on the crash screen').toBe(false);
   expect(guestState.blank, 'the guest landed on a blank page').toBe(false);
   expect(guestState.inLive, 'the guest never reached the live session').toBe(true);
+  expect(
+    heard.found,
+    'a joiner who never raised a hand has NO remote audio element -- they are in the app but not in the room',
+  ).toBeGreaterThan(0);
+  expect(
+    heard.energy,
+    'a joiner who never raised a hand cannot hear the host speaking',
+  ).toBeGreaterThan(0.001);
 
   for (const ctx of contexts) await ctx.close();
 });

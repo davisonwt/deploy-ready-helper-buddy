@@ -428,8 +428,22 @@ export default function LiveStage({
   const displayName = (user as any)?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Tribe';
 
   // Whether the local user should actually have an audio/video transport.
-  // Hosts always join; viewers only join when approved (so we save bandwidth).
-  const inCall = isHost || iAmApproved;
+  //
+  // Everyone in the session joins the room, because HEARING and SPEAKING are
+  // separate concerns. This used to be `isHost || iAmApproved` to save
+  // bandwidth, which meant a viewer who never raised a hand was present in the
+  // app and absent from the Daily room -- so CallAudioLayer (gated on
+  // roomActive below) never mounted for them and they heard nothing at all, on
+  // any view. Reported live 2026-09-18: members joined Davison's session and
+  // could not hear the host speaking.
+  //
+  // Who may SPEAK is untouched by this. A viewer has no owner grant, so
+  // useDailyCallObject joins them with startAudioOff; both mic controls are
+  // gated on (isHostOrMod || iAmLiveSpeaker), so they are never even offered
+  // one; and the host-side reconciliation below force-mutes every regular
+  // participant who is not liveSpeakerUserId, re-asserting if a client tries
+  // to defeat it. The raise-hand queue is exactly as it was.
+  const inCall = isHost || iAmApproved || !!user;
 
   // Explicit "Leave call" override -- inCall alone (host/approved) would
   // otherwise immediately reconnect. Reset whenever inCall itself goes
