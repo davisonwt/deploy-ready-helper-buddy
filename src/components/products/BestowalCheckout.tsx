@@ -82,7 +82,7 @@ export default function BestowalCheckout() {
   const checkoutTotal = round2(baseSubtotal + s2gFee);
   const {
     provider, setProvider, providers, balanceShortBy, refetchBalance,
-  } = useBalanceProvider(checkoutTotal, ['solana', 'paypal', 'paystack']);
+  } = useBalanceProvider(checkoutTotal, ['solana', 'paypal']);
   const effectiveProvider = provider;
   const feeQuote = quoteFee(effectiveProvider, checkoutTotal);
 

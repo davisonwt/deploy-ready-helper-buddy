@@ -210,13 +210,6 @@ export default function PublicPayPage() {
                 {starting === 'paypal' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Pay with PayPal
               </Button>
-              <Button onClick={() => startPayment('paystack')} disabled={starting !== null} variant="outline" className="w-full">
-                {starting === 'paystack' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Pay by Card / EFT
-              </Button>
-              <p className="text-xs text-muted-foreground text-center">
-                Card and EFT payments are charged in ZAR at the live exchange rate; the processor's fee is added to your total.
-              </p>
             </div>
           )}
 
