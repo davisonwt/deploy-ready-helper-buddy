@@ -26,8 +26,19 @@ async function login(page: Page, email: string, pass: string) {
   throw new Error('login failed for ' + email);
 }
 
+/** A missing fixture FAILS -- see CLAUDE.md's "a live spec never skips silently". */
+function requireFixture(value: string, envName: string) {
+  if (value) return;
+  throw new Error(
+    `${envName} is not set, so this spec cannot run. Create a multi-unit listing `
+    + 'first (npx playwright test --config=playwright.live.config.ts pillow-units '
+    + `prints its id), then re-run with ${envName}=<id>. A FAILURE, not a skip.`,
+  );
+}
+
 test.describe.serial('Units can be booked and edited', () => {
-  test.skip(!OWNER_E || !OWNER_P || !LISTING, 'Needs the owner account and a listing id.');
+  test.skip(!OWNER_E || !OWNER_P, 'The owner account is required in .env.test.');
+  test.beforeAll(() => requireFixture(LISTING, 'QA_LISTING_ID'));
 
   test('a guest books one specific unit', async ({ page }) => {
     test.skip(!GUEST_E || !GUEST_P, 'Needs a second account: the owner cannot book their own seed.');

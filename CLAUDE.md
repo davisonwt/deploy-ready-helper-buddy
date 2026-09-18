@@ -150,6 +150,34 @@ nobody re-ran:
   is exactly the condition that does not hold in production. One live form
   submission would have caught it.
 
+## Golden rule: a live spec never skips silently
+If a spec cannot run -- missing credentials, missing fixture, missing seeded
+row -- it **FAILS and says why**. It must never `test.skip` its way to green.
+
+On 2026-09-18 an audit found **nine of 42 live specs reporting green having
+never executed**. They gated on `process.env.TEST_USER_EMAIL ?? ''` and
+friends, names that `.env.test` has never defined, so `test.skip(!HOST_EMAIL,
+...)` fired on every run. That silence covered **every spec on the live-session
+audio path** -- `gathering-room`, `gathering-room-3way`,
+`mic-silence-and-portrait`, `live-now-directory`,
+`scripture-study-speaker-queue` -- which is precisely where two real
+multi-person audio bugs reached members: participants going silent on each
+other, and remote audio stopping on a view change. The suite was green
+throughout.
+
+A green suite that never ran is worse than a red one. Red gets investigated;
+green gets trusted.
+
+- `test.skip` is for a case that genuinely does not apply on this run (a
+  desktop-only check on mobile), never for "I could not get set up."
+- A missing fixture throws with the exact command that creates it.
+- When adding a spec that reads `process.env.X`, confirm `X` exists in
+  `.env.test`. If it needs a new identity, add it there in the same commit.
+- The audit is one script:
+  `node scripts/audit-spec-skips.mjs` -- it cross-references every
+  `test.skip` against the names `.env.test` actually defines. Note that
+  `?? ''` is NOT a default; it is exactly what makes the skip fire.
+
 ## TypeScript migration ratchet
 (see `CONTRIBUTING.md` for full detail)
 - All new files must be `.ts`/`.tsx` — no new `.js`/`.jsx`.

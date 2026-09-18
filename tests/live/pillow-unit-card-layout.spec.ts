@@ -53,6 +53,21 @@ async function cards(page: Page) {
   });
 }
 
+/**
+ * A missing fixture FAILS -- it never skips.
+ *
+ * On 2026-09-18 nine of 42 live specs were found reporting green having never
+ * executed. A green suite that never ran is worse than a red one.
+ */
+function requireFixture(value: string, envName: string) {
+  if (value) return;
+  throw new Error(
+    `${envName} is not set, so this spec cannot run. Create a three-unit listing `
+    + 'first (npx playwright test --config=playwright.live.config.ts pillow-units '
+    + `prints its id), then re-run with ${envName}=<id>. A FAILURE, not a skip.`,
+  );
+}
+
 for (const vp of [{ w: 390, h: 844, n: 'mobile-390' }, { w: 1280, h: 800, n: 'desktop-1280' }]) {
   test(`single-unit listing at ${vp.n}`, async ({ page }) => {
     test.skip(!E || !P, 'account required');
@@ -74,7 +89,8 @@ for (const vp of [{ w: 390, h: 844, n: 'mobile-390' }, { w: 1280, h: 800, n: 'de
   });
 
   test(`multi-unit listing at ${vp.n}`, async ({ page }) => {
-    test.skip(!E || !P || !MULTI, 'needs the three-unit test listing');
+    test.skip(!E || !P, 'account required');
+    requireFixture(MULTI, 'QA_MULTI_ID');
     await page.setViewportSize({ width: vp.w, height: vp.h });
     await login(page);
     await page.goto(`/seed/pillow/${MULTI}`, { waitUntil: 'domcontentloaded' });

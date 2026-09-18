@@ -16,10 +16,24 @@ import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 //
 // Run: npx playwright test --config=playwright.live.config.ts capacity-4-participants
 
-const HOST_EMAIL = process.env.TEST_USER_EMAIL ?? '';
-const HOST_PASS = process.env.TEST_USER_PASSWORD ?? '';
-const GUEST_EMAIL = process.env.TEST_USER2_EMAIL ?? '';
-const GUEST_PASS = process.env.TEST_USER2_PASSWORD ?? '';
+// TEST_USER_*/TEST_USER2_* are not in .env.test and never have been, so this
+// whole spec -- the one that proves everyone hears everyone -- was silently
+// skipping every run. Fall back to the account names the file actually holds
+// (TEST_GOSAT as host, TEST_A as guest) while keeping the original names
+// working if they are ever set.
+// The HOST must own STALL below -- going live happens from the owner's own
+// stall -- so TEST_A (davisontest1) is the host and TEST_GOSAT is the guest.
+const HOST_EMAIL = process.env.TEST_USER_EMAIL ?? process.env.TEST_A_EMAIL ?? '';
+const HOST_PASS = process.env.TEST_USER_PASSWORD ?? process.env.TEST_A_PASSWORD ?? '';
+const GUEST_EMAIL = process.env.TEST_USER2_EMAIL ?? process.env.TEST_GOSAT_EMAIL ?? '';
+const GUEST_PASS = process.env.TEST_USER2_PASSWORD ?? process.env.TEST_GOSAT_PASSWORD ?? '';
+// A THIRD distinct identity. The capacity test deliberately used one guest
+// account on three tabs, which is fine for "can the SFU carry four joins" --
+// but everything the app does with a participant is keyed on user_id
+// (`approved` is a list of user_ids, so is liveSpeakerUserId), so two tabs
+// sharing an account are indistinguishable to the approval and queue logic.
+const GUEST2_EMAIL = process.env.TEST_USER3_EMAIL ?? process.env.TEST_B_EMAIL ?? '';
+const GUEST2_PASS = process.env.TEST_USER3_PASSWORD ?? process.env.TEST_B_PASSWORD ?? '';
 const STALL = 'davisontest1';
 
 async function login(page: Page, email: string, pass: string) {
@@ -210,6 +224,114 @@ test('Capacity: 4 simultaneous participants (host + guest on 3 devices) -- ALL m
     }
     console.log('PASS: all 4 participants (host + 3 guest devices) hear all others -- no capacity drop.');
   });
+
+  for (const ctx of contexts) await ctx.close();
+});
+
+/**
+ * THE REQUIREMENT, as Davison states it: in a live session everyone hears
+ * everyone, ALWAYS, whatever view any participant is on. Exploring the options
+ * must never cut anyone's sound, in either direction.
+ *
+ * The capacity test above proves everyone hears everyone at one moment, in one
+ * view. This proves it stays true THROUGH a view change, which is what members
+ * actually reported losing.
+ *
+ * Shares that test's harness deliberately -- same real four-browser session,
+ * same RMS energy measurement on the live remote streams. A view change is
+ * broadcast to every participant (setStageMode writes board_state), so when
+ * the presenter switches tabs EVERY tab's view changes, and every tab is
+ * re-measured.
+ */
+const STAGE_TABS = ['Camera', 'Image', 'Text', 'PDF', 'Clip', 'Seed', 'Media'] as const;
+
+test('Views: everyone still hears everyone through EVERY view in the tab strip', async ({ browser }) => {
+  test.skip(
+    !HOST_EMAIL || !HOST_PASS || !GUEST_EMAIL || !GUEST_PASS || !GUEST2_EMAIL || !GUEST2_PASS,
+    'needs three distinct identities: a host who owns the stall, plus two guests'
+  );
+  test.setTimeout(12 * 60_000);
+
+  const contexts: BrowserContext[] = [];
+  const newCtx = async () => {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['camera', 'microphone'] });
+    contexts.push(ctx);
+    return ctx;
+  };
+
+  const hostCtx = await newCtx();
+  const guestCtx1 = await newCtx();
+  const guestCtx2 = await newCtx();
+  const hostPage = await hostCtx.newPage();
+  const g1 = await guestCtx1.newPage();
+  const g2 = await guestCtx2.newPage();
+
+  await test.step('setup: one session, host + two guest devices, all audible', async () => {
+    await login(hostPage, HOST_EMAIL, HOST_PASS);
+    await hostStartFreshLiveSession(hostPage);
+    await expect(hostPage.locator('text=/You are hosting/')).toBeVisible({ timeout: 15000 });
+
+    // THREE DISTINCT identities, one tab each.
+    await login(g1, GUEST_EMAIL, GUEST_PASS);
+    await guestStepIntoLive(g1);
+    await login(g2, GUEST2_EMAIL, GUEST2_PASS);
+    await guestStepIntoLive(g2);
+
+    // Each distinct guest raises their own hand and is approved separately --
+    // one approval cannot stand in for the other now that they are different
+    // user_ids.
+    for (const [label, g] of [['guest1', g1], ['guest2', g2]] as const) {
+      const raiseHandBtn = g.locator('button[title="Join with camera on"]').first();
+      await expect(raiseHandBtn, `${label} raise-hand control`).toHaveCount(1);
+      await raiseHandBtn.click();
+      const approveBtn = hostPage.locator('button[title="Approve"]').first();
+      await expect(approveBtn, `host should see ${label}'s hand-raise`).toBeVisible({ timeout: 25000 });
+      await approveBtn.click();
+      await hostPage.waitForTimeout(3000);
+    }
+    // Three browsers each establishing their own join to Daily's SFU takes
+    // longer than the capacity test's original 5s, and a baseline measured
+    // too early reads as "nobody is audible" rather than "not connected yet".
+    await hostPage.waitForTimeout(15000);
+
+    const baseline = await measureAudioEnergyWithRetry(hostPage, 12);
+    console.log(`[BASELINE] host hears ${baseline.found} remote streams, energy ${baseline.energy.toFixed(4)}`);
+    expect(baseline.found, 'baseline: host must hear the guest devices before any view change').toBeGreaterThan(0);
+  });
+
+  const failures: string[] = [];
+
+  for (const tab of STAGE_TABS) {
+    await test.step(`view: ${tab}`, async () => {
+      const tabBtn = hostPage.getByRole('button', { name: tab, exact: true }).first();
+      if (!(await tabBtn.count())) {
+        console.log(`[${tab}] SKIP -- tab not present for this presenter`);
+        return;
+      }
+      await tabBtn.click();
+      // The change broadcasts to every participant; give it time to land and
+      // for any media element in Clip/Media mode to actually start.
+      await hostPage.waitForTimeout(6000);
+
+      const h = await measureAudioEnergyWithRetry(hostPage, 4);
+      const a = await measureAudioEnergyWithRetry(g1, 4);
+      const b = await measureAudioEnergyWithRetry(g2, 4);
+
+      const line = (who: string, r: { found: number; energy: number }) =>
+        `${who} found=${r.found} energy=${r.energy.toFixed(4)}`;
+      const ok = h.found > 0 && h.energy > 0.001
+        && a.found > 0 && a.energy > 0.001
+        && b.found > 0 && b.energy > 0.001;
+      console.log(`[${tab}] ${ok ? 'PASS' : 'FAIL'} -- ${line('host', h)} | ${line('guest1', a)} | ${line('guest2', b)}`);
+      if (!ok) failures.push(`${tab}: host=${h.found}/${h.energy.toFixed(4)} g1=${a.found}/${a.energy.toFixed(4)} g2=${b.found}/${b.energy.toFixed(4)}`);
+    });
+  }
+
+  expect(
+    failures,
+    `a view change cut someone's audio:\n  ${failures.join('\n  ')}`,
+  ).toEqual([]);
+  console.log('PASS: audio survived every view in the tab strip, in both directions.');
 
   for (const ctx of contexts) await ctx.close();
 });

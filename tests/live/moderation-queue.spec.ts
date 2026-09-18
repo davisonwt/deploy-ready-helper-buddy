@@ -11,7 +11,7 @@ import { test, expect, type Page } from '@playwright/test';
  *   3. "Delete image" deletes the object. It used to stamp the row and nothing
  *      else, while the toast claimed "hidden now".
  *
- * Needs two disposable rows seeded first (scratchpad/seed-queue-rows.mjs), and
+ * Needs two disposable needs_review rows in place first (see requireFixture), and
  * an account holding gosat or admin:
  *   QUEUE_ALLOW_ID=<id> QUEUE_DELETE_ID=<id> npx playwright test \
  *     --config=playwright.live.config.ts moderation-queue
@@ -53,6 +53,26 @@ function rowCard(page: Page, tag: string) {
   return page.locator('div.rounded-md.border').filter({ hasText: tag }).first();
 }
 
+/**
+ * A missing fixture FAILS -- it never skips.
+ *
+ * On 2026-09-18 nine of 42 live specs were found reporting green having never
+ * executed, including every spec covering the live-session audio path, which
+ * is exactly where two real multi-person audio bugs reached members. A green
+ * suite that never ran is worse than a red one.
+ */
+function requireFixture(value: string, envName: string) {
+  if (value) return;
+  throw new Error(
+    `${envName} is not set, so this spec cannot run. It needs a media_moderation `
+    + `row sitting at verdict='needs_review' whose title starts QAQUEUE-, which no `
+    + 'script creates yet: upload a cover as a test account while the scanner is '
+    + 'failing open, or insert one in Studio, then re-run with '
+    + `${envName}=<media_moderation.id>. This is a FAILURE, not a skip: a spec `
+    + 'that quietly passes without running is how a broken path stays green.',
+  );
+}
+
 test.describe.serial('Trust & Safety queue', () => {
   test.skip(!E || !P, 'A gosat/admin account is required in .env.test.');
 
@@ -68,7 +88,7 @@ test.describe.serial('Trust & Safety queue', () => {
   });
 
   test('2. a flagged image renders as a thumbnail that actually decodes', async ({ page }) => {
-    test.skip(!DELETE_ID, 'needs a seeded row');
+    requireFixture(DELETE_ID, 'QUEUE_DELETE_ID');
     await login(page);
     await openQueue(page);
 
@@ -115,7 +135,7 @@ test.describe.serial('Trust & Safety queue', () => {
   });
 
   test('3. Allow resolves the row and clears it from the queue', async ({ page }) => {
-    test.skip(!ALLOW_ID, 'needs a seeded row');
+    requireFixture(ALLOW_ID, 'QUEUE_ALLOW_ID');
     await login(page);
     await openQueue(page);
 
@@ -127,7 +147,7 @@ test.describe.serial('Trust & Safety queue', () => {
   });
 
   test('4. Delete image removes the row from the queue', async ({ page }) => {
-    test.skip(!DELETE_ID, 'needs a seeded row');
+    requireFixture(DELETE_ID, 'QUEUE_DELETE_ID');
     await login(page);
     await openQueue(page);
 
