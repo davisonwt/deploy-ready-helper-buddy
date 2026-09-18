@@ -178,6 +178,35 @@ green gets trusted.
   `test.skip` against the names `.env.test` actually defines. Note that
   `?? ''` is NOT a default; it is exactly what makes the skip fire.
 
+## Golden rule: crypto on S2G is Solana, via Phantom
+
+**Do not propose NOWPayments.** It has been raised and rejected more than
+once. Crypto in and crypto out are both Solana; members connect a Phantom
+wallet and are paid in USDC on Solana.
+
+What is actually live, measured 2026-09-18:
+
+- **Crypto out is the ONLY payout rail any member has configured.**
+  `profiles.payout_network` reads `solana_usdc` for 7 members, each with an
+  address; **nobody** has any other network set. `payout-earnings` splits
+  owed rows on that column and sends the Solana leg straight from the hot
+  wallet (`_shared/solanaPayout.ts`); the PayPal leg is real code that no
+  member has selected.
+- **Crypto in** is `create-solana-bestowal-order`, `check-solana-payment`,
+  `sweep-solana-payments`, `solana-rpc-proxy`.
+- `PayoutProviderId` in `src/lib/payments/providerFees.ts` is
+  `'solana' | 'paypal' | 'balance' | 'paystack'` -- NOWPayments is already
+  absent from the enum that decides behaviour.
+
+The NOWPayments code that remains is dead at checkout but **not inert in the
+database**, and that is the trap: `_shared/resolveSowerPayout.ts` still
+queries `wallet_type IN ('nowpayments_crypto','paypal_email')`, and two
+members (`callth3guy`, `amberswheeles`) hold active, verified wallets typed
+`nowpayments_crypto`. Both are 44-character Solana addresses with no
+NOWPayments API key or merchant id -- Phantom wallets wearing the wrong
+label. Deleting the label without migrating those rows first would orphan
+their payouts. Rename the rows, then remove the string.
+
 ## TypeScript migration ratchet
 (see `CONTRIBUTING.md` for full detail)
 - All new files must be `.ts`/`.tsx` — no new `.js`/`.jsx`.

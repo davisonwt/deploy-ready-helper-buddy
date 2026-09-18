@@ -53,7 +53,8 @@ export const PayoutSetupBanner = () => {
             </h3>
             <p className="text-sm text-muted-foreground mb-3">
               Bestowals you receive have nowhere to go until you pick how you want to be paid.
-              Choose NOWPayments (≈ 0.4–1% fee) or PayPal (≈ 5.7–8% fee). You pay the fee, not Sow2Grow.
+              Choose your Phantom wallet for USDC on Solana (network fee only, a fraction of a cent)
+              or PayPal (≈ 5.7–8% fee). You pay the fee, not Sow2Grow.
             </p>
             <div className="flex gap-2">
               <Button
