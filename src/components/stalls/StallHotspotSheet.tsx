@@ -102,15 +102,49 @@ const EMPTY_TEXT: Partial<Record<TileKind, string>> = {
   services: 'No services listed yet',
 };
 
-/** Where "Add one" sends the owner, per kind -- the only real create flow each maps to. */
-const ADD_ONE_PATH: Partial<Record<TileKind, string>> = {
-  books: '/sow/book',
+/**
+ * Where "Add one" sends the owner.
+ *
+ * This is a DEFAULTED lookup, not a fixed list, and that is the whole point:
+ * sowers name their own shelves, so a shelf kind this file has never heard of
+ * must still get a working "+" with no code change. The fallback mirrors the
+ * item query above -- anything without its own branch is fetched with
+ * `type in ('book','ebook')`, so a book is genuinely what that shelf lists and
+ * the book form is genuinely where a new one comes from.
+ *
+ * Keep this in step with the typeFilter in the load effect. If a kind ever
+ * gets its own query branch, give it a line here too.
+ */
+const ADD_ONE_PATH_BY_KIND: Partial<Record<TileKind, string>> = {
   music: '/sow/music',
-  lyrics: '/sow/book', // lyrics are a category on the same book form (products.category = 'lyrics') -- no dedicated lyrics form exists
-  mugs: '/sow/product', // mugs are a category on the general Shop product form (products.type = 'product', category = 'mugs')
+  mugs: '/sow/product', // a category on the general Shop product form (products.category = 'mugs')
   products: '/sow/product', // general Shop product form (products.type = 'product')
   services: '/sow/hand', // the only form that writes products.type = 'service'
+  books: '/sow/book',
+  lyrics: '/sow/book', // a category on the same book form (products.category = 'lyrics')
 };
+
+/** The book form backs every shelf that has no query branch of its own. */
+const ADD_ONE_FALLBACK = '/sow/book';
+
+function addOnePathFor(kind: TileKind): string | null {
+  if (STATIC_TEXT_KINDS.has(kind) || kind === 'story') return null;
+  return ADD_ONE_PATH_BY_KIND[kind] ?? ADD_ONE_FALLBACK;
+}
+
+/**
+ * Whether the bulk wizard can actually put seeds on THIS shelf.
+ *
+ * It writes products.type = 'product', so it only ever populates a shelf whose
+ * query asks for that type. Offering it on a books or custom shelf would send
+ * a member off to import a hundred rows that then do not appear where they
+ * expected -- the same broken promise as pointing them at a form that rejects
+ * them, so it is withheld instead. See editPathForSource's comment above for
+ * the same rule applied to Edit.
+ */
+function bulkUploadAppliesTo(kind: TileKind): boolean {
+  return kind === 'products' || kind === 'mugs';
+}
 
 /**
  * Bottom sheet opened by tapping a painted-interior hotspot -- styled to
@@ -173,6 +207,12 @@ const STATIC_TEXT_KINDS = new Set<TileKind>(['companion_info', 'passes', 'activa
 
 export default function StallHotspotSheet({ ownerId, ownerName, kind, label, text, isOwner, onClose, scrollToItemId, viewerCutoff }: Props) {
   const displayLabel = label?.trim() || KIND_LABEL[kind] || kind;
+  // Owner "+": where a single new seed comes from, and whether the bulk
+  // wizard can actually land seeds on this shelf. Both withheld rather than
+  // offered-and-broken -- see addOnePathFor / bulkUploadAppliesTo.
+  const addOne = addOnePathFor(kind);
+  const showBulk = bulkUploadAppliesTo(kind);
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [items, setItems] = useState<Item[] | null>(null);
   // undefined = still loading; null = loaded, nothing there; string = loaded, has content.
   const [bio, setBio] = useState<string | null | undefined>(undefined);
@@ -406,21 +446,50 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
         <div className="shrink-0 flex items-center justify-between px-5 pb-3 border-b border-amber-500/15">
           <h2 className="font-serif text-xl text-amber-200 tracking-wide">{displayLabel}</h2>
           <div className="flex items-center gap-1">
-            {/* Add to this shelf, owner only. EmptyState already offers this
-                when a shelf is bare; this is the same action for a shelf that
-                already has seeds on it, where there was no way in at all
-                without leaving the stall. Gated on the same isOwner prop the
-                edit/delete actions use -- a visitor never renders it. */}
-            {isOwner && ADD_ONE_PATH[kind] && (
-              <button
-                type="button"
-                onClick={() => sheetNavigate(ADD_ONE_PATH[kind]!)}
-                aria-label={`Add to ${displayLabel}`}
-                title={`Add to ${displayLabel}`}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-200 transition-colors hover:bg-amber-500/20"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
+            {/* Add to this shelf, owner only.
+                Being the OWNER of a listing shelf is the whole condition --
+                not the shelf's kind. Sowers name their own shelves, so keying
+                this off a fixed list of known kinds meant a member's own
+                category silently had no way in. Every listing shelf gets it,
+                including kinds that do not exist yet. A visitor never renders
+                it, on any shelf. */}
+            {isOwner && addOne && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => (showBulk ? setAddMenuOpen((o) => !o) : sheetNavigate(addOne))}
+                  aria-label={`Add to ${displayLabel}`}
+                  aria-haspopup={showBulk ? 'menu' : undefined}
+                  aria-expanded={showBulk ? addMenuOpen : undefined}
+                  title={`Add to ${displayLabel}`}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-200 transition-colors hover:bg-amber-500/20"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+                {showBulk && addMenuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-10 z-10 w-44 overflow-hidden rounded-lg border border-amber-500/25 bg-[#1d130a] shadow-xl"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => { setAddMenuOpen(false); sheetNavigate(addOne); }}
+                      className="block w-full px-3 py-2.5 text-left text-sm text-amber-100/90 hover:bg-amber-500/10"
+                    >
+                      Add one
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => { setAddMenuOpen(false); sheetNavigate('/dashboard/sower/upload'); }}
+                      className="block w-full border-t border-amber-500/15 px-3 py-2.5 text-left text-sm text-amber-100/90 hover:bg-amber-500/10"
+                    >
+                      Bulk upload
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
             <button type="button" onClick={handleClose} aria-label="Close shelf" className="text-amber-100/60 hover:text-amber-100 transition-colors">
               <X className="h-5 w-5" />
@@ -446,7 +515,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
           ) : items === null ? (
             <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-amber-100/40" /></div>
           ) : items.length === 0 ? (
-            <EmptyState text={`Nothing in ${displayLabel} yet`} isOwner={isOwner} addOnePath={ADD_ONE_PATH[kind]} addOneLabel={`Add to ${displayLabel}`} />
+            <EmptyState text={`Nothing in ${displayLabel} yet`} isOwner={isOwner} addOnePath={addOne ?? undefined} addOneLabel={`Add to ${displayLabel}`} />
           ) : (
             // Horizontal swipeable row of SeedCards (Flow v2 step 2) --
             // snap-x, ~80% width per card on phone, capped at 300px on
