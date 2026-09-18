@@ -70,23 +70,6 @@ export interface SpotlightRequest {
   at: number;
 }
 
-/**
- * Anyone currently in this live, panel or not.
- *
- * Reported live 2026-09-18: a host's "Everyone here" sheet read 0 and 0 while a
- * member was chatting in the room. Nothing in the app knew she was there. The
- * Daily participant list cannot answer it -- LiveStage only joins the call when
- * `isHost || iAmApproved`, so a viewer who never raised a hand is deliberately
- * not in the room. `stage:${seedId}` is the one channel EVERY participant
- * subscribes to (they need the board), so presence belongs here.
- */
-export interface PresentViewer {
-  user_id: string;
-  name: string;
-  avatar?: string | null;
-  at: number;
-}
-
 export interface HandRaise {
   user_id: string;
   name: string;
@@ -150,26 +133,6 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
   // already-granted speaking rights, and persisting it too would mean
   // writing on every single raise/cancel, not just approve/remove.
   const [liveSpeakerUserId, setLiveSpeakerUserId] = useState<string | null>(null);
-  // Everyone subscribed to this stage channel, panel or not -- see PresentViewer.
-  const [present, setPresent] = useState<PresentViewer[]>([]);
-  const subscribedRef = useRef(false);
-  // What this tab publishes about itself, read through a ref at track time so
-  // that gaining a user a moment after mount doesn't tear the channel down.
-  const meRef = useRef<PresentViewer | null>(null);
-  useEffect(() => {
-    const meta = (user as { user_metadata?: Record<string, string> } | null)?.user_metadata;
-    meRef.current = user
-      ? {
-          user_id: user.id,
-          name: meta?.display_name || meta?.username || user.email?.split('@')[0] || 'Tribe',
-          avatar: meta?.avatar_url ?? null,
-          at: Date.now(),
-        }
-      : null;
-    // Covers the order the other way round: channel already SUBSCRIBED (its
-    // callback fired with no user yet) and the session arrives afterwards.
-    if (subscribedRef.current && meRef.current) chRef.current?.track(meRef.current);
-  }, [user]);
   const playingVoiceNoteRef = useRef<PlayingVoiceNote | null>(null);
   // Gathering Room batch 2: which #1-position user_ids the host has already
   // triggered a play_voice_note for, so the same note doesn't fire twice
@@ -220,29 +183,8 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
   useEffect(() => {
     if (!enabled || !seedId) return;
     let cancelled = false;
-    const ch = supabase.channel(`stage:${seedId}`, {
-      // presence.key is the user's own id, so the two useLiveStage instances a
-      // viewer runs (LiveStage's own and LiveStageOverlay's read-only one)
-      // collapse to a single person rather than counting twice.
-      config: { broadcast: { self: false }, presence: { key: user?.id ?? 'anon' } },
-    });
+    const ch = supabase.channel(`stage:${seedId}`, { config: { broadcast: { self: false } } });
     chRef.current = ch;
-    subscribedRef.current = false;
-
-    ch.on('presence', { event: 'sync' }, () => {
-      const state = ch.presenceState() as Record<string, PresentViewer[]>;
-      const byUser = new Map<string, PresentViewer>();
-      for (const entries of Object.values(state)) {
-        for (const p of entries) {
-          if (!p?.user_id) continue;
-          // Same person on two channel instances (or two devices): keep the
-          // earliest join, so "in the session since" stays truthful.
-          const seen = byUser.get(p.user_id);
-          if (!seen || (p.at ?? 0) < (seen.at ?? 0)) byUser.set(p.user_id, p);
-        }
-      }
-      setPresent([...byUser.values()].sort((a, b) => (a.at ?? 0) - (b.at ?? 0)));
-    });
 
     ch.on('broadcast', { event: 'stage_mode' }, ({ payload }) => {
       setStage(payload as StagePayload);
@@ -287,14 +229,7 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
       if (user_id) setSpotlightRequests(prev => prev.filter(r => r.user_id !== user_id));
     });
 
-    // track() before the SUBSCRIBED handshake is silently ineffective -- the
-    // same trap that once dropped hosts out of Live Now (see
-    // useTribalLiveOrchard.ts's channelSubscribedPromise).
-    ch.subscribe((status) => {
-      if (status !== 'SUBSCRIBED') return;
-      subscribedRef.current = true;
-      if (meRef.current) ch.track(meRef.current);
-    });
+    ch.subscribe();
 
     // Late-joiner hydration (Gathering Room batch 1) -- row CREATION is no
     // longer this effect's job. It used to be: SELECT for an existing row,
@@ -363,7 +298,6 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
 
     return () => {
       cancelled = true;
-      subscribedRef.current = false;
       supabase.removeChannel(ch);
       chRef.current = null;
       // Primary path for closing the row is the explicit "End live" action
@@ -582,7 +516,6 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     stage, setStageMode,
     hands, raiseHand, cancelHand, approveHand, denyHand,
     approved, removeGuest, toggleMute,
-    present,
     liveSpeakerUserId, setLiveSpeaker, advanceQueue,
     spotlightRequests, setSpotlight, requestSpotlight, cancelSpotlightRequest, denySpotlight,
     playingVoiceNote, finishVoiceNote,

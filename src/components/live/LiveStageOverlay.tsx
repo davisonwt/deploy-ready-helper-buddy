@@ -11,7 +11,7 @@
  * Built on the existing LiveStage + Supabase realtime broadcast (`liveroom:${seedId}`).
  * No new DB tables.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -103,16 +103,7 @@ export default function LiveStageOverlay({
     // Read-only, for the participants sheet's per-row status below.
     liveSpeakerUserId: everyoneSpeakerUserId,
     stage: everyoneStage,
-    present: everyonePresent,
   } = useLiveStage(seedId, { isHost: false, enabled: true });
-  // The group that was invisible: in the session, never raised a hand. Derived
-  // by subtraction so nobody can appear in two groups at once.
-  const watching = useMemo(() => {
-    const onPanel = new Set<string>(everyoneApproved.map((g) => g.user_id));
-    if (hostId) onPanel.add(hostId);
-    const waiting = new Set<string>(everyoneHands.map((h) => h.user_id));
-    return everyonePresent.filter((p) => !onPanel.has(p.user_id) && !waiting.has(p.user_id));
-  }, [everyonePresent, everyoneApproved, everyoneHands, hostId]);
   const [participantsSheetOpen, setParticipantsSheetOpen] = useState(false);
   // The approved list is guests only (useLiveStage builds it from approve_hand),
   // so the host would otherwise be missing from a sheet titled "Everyone here".
@@ -433,10 +424,8 @@ export default function LiveStageOverlay({
             </div>
             <div className="max-h-[55vh] overflow-y-auto p-3 space-y-3">
               <div>
-                {/* Counts the host too -- the row is right there below, so a
-                    header reading 0 above a visible person was its own small lie. */}
-                <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-400">In the pocket · {everyoneApproved.length + (hostId ? 1 : 0)}</div>
-                {everyoneApproved.length === 0 && !hostId && <div className="rounded-md bg-black/20 p-2 text-center text-xs italic text-white/40">Empty seats.</div>}
+                <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-400">In the pocket · {everyoneApproved.length}</div>
+                {everyoneApproved.length === 0 && <div className="rounded-md bg-black/20 p-2 text-center text-xs italic text-white/40">Empty seats.</div>}
                 {/* Host row: the approved list is guests only, so without this the
                     one person always in the session would be missing from a sheet
                     called "Everyone here". Read-only, like every row here. */}
@@ -474,18 +463,6 @@ export default function LiveStageOverlay({
                   <div key={h.user_id} className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1.5 text-xs">
                     {h.avatar ? <img src={h.avatar} alt="" className="h-6 w-6 rounded-full object-cover" /> : <div className="h-6 w-6 rounded-full bg-amber-900/40" />}
                     <span className="truncate font-bold">{h.name}</span>
-                  </div>
-                ))}
-              </div>
-              {/* In the session, never raised a hand. Invisible until 2026-09-18:
-                  a member was chatting in a live whose sheet read 0 and 0. */}
-              <div>
-                <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-sky-400">Watching · {watching.length}</div>
-                {watching.length === 0 && <div className="rounded-md bg-black/20 p-2 text-center text-xs italic text-white/40">No one else in the session.</div>}
-                {watching.map((p) => (
-                  <div key={p.user_id} className="flex items-center gap-2 rounded-md bg-white/5 px-2 py-1.5 text-xs">
-                    {p.avatar ? <img src={p.avatar} alt="" className="h-6 w-6 rounded-full object-cover" /> : <div className="h-6 w-6 rounded-full bg-sky-900/40" />}
-                    <span className="truncate font-bold">{p.user_id === user?.id ? 'You' : p.name}</span>
                   </div>
                 ))}
               </div>
