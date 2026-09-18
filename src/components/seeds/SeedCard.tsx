@@ -496,6 +496,46 @@ export default function SeedCard({
     await shareContent('page', openPath, title);
   };
 
+  /**
+   * Can Share do ANYTHING on this device?
+   *
+   * shareContent falls back from navigator.share to the clipboard, and both
+   * need a secure context. Where neither exists it ends at a toast telling the
+   * member to copy a URL out of a toast, which is not a share -- so the menu
+   * withholds the action instead of offering a dead one. A caller that passes
+   * onShareOverride (the stall shelf, which opens ShareSeedDialog) always has
+   * a real handler and is always offered.
+   */
+  const canShare = !!onShareOverride
+    || (typeof navigator !== 'undefined' && (!!navigator.share || !!navigator.clipboard?.writeText));
+
+  /**
+   * THE MENU RENDERS AN ACTION ONLY WHERE THAT ACTION REALLY WORKS.
+   *
+   * Share shipped inert on 2026-09-17 and Park before it, both the same way:
+   * the item was rendered unconditionally and the handler behind it was
+   * absent or a no-op, so nobody could see the difference between "offered"
+   * and "works". Every entry below states the condition that makes it real,
+   * and the menu is built from this list rather than from hand-written JSX
+   * per item -- a fourth action cannot be added without answering the same
+   * question.
+   *
+   * `disabled` is deliberately NOT a member of this list. An action is either
+   * offered because it works, or withheld. Greying out is how Share came to
+   * be dead for owners on their own seeds (railDisabled = viewerIsOwner),
+   * which is exactly backwards: sharing your own seed is the whole point.
+   */
+  const menuActions: { key: string; available: boolean }[] = [
+    { key: 'share', available: canShare },
+    { key: 'gift', available: !!onGift && !viewerIsOwner },
+    { key: 'edit', available: !!mine && !!onEdit },
+    { key: 'delete', available: !!mine && !!onDelete },
+    { key: 'report', available: !mine && !!effectiveReportTarget },
+  ];
+  const can = (key: string) => menuActions.some((a) => a.key === key && a.available);
+  /** No working action at all means no "..." -- an empty menu is its own lie. */
+  const hasAnyMenuAction = menuActions.some((a) => a.available);
+
   const startDirectRoom = async (): Promise<string | null> => {
     if (!user) { navigate('/login'); return null; }
     const { data: roomId, error } = await supabase.rpc('get_or_create_direct_room', {
@@ -1089,6 +1129,7 @@ export default function SeedCard({
                 />
               </div>
               <div className="flex min-h-0 flex-1 items-center justify-center">
+                {hasAnyMenuAction && (
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
@@ -1109,44 +1150,47 @@ export default function SeedCard({
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex flex-col gap-0.5">
-                      <PopoverClose asChild>
-                        <button
-                          type="button"
-                          onClick={handleShare}
-                          disabled={railDisabled}
-                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent disabled:opacity-50"
-                        >
-                          <Share2 className="h-4 w-4" /> Share
-                        </button>
-                      </PopoverClose>
-                      {onGift && (
+                      {/* Share is NOT gated on railDisabled any more: that is
+                          viewerIsOwner, so it greyed out sharing your own seed
+                          -- the one share a sower most wants to send. */}
+                      {can('share') && (
                         <PopoverClose asChild>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onGift(); }}
-                            disabled={railDisabled}
-                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent disabled:opacity-50"
+                            onClick={handleShare}
+                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+                          >
+                            <Share2 className="h-4 w-4" /> Share
+                          </button>
+                        </PopoverClose>
+                      )}
+                      {can('gift') && (
+                        <PopoverClose asChild>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onGift!(); }}
+                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
                           >
                             <Gift className="h-4 w-4" /> Gift
                           </button>
                         </PopoverClose>
                       )}
-                      {mine && onEdit && (
+                      {can('edit') && (
                         <PopoverClose asChild>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onEdit(); }}
+                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onEdit!(); }}
                             className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
                           >
                             <Pencil className="h-4 w-4" /> Edit
                           </button>
                         </PopoverClose>
                       )}
-                      {mine && onDelete && (
+                      {can('delete') && (
                         <PopoverClose asChild>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onDelete(); }}
+                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onDelete!(); }}
                             className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="h-4 w-4" /> Delete
@@ -1155,19 +1199,20 @@ export default function SeedCard({
                       )}
                       {/* Reporting your own seed is meaningless -- the owner
                           gets Edit/Delete/Share, everyone else Share/Report. */}
-                      {!mine && effectiveReportTarget && (
+                      {can('report') && (
                         <ReportButton
-                          targetType={effectiveReportTarget.type}
-                          targetId={effectiveReportTarget.id}
+                          targetType={effectiveReportTarget!.type}
+                          targetId={effectiveReportTarget!.id}
                           size="sm"
                           variant="ghost"
                           label="Report"
-                          className={`w-full justify-start gap-2 px-2 py-1.5 text-sm font-normal ${railDisabled ? 'pointer-events-none opacity-40' : ''}`}
+                          className="w-full justify-start gap-2 px-2 py-1.5 text-sm font-normal"
                         />
                       )}
                     </div>
                   </PopoverContent>
                 </Popover>
+                )}
               </div>
             </div>
           </div>

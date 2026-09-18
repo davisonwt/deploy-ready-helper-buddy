@@ -7,6 +7,7 @@ import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
 import { deleteRow } from '@/components/garden/seedCardBuilders';
 import { toast } from 'sonner';
 import { TILE_KINDS, type TileKind } from '@/lib/stalls/stallTypes';
+import ShareSeedDialog from '@/components/share/ShareSeedDialog';
 
 interface Props {
   ownerId: string;
@@ -220,6 +221,8 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
   const addOne = addOnePathFor(kind);
   const showBulk = bulkUploadAppliesTo(kind);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
+  /** The seed whose Share dialog is open, if any. Owner and visitor alike. */
+  const [shareItem, setShareItem] = useState<Item | null>(null);
   const [items, setItems] = useState<Item[] | null>(null);
   // undefined = still loading; null = loaded, nothing there; string = loaded, has content.
   const [bio, setBio] = useState<string | null | undefined>(undefined);
@@ -554,6 +557,12 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
                       tapBehavior="inline"
                       forceViewerIsOwner={isOwner ? undefined : false}
                       mine={!!isOwner}
+                      // Share on a shelf opens the real share dialog -- send
+                      // it to a tribe member, a room, the feed, or copy the
+                      // link. Without this override SeedCard falls back to
+                      // navigator.share/clipboard, which on desktop ends at a
+                      // toast and never reaches a person.
+                      onShareOverride={() => setShareItem(item)}
                       onEdit={editPathFor(item) ? () => sheetNavigate(editPathFor(item)!) : undefined}
                       onDelete={() => removeItem(item)}
                       isNew={!!viewerCutoff && new Date(item.createdAt).getTime() > new Date(viewerCutoff).getTime()}
@@ -585,6 +594,21 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
           )}
         </div>
       </div>
+      {/* Rendered OUTSIDE the sheet's own stacking context so it is never
+          clipped by the 85vh panel or covered by it -- the failure a share
+          dialog shipped with on 2026-09-18. */}
+      {shareItem && (
+        <ShareSeedDialog
+          open
+          onOpenChange={(o) => { if (!o) setShareItem(null); }}
+          seedId={shareItem.id}
+          title={shareItem.title}
+          subtitle={shareItem.blurb || null}
+          image={shareItem.cover}
+          openPath={itemOpenPath}
+          feedKind={kind === 'music' ? 'music' : 'photo'}
+        />
+      )}
     </>
   );
 }
