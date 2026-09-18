@@ -10,8 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileSpreadsheet, FileText, AlertCircle, CheckCircle2, ArrowLeft, Sprout, ImagePlus, X, Star, GripVertical, ChevronRight, Images } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, AlertCircle, CheckCircle2, ArrowLeft, Sprout, ImagePlus, X, Star, GripVertical, ChevronRight, Images, FolderArchive, Download, Film } from 'lucide-react';
 import SignedImg from '@/components/media/SignedImg';
+import { isZipFile, openZipBundle, ZIP_LIMITS, type ZipBundle } from '@/lib/bulk/zipBundle';
+import { attachBundleMedia, type BundleIssue } from '@/lib/bulk/attachBundleMedia';
+import { buildTemplateZip, downloadTemplateZip } from '@/lib/bulk/templateZip';
 
 // Pre-existing bug found live 2026-09-15 while verifying dropship support:
 // this page was the only caller in the codebase using
@@ -51,13 +54,162 @@ type ParsedRow = {
   };
   issues: string[];
   images?: ProductImage[];
+  /** From a ZIP's audio_file / book_file column, already uploaded and moderated. */
+  fileUrl?: string;
+  /** From the video_url column. A link, never an uploaded file -- see templateZip.ts. */
+  videoUrl?: string;
 };
 
 type Summary = { total: number; valid: number; with_issues: number; lower_accuracy: boolean };
 
-const ACCEPT = '.csv,.xlsx,.xls,.txt,.pdf,.docx';
+const ACCEPT = '.zip,.csv,.xlsx,.xls,.txt,.pdf,.docx';
 const MAX_IMAGES = 5;
 const IMG_BUCKET = 'orchard-images';
+
+const mb = (bytes: number) => `${Math.round(bytes / 1024 / 1024)}MB`;
+
+/**
+ * What the ZIP must look like, stated on the page itself.
+ *
+ * Deliberately short and concrete: the folder tree, the columns, the limits,
+ * and the two rules people get wrong (video is a link; a missing file does not
+ * fail the run). The template below it is the same thing, already built.
+ */
+function BundleInstructions() {
+  const { toast } = useToast();
+  const [building, setBuilding] = useState(false);
+
+  const download = async () => {
+    setBuilding(true);
+    try {
+      downloadTemplateZip(await buildTemplateZip());
+    } catch (e) {
+      toast({ title: 'Could not build the template', description: e instanceof Error ? e.message : String(e), variant: 'destructive' });
+    } finally {
+      setBuilding(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <FolderArchive className="h-4 w-4" /> What to put in the ZIP
+        </CardTitle>
+        <CardDescription>
+          One zip: your spreadsheet, plus folders holding your photos and audio. Each row becomes its own seed card.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        <pre className="rounded-md bg-muted p-3 text-xs leading-relaxed overflow-x-auto">{`my-seeds.zip
+├── products.csv     ← one row per seed
+├── images/
+│   ├── clay-mug.jpg
+│   └── wool-scarf.jpg
+└── audio/
+    └── morning-song.mp3`}</pre>
+
+        <div className="space-y-1.5">
+          <p className="font-medium">The columns</p>
+          <p className="text-muted-foreground">
+            <code>name</code>, <code>description</code>, <code>price</code>, <code>category</code>,{' '}
+            <code>sku</code>, <code>stock_qty</code> — then{' '}
+            <code>image_file</code>, <code>audio_file</code> and <code>book_file</code> to name your files.
+            Upper or lower case doesn't matter, and a folder in front is fine:{' '}
+            <code>images/Hat.JPG</code> and <code>hat.jpg</code> find the same file.
+          </p>
+        </div>
+
+        <div className="flex gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+          <Film className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+          <p className="text-muted-foreground">
+            <span className="font-medium text-foreground">Video goes in as a link, not a file.</span> Put the
+            YouTube or Vimeo address in a <code>video_url</code> column. A hundred marketing videos is tens of
+            gigabytes and would never finish uploading from a phone.
+          </p>
+        </div>
+
+        <div className="flex gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+          <p className="text-muted-foreground">
+            <span className="font-medium text-foreground">A missing file never costs you the upload.</span> That
+            row is imported anyway, and the report at the end names the row and the file it was looking for.
+          </p>
+        </div>
+
+        <p className="text-muted-foreground">
+          Limits: zip up to {mb(ZIP_LIMITS.MAX_ARCHIVE_BYTES)}, {ZIP_LIMITS.MAX_ENTRIES} files inside,
+          each image up to {mb(ZIP_LIMITS.MAX_IMAGE_BYTES)}, each audio or book file up to {mb(ZIP_LIMITS.MAX_AUDIO_BYTES)}.
+          No spreadsheet? A plain CSV or XLSX on its own still works exactly as before.
+        </p>
+
+        <Button variant="outline" onClick={download} disabled={building} className="w-full sm:w-auto">
+          <Download className="h-4 w-4 mr-2" />
+          {building ? 'Building…' : 'Download the template ZIP'}
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          Columns already set up, one example row filled in, and a README inside explaining the layout.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** The end-of-run report: which row, which file, what was wrong. */
+function BundleReportCard({ report }: {
+  report: {
+    issues: BundleIssue[];
+    warnings: string[];
+    unusedFiles: string[];
+    counts: { images: number; audio: number; books: number; videoUrls: number };
+  };
+}) {
+  const { issues, warnings, unusedFiles, counts } = report;
+  const clean = issues.length === 0 && warnings.length === 0 && unusedFiles.length === 0;
+
+  return (
+    <Card className={clean ? 'border-emerald-500/40' : 'border-amber-500/40'}>
+      <CardHeader className="py-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          {clean
+            ? <><CheckCircle2 className="h-4 w-4 text-emerald-600" /> Everything in your ZIP was attached</>
+            : <><AlertCircle className="h-4 w-4 text-amber-600" /> Your ZIP: {issues.length} thing{issues.length === 1 ? '' : 's'} to look at</>}
+        </CardTitle>
+        <CardDescription>
+          Attached {counts.images} image{counts.images === 1 ? '' : 's'},{' '}
+          {counts.audio} audio file{counts.audio === 1 ? '' : 's'},{' '}
+          {counts.books} book file{counts.books === 1 ? '' : 's'} and{' '}
+          {counts.videoUrls} video link{counts.videoUrls === 1 ? '' : 's'}.
+          {issues.length > 0 && ' Every row below was still imported.'}
+        </CardDescription>
+      </CardHeader>
+      {!clean && (
+        <CardContent className="space-y-3 text-sm">
+          {issues.length > 0 && (
+            <div className="space-y-1.5">
+              {issues.map((it, i) => (
+                <div key={i} className="rounded-md border border-amber-500/20 bg-amber-500/5 p-2">
+                  <span className="font-medium">Row {it.row}</span>
+                  <span className="text-muted-foreground"> · {it.name}</span>
+                  {it.file && <span className="text-muted-foreground"> · <code>{it.file}</code></span>}
+                  <div className="text-muted-foreground">{it.problem}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {unusedFiles.length > 0 && (
+            <p className="text-muted-foreground">
+              <span className="font-medium text-foreground">{unusedFiles.length} file{unusedFiles.length === 1 ? '' : 's'} in the ZIP no row asked for:</span>{' '}
+              {unusedFiles.slice(0, 8).join(', ')}{unusedFiles.length > 8 ? `, and ${unusedFiles.length - 8} more` : ''}.
+              Check the spelling in your <code>image_file</code> column.
+            </p>
+          )}
+          {warnings.map((w, i) => <p key={i} className="text-muted-foreground">{w}</p>)}
+        </CardContent>
+      )}
+    </Card>
+  );
+}
 
 export default function BulkUploadWizardPage() {
   const navigate = useNavigate();
@@ -73,6 +225,14 @@ export default function BulkUploadWizardPage() {
   const [dragOver, setDragOver] = useState(false);
   const [publishedCount, setPublishedCount] = useState(0);
   const { rates, loading: ratesLoading } = useExchangeRates();
+  /** Everything the ZIP run has to tell the member afterwards. */
+  const [bundleReport, setBundleReport] = useState<{
+    issues: BundleIssue[];
+    warnings: string[];
+    unusedFiles: string[];
+    counts: { images: number; audio: number; books: number; videoUrls: number };
+  } | null>(null);
+  const [attachStatus, setAttachStatus] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -84,7 +244,30 @@ export default function BulkUploadWizardPage() {
   }, []);
 
   const handleFile = useCallback(async (f: File) => {
-    if (f.size > 50 * 1024 * 1024) {
+    // A ZIP is unpacked in the browser first; the spreadsheet inside is what
+    // goes to the parser, so a plain spreadsheet with no ZIP keeps working
+    // exactly as it did.
+    let bundle: ZipBundle | null = null;
+    let toParse = f;
+    if (isZipFile(f)) {
+      setFile(f);
+      setParsing(true);
+      setProgress(8);
+      setBundleReport(null);
+      setAttachStatus('Opening the ZIP…');
+      try {
+        bundle = await openZipBundle(f);
+        toParse = bundle.spreadsheet!;
+        setAttachStatus(`Found ${bundle.spreadsheet!.name} and ${bundle.media.size} media file${bundle.media.size === 1 ? '' : 's'}.`);
+      } catch (e) {
+        toast({ title: 'Could not open that ZIP', description: e instanceof Error ? e.message : String(e), variant: 'destructive' });
+        setFile(null);
+        setParsing(false);
+        setAttachStatus(null);
+        setProgress(0);
+        return;
+      }
+    } else if (f.size > 50 * 1024 * 1024) {
       toast({ title: 'File too large', description: 'Maximum 50MB.', variant: 'destructive' });
       return;
     }
@@ -95,7 +278,7 @@ export default function BulkUploadWizardPage() {
     const tick = setInterval(() => setProgress((p) => (p < 85 ? p + 5 : p)), 250);
     try {
       const fd = new FormData();
-      fd.append('file', f);
+      fd.append('file', toParse);
       if (sowerId) fd.append('sower_id', sowerId);
 
       const { data: { session } } = await supabase.auth.getSession();
@@ -137,6 +320,54 @@ export default function BulkUploadWizardPage() {
         return r;
       });
 
+      // Attach whatever the ZIP carried, BEFORE the review step, so the member
+      // reviews rows that already show their photo. A row whose file is
+      // missing is imported anyway and named in the report -- never a failure
+      // of the whole run.
+      if (bundle && json.job_id && sowerId) {
+        const jid = json.job_id as string;
+        setAttachStatus('Uploading and checking your files…');
+        const result = await attachBundleMedia(
+          parsedRows.map((r) => ({
+            idx: r.idx,
+            displayRow: r.idx + 1,
+            name: r.normalized.name ?? `Row ${r.idx + 1}`,
+            raw: r.raw as Record<string, unknown>,
+          })),
+          bundle.media,
+          { sowerId, jobId: jid },
+          (doneCount, total) => setAttachStatus(`Uploading and checking your files… ${doneCount} of ${total} rows`),
+        );
+        parsedRows = parsedRows.map((r) => {
+          const got = result.attached.get(r.idx);
+          if (!got) return r;
+          return {
+            ...r,
+            images: got.imageUrl && got.imagePath ? [{ url: got.imageUrl, path: got.imagePath }] : r.images,
+            fileUrl: got.fileUrl ?? r.fileUrl,
+            videoUrl: got.videoUrl ?? r.videoUrl,
+          };
+        });
+        setBundleReport({
+          issues: result.issues,
+          warnings: bundle.warnings,
+          unusedFiles: result.unusedFiles,
+          counts: result.counts,
+        });
+        setAttachStatus(null);
+      } else if (bundle) {
+        setBundleReport({
+          issues: [],
+          warnings: [
+            ...bundle.warnings,
+            'Your files could not be attached because this account has no sower profile yet. The rows were still imported.',
+          ],
+          unusedFiles: [],
+          counts: { images: 0, audio: 0, books: 0, videoUrls: 0 },
+        });
+        setAttachStatus(null);
+      }
+
       setRows(parsedRows);
       setSummary(json.summary ?? null);
       setJobId(json.job_id ?? null);
@@ -154,6 +385,7 @@ export default function BulkUploadWizardPage() {
       setFile(null);
     } finally {
       setParsing(false);
+      setAttachStatus(null);
       setTimeout(() => setProgress(0), 800);
     }
   }, [sowerId, toast, rates]);
@@ -194,8 +426,15 @@ export default function BulkUploadWizardPage() {
 
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Bulk Plant Your Seeds</h1>
-          <p className="text-muted-foreground">Upload 10–1000 products at once. CSV, XLSX, TXT, PDF, or DOCX.</p>
+          <p className="text-muted-foreground">
+            Sow 10–1000 seeds at once. Send a ZIP with your photos in it, or just a spreadsheet on its own.
+          </p>
         </div>
+
+        {/* The shape a member needs, in plain words, BEFORE they pick a file.
+            Behind a link is the same as not there: someone who lays the ZIP
+            out wrong gets a report full of failures and gives up. */}
+        <BundleInstructions />
 
         <Card
           className={`border-2 border-dashed transition-colors ${dragOver ? 'border-primary bg-primary/5' : 'border-muted'}`}
@@ -210,7 +449,7 @@ export default function BulkUploadWizardPage() {
                 <div className="space-y-2 w-full max-w-md">
                   <p className="font-medium">Planting your seeds…</p>
                   <Progress value={progress} />
-                  <p className="text-xs text-muted-foreground">{file?.name}</p>
+                  <p className="text-xs text-muted-foreground">{attachStatus ?? file?.name}</p>
                 </div>
               </>
             ) : (
@@ -311,6 +550,8 @@ export default function BulkUploadWizardPage() {
           </CardContent>
         </Card>
       )}
+
+      {bundleReport && <BundleReportCard report={bundleReport} />}
 
       <Card>
         <CardHeader className="py-3">
@@ -752,10 +993,16 @@ function PublishStep({
           // bulk-imported row never actually matched that convention.
           kind: 'product',
           type: 'product',
-          file_url: '',
+          // From a ZIP's audio_file/book_file column when there was one --
+          // same column a single sow writes, so the card plays/downloads
+          // exactly as a one-at-a-time seed does.
+          file_url: r.fileUrl ?? '',
           image_urls: (r.images ?? []).map((im) => im.url),
           cover_image_url: r.images?.[0]?.url ?? null,
           is_dropship: n.dropship ?? false,
+          // video_url is a LINK, and products has no column for one, so it
+          // rides in metadata rather than inventing a schema change.
+          ...(r.videoUrl ? { metadata: { video_url: r.videoUrl } } : {}),
         };
         const prod = await insertProduct(productPayload);
 

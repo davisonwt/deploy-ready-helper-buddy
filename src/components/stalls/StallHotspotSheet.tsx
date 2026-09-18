@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Loader2, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import StoryPdfViewer from './StoryPdfViewer';
 import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
@@ -405,9 +405,27 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
         </div>
         <div className="shrink-0 flex items-center justify-between px-5 pb-3 border-b border-amber-500/15">
           <h2 className="font-serif text-xl text-amber-200 tracking-wide">{displayLabel}</h2>
-          <button type="button" onClick={handleClose} aria-label="Close shelf" className="text-amber-100/60 hover:text-amber-100 transition-colors">
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            {/* Add to this shelf, owner only. EmptyState already offers this
+                when a shelf is bare; this is the same action for a shelf that
+                already has seeds on it, where there was no way in at all
+                without leaving the stall. Gated on the same isOwner prop the
+                edit/delete actions use -- a visitor never renders it. */}
+            {isOwner && ADD_ONE_PATH[kind] && (
+              <button
+                type="button"
+                onClick={() => sheetNavigate(ADD_ONE_PATH[kind]!)}
+                aria-label={`Add to ${displayLabel}`}
+                title={`Add to ${displayLabel}`}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-200 transition-colors hover:bg-amber-500/20"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            )}
+            <button type="button" onClick={handleClose} aria-label="Close shelf" className="text-amber-100/60 hover:text-amber-100 transition-colors">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
