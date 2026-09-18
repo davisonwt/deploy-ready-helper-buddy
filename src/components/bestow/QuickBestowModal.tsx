@@ -31,6 +31,7 @@ import { priceBreakdown, round2 } from '@/lib/pricing/platformFee';
 import { useBalanceProvider, isBalanceSuccess } from '@/hooks/useBalanceProvider';
 import { useExchangeRates, formatConvertedWithUsd } from '@/lib/currency/rates';
 import { checkoutErrorMessage, isBlockingCheckoutError } from '@/lib/payments/checkoutErrors';
+import { railsForCurrency, noRailMessage, type RailId } from '@/lib/payments/railAvailability';
 import { supabase } from '@/integrations/supabase/client';
 import { deliveryAddressRequired, validateDeliveryAddress, type DeliveryAddress, type PocketType } from '@/lib/orchards/pocketRules';
 
@@ -107,13 +108,22 @@ export default function QuickBestowModal({
   // raw base, or both numbers understate what's charged. Computed above the
   // useBalanceProvider call (a hook) so it stays unconditional per the
   // Rules of Hooks.
+  const [orchardCurrency, setOrchardCurrency] = useState<string | null>(null);
+
   const pricing = lockAmount
     ? { base: defaultAmount, s2gFee: 0, total: round2(defaultAmount) }
     : priceBreakdown(amount);
   const belowCryptoMin = pricing.total < MIN_CRYPTO_BESTOWAL_USD;
   const { provider, setProvider, providers, balanceShortBy, refetchBalance } = useBalanceProvider(pricing.total, ['solana', 'paypal', 'paystack']);
   const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
-  const effectiveProviders: PayoutProviderId[] = belowCryptoMin ? ['paypal'] : providers;
+  // An orchard carries its own currency. Offer only rails that can charge
+  // it -- sending the number with a currency_code it is not denominated in
+  // is the 18x bug. Until the currency is known, offer nothing.
+  const rails = railsForCurrency(orchardCurrency, ['paypal', 'solana']);
+  const railAllowed = (id: PayoutProviderId) =>
+    id === 'balance' || rails.available.some((r) => r.id === (id as RailId));
+  const beforeRailGate: PayoutProviderId[] = belowCryptoMin ? ['paypal'] : providers;
+  const effectiveProviders: PayoutProviderId[] = beforeRailGate.filter(railAllowed);
   const feePreview = quoteFee(effectiveProvider, pricing.total);
 
   useEffect(() => {
@@ -124,10 +134,15 @@ export default function QuickBestowModal({
       setSellerBlocked(false);
       setPocketType('bestowal');
       setProductType(orchardProductType ?? null);
-      if (orchardProductType == null && orchardId) {
-        // The address rule depends on whether the orchard ships something.
-        supabase.from('orchards').select('product_type').eq('id', orchardId).maybeSingle()
-          .then(({ data }) => setProductType((data as any)?.product_type ?? 'physical'));
+      setOrchardCurrency(null);
+      if (orchardId) {
+        // The address rule depends on whether the orchard ships something;
+        // the currency decides which rails may be offered at all.
+        supabase.from('orchards').select('product_type, currency').eq('id', orchardId).maybeSingle()
+          .then(({ data }) => {
+            if (orchardProductType == null) setProductType((data as any)?.product_type ?? 'physical');
+            setOrchardCurrency((data as any)?.currency ?? null);
+          });
       }
     }
   }, [open, defaultAmount, orchardId, orchardProductType]);
@@ -302,16 +317,25 @@ export default function QuickBestowModal({
                 Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
               </p>
             )}
-            <div className="mt-1">
-              <ProviderPicker
-                value={effectiveProvider}
-                onChange={setProvider}
-                amount={pricing.total}
-                mode="buyer"
-                disabled={processing}
-                providers={effectiveProviders}
-              />
-            </div>
+            {effectiveProviders.length === 0 ? (
+              <p className="mt-1 rounded-md border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
+                {orchardCurrency ? noRailMessage(orchardCurrency) : 'Checking which payment methods can charge this seed’s currency…'}
+              </p>
+            ) : (
+              <div className="mt-1">
+                <ProviderPicker
+                  value={effectiveProvider}
+                  onChange={setProvider}
+                  amount={pricing.total}
+                  mode="buyer"
+                  disabled={processing}
+                  providers={effectiveProviders}
+                />
+              </div>
+            )}
+            {rails.blocked.map((r) => (
+              <p key={r.id} className="text-xs text-muted-foreground mt-1">{r.reason}</p>
+            ))}
             {!belowCryptoMin && balanceShortBy > 0 && (
               <p className="text-xs text-muted-foreground mt-1">
                 Not enough in your S2G Balance — top up ${balanceShortBy.toFixed(2)} to pay this way.

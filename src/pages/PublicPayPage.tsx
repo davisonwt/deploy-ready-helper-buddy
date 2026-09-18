@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { railsForCurrency, noRailMessage } from '@/lib/payments/railAvailability';
 import QRCode from 'qrcode';
 import { CheckCircle2, Loader2, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,13 @@ interface PublicInvoice {
   total: number;
   amount_paid: number;
   amount_due: number;
+  /**
+   * What the payer is SHOWN. Every rail here charges USD, so a non-USD
+   * invoice must not be payable until the rails carry the currency through.
+   * No non-USD invoice exists today; the guard is here so the next feature
+   * cannot reintroduce the 18x relabelling silently.
+   */
+  currency_display?: string | null;
   paid_at: string | null;
   customer_name: string | null;
   estimate_lines: EstimateLine[];
@@ -153,6 +161,8 @@ export default function PublicPayPage() {
 
   const feeAmount = round2(invoice.total * S2G_FEE_RATE);
   const buyerTotal = round2(invoice.total + feeAmount);
+  const invoiceCurrency = invoice.currency_display ?? 'USD';
+  const rails = railsForCurrency(invoiceCurrency, ['paypal', 'solana']);
 
   return (
     <div className="mx-auto max-w-lg px-4 py-10 space-y-6">
@@ -200,7 +210,13 @@ export default function PublicPayPage() {
             <p className="text-sm text-muted-foreground">This invoice hasn't been sent yet.</p>
           )}
 
-          {invoice.status === 'sent' && !payment && !paypalPayment && !paystackPayment && (
+          {invoice.status === 'sent' && rails.none && (
+            <div className="rounded-md border border-border bg-muted/50 p-3">
+              <p className="text-sm text-muted-foreground">{noRailMessage(invoiceCurrency)}</p>
+            </div>
+          )}
+
+          {invoice.status === 'sent' && !rails.none && !payment && !paypalPayment && !paystackPayment && (
             <div className="space-y-2">
               <Button onClick={() => startPayment('solana')} disabled={starting !== null} className="w-full">
                 {starting === 'solana' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wallet className="mr-2 h-4 w-4" />}

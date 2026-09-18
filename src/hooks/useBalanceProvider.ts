@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useBalance } from '@/hooks/useBalance';
 import type { PayoutProviderId } from '@/lib/payments/providerFees';
 import { S2G_BALANCE_ENABLED } from '@/lib/featureFlags';
+import { PAYSTACK_ENABLED } from '@/lib/payments/railAvailability';
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
@@ -17,7 +18,12 @@ const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
  * call site goes through, so turning the flag off removes 'balance' from
  * every checkout at once without touching any of them individually.
  */
-export function useBalanceProvider(amount: number, otherProviders: PayoutProviderId[] = ['solana', 'paypal']) {
+export function useBalanceProvider(amount: number, requestedProviders: PayoutProviderId[] = ['solana', 'paypal']) {
+  // PAYSTACK_ENABLED is filtered HERE rather than at each call site, for the
+  // same reason S2G_BALANCE_ENABLED is: there are seven ProviderPicker call
+  // sites and removing a rail from four of them is how one gets left open.
+  const otherProviders = requestedProviders.filter((id) => PAYSTACK_ENABLED || id !== 'paystack');
+
   const { available, loading: balanceLoading, refetch } = useBalance();
   const [provider, setProvider] = useState<PayoutProviderId>(otherProviders[0] ?? 'solana');
   const autoSelected = useRef(false);

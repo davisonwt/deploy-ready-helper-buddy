@@ -235,6 +235,43 @@ Context, so the shape of the work is clear:
   treasury. Several of those columns default to `'USD'`, which is how the
   original bug survived.
 
+## Golden rule: a rail is never handed a currency it cannot charge
+
+Any code path that passes a member-set price to a payment rail MUST verify
+the rail supports that currency **before** the request. Never send an amount
+with a `currency_code` the amount is not denominated in.
+
+On 2026-09-19 four paths were found relabelling a ZAR price as USD -- a
+R1,449.99 listing charged $1,449.99, roughly 18x -- and only one was caught
+by the task that started as a display fix. The other three were found only
+by going and looking:
+
+- `create-booking-paypal-order:154` -- `currency_code: "USD"` hardcoded,
+  while `bookings.currency` (trigger-set from the listing since
+  `20260917140000`) was never read.
+- `create-invoice-payment:260` -- same hardcode, against
+  `invoices.currency_display`.
+- `create-orchard-bestowal-order:339` -- same hardcode, against
+  `orchards.currency`.
+- `create-solana-bestowal-order:98/151` -- reads `orchard.currency`, then
+  sends the number as `amountUsdc` regardless. USDC is dollars, so this is
+  the same bug on a rail with no chargeback.
+
+The gate lives in `src/lib/payments/railAvailability.ts`. Use it; do not
+re-derive a currency list at a call site. Blocking is the correct outcome --
+a screen that honestly reads "you will be charged $1,650" for an R1,650
+listing is still a broken product, so the rail is hidden with a plain
+reason rather than relabelled.
+
+Which tables carry a member-set currency, measured 2026-09-19:
+`pillow_seed_details`, `wheel_seed_details`, `hand_seed_details`, `bookings`,
+`orchards`, `invoices` (`currency_display`), `companies`, `bestowals`.
+`products` has **no** currency column -- its prices are USD by construction.
+
+A corollary that cost a commit: when removing or gating a rail, fix it at the
+choke point, not per call site. There are seven `ProviderPicker` call sites;
+a change applied to four of them leaves three doors open and reads as done.
+
 ## Payment code
 - Payment/fee logic (Cryptomus, Binance Pay, bestowal distribution, wallet balances) is the most incident-prone part of this codebase — recent commit history shows repeated fee-bypass and payment-flow bugs. Changes here need extra care:
   - Trace the full money path (client → edge function → Supabase tables) before changing fee or distribution math.
