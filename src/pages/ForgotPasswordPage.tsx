@@ -53,8 +53,26 @@ export default function ForgotPasswordPage() {
       setStep("locked");
       return;
     }
+    // "Incorrect answers" used to be shown for EVERY failure, including the
+    // case where the stored hash was in a format we could not check at all --
+    // telling a member they had misremembered their own life when the fault
+    // was ours. reason distinguishes them.
     if (!row.success) {
-      toast({ variant: "destructive", title: "Incorrect answers" });
+      if (row.reason === "unverifiable") {
+        toast({
+          variant: "destructive",
+          title: "We couldn't check your answers",
+          description:
+            row.message ||
+            "Something is wrong on our side, not with what you entered. Please contact support via the in-app ChatApp.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Incorrect answers",
+          description: "Those answers don't match what we have on file.",
+        });
+      }
       return;
     }
     setToken(row.token);
