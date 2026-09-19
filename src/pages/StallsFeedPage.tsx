@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader2, Radio, Search, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Radio, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
@@ -149,6 +149,18 @@ export default function StallsFeedPage() {
   // there's no room for both regardless of viewport width.
   const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
   const [searchOpen, setSearchOpen] = useState(() => searchParams.has('q'));
+  // Chip row scrolling: found live -- a bare overflow-x-auto container does
+  // NOT map a plain vertical mouse-wheel scroll to horizontal movement in
+  // any browser; that mapping only happens for an actual horizontal wheel,
+  // a trackpad's horizontal swipe, or shift+wheel. A mouse user with no
+  // touch/trackpad had no way to reach chips past the fold at all. The
+  // wheel handler below does that mapping manually (deltaY -> scrollLeft,
+  // whichever axis is larger); the chevrons are the CLICKABLE fallback for
+  // fine-pointer devices per Davison's explicit requirement, independent
+  // of whether a given mouse's wheel is even scrolled in that moment.
+  const chipRowRef = useRef<HTMLDivElement>(null);
+  const [canScrollChipsLeft, setCanScrollChipsLeft] = useState(false);
+  const [canScrollChipsRight, setCanScrollChipsRight] = useState(false);
   // "New seeds" (supabase/migrations/20260912140000_stall_visits.sql) --
   // stall_user_id -> {total, latest}, from the same RPC StallInteriorView
   // uses for its own hotspot dots. Fetched once per signed-in viewer, not
@@ -398,6 +410,48 @@ export default function StallsFeedPage() {
     }
   }, [chip, pinnedOrderedCards]);
 
+  // Chevron visibility tracks real scroll position -- re-checked on mount,
+  // on every scroll (wheel, chevron click, or a mobile drag), on resize,
+  // and whenever the chip list itself changes width (chip count is fixed
+  // here, but the row's own width isn't, e.g. a sidebar collapsing).
+  useEffect(() => {
+    const el = chipRowRef.current;
+    if (!el) return;
+    const update = () => {
+      setCanScrollChipsLeft(el.scrollLeft > 2);
+      setCanScrollChipsRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+    };
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      el.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, [searchOpen]);
+
+  // Maps a plain vertical wheel scroll to horizontal movement -- the one
+  // thing overflow-x-auto never does on its own for an ordinary mouse
+  // wheel (only an actual horizontal wheel, trackpad swipe, or shift+wheel
+  // triggers native horizontal scroll). Only intervenes, and only
+  // preventDefault()s the page scroll, when the row can actually move and
+  // the gesture is more vertical than horizontal -- a trackpad's own
+  // horizontal swipe (deltaX already dominant) passes through untouched.
+  const onChipRowWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const el = chipRowRef.current;
+    if (!el) return;
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    if (!canScrollChipsLeft && !canScrollChipsRight) return;
+    el.scrollLeft += e.deltaY;
+    e.preventDefault();
+  };
+
+  const scrollChipsBy = (direction: 1 | -1) => {
+    const el = chipRowRef.current;
+    if (!el) return;
+    el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: 'smooth' });
+  };
+
   return (
     <div className="flex flex-col h-[calc(100dvh-4rem)] lg:h-[100dvh]">
       <div className="flex-1 min-h-0 flex">
@@ -461,7 +515,11 @@ export default function StallsFeedPage() {
                 fade is a decoration hinting "more" off the right edge;
                 pointer-events-none so it never blocks a tap/scroll under it. */}
             <div className={`relative flex-1 min-w-0 ${searchOpen ? 'hidden' : ''}`}>
-              <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div
+                ref={chipRowRef}
+                onWheel={onChipRowWheel}
+                className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
                 {CHIPS.map((c) => (
                   <button
                     key={c.id}
@@ -477,7 +535,37 @@ export default function StallsFeedPage() {
                   </button>
                 ))}
               </div>
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background lg:from-[#140c06] to-transparent" />
+              {canScrollChipsRight && (
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background lg:from-[#140c06] to-transparent" />
+              )}
+              {/* Click-only fallback for a mouse with no wheel/trackpad
+                  gesture that reaches this row -- a plain vertical wheel
+                  scroll does not natively move a horizontal overflow
+                  container (onChipRowWheel above handles that gesture
+                  when it happens), but a user must be able to reach every
+                  chip by clicking alone regardless. Fine-pointer (mouse)
+                  only -- touch keeps drag-only, no chevrons, per its own
+                  native scrolling. */}
+              {canScrollChipsLeft && (
+                <button
+                  type="button"
+                  onClick={() => scrollChipsBy(-1)}
+                  aria-label="Scroll categories left"
+                  className="hidden [@media(pointer:fine)]:flex absolute inset-y-0 left-0 items-center pl-0.5 pr-2 bg-gradient-to-r from-background lg:from-[#140c06] to-transparent"
+                >
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground lg:text-amber-300" />
+                </button>
+              )}
+              {canScrollChipsRight && (
+                <button
+                  type="button"
+                  onClick={() => scrollChipsBy(1)}
+                  aria-label="Scroll categories right"
+                  className="hidden [@media(pointer:fine)]:flex absolute inset-y-0 right-0 items-center pr-0.5 pl-2 bg-gradient-to-l from-background lg:from-[#140c06] to-transparent"
+                >
+                  <ChevronRight className="h-4 w-4 text-muted-foreground lg:text-amber-300" />
+                </button>
+              )}
             </div>
 
             {/* Search -- a bare 🔍 icon at every size now (was an
