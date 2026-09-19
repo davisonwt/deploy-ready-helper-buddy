@@ -10,6 +10,7 @@ import { resolveStallHotspots } from '@/lib/stalls/stallTypes'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import OwnerMenuItems from '@/components/owner/OwnerMenuItems'
 import SettlementConsentBanner from '@/components/dashboard/SettlementConsentBanner'
+import RadioBanner from '@/components/dashboard/RadioBanner'
 import type { StallHotspot, StallTier } from '@/lib/stalls/stallTypes'
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard'
 import { useActiveLiveSession } from '@/hooks/useActiveLiveSession'
@@ -181,8 +182,9 @@ export default function CockpitPage() {
   // everyone else); floats above the interior/CTA rather than living inside
   // either, since neither has a content column of its own to put it in.
   const consentNagContent = (
-    <div style={{ padding: '10px 12px 0' }}>
+    <div style={{ padding: '10px 12px 0' }} className="space-y-2">
       <SettlementConsentBanner />
+      <RadioBanner />
     </div>
   )
 

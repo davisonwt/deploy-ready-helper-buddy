@@ -6,6 +6,9 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { RequireVerification } from '@/components/auth/RequireVerification';
 import { RequireSettlementConsent } from '@/components/auth/RequireSettlementConsent';
 import Layout from '@/components/Layout';
+// Small (just an icon + stop button when the radio is on, null otherwise)
+// -- not lazy, no heavy engine behind it like GlobalLiveSessionOverlay.
+import GlobalRadioPlayer from '@/components/media/GlobalRadioPlayer';
 // Lazy -- this pulls in the whole Daily.co call engine (LiveStage/
 // LiveStageOverlay), which must NOT land in the main bundle every page
 // load pays for just because this is mounted unconditionally at the root.
@@ -225,6 +228,10 @@ const AppRoutes = () => (
         backgrounded-tab reload alike. See GlobalLiveSessionOverlay.tsx's
         own doc comment for the full "silent auto-rejoin" design. */}
     <Suspense fallback={null}><GlobalLiveSessionOverlay /></Suspense>
+    {/* Grove Station radio -- module-level store (src/lib/media/radioPlayback.ts)
+        holds the actual <audio> element, mounted here for the same reason
+        as GlobalLiveSessionOverlay above: never unmounted by in-app nav. */}
+    <GlobalRadioPlayer />
     <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/login" element={<LoginPage />} />
