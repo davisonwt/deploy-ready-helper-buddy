@@ -56,9 +56,22 @@ interface ChatRoomProps {
    * upload, moderation, send) is identical either way.
    */
   recordGesture?: 'tap' | 'hold';
+  /**
+   * false (default): render this room's own back/title/participants row and
+   * Invite/$ buttons -- /chatapp's existing behavior, unchanged. true:
+   * suppress that row and those two buttons because the parent page already
+   * has its own back button and title (ConversationsPage does). Without
+   * this, /conversations showed a second back-arrow/title bar directly
+   * under its own, plus Invite and $ -- what got mistaken for "the old page
+   * UI" while diagnosing a real RLS bug, when it was actually just this
+   * component's own header rendering unconditionally regardless of host.
+   * Mic/video recording, the call button, Delete Room and the paperclip
+   * attach stay -- /conversations has no other way to trigger them.
+   */
+  embedded?: boolean;
 }
 
-export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, instructorId, rail, dropAnimation, recordGesture = 'tap' }) => {
+export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, instructorId, rail, dropAnimation, recordGesture = 'tap', embedded = false }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { startCall, currentCall, endCall } = useCallManager();
@@ -781,6 +794,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
           the message list scrolls underneath it. */}
       <div className="sticky top-0 z-20 border-b border-[#4FA876]/15 bg-[#0E1B15]/95 backdrop-blur px-6 py-4">
         <div className="flex items-center justify-between gap-4">
+          {!embedded && (
           <div className="flex items-center gap-4 min-w-0">
             <Button
               variant="ghost"
@@ -857,8 +871,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
               </div>
             </div>
           </div>
-          
-          
+          )}
+
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
             <Button
@@ -965,6 +979,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
             </Button>
             
             
+            {!embedded && (
             <Button
               variant="ghost"
               size="sm"
@@ -972,7 +987,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
             >
               Invite
             </Button>
-            
+            )}
+
             {roomInfo?.created_by === user?.id && (
               <Button
                 variant="ghost"
@@ -995,6 +1011,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
               </Button>
             )}
             
+            {!embedded && (
             <Button
               variant="ghost"
               size="sm"
@@ -1002,7 +1019,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
             >
               <DollarSign className="h-4 w-4" />
             </Button>
-            
+            )}
+
             <label className="cursor-pointer">
               <input
                 type="file"

@@ -180,7 +180,7 @@ export default function ConversationsPage() {
         )}
 
         <div className="min-h-0 flex-1">
-          <ChatRoom roomId={openId} onBack={backToList} backLabel="Conversations" recordGesture="hold" />
+          <ChatRoom roomId={openId} onBack={backToList} backLabel="Conversations" recordGesture="hold" embedded />
         </div>
       </div>
     );
