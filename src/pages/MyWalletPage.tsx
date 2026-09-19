@@ -196,16 +196,31 @@ export default function MyWalletPage() {
         </div>
       </header>
 
-      {/* Balance */}
+      {/* Balance.
+          NOT "Available balance": nothing here can be taken out today. No
+          self-service withdrawal path exists -- every payout so far has been
+          sent by hand by a gosat -- so calling it "available" told a member
+          something untrue about their own money. This is also NOT crypto: it
+          is a sum of earning_credit rows in balance_ledger, denominated in
+          USD, and no USDC is held against it. */}
       <Card>
         <CardHeader>
-          <CardTitle>Available balance</CardTitle>
-          <CardDescription>What Sow2Grow holds for you. Top-ups credit here; bestowals debit here.</CardDescription>
+          <CardTitle>Your earnings, held by Sow2Grow</CardTitle>
+          <CardDescription>
+            Money you have earned from bestowals. Sow2Grow is holding it for you.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-3">
           <div className="text-4xl font-bold text-primary">
             {balanceLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : formatConvertedWithUsd(balanceAvailable ?? 0, displayCurrency, rates)}
           </div>
+          <Alert>
+            <AlertDescription className="text-sm">
+              <strong>This is not crypto, and you cannot withdraw it yourself yet.</strong>{' '}
+              Payouts are sent by hand by a gosat, and the minimum is $20. When you reach it,
+              message a gosat in the app and they will arrange it with you.
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
 
@@ -214,7 +229,9 @@ export default function MyWalletPage() {
         <CardHeader className="flex flex-row items-start justify-between space-y-0">
           <div>
             <CardTitle>Payout destination</CardTitle>
-            <CardDescription>Where Sow2Grow sends your money.</CardDescription>
+            {/* Was "Where Sow2Grow sends your money" -- present tense, and a
+                promise nothing keeps yet: no payout runs automatically. */}
+            <CardDescription>Where your money will be sent once a gosat arranges a payout. Nothing is sent automatically.</CardDescription>
           </div>
           <Button asChild variant="outline" size="sm">
             <Link to="/settings/payouts"><Settings2 className="h-4 w-4 mr-1" /> Change</Link>
