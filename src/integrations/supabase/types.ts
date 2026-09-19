@@ -13941,6 +13941,7 @@ export type Database = {
           published: boolean
           story: string | null
           story_pdf_path: string | null
+          story_photo_path: string | null
           tagline: string | null
           tier: string
           tiles: Json
@@ -13961,6 +13962,7 @@ export type Database = {
           published?: boolean
           story?: string | null
           story_pdf_path?: string | null
+          story_photo_path?: string | null
           tagline?: string | null
           tier?: string
           tiles?: Json
@@ -13981,6 +13983,7 @@ export type Database = {
           published?: boolean
           story?: string | null
           story_pdf_path?: string | null
+          story_photo_path?: string | null
           tagline?: string | null
           tier?: string
           tiles?: Json

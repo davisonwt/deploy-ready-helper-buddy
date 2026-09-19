@@ -1,5 +1,6 @@
 import { Textarea } from '@/components/ui/textarea';
 import StallPdfUpload, { type StallPdfResult } from '@/components/stalls/StallPdfUpload';
+import StoryPhotoUpload, { type StoryPhotoResult } from '@/components/stalls/StoryPhotoUpload';
 
 interface Props {
   /** user id -- StallPdfUpload always writes `${pathPrefix}/story.pdf`. */
@@ -8,6 +9,8 @@ interface Props {
   onStoryChange: (value: string) => void;
   storyPdf: StallPdfResult | null;
   onStoryPdfChange: (value: StallPdfResult | null) => void;
+  storyPhoto: StoryPhotoResult | null;
+  onStoryPhotoChange: (value: StoryPhotoResult | null) => void;
 }
 
 /**
@@ -16,10 +19,16 @@ interface Props {
  * (StoryEditSheet.tsx) can open the SAME editor in place rather than a
  * second one with its own drifting copy of these fields.
  */
-export default function StoryFields({ pathPrefix, story, onStoryChange, storyPdf, onStoryPdfChange }: Props) {
+export default function StoryFields({ pathPrefix, story, onStoryChange, storyPdf, onStoryPdfChange, storyPhoto, onStoryPhotoChange }: Props) {
   return (
     <div>
       <label className="text-sm font-medium mb-2 block text-amber-100/80">My Story (optional)</label>
+      <div className="mb-3 flex items-center gap-3">
+        <StoryPhotoUpload pathPrefix={pathPrefix} value={storyPhoto} onChange={onStoryPhotoChange} />
+        <p className="text-xs text-amber-100/50">
+          A photo of you -- the story is about a person, so shows above it. Optional.
+        </p>
+      </div>
       <p className="text-xs text-amber-100/50 mb-1.5">
         Shown under the MY STORY button inside your stall. Blank lines start a new paragraph.
         Type a line in ALL CAPS to make it a heading — everything renders exactly as typed, so write it the way you want it read.

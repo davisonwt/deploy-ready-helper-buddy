@@ -228,6 +228,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
   // undefined = still loading; null = loaded, nothing there; string = loaded, has content.
   const [bio, setBio] = useState<string | null | undefined>(undefined);
   const [storyPdfUrl, setStoryPdfUrl] = useState<string | null | undefined>(undefined);
+  const [storyPhotoUrl, setStoryPhotoUrl] = useState<string | null | undefined>(undefined);
   const [editingStory, setEditingStory] = useState(false);
   const [visible, setVisible] = useState(false);
   const sheetNavigate = useNavigate();
@@ -267,9 +268,10 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
     (async () => {
       if (STATIC_TEXT_KINDS.has(kind)) { setItems([]); return; }
       if (kind === 'story') {
-        const { data: stallRow } = await supabase.from('stalls').select('story, story_pdf_path').eq('user_id', ownerId).maybeSingle();
-        const row = stallRow as { story?: string | null; story_pdf_path?: string | null } | null;
+        const { data: stallRow } = await supabase.from('stalls').select('story, story_pdf_path, story_photo_path').eq('user_id', ownerId).maybeSingle();
+        const row = stallRow as { story?: string | null; story_pdf_path?: string | null; story_photo_path?: string | null } | null;
         if (alive) setStoryPdfUrl(row?.story_pdf_path ?? null);
+        if (alive) setStoryPhotoUrl(row?.story_photo_path ?? null);
 
         const story = row?.story;
         if (story && story.trim()) {
@@ -530,14 +532,30 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
               {text || 'Coming soon.'}
             </div>
           ) : kind === 'story' ? (
-            bio === undefined || storyPdfUrl === undefined ? (
+            bio === undefined || storyPdfUrl === undefined || storyPhotoUrl === undefined ? (
               <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-amber-100/40" /></div>
-            ) : storyPdfUrl ? (
-              <StoryPdfViewer url={storyPdfUrl} />
-            ) : bio ? (
-              <div className="py-4">{renderStory(bio)}</div>
             ) : (
-              <EmptyState text={EMPTY_TEXT.story!} isOwner={isOwner} onAddOne={() => setEditingStory(true)} addOneLabel="Write your story" />
+              <div className="py-4">
+                {/* The story is about a person -- shown above the text/PDF/
+                    empty-state regardless of which of those renders, and
+                    just as absent as today when there is no photo. */}
+                {storyPhotoUrl && (
+                  <div className="mb-4 flex justify-center">
+                    <img
+                      src={storyPhotoUrl}
+                      alt=""
+                      className="h-28 w-28 rounded-full border-2 border-amber-500/25 object-cover shadow-lg"
+                    />
+                  </div>
+                )}
+                {storyPdfUrl ? (
+                  <StoryPdfViewer url={storyPdfUrl} />
+                ) : bio ? (
+                  renderStory(bio)
+                ) : (
+                  <EmptyState text={EMPTY_TEXT.story!} isOwner={isOwner} onAddOne={() => setEditingStory(true)} addOneLabel="Write your story" />
+                )}
+              </div>
             )
           ) : items === null ? (
             <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-amber-100/40" /></div>
@@ -630,9 +648,10 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
         <StoryEditSheet
           ownerId={ownerId}
           onClose={() => setEditingStory(false)}
-          onSaved={(newStory, newPdfUrl) => {
+          onSaved={(newStory, newPdfUrl, newPhotoUrl) => {
             setBio(newStory);
             setStoryPdfUrl(newPdfUrl);
+            setStoryPhotoUrl(newPhotoUrl);
             setEditingStory(false);
           }}
         />

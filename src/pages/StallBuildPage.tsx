@@ -14,6 +14,7 @@ import { useContainImageRect } from '@/hooks/useContainImageRect';
 import { shareStallLink } from '@/lib/referral';
 import StallImageUpload, { type StallImageResult } from '@/components/stalls/StallImageUpload';
 import { type StallPdfResult } from '@/components/stalls/StallPdfUpload';
+import { type StoryPhotoResult } from '@/components/stalls/StoryPhotoUpload';
 import StoryFields from '@/components/stalls/StoryFields';
 import HotspotEditor, { newHotspotId } from '@/components/stalls/HotspotEditor';
 import MyProductsPage from '@/pages/MyProductsPage';
@@ -133,6 +134,7 @@ export default function StallBuildPage() {
   const [tagline, setTagline] = useState('');
   const [story, setStory] = useState('');
   const [storyPdf, setStoryPdf] = useState<StallPdfResult | null>(null);
+  const [storyPhoto, setStoryPhoto] = useState<StoryPhotoResult | null>(null);
   const [front, setFront] = useState<StallImageResult | null>(null);
   const [interior, setInterior] = useState<StallImageResult | null>(null);
   const [tiles, setTiles] = useState<TileDraft[]>([emptyTile(), emptyTile(), emptyTile()]);
@@ -202,6 +204,10 @@ export default function StallBuildPage() {
         if (data.story_pdf_path) {
           // Fixed upload path (StallPdfUpload always writes `${user.id}/story.pdf`) -- deterministic, no need to parse it back out of the URL.
           setStoryPdf({ url: data.story_pdf_path, storagePath: `${user.id}/story.pdf`, fileName: 'story.pdf' });
+        }
+        if (data.story_photo_path) {
+          // Same deterministic-path reasoning as story_pdf_path above.
+          setStoryPhoto({ url: data.story_photo_path, storagePath: `${user.id}/story-photo.webp` });
         }
         if (data.front_image_path) setFront({ url: data.front_image_path, storagePath: null });
         if (data.interior_image_path) setInterior({ url: data.interior_image_path, storagePath: null });
@@ -273,6 +279,7 @@ export default function StallBuildPage() {
           tagline: tagline.trim() || null,
           story: story.trim() || null,
           story_pdf_path: storyPdf?.url ?? null,
+          story_photo_path: storyPhoto?.url ?? null,
           front_image_path: front.url,
           interior_image_path: interior.url,
           tiles: tilesPayload as unknown as Json,
@@ -386,7 +393,7 @@ export default function StallBuildPage() {
             <label className="text-sm font-medium mb-2 block text-amber-100/80">Tagline (optional)</label>
             <Textarea value={tagline} onChange={(e) => setTagline(e.target.value)} maxLength={160} rows={2} placeholder="Words that heal, songs that awaken." className="bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30" />
           </div>
-          <StoryFields pathPrefix={pathPrefix} story={story} onStoryChange={setStory} storyPdf={storyPdf} onStoryPdfChange={setStoryPdf} />
+          <StoryFields pathPrefix={pathPrefix} story={story} onStoryChange={setStory} storyPdf={storyPdf} onStoryPdfChange={setStoryPdf} storyPhoto={storyPhoto} onStoryPhotoChange={setStoryPhoto} />
         </div>
       )}
 

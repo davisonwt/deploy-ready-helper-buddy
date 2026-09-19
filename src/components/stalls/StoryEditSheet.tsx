@@ -4,13 +4,14 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import StoryFields from './StoryFields';
 import type { StallPdfResult } from './StallPdfUpload';
+import type { StoryPhotoResult } from './StoryPhotoUpload';
 
 interface Props {
   ownerId: string;
   onClose: () => void;
   /** Lets the caller (StallHotspotSheet) update its own already-rendered
    *  story content directly from the save result, instead of a refetch. */
-  onSaved: (story: string | null, storyPdfUrl: string | null) => void;
+  onSaved: (story: string | null, storyPdfUrl: string | null, storyPhotoUrl: string | null) => void;
 }
 
 /**
@@ -19,28 +20,33 @@ interface Props {
  * StallChatSheet.tsx, stacked one level higher since it opens from inside
  * StallHotspotSheet, which is itself an overlay. Never navigate() to
  * /stall/build. Reuses StoryFields (the exact same Textarea +
- * StallPdfUpload StallBuildPage's own Setup step renders) rather than a
- * second set of story fields, and writes only stalls.story/
- * story_pdf_path -- not StallBuildPage's handlePublish, which upserts the
- * whole row and requires front/interior/hotspots/categories that a
- * story-only edit has no reason to load.
+ * StallPdfUpload + StoryPhotoUpload StallBuildPage's own Setup step
+ * renders) rather than a second set of story fields, and writes only
+ * stalls.story/story_pdf_path/story_photo_path -- not StallBuildPage's
+ * handlePublish, which upserts the whole row and requires
+ * front/interior/hotspots/categories that a story-only edit has no
+ * reason to load.
  */
 export default function StoryEditSheet({ ownerId, onClose, onSaved }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [story, setStory] = useState('');
   const [storyPdf, setStoryPdf] = useState<StallPdfResult | null>(null);
+  const [storyPhoto, setStoryPhoto] = useState<StoryPhotoResult | null>(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { data } = await supabase.from('stalls').select('story, story_pdf_path').eq('user_id', ownerId).maybeSingle();
-      const row = data as { story?: string | null; story_pdf_path?: string | null } | null;
+      const { data } = await supabase.from('stalls').select('story, story_pdf_path, story_photo_path').eq('user_id', ownerId).maybeSingle();
+      const row = data as { story?: string | null; story_pdf_path?: string | null; story_photo_path?: string | null } | null;
       if (!alive) return;
       setStory(row?.story ?? '');
       if (row?.story_pdf_path) {
         // Fixed upload path (StallPdfUpload always writes `${ownerId}/story.pdf`) -- deterministic, no need to parse it back out of the URL.
         setStoryPdf({ url: row.story_pdf_path, storagePath: `${ownerId}/story.pdf`, fileName: 'story.pdf' });
+      }
+      if (row?.story_photo_path) {
+        setStoryPhoto({ url: row.story_photo_path, storagePath: `${ownerId}/story-photo.webp` });
       }
       setLoading(false);
     })();
@@ -52,11 +58,11 @@ export default function StoryEditSheet({ ownerId, onClose, onSaved }: Props) {
     try {
       const { error } = await supabase
         .from('stalls')
-        .update({ story: story.trim() || null, story_pdf_path: storyPdf?.url ?? null })
+        .update({ story: story.trim() || null, story_pdf_path: storyPdf?.url ?? null, story_photo_path: storyPhoto?.url ?? null })
         .eq('user_id', ownerId);
       if (error) throw error;
       toast.success('Story saved');
-      onSaved(story.trim() || null, storyPdf?.url ?? null);
+      onSaved(story.trim() || null, storyPdf?.url ?? null, storyPhoto?.url ?? null);
     } catch (e: unknown) {
       toast.error('Could not save your story', { description: e instanceof Error ? e.message : undefined });
     } finally {
@@ -78,7 +84,15 @@ export default function StoryEditSheet({ ownerId, onClose, onSaved }: Props) {
           {loading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-amber-100/40" /></div>
           ) : (
-            <StoryFields pathPrefix={ownerId} story={story} onStoryChange={setStory} storyPdf={storyPdf} onStoryPdfChange={setStoryPdf} />
+            <StoryFields
+              pathPrefix={ownerId}
+              story={story}
+              onStoryChange={setStory}
+              storyPdf={storyPdf}
+              onStoryPdfChange={setStoryPdf}
+              storyPhoto={storyPhoto}
+              onStoryPhotoChange={setStoryPhoto}
+            />
           )}
         </div>
         <div className="shrink-0 border-t border-amber-500/15 px-5 py-3">
