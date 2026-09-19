@@ -124,8 +124,15 @@ function DemoInteriorView({ onClose, onHotspotTap }: { onClose: () => void; onHo
     return () => { document.body.style.overflow = prev; };
   }, []);
 
+  // bg-black/10 read as almost no overlay at all -- pale amber-100 text
+  // sitting directly on the photo's own light wood grain, which is the
+  // "barely readable" report. Darkened the disc itself (still lets the
+  // wood grain show through, just dimmed) rather than touching the art or
+  // relying on text-shadow alone, which doesn't hold up against the
+  // lightest patches of grain. Border strengthened to stay visible against
+  // the darker fill.
   const hotspotButtonClass =
-    "absolute outline-none flex items-center justify-center rounded-full border border-amber-300/50 bg-black/10 hover:bg-amber-500/20 transition-colors";
+    "absolute outline-none flex items-center justify-center rounded-full border border-amber-300/70 bg-black/55 hover:bg-amber-500/30 transition-colors";
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black flex flex-col overflow-hidden max-lg:portrait:overflow-y-auto">
@@ -154,7 +161,7 @@ function DemoInteriorView({ onClose, onHotspotTap }: { onClose: () => void; onHo
                   className={hotspotButtonClass}
                   style={{ left: `${h.x}%`, top: `${h.y}%`, width: `${h.w}%`, height: `${h.h}%`, minWidth: 44, minHeight: 44 }}
                 >
-                  <span className="text-[10px] font-bold tracking-wide text-amber-100 drop-shadow">{h.label}</span>
+                  <span className="text-[10px] font-bold tracking-wide text-amber-100 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">{h.label}</span>
                 </button>
               ))}
             </div>
@@ -180,7 +187,7 @@ function DemoInteriorView({ onClose, onHotspotTap }: { onClose: () => void; onHo
                 height: (h.h / 100) * rect.height,
               }}
             >
-              <span className="text-xs font-bold tracking-wide text-amber-100 drop-shadow">{h.label}</span>
+              <span className="text-xs font-bold tracking-wide text-amber-100 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">{h.label}</span>
             </button>
           ))}
           <button
