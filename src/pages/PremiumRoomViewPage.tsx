@@ -751,7 +751,13 @@ const PremiumRoomViewPage: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0" style={{ height: 560 }}>
-              <ChatRoom roomId={room.chat_room_id} onBack={() => { /* stays on page */ }} />
+              {/* showHeader/showToolbar/allowDeleteRoom all explicit here to
+                  preserve this page's existing behavior unchanged under
+                  ChatRoom's new default-off toolbar (2026-09-19) -- this
+                  page has no other way to reach recording/call/mute/Delete
+                  Room, same reasoning /conversations and the stall chat
+                  sheet used for showToolbar alone. */}
+              <ChatRoom roomId={room.chat_room_id} onBack={() => { /* stays on page */ }} showHeader showToolbar allowDeleteRoom />
             </CardContent>
           </Card>
         )}

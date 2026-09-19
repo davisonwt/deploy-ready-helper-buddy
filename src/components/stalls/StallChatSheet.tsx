@@ -16,9 +16,11 @@ interface Props {
  *
  * Renders the actual /conversations chat UI, not a second one --
  * ChatRoom has no dependency on being hosted by ConversationsPage (plain
- * roomId/onBack props, own data fetching). `embedded` suppresses
- * ChatRoom's own back/title row (redundant here), which is why this sheet
- * supplies its own close button.
+ * roomId/onBack props, own data fetching). ChatRoom's own header/toolbar
+ * default OFF (see ChatRoom.tsx's showHeader/showToolbar/allowDeleteRoom),
+ * so this sheet supplies its own close button and opts into showToolbar
+ * only -- recording/call/mute, never ChatRoom's own back/title row
+ * (redundant here) or Delete Room.
  */
 export default function StallChatSheet({ roomId, onClose }: Props) {
   return (
@@ -38,7 +40,7 @@ export default function StallChatSheet({ roomId, onClose }: Props) {
         </div>
         <div className="min-h-0 flex-1">
           {roomId ? (
-            <ChatRoom roomId={roomId} onBack={onClose} embedded recordGesture="hold" />
+            <ChatRoom roomId={roomId} onBack={onClose} showToolbar recordGesture="hold" />
           ) : (
             <div className="flex h-full items-center justify-center">
               <Loader2 className="h-6 w-6 animate-spin text-amber-300" />

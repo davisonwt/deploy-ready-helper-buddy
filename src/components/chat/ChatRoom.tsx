@@ -59,21 +59,45 @@ interface ChatRoomProps {
    */
   recordGesture?: 'tap' | 'hold';
   /**
-   * false (default): render this room's own back/title/participants row and
-   * Invite/$ buttons -- /chatapp's existing behavior, unchanged. true:
-   * suppress that row and those two buttons because the parent page already
-   * has its own back button and title (ConversationsPage does). Without
-   * this, /conversations showed a second back-arrow/title bar directly
-   * under its own, plus Invite and $ -- what got mistaken for "the old page
-   * UI" while diagnosing a real RLS bug, when it was actually just this
-   * component's own header rendering unconditionally regardless of host.
-   * Mic/video recording, the call button, Delete Room and the paperclip
-   * attach stay -- /conversations has no other way to trigger them.
+   * Default false: no back/title/participants row, no Invite, no $. A host
+   * that already owns its own header (ConversationsPage, StallChatSheet)
+   * leaves this off. A host that has no header of its own and needs
+   * ChatRoom's (PremiumRoomViewPage) opts in explicitly.
    */
-  embedded?: boolean;
+  showHeader?: boolean;
+  /**
+   * Default false: no mic/video record, call, or mute button. A host opts
+   * in only when it has no other way to trigger recording/calling -- true
+   * for /conversations and the stall chat sheet (recordGesture handles
+   * how recording itself behaves once shown), true for PremiumRoomViewPage.
+   *
+   * This one used to be unconditional regardless of `embedded`, which is
+   * exactly how "Delete Room" (see allowDeleteRoom below) kept reappearing
+   * on hosts that never asked for it: 2026-09-19, three times in one day
+   * (the duplicate-header fix on /conversations, the stall chat sheet a
+   * few hours later, then Global Chat) a host had to notice and suppress
+   * this component's own chrome piece by piece. Inverted here so nothing
+   * renders unless a host asks for it by name -- a future host that
+   * forgets to ask gets a bare message list and composer, never chrome it
+   * didn't request.
+   */
+  showToolbar?: boolean;
+  /**
+   * Default false. Separate from showToolbar on purpose: Delete Room is
+   * destructive and host-specific (PremiumRoomViewPage's room creator may
+   * legitimately want it; /conversations and the stall sheet never should),
+   * so a host asks for the whole toolbar and, only if it also genuinely
+   * needs deletion, for this too. Still further gated at render time on
+   * room_type/created_by/is_system_room -- this prop only says the HOST
+   * permits the button to exist at all. The database is the real
+   * boundary regardless (chat_rooms_delete / chat_participants_delete RLS,
+   * 20260919160000_system_room_delete_immune.sql) -- this prop and that
+   * gating are cosmetic on top of it, not instead of it.
+   */
+  allowDeleteRoom?: boolean;
 }
 
-export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, instructorId, rail, dropAnimation, recordGesture = 'tap', embedded = false }) => {
+export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, instructorId, rail, dropAnimation, recordGesture = 'tap', showHeader = false, showToolbar = false, allowDeleteRoom = false }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { startCall, currentCall, endCall } = useCallManager();
@@ -831,7 +855,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
           the message list scrolls underneath it. */}
       <div className="sticky top-0 z-20 border-b border-[#4FA876]/15 bg-[#0E1B15]/95 backdrop-blur px-6 py-4">
         <div className="flex items-center justify-between gap-4">
-          {!embedded && (
+          {showHeader && (
           <div className="flex items-center gap-4 min-w-0">
             <Button
               variant="ghost"
@@ -912,6 +936,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
+            {showToolbar && (
+            <>
             <Button
               variant={recorder.recording && recorder.kind === 'audio' ? 'destructive' : 'ghost'}
               size="sm"
@@ -1024,9 +1050,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
             >
               {muted ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
             </Button>
+            </>
+            )}
 
-
-            {!embedded && (
+            {showHeader && (
             <Button
               variant="ghost"
               size="sm"
@@ -1036,21 +1063,24 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
             </Button>
             )}
 
-            {/* Not for direct (1:1) rooms, ever, and not embedded. Found
-                2026-09-19: get_or_create_direct_room sets created_by to
-                whoever RPC'd it first -- the visitor, for the stall-chat
-                button -- so "creator" here does not mean "the sower's
-                room" or anything like ownership; it just means "whoever
-                tapped first," and this button let that person unilaterally
-                wipe the room, its messages, and the other participant's
-                membership. A 1:1 DM has no one who should hold that power
-                over the other side. Group rooms keep it -- a real creator/
-                moderator concept still makes sense there. RLS hardened to
-                match (chat_rooms_delete now excludes room_type='direct'
-                even for the creator; admin/gosat unaffected) -- this
-                button being hidden was never the actual security boundary,
-                just the visible one. */}
-            {!embedded && roomInfo?.room_type !== 'direct' && roomInfo?.created_by === user?.id && (
+            {/* Not for direct (1:1) rooms, ever, not a system room, ever
+                (Global Chat: is_system_room=true -- nobody deletes it, not
+                its creator, not gosat), and not unless the host explicitly
+                allows it (allowDeleteRoom). Found 2026-09-19:
+                get_or_create_direct_room sets created_by to whoever RPC'd
+                it first -- the visitor, for the stall-chat button -- so
+                "creator" here does not mean "the sower's room" or anything
+                like ownership; it just means "whoever tapped first," and
+                this button let that person unilaterally wipe the room, its
+                messages, and the other participant's membership. A 1:1 DM
+                has no one who should hold that power over the other side.
+                Group rooms keep it -- a real creator/moderator concept
+                still makes sense there. RLS is the real boundary regardless
+                of any of these three conditions (chat_rooms_delete /
+                chat_participants_delete, 20260919160000_system_room_delete_immune.sql)
+                -- this button being hidden was never the actual security
+                boundary, just the visible one. */}
+            {allowDeleteRoom && roomInfo?.room_type !== 'direct' && !roomInfo?.is_system_room && roomInfo?.created_by === user?.id && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -1072,7 +1102,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
               </Button>
             )}
             
-            {!embedded && (
+            {showHeader && (
             <Button
               variant="ghost"
               size="sm"
