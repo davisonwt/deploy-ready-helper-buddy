@@ -129,7 +129,7 @@ test.describe.serial('Radio reliability -- real listening conditions', () => {
   test.skip(!EMAIL || !PASS, 'TEST_A_EMAIL/PASSWORD required in .env.test.');
 
   test('1. long desktop session: 10+ transitions over 30+ real minutes, backgrounded for part of it', async ({ page, context }) => {
-    test.setTimeout(60 * 60_000);
+    test.setTimeout(80 * 60_000);
     const logs: string[] = [];
     attachRadioLogCapture(page, logs);
 
@@ -146,30 +146,37 @@ test.describe.serial('Radio reliability -- real listening conditions', () => {
       .poll(() => logs.some((l) => l.includes('event: playing')), { timeout: 30000, message: 'no playing event logged yet' })
       .toBe(true);
 
-    // Phase A: 16 real minutes foregrounded.
-    console.log('[harness] phase A: 16 minutes foregrounded');
-    await page.waitForTimeout(16 * 60_000);
+    // Phase A: 22 real minutes foregrounded.
+    console.log('[harness] phase A: 22 minutes foregrounded');
+    await page.waitForTimeout(22 * 60_000);
     console.log(`[harness] phase A done, transitions so far: ${countOccurrences(logs, 'event: playing')}`);
 
-    // Phase B: background the radio tab behind a second real tab for 10
+    // Phase B: background the radio tab behind a second real tab for 12
     // real minutes -- document.visibilityState genuinely flips to
     // 'hidden' on the radio page, real Chromium timer throttling applies.
-    console.log('[harness] phase B: backgrounding the radio tab for 10 minutes');
+    console.log('[harness] phase B: backgrounding the radio tab for 12 minutes');
     const blank = await context.newPage();
     await blank.goto('about:blank');
     await blank.bringToFront();
-    await page.waitForTimeout(10 * 60_000);
+    await page.waitForTimeout(12 * 60_000);
     console.log('[harness] phase B: bringing radio tab back to front');
     await page.bringToFront();
     await page.waitForTimeout(15_000); // let visibilitychange resync run
     await blank.close();
     console.log(`[harness] phase B done, transitions so far: ${countOccurrences(logs, 'event: playing')}`);
 
-    // Phase C: another 16 real minutes foregrounded, to comfortably clear
-    // 10+ total transitions (avg track ~230s => ~10.4 over 40 real
-    // minutes total) and confirm steady state after the background stretch.
-    console.log('[harness] phase C: 16 more minutes foregrounded');
-    await page.waitForTimeout(16 * 60_000);
+    // Phase C: another 26 real minutes foregrounded. Total budget ~60 real
+    // minutes, checked against the actual ordered duration list (49
+    // tracks, queried directly from products -- pool average 238s/track,
+    // total cycle ~194min), not a guess: a prior run landed on the pool's
+    // own worst 6-track run (430+404+288+348+368+391=2229s, ~37min) and
+    // only cleared 6 transitions in its 42-minute window. Extended to a
+    // full 60-minute window starting at that same worst point, the cycle
+    // wraps back into the pool's shorter tracks and clears 11 -- so 60
+    // real minutes clears the required 10 even starting from the
+    // documented worst case in this pool, not just on average.
+    console.log('[harness] phase C: 26 more minutes foregrounded');
+    await page.waitForTimeout(26 * 60_000);
 
     const playingCount = countOccurrences(logs, 'event: playing');
     const endedCount = countOccurrences(logs, 'event: ended');
