@@ -143,12 +143,12 @@ export default function StallsFeedPage() {
   // Search: client-side only, on top of whatever the active chip already
   // fetched -- no extra round-trip, and "combined with the active
   // category chip" falls out for free since search only ever narrows
-  // `cards`, never widens past what the chip query returned. Mobile-only
-  // toggle: the 🔍 icon expands into this same input, replacing the chip
-  // row while open (no room for both on a narrow screen); desktop always
-  // shows the input, so this flag never gates it there (max-lg: below).
+  // `cards`, never widens past what the chip query returned. The 🔍 icon
+  // expands into this same input at every size (was desktop-only-open,
+  // mobile-only-collapsed), replacing the chip row while open since
+  // there's no room for both regardless of viewport width.
   const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(() => searchParams.has('q'));
+  const [searchOpen, setSearchOpen] = useState(() => searchParams.has('q'));
   // "New seeds" (supabase/migrations/20260912140000_stall_visits.sql) --
   // stall_user_id -> {total, latest}, from the same RPC StallInteriorView
   // uses for its own hotspot dots. Fetched once per signed-in viewer, not
@@ -444,49 +444,63 @@ export default function StallsFeedPage() {
               shrink the chip strip below its own min-content width (the
               classic flexbox overflow bug), which previously pushed the ✕
               button off the right edge on mobile; still needed now that
-              the row is in-flow rather than absolute. */}
+              the row is in-flow rather than absolute.
+              2026-09-19: desktop used to wrap the chips onto multiple rows
+              (lg:flex-wrap) and always show the full search input --
+              found live, still wrapping into four rows on production, no
+              commit anywhere in this repo's history ever actually changed
+              this block despite an earlier report that it had. One
+              scrolling row + edge fade + a collapsed search icon now
+              applies at every size, not just mobile -- same behaviour,
+              same code path, nothing left for a screen this wide to fall
+              back to. */}
           <div className="shrink-0 min-w-0 flex items-center gap-2 px-4 py-3 lg:bg-[#140c06] lg:border-b lg:border-amber-500/15">
-            {/* Chips -- hidden on mobile only while the search input is
-                expanded (no room for both at that width); always shown on
-                desktop regardless of the mobile-only toggle state. */}
-            <div className={`flex-1 min-w-0 flex gap-2 overflow-x-auto lg:flex-wrap lg:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${mobileSearchOpen ? 'max-lg:hidden' : ''}`}>
-              {CHIPS.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setChip(c.id)}
-                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors ${
-                    chip === c.id
-                      ? 'bg-primary text-primary-foreground lg:bg-amber-500 lg:text-amber-950'
-                      : 'bg-muted text-muted-foreground hover:bg-accent lg:bg-amber-500/10 lg:text-amber-200 lg:border lg:border-amber-500/25 lg:hover:bg-amber-500/20'
-                  }`}
-                >
-                  {c.label}
-                </button>
-              ))}
+            {/* Chips -- one horizontal scrolling row at every breakpoint,
+                hidden while search is expanded (no room for both at any
+                width once search takes the icon's place). The trailing
+                fade is a decoration hinting "more" off the right edge;
+                pointer-events-none so it never blocks a tap/scroll under it. */}
+            <div className={`relative flex-1 min-w-0 ${searchOpen ? 'hidden' : ''}`}>
+              <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {CHIPS.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setChip(c.id)}
+                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors ${
+                      chip === c.id
+                        ? 'bg-primary text-primary-foreground lg:bg-amber-500 lg:text-amber-950'
+                        : 'bg-muted text-muted-foreground hover:bg-accent lg:bg-amber-500/10 lg:text-amber-200 lg:border lg:border-amber-500/25 lg:hover:bg-amber-500/20'
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background lg:from-[#140c06] to-transparent" />
             </div>
 
-            {/* Search -- desktop: always an icon+input pill, left of ✕.
-                Mobile: a bare 🔍 icon that expands into the same pill
-                (replacing the chip row above while open) with its own
-                collapse ✕, which also clears the query. */}
-            <div className="lg:hidden shrink-0">
-              {mobileSearchOpen ? (
-                <div className="flex-1 min-w-0 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5">
-                  <Search className="h-4 w-4 shrink-0 text-white/70" />
+            {/* Search -- a bare 🔍 icon at every size now (was an
+                always-open input pill on desktop, crowding the chip row
+                down to nothing) that expands into the same pill, with its
+                own collapse ✕ which also clears the query. */}
+            <div className="shrink-0">
+              {searchOpen ? (
+                <div className="flex-1 min-w-0 flex items-center gap-1.5 rounded-full bg-black/50 lg:bg-amber-500/10 lg:border lg:border-amber-500/25 px-3 py-1.5">
+                  <Search className="h-4 w-4 shrink-0 text-white/70 lg:text-amber-300" />
                   <input
                     type="search"
                     autoFocus
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder={chip === 'orchard' ? "Search orchards…" : "Search stalls…"}
-                    className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
+                    className="w-36 lg:w-48 bg-transparent text-sm text-white lg:text-amber-100 placeholder:text-white/50 lg:placeholder:text-amber-300/50 outline-none"
                   />
                   <button
                     type="button"
-                    onClick={() => { setMobileSearchOpen(false); setSearch(''); }}
+                    onClick={() => { setSearchOpen(false); setSearch(''); }}
                     aria-label="Close search"
-                    className="shrink-0 text-white/70 hover:text-white"
+                    className="shrink-0 text-white/70 hover:text-white lg:text-amber-300 lg:hover:text-amber-100"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -494,34 +508,24 @@ export default function StallsFeedPage() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setMobileSearchOpen(true)}
+                  onClick={() => setSearchOpen(true)}
                   aria-label="Search stalls"
-                  className="flex items-center justify-center rounded-full bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
+                  className="flex items-center justify-center rounded-full bg-black/50 p-2 text-white hover:bg-black/70 lg:bg-amber-500/10 lg:text-amber-300 lg:border lg:border-amber-500/25 lg:hover:bg-amber-500/20 transition-colors"
                 >
                   <Search className="h-4 w-4" />
                 </button>
               )}
             </div>
-            <div className="hidden lg:flex items-center gap-1.5 shrink-0 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1.5">
-              <Search className="h-4 w-4 shrink-0 text-amber-300" />
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={chip === 'orchard' ? "Search orchards…" : "Search stalls…"}
-                className="w-36 bg-transparent text-sm text-amber-100 placeholder:text-amber-300/50 outline-none"
-              />
-            </div>
 
-            {/* Hidden (not unmounted) on mobile while search is expanded --
-                CSS-only so it's unconditionally back at lg: regardless of
-                that mobile-only toggle's state. */}
+            {/* Hidden (not unmounted) while search is expanded, at every
+                size now -- there's no room for it once the search pill
+                takes over the row. */}
             <button
               type="button"
               onClick={() => navigate('/cockpit')}
               aria-label="Close"
               title="Back to Cockpit"
-              className={`shrink-0 flex items-center justify-center rounded-full bg-black/50 p-2 text-white hover:bg-black/70 lg:bg-amber-500/10 lg:text-amber-300 lg:border lg:border-amber-500/25 lg:hover:bg-amber-500/20 transition-colors ${mobileSearchOpen ? 'max-lg:hidden' : ''}`}
+              className={`shrink-0 flex items-center justify-center rounded-full bg-black/50 p-2 text-white hover:bg-black/70 lg:bg-amber-500/10 lg:text-amber-300 lg:border lg:border-amber-500/25 lg:hover:bg-amber-500/20 transition-colors ${searchOpen ? 'hidden' : ''}`}
             >
               <X className="h-5 w-5" />
             </button>
