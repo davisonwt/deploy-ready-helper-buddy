@@ -757,7 +757,7 @@ const PremiumRoomViewPage: React.FC = () => {
                   page has no other way to reach recording/call/mute/Delete
                   Room, same reasoning /conversations and the stall chat
                   sheet used for showToolbar alone. */}
-              <ChatRoom roomId={room.chat_room_id} onBack={() => { /* stays on page */ }} showHeader showToolbar allowDeleteRoom />
+              <ChatRoom roomId={room.chat_room_id} onBack={() => { /* stays on page */ }} showHeader showToolbar allowDeleteRoom showCallButton />
             </CardContent>
           </Card>
         )}

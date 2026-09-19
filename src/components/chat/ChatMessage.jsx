@@ -12,6 +12,7 @@ import { BookingRequestMessage } from './BookingRequestMessage';
 import { BookingResponseMessage } from './BookingResponseMessage';
 import { BookingConfirmedMessage } from './BookingConfirmedMessage';
 import { SeedReferenceMessage } from './SeedReferenceMessage';
+import { MessageText } from './MessageText';
 import ReportButton from '@/components/moderation/ReportButton';
 
 const getFileIcon = (fileType) => {
@@ -290,9 +291,7 @@ const ChatMessage = ({ message, isOwn = false, onDelete, isInstructor, instructo
           }}
         >
           {message.content && (
-            <p className="text-sm whitespace-pre-wrap break-words">
-              {message.content}
-            </p>
+            <MessageText content={message.content} />
           )}
           
           {message.file_url && (

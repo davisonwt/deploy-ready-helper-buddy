@@ -113,10 +113,11 @@ async function fetchNowPlaying(): Promise<{ track: RadioTrackInfo | null; offset
 }
 
 /** Reloads .src onto whatever's live right now and seeks to its live
- *  offset. Called on startRadio() and whenever polling notices the
- *  playing track has changed. Never called with a caller-chosen track --
- *  there is no such parameter to pass. */
-async function tuneToLive() {
+ *  offset. Called on startRadio() (shouldPlay always true there) and
+ *  whenever polling notices the playing track has changed (shouldPlay
+ *  reflects whether playback was already under way). Never called with a
+ *  caller-chosen track -- there is no such parameter to pass. */
+async function tuneToLive(shouldPlay: boolean) {
   const session = await ensureFreshSession();
   const token = session?.access_token;
   if (!token) {
@@ -124,18 +125,17 @@ async function tuneToLive() {
     return;
   }
   const el = ensureAudio();
-  const wasPlaying = !el.paused;
   el.src = `${STREAM_ENDPOINT}?token=${encodeURIComponent(token)}`;
   const onLoaded = () => {
     el.currentTime = state.offsetSeconds;
     el.removeEventListener('loadedmetadata', onLoaded);
   };
   el.addEventListener('loadedmetadata', onLoaded);
-  if (wasPlaying || state.isPlaying) {
+  if (shouldPlay) {
     try {
       await el.play();
     } catch {
-      setState({ isPlaying: false });
+      setState({ isPlaying: false, loading: false });
     }
   }
 }
@@ -144,9 +144,10 @@ async function pollOnce() {
   const result = await fetchNowPlaying();
   if (!result) return;
   const trackChanged = result.track?.id !== state.track?.id;
+  const wasPlaying = state.isPlaying;
   setState({ track: result.track, offsetSeconds: result.offsetSeconds, poolSize: result.poolSize, loading: false });
-  if (trackChanged && state.isPlaying) {
-    await tuneToLive();
+  if (trackChanged && wasPlaying) {
+    await tuneToLive(true);
   }
 }
 
@@ -167,7 +168,7 @@ export function startRadio() {
   setState({ loading: true });
   (async () => {
     await pollOnce();
-    await tuneToLive();
+    await tuneToLive(true);
     startPolling();
   })();
 }

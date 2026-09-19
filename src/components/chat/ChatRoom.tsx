@@ -95,9 +95,20 @@ interface ChatRoomProps {
    * gating are cosmetic on top of it, not instead of it.
    */
   allowDeleteRoom?: boolean;
+  /**
+   * Default false. The in-toolbar Phone button, separate from showToolbar
+   * because it duplicates ConversationsPage's own call buttons on
+   * /conversations (confirmed live 2026-09-19: two "start a call" controls
+   * stacked directly above the message list) and is outright wrong in a
+   * group room -- it calls "the first other participant found," meaningless
+   * once a room has more than two people, which every room reachable via
+   * /conversations now can. Only PremiumRoomViewPage, which has no other
+   * calling entry point, opts in.
+   */
+  showCallButton?: boolean;
 }
 
-export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, instructorId, rail, dropAnimation, recordGesture = 'tap', showHeader = false, showToolbar = false, allowDeleteRoom = false }) => {
+export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, instructorId, rail, dropAnimation, recordGesture = 'tap', showHeader = false, showToolbar = false, allowDeleteRoom = false, showCallButton = false }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { startCall, currentCall, endCall } = useCallManager();
@@ -977,6 +988,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
               {recorder.recording && recorder.kind === 'video' ? <Square className="h-4 w-4" /> : <Video className="h-4 w-4" />}
             </Button>
             
+            {showCallButton && (
             <Button
               variant="ghost"
               size="icon"
@@ -1040,6 +1052,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
             >
               <Phone className="h-4 w-4" />
             </Button>
+            )}
 
             <Button
               variant="ghost"
