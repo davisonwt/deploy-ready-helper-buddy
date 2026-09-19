@@ -34,13 +34,6 @@ export default function StoryPhotoUpload({ pathPrefix, value, onChange }: Props)
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
-  // The upload path is fixed (upsert), so replacing a photo keeps the same
-  // URL -- without this, this component's own <img> would keep showing
-  // the byte it already had cached for that URL right after a successful
-  // re-upload. Bumped locally on every successful upload; never part of
-  // the value passed to onChange (and so never what gets persisted) --
-  // that stays the clean canonical URL.
-  const [bustNonce, setBustNonce] = useState(0);
 
   const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -75,8 +68,17 @@ export default function StoryPhotoUpload({ pathPrefix, value, onChange }: Props)
       }
 
       const { data: pub } = supabase.storage.from('stalls').getPublicUrl(path);
-      setBustNonce((n) => n + 1);
-      onChange({ url: pub.publicUrl, storagePath: path });
+      // The upload path is fixed (upsert) so every replacement reuses the
+      // same URL -- found live: Supabase's storage CDN does not appear to
+      // invalidate its own cache on overwrite, so a fresh page load (a
+      // brand-new browser context, not this browser's own cache) still
+      // received the PREVIOUS photo's bytes after a real replace. A
+      // version marker baked into the persisted URL itself, not just this
+      // component's own local preview, is what actually fixes that --
+      // every consumer (this editor, the My Story sheet, anyone, anytime)
+      // gets a genuinely different URL after a change.
+      const bustedUrl = `${pub.publicUrl}?v=${Date.now()}`;
+      onChange({ url: bustedUrl, storagePath: path });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Could not process that image.');
     } finally {
@@ -120,7 +122,7 @@ export default function StoryPhotoUpload({ pathPrefix, value, onChange }: Props)
           {busy ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           ) : value ? (
-            <img src={bustNonce > 0 ? `${value.url}${value.url.includes('?') ? '&' : '?'}v=${bustNonce}` : value.url} alt="Your story photo" className="h-full w-full object-cover" />
+            <img src={value.url} alt="Your story photo" className="h-full w-full object-cover" />
           ) : (
             <div className="flex flex-col items-center text-center px-1">
               <User className="h-5 w-5 text-muted-foreground" />
