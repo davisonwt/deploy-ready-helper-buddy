@@ -1,11 +1,12 @@
 import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2, Radio } from 'lucide-react';
+import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2, Radio, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { useRoles } from '@/hooks/useRoles';
@@ -14,6 +15,7 @@ import StallHotspotSheet from './StallHotspotSheet';
 import StallSideNav from './StallSideNav';
 import StallTodayPanel from './StallTodayPanel';
 import StallJoinSheet from './StallJoinSheet';
+import StallChatSheet from './StallChatSheet';
 import OwnerMenuItems from '@/components/owner/OwnerMenuItems';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
 import type { StallHotspot, TileKind } from '@/lib/stalls/stallTypes';
@@ -192,6 +194,7 @@ export function StallDrawer({ side, open, onClose, children }: { side: 'left' | 
 export default function StallInteriorView({ ownerId, username, interiorImageUrl, stallName, hotspots, onClose, isOwner, hideClose, bottomBar, topBanner }: Props) {
   const { setStallInteriorOpen } = useAppContext();
   const { user, logout } = useAuth();
+  const { toast } = useToast();
   // Pre-flight (2026-09-13, Davison): same "who's alive in the orchard
   // right now" presence used for the Tribal Gardens feed's LIVE badge
   // (StallsFeedPage.tsx's liveOwnerIds) -- this stall's own front/interior
@@ -322,6 +325,28 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   // through, so gating it here covers all three without touching
   // SeedCard's own per-action guards used everywhere else in the app.
   const [showJoinSheet, setShowJoinSheet] = useState(false);
+  // "Message the sower" from the interior's own top bar -- opens in place
+  // (StallChatSheet, a fixed overlay like StallJoinSheet's), never
+  // navigate(), so the interior is never unmounted. Room id is resolved
+  // lazily on tap via the same get_or_create_direct_room RPC SeedCard.tsx's
+  // Message action already uses -- null while that call is in flight.
+  const [showChatSheet, setShowChatSheet] = useState(false);
+  const [chatRoomId, setChatRoomId] = useState<string | null>(null);
+  const handleOpenChat = async () => {
+    if (!user) { setShowJoinSheet(true); return; }
+    setChatRoomId(null);
+    setShowChatSheet(true);
+    const { data: roomId, error } = await supabase.rpc('get_or_create_direct_room', {
+      user1_id: user.id,
+      user2_id: ownerId,
+    });
+    if (error || !roomId) {
+      toast({ variant: 'destructive', title: 'Could not start a conversation', description: error?.message });
+      setShowChatSheet(false);
+      return;
+    }
+    setChatRoomId(roomId);
+  };
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const rect = useContainImageRect(containerRef, imgRef);
@@ -666,6 +691,23 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
               </div>
             )
           )}
+          {/* Message the sower -- in place (StallChatSheet), never
+              navigate(). Hidden for the owner viewing their own stall
+              (effectiveIsOwner): there is no one to message. Shown for a
+              logged-out visitor same as every other gated interior action
+              -- tapping it opens the existing sign-in nudge, not a second
+              one. */}
+          {username && !effectiveIsOwner && (
+            <button
+              type="button"
+              onClick={handleOpenChat}
+              aria-label="Message the sower"
+              title="Message the sower"
+              className="shrink-0 flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </button>
+          )}
           {/* Share (everyone, not owner-only -- "come see my shop" is meant
               to spread from any viewer, burning THEIR own referral code if
               signed in). "Share my stall" above is the owner-menu's own
@@ -783,6 +825,17 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
             >
               <CalendarDays className="h-4 w-4" />
             </button>
+            {username && !effectiveIsOwner && (
+              <button
+                type="button"
+                onClick={handleOpenChat}
+                aria-label="Message the sower"
+                title="Message the sower"
+                className="flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </button>
+            )}
             {username && (
               <button
                 type="button"
@@ -906,6 +959,10 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
 
       {showJoinSheet && (
         <StallJoinSheet stallName={stallName} onClose={() => setShowJoinSheet(false)} />
+      )}
+
+      {showChatSheet && (
+        <StallChatSheet roomId={chatRoomId} onClose={() => setShowChatSheet(false)} />
       )}
 
       {scriptureRoom && (
