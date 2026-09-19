@@ -291,18 +291,31 @@ export default function StallsFeedPage() {
     });
   }, [filteredCards, chip, newSeedInfo]);
 
-  // Pinned system stalls first, in PINNED_STALL_USER_IDS order,
-  // regardless of chip/sort -- not during search, where they're just
-  // another stall (found or not, on their own merits). Deduped: if one
-  // is already present (chip is 'for_you'/'new'/its own category, or it
-  // happens to match the search), it isn't listed twice.
+  // Pinned system stalls first, in PINNED_STALL_USER_IDS order -- not
+  // during search, where they're just another stall (found or not, on
+  // their own merits). Deduped: if one is already present (its own
+  // category, or it happens to match the search), it isn't listed twice.
+  //
+  // 2026-09-20: this used to pin all four regardless of which category
+  // chip was active -- found live (screenshot evidence: clicking "Art &
+  // Craft" put Grove Station, tagged Music, at the top of a filter that
+  // otherwise had exactly one real match) and confirmed as the dominant
+  // cause of "clicking Music shows non-music stalls," on top of the
+  // separate stale-category-data fix. For You/New still pin all four
+  // (a general, unfiltered browse), but a specific category pill now
+  // only pins the ones that actually carry that category -- a pill that
+  // doesn't filter isn't a filter.
   const pinnedOrderedCards = useMemo(() => {
     if (!orderedCards) return orderedCards;
     if (search.trim() || tribeMine || villageFilter || pinnedCards.length === 0) return orderedCards;
-    const pinnedIds = new Set(pinnedCards.map((c) => c.user_id));
+    const applicablePinned = chip === 'for_you' || chip === 'new'
+      ? pinnedCards
+      : pinnedCards.filter((c) => c.categories?.includes(chip as StallCategory));
+    if (applicablePinned.length === 0) return orderedCards;
+    const pinnedIds = new Set(applicablePinned.map((c) => c.user_id));
     const rest = orderedCards.filter((c) => !pinnedIds.has(c.user_id));
-    return [...pinnedCards, ...rest];
-  }, [orderedCards, pinnedCards, search, tribeMine, villageFilter]);
+    return [...applicablePinned, ...rest];
+  }, [orderedCards, pinnedCards, search, tribeMine, villageFilter, chip]);
 
   useEffect(() => {
     if (!showPanHint) return;
