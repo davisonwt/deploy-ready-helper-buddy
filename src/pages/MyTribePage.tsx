@@ -14,6 +14,48 @@ const SHEET_TITLE: Record<Exclude<TribeHotspotId, 'village'>, string> = {
   rewards: 'Rewards',
 };
 
+function capitalize(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+/**
+ * A dotted username ("davison.taljaard") copied into display_name at
+ * signup is not a real display name -- measured live, 2026-09-19: 1 of 96
+ * profiles has a dot in display_name, but it's exactly the account that
+ * showed "davison.taljaard's" on the gate sign, because display_name is
+ * checked first and this WAS that account's display_name (a byte-for-byte
+ * copy of username, not a placeholder that happened to look similar).
+ * Anything dotted, or identical to the row's own username, is treated as
+ * "no real name," and the caller falls through to the next candidate.
+ */
+function looksLikeUsername(value: string, username: string): boolean {
+  const v = value.trim();
+  if (!v) return true;
+  if (v.includes('.')) return true;
+  if (username && v.toLowerCase() === username.trim().toLowerCase()) return true;
+  return false;
+}
+
+/**
+ * Short, real, capitalized first name for a wooden sign -- never the full
+ * dotted username. display_name is preferred over first_name (matches the
+ * old priority), but only when it doesn't just look like a copy of
+ * username; first_name is genuinely set for 84 of 96 profiles and is the
+ * far more reliable source of an actual short name. The username fallback
+ * itself is truncated at the first dot before it's ever shown.
+ */
+function shortViewerName(p: { display_name?: string | null; first_name?: string | null; username?: string | null } | null, email: string | undefined): string {
+  const username = p?.username?.trim() || '';
+  const display = p?.display_name?.trim() || '';
+  const first = p?.first_name?.trim() || '';
+  if (display && !looksLikeUsername(display, username)) return capitalize(display);
+  if (first && !looksLikeUsername(first, username)) return capitalize(first);
+  if (username) return capitalize(username.split('.')[0]);
+  const emailName = email?.split('@')[0]?.split('.')[0];
+  if (emailName) return capitalize(emailName);
+  return 'Friend';
+}
+
 /**
  * Same slide-up/backdrop/mount-unmount pattern StallHotspotSheet.tsx and
  * StallInteriorView.tsx's own StallDrawer already use -- not reused
@@ -116,7 +158,7 @@ export default function MyTribePage() {
         .eq('user_id', user.id)
         .maybeSingle();
       const p = data as { display_name?: string | null; first_name?: string | null; username?: string | null } | null;
-      const name = p?.display_name?.trim() || p?.first_name?.trim() || p?.username?.trim() || user.email?.split('@')[0] || 'Friend';
+      const name = shortViewerName(p, user.email);
       if (alive) setViewerName(name);
     })();
     return () => { alive = false; };
