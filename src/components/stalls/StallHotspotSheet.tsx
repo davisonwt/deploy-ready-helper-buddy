@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Loader2, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import StoryPdfViewer from './StoryPdfViewer';
+import StoryEditSheet from './StoryEditSheet';
 import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
 import { deleteRow } from '@/components/garden/seedCardBuilders';
 import { toast } from 'sonner';
@@ -227,6 +228,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
   // undefined = still loading; null = loaded, nothing there; string = loaded, has content.
   const [bio, setBio] = useState<string | null | undefined>(undefined);
   const [storyPdfUrl, setStoryPdfUrl] = useState<string | null | undefined>(undefined);
+  const [editingStory, setEditingStory] = useState(false);
   const [visible, setVisible] = useState(false);
   const sheetNavigate = useNavigate();
 
@@ -463,6 +465,21 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
                 category silently had no way in. Every listing shelf gets it,
                 including kinds that do not exist yet. A visitor never renders
                 it, on any shelf. */}
+            {/* My Story's own Edit -- owner only (effectiveIsOwner, same as
+                every other owner-only affordance in this sheet), opens
+                StoryEditSheet in place rather than navigate()'ing to
+                /stall/build and leaving the interior. */}
+            {isOwner && kind === 'story' && (
+              <button
+                type="button"
+                onClick={() => setEditingStory(true)}
+                aria-label="Edit my story"
+                title="Edit my story"
+                className="flex h-8 items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 text-xs font-semibold text-amber-200 transition-colors hover:bg-amber-500/20"
+              >
+                Edit
+              </button>
+            )}
             {isOwner && addOne && (
               <div className="relative">
                 <button
@@ -520,7 +537,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
             ) : bio ? (
               <div className="py-4">{renderStory(bio)}</div>
             ) : (
-              <EmptyState text={EMPTY_TEXT.story!} isOwner={isOwner} addOnePath="/stall/build" addOneLabel="Write your story" />
+              <EmptyState text={EMPTY_TEXT.story!} isOwner={isOwner} onAddOne={() => setEditingStory(true)} addOneLabel="Write your story" />
             )
           ) : items === null ? (
             <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-amber-100/40" /></div>
@@ -609,6 +626,17 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
           feedKind={kind === 'music' ? 'music' : 'photo'}
         />
       )}
+      {editingStory && (
+        <StoryEditSheet
+          ownerId={ownerId}
+          onClose={() => setEditingStory(false)}
+          onSaved={(newStory, newPdfUrl) => {
+            setBio(newStory);
+            setStoryPdfUrl(newPdfUrl);
+            setEditingStory(false);
+          }}
+        />
+      )}
     </>
   );
 }
@@ -656,15 +684,16 @@ function renderStory(text: string) {
   return blocks;
 }
 
-function EmptyState({ text, isOwner, addOnePath, addOneLabel }: { text: string; isOwner?: boolean; addOnePath?: string; addOneLabel: string }) {
+function EmptyState({ text, isOwner, addOnePath, onAddOne, addOneLabel }: { text: string; isOwner?: boolean; addOnePath?: string; /** Opens something in place instead of navigating -- My Story's own StoryEditSheet. Takes priority over addOnePath when both are given. */ onAddOne?: () => void; addOneLabel: string }) {
   const navigate = useNavigate();
+  const action = onAddOne ?? (addOnePath ? () => navigate(addOnePath) : undefined);
   return (
     <div className="py-12 text-center">
       <p className="text-amber-100/50 font-serif italic">{text}</p>
-      {isOwner && addOnePath && (
+      {isOwner && action && (
         <button
           type="button"
-          onClick={() => navigate(addOnePath)}
+          onClick={action}
           className="mt-2 text-sm text-amber-400 hover:text-amber-300 underline underline-offset-2"
         >
           {addOneLabel}

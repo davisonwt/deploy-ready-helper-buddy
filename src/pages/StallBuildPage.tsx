@@ -13,7 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
 import { shareStallLink } from '@/lib/referral';
 import StallImageUpload, { type StallImageResult } from '@/components/stalls/StallImageUpload';
-import StallPdfUpload, { type StallPdfResult } from '@/components/stalls/StallPdfUpload';
+import { type StallPdfResult } from '@/components/stalls/StallPdfUpload';
+import StoryFields from '@/components/stalls/StoryFields';
 import HotspotEditor, { newHotspotId } from '@/components/stalls/HotspotEditor';
 import MyProductsPage from '@/pages/MyProductsPage';
 import MyS2GLibraryPage from '@/pages/MyS2GLibraryPage';
@@ -385,25 +386,7 @@ export default function StallBuildPage() {
             <label className="text-sm font-medium mb-2 block text-amber-100/80">Tagline (optional)</label>
             <Textarea value={tagline} onChange={(e) => setTagline(e.target.value)} maxLength={160} rows={2} placeholder="Words that heal, songs that awaken." className="bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30" />
           </div>
-          <div>
-            <label className="text-sm font-medium mb-2 block text-amber-100/80">My Story (optional)</label>
-            <p className="text-xs text-amber-100/50 mb-1.5">
-              Shown under the MY STORY button inside your stall. Blank lines start a new paragraph.
-              Type a line in ALL CAPS to make it a heading — everything renders exactly as typed, so write it the way you want it read.
-            </p>
-            <Textarea
-              value={story}
-              onChange={(e) => setStory(e.target.value)}
-              maxLength={4000}
-              rows={8}
-              placeholder={"MY JOURNEY\n\nit started with a single song..."}
-              className="bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30"
-            />
-            <p className="text-xs text-amber-100/50 mt-3 mb-1.5">
-              Prefer a PDF instead? Upload one and it replaces the text above inside your stall.
-            </p>
-            <StallPdfUpload pathPrefix={pathPrefix} value={storyPdf} onChange={setStoryPdf} />
-          </div>
+          <StoryFields pathPrefix={pathPrefix} story={story} onStoryChange={setStory} storyPdf={storyPdf} onStoryPdfChange={setStoryPdf} />
         </div>
       )}
 
