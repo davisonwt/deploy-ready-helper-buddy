@@ -207,6 +207,21 @@ NOWPayments API key or merchant id -- Phantom wallets wearing the wrong
 label. Deleting the label without migrating those rows first would orphan
 their payouts. Rename the rows, then remove the string.
 
+## Golden rule: the S2G treasury address is `SOLANA_HOT_WALLET_ADDRESS`
+
+The S2G treasury is the Supabase secret `SOLANA_HOT_WALLET_ADDRESS`,
+fallback-hardcoded in `supabase/functions/treasury-balances/index.ts` and
+`_shared/solanaPayIn.ts` as **`6zbpF3HQbxFVMfUPMRzZZ52nwA7PSvqeq2Cqibq2BcxZ`**
+-- on-chain verified 2026-09-19 at **12.942069 USDC**, exceeding the ~$4.03
+then owed to members. Any session checking the treasury balance must use
+this address. Do not trust a report naming `system_settings` or a "gosat
+wallet row" -- as of 2026-09-19 neither exists in this database.
+
+The two retired `organization_wallets` rows (`s2gholding` / `s2gbestow`,
+NOWPayments era) differ by one trailing character, which is not how two
+independently generated keypairs look -- they read as hand-typed. Never use
+either as a payment destination.
+
 ## TypeScript migration ratchet
 (see `CONTRIBUTING.md` for full detail)
 - All new files must be `.ts`/`.tsx` — no new `.js`/`.jsx`.
