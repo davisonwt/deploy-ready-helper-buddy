@@ -30,7 +30,13 @@ export default function GlobalRadioPlayer() {
         type="button"
         onClick={() => setSheetOpen(true)}
         aria-label="What's playing on Grove Station"
-        className="fixed bottom-4 right-4 z-[9000] flex items-center gap-2 rounded-full border border-amber-500/30 bg-[#140c06]/95 px-3 py-2 text-amber-100 shadow-lg backdrop-blur"
+        // z-[9000] used to sit UNDER StallInteriorView's own root
+        // (z-[9999] -- the Cockpit is a StallInteriorView), making the
+        // pill visually present but unreachable on the exact page its own
+        // Radio button lives on. 10010 clears that, while staying below
+        // NowPlayingSheet's own overlay (z-[10020]/[10021]) so opening the
+        // sheet correctly covers the pill instead of floating over it.
+        className="fixed bottom-4 right-4 z-[10010] flex items-center gap-2 rounded-full border border-amber-500/30 bg-[#140c06]/95 px-3 py-2 text-amber-100 shadow-lg backdrop-blur"
       >
         <Radio className="h-4 w-4 text-amber-300 animate-pulse" />
         <span
