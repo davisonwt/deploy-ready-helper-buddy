@@ -11,16 +11,17 @@ import { cn } from '@/lib/utils';
 
 const LOW_BALANCE_THRESHOLD = 5;
 
-// Same list GroundskeeperWidget uses (fixed bottom-right, this chip's
-// immediate neighbor at bottom-24) -- both sat on top of the chat Send
-// button, mic/camera toggles, and Daily call controls on narrow widths.
-// Every route confirmed (via grep) to render ChatRoom or a Daily call.
+// /call/:roomKind/:roomId (Jitsi) and /premium-room/:id are real, current
+// routes with the same collision (this chip sits on top of call controls).
+// /chatapp, /live-rooms, /classroom and /skilldrop used to belong here too,
+// but as of 2026-09-19 they only redirect to /conversations before anything
+// renders -- keeping them was dead code, and a dead private copy of a route
+// list is exactly how /conversations itself went unlisted here for hours
+// after it shipped. /conversations (and Global Chat, the same route with a
+// ?c= query param) is now excluded via the shared isOverlaySuppressedRoute
+// predicate below instead -- one list, not two that can drift apart again.
 const CHAT_OR_CALL_ROUTES = [
-  '/chatapp',
   '/call/',
-  '/live-rooms',
-  '/classroom',
-  '/skilldrop',
   '/premium-room',
 ];
 

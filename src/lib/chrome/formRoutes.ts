@@ -29,6 +29,13 @@ const SUPPRESSED_ROUTES: RegExp[] = [
   // to scroll past it to. /search, /let-it-rain and /browse-orchards all
   // redirect here, so they are covered by the resolved path.
   /^\/stalls-feed(\/|$)/,
+  // The wallet balance chip sat on top of the message composer and send
+  // button in a conversation. /chatapp, /classroom, /skilldrop and
+  // /live-rooms all redirect here (2026-09-19 consolidation), so this one
+  // entry covers the conversation list, an open conversation, and Global
+  // Chat (?c=<room id> is a query param, not part of the pathname this
+  // matches against).
+  /^\/conversations(\/|$)/,
 ];
 
 export function isOverlaySuppressedRoute(pathname: string): boolean {
