@@ -35,6 +35,9 @@ interface TribeMember {
   avatar_url: string | null;
 }
 
+/** The one always-open, everyone-auto-joined room (20260919150000_global_chat_room.sql). */
+const GLOBAL_CHAT_ROOM_ID = '00000000-0000-0000-0000-000000000001';
+
 export default function ShareSeedDialog({
   open, onOpenChange, seedId, title, subtitle, image, openPath, feedKind = 'photo',
   initialTab = 'tribe',
@@ -167,6 +170,42 @@ export default function ShareSeedDialog({
       variant: sent ? undefined : 'destructive',
     });
     if (sent) onOpenChange(false);
+  };
+
+  const shareToGlobalChat = async () => {
+    if (!user?.id) return;
+    setBusy(true);
+    try {
+      // Direct insert, same shape SeedCard.tsx's own
+      // attachSeedReferenceIfFirstMessage already uses for exactly this --
+      // a tappable seed card in a chat thread. send_chat_message (the RPC
+      // the Tribe/Circle tabs above call) has no system_metadata parameter
+      // at all, so it cannot produce this; a plain 'text' message with a
+      // link, the Tribe tab's own shape, would render as inert text with
+      // no way to tap through (ChatMessage.jsx does not linkify URLs).
+      // This is the one existing mechanism that actually satisfies "the
+      // recipient can tap through to the seed."
+      const { error } = await supabase.from('chat_messages').insert({
+        room_id: GLOBAL_CHAT_ROOM_ID,
+        sender_id: user.id,
+        content: null,
+        message_type: 'seed_reference',
+        system_metadata: {
+          type: 'seed_reference',
+          seed_id: seedId,
+          title,
+          cover: image ?? null,
+          href: openPath,
+        },
+      } as never);
+      if (error) throw error;
+      toast({ title: 'Shared into Global Chat', description: 'Everyone in Global Chat can see it now.' });
+      onOpenChange(false);
+    } catch (e: any) {
+      toast({ title: 'Could not share into Global Chat', description: e?.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
+    }
   };
 
   const createRoomAndShare = async () => {
@@ -338,6 +377,13 @@ export default function ShareSeedDialog({
 
           <TabsContent value="room" className="mt-0 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden">
             <div className="flex min-h-0 flex-1 flex-col gap-3 px-6 py-3">
+              <Button variant="outline" className="w-full shrink-0 gap-2" disabled={busy} onClick={shareToGlobalChat}>
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe2 className="h-4 w-4" />}
+                Share into Global Chat
+              </Button>
+              <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                <div className="h-px flex-1 bg-border" /> or start a new circle <div className="h-px flex-1 bg-border" />
+              </div>
               <Input
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
