@@ -9,7 +9,7 @@ export const isVerificationEnabled = (): boolean => {
 
 export const getVerificationRedirectPath = (): string => {
   const path = import.meta.env.VITE_VERIFICATION_REDIRECT;
-  return typeof path === 'string' && path.length > 0 ? path : '/chatapp';
+  return typeof path === 'string' && path.length > 0 ? path : '/conversations';
 };
 
 export const setVerificationEnabled = (enabled: boolean) => {

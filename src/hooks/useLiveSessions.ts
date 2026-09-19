@@ -168,7 +168,7 @@ async function loadAll(): Promise<LiveSession[]> {
       hostAvatar: p?.avatar_url || null,
       count: r.current_listeners || 0,
       startedAt: r.created_at,
-      joinPath: `/chatapp?room=${r.id}`,
+      joinPath: `/conversations?c=${r.id}`,
     })
   })
 

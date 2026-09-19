@@ -205,7 +205,7 @@ function WhispererCard({ w }: { w: WhispererRow }) {
 
         <div className="mt-4 flex gap-2">
           <Link
-            to={`/chatapp?dm=${w.user_id}`}
+            to="/conversations"
             className="flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-fuchsia-500 hover:from-purple-400 hover:to-fuchsia-400 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5"
           >
             <MessageCircle className="w-3.5 h-3.5" /> Message via ChatApp

@@ -45,7 +45,7 @@ export const COCKPIT_NAV: CockpitNavItem[] = [
   // (same pattern as Grove Station's nav entry -> its own stall).
   { label: 'Wandering Hearts', sub: 'Tribal connections', emoji: '💚', path: '/stall/wanderinghearts', color: '#dc2626' },
   { label: 'My Tribe', sub: 'Your invitation code & tribe', emoji: '🌿', path: '/my-tribe', color: '#22c55e' },
-  { label: 'ChatApp', sub: 'Tribe messaging', emoji: '💬', path: '/chatapp', color: '#0891b2' },
+  { label: 'ChatApp', sub: 'Tribe messaging', emoji: '💬', path: '/conversations', color: '#0891b2' },
   // Grove Station now has its own stall (S2G's own radio station,
   // phase 1) -- points there instead of the /grove-station app page for
   // now; phase 2's plaques (On Air/Schedule/Shows/Advertise) are meant to
@@ -77,8 +77,8 @@ export const COCKPIT_NAV_MORE: CockpitNavItem[] = [
   { label: 'Books', sub: 'Business bookkeeping', emoji: '📒', path: '/books', color: '#2563eb' },
   { label: 'Whisperers', sub: 'List yourself or find one', emoji: '🌬️', path: '/whisperers', color: '#a855f7' },
   { label: 'Companions', sub: 'Helpers for hire', emoji: '🏘', path: '/stall/companions', color: '#14b8a6' },
-  { label: 'Classroom', sub: 'Teach or learn a skill', emoji: '🎓', path: '/classroom', color: '#3b82f6' },
-  { label: 'SkillDrop', sub: 'Quick skill shares', emoji: '💡', path: '/skilldrop', color: '#eab308' },
+  { label: 'Classroom', sub: 'Teach or learn a skill', emoji: '🎓', path: '/conversations', color: '#3b82f6' },
+  { label: 'SkillDrop', sub: 'Quick skill shares', emoji: '💡', path: '/conversations', color: '#eab308' },
   { label: 'Premium Rooms', sub: 'Paid live rooms', emoji: '💎', path: '/premium-rooms', color: '#06b6d4' },
   { label: 'Prescriptions', sub: 'Your submitted prescriptions', emoji: '📋', path: '/my-garden/prescriptions', color: '#84cc16' },
   { label: 'Bulk directory', sub: 'Wholesale seed directory', emoji: '📦', path: '/bulk/directory', color: '#f59e0b' },

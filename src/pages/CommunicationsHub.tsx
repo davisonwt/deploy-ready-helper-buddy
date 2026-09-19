@@ -7,12 +7,16 @@ import { Button } from '@/components/ui/button';
 type LaunchKind = 'one_on_one' | 'community_chat' | 'classroom' | 'skilldrop' | 'training' | 'radio';
 
 const LAUNCH_TYPES: Array<{ id: LaunchKind; label: string; icon: React.ReactNode; deepLink: string }> = [
-  { id: 'one_on_one',     label: '1-on-1 Live',     icon: <Video className="h-5 w-5" />,    deepLink: '/live-rooms' },
-  // Flow v2 step 12: /community-chats is DELETE-marked (MERGE INTO
-  // /chatapp) -- points at the real v2 destination instead of the dead route.
-  { id: 'community_chat', label: 'Community Chat',  icon: <Users className="h-5 w-5" />,    deepLink: '/chatapp' },
-  { id: 'classroom',      label: 'Classroom',       icon: <BookOpen className="h-5 w-5" />, deepLink: '/classroom' },
-  { id: 'skilldrop',      label: 'SkillDrop',       icon: <Zap className="h-5 w-5" />,      deepLink: '/skilldrop' },
+  // 2026-09-19: one_on_one/community_chat/classroom/skilldrop all merged
+  // into /conversations -- pointed directly there rather than through the
+  // /live-rooms /chatapp /classroom /skilldrop redirects (see
+  // LegacyChatRedirect in AppRoutes.tsx). training and radio are genuinely
+  // different features (Premium Rooms; the Grove Station AOD radio stall)
+  // and keep their own homes.
+  { id: 'one_on_one',     label: '1-on-1 Live',     icon: <Video className="h-5 w-5" />,    deepLink: '/conversations' },
+  { id: 'community_chat', label: 'Community Chat',  icon: <Users className="h-5 w-5" />,    deepLink: '/conversations' },
+  { id: 'classroom',      label: 'Classroom',       icon: <BookOpen className="h-5 w-5" />, deepLink: '/conversations' },
+  { id: 'skilldrop',      label: 'SkillDrop',       icon: <Zap className="h-5 w-5" />,      deepLink: '/conversations' },
   { id: 'training',       label: 'Training',        icon: <Dumbbell className="h-5 w-5" />, deepLink: '/premium-rooms' },
   { id: 'radio',          label: 'Radio',           icon: <Radio className="h-5 w-5" />,    deepLink: '/radio' },
 ];

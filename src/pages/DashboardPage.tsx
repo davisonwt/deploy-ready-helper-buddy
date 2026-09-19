@@ -167,7 +167,7 @@ export default function CockpitPage() {
           🔴 Go Live
         </LivingButton>
       </div>
-      <Link to="/chatapp" style={{ flex: 1, textDecoration: 'none' }}>
+      <Link to="/conversations" style={{ flex: 1, textDecoration: 'none' }}>
         <LivingButton variant="share" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
           💬 Chat
         </LivingButton>

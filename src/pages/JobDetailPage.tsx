@@ -99,7 +99,7 @@ export default function JobDetailPage() {
         <CardContent className="space-y-4">
           {job.description && <p className="text-sm text-muted-foreground">{job.description}</p>}
           {job.chat_channel_id && (
-            <Link to={`/chatapp?room=${job.chat_channel_id}`}>
+            <Link to={`/conversations?c=${job.chat_channel_id}`}>
               <Button variant="outline" size="sm"><MessageCircle className="mr-2 h-4 w-4" /> Open job chat</Button>
             </Link>
           )}

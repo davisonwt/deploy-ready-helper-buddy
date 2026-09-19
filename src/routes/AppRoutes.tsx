@@ -199,6 +199,25 @@ function SearchRedirect() {
   return <Navigate to={q ? `/stalls-feed?q=${encodeURIComponent(q)}` : '/stalls-feed'} replace />;
 }
 
+// 2026-09-19: /chatapp, /community-chats, /live-rooms, /classroom(/:id),
+// /skilldrop(/:id) all merge into /conversations -- the old pages and
+// components are NOT deleted, only unreachable by their old paths. Carries
+// `?room=<id>` across as /conversations' own `?c=<id>` (same chat_rooms
+// row either way). Classroom/SkillDrop's instructor rail and drop-in
+// animation (SessionPage.tsx) have no equivalent in plain ChatRoom usage
+// and are lost once redirected -- the room itself still opens, just
+// without that page's extra UI.
+function LegacyChatRedirect() {
+  const location = useLocation();
+  const room = new URLSearchParams(location.search).get('room');
+  return <Navigate to={room ? `/conversations?c=${encodeURIComponent(room)}` : '/conversations'} replace />;
+}
+
+function LegacyChatRoomIdRedirect() {
+  const { id } = useParams();
+  return <Navigate to={id ? `/conversations?c=${encodeURIComponent(id)}` : '/conversations'} replace />;
+}
+
 const AppRoutes = () => (
   <>
     {/* Mounted once here, above every route -- not inside any specific
@@ -447,22 +466,20 @@ const AppRoutes = () => (
     <Route path="/grove-feed" element={
       <ProtectedRoute><Layout><GroveFeedPage /></Layout></ProtectedRoute>
     } />
-    <Route path="/communications-hub" element={
-      <ProtectedRoute allowIncompleteSetup>
-        <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading...</div></div>}>
-          <CommunicationsHub />
-        </Suspense>
-      </ProtectedRoute>
-    } />
-    <Route path="/chatapp" element={
-      <ProtectedRoute>
-        <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading...</div></div>}>
-          <ChatApp />
-        </Suspense>
-      </ProtectedRoute>
-    } />
+    {/* The "ChatApp Go-Live" hub merged into /conversations 2026-09-19.
+        CommunicationsHub.tsx is not deleted, only unreachable here.
+        Carries ?room=<id> across like the other legacy chat redirects (see
+        ChatList.tsx's "back to hub with a room" call); ?session=<id>&kind=
+        (useLiveSessions.ts's classroom/skilldrop join links) has no
+        equivalent resolution here and lands on the plain list -- a known,
+        narrow gap, not silently pretended away. */}
+    <Route path="/communications-hub" element={<ProtectedRoute allowIncompleteSetup><LegacyChatRedirect /></ProtectedRoute>} />
+    {/* /chatapp merged into /conversations 2026-09-19 -- see
+        LegacyChatRedirect above. ChatApp.tsx is not deleted, only
+        unreachable by this path. */}
+    <Route path="/chatapp" element={<ProtectedRoute><LegacyChatRedirect /></ProtectedRoute>} />
     {/* Phase 1A/1B-lite: the unified conversation list, built alongside
-        /chatapp. Nothing about /chatapp changes. */}
+        /chatapp. Now the only reachable path for it. */}
     <Route path="/conversations" element={
       <ProtectedRoute>
         <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading...</div></div>}>
@@ -470,48 +487,12 @@ const AppRoutes = () => (
         </Suspense>
       </ProtectedRoute>
     } />
-    <Route path="/community-chats" element={
-      <ProtectedRoute>
-        <Suspense fallback={<LoadingFallback />}>
-          <CommunityChatsPage />
-        </Suspense>
-      </ProtectedRoute>
-    } />
-    <Route path="/classroom" element={
-      <ProtectedRoute>
-        <Suspense fallback={<LoadingFallback />}>
-          <ClassroomPage />
-        </Suspense>
-      </ProtectedRoute>
-    } />
-    <Route path="/classroom/:id" element={
-      <ProtectedRoute>
-        <Suspense fallback={<LoadingFallback />}>
-          <SessionPage kind="classroom" />
-        </Suspense>
-      </ProtectedRoute>
-    } />
-    <Route path="/classroom/:id/dashboard" element={
-      <ProtectedRoute>
-        <Suspense fallback={<LoadingFallback />}>
-          <ClassroomDashboardPage />
-        </Suspense>
-      </ProtectedRoute>
-    } />
-    <Route path="/skilldrop" element={
-      <ProtectedRoute>
-        <Suspense fallback={<LoadingFallback />}>
-          <SkillDropPage />
-        </Suspense>
-      </ProtectedRoute>
-    } />
-    <Route path="/skilldrop/:id" element={
-      <ProtectedRoute>
-        <Suspense fallback={<LoadingFallback />}>
-          <SessionPage kind="skilldrop" />
-        </Suspense>
-      </ProtectedRoute>
-    } />
+    <Route path="/community-chats" element={<ProtectedRoute><LegacyChatRedirect /></ProtectedRoute>} />
+    <Route path="/classroom" element={<ProtectedRoute><LegacyChatRedirect /></ProtectedRoute>} />
+    <Route path="/classroom/:id" element={<ProtectedRoute><LegacyChatRoomIdRedirect /></ProtectedRoute>} />
+    <Route path="/classroom/:id/dashboard" element={<ProtectedRoute><LegacyChatRoomIdRedirect /></ProtectedRoute>} />
+    <Route path="/skilldrop" element={<ProtectedRoute><LegacyChatRedirect /></ProtectedRoute>} />
+    <Route path="/skilldrop/:id" element={<ProtectedRoute><LegacyChatRoomIdRedirect /></ProtectedRoute>} />
     <Route path="/onboarding/security" element={
       <ProtectedRoute allowIncompleteSetup>
         <OnboardingSecurityPage />
@@ -745,9 +726,10 @@ const AppRoutes = () => (
     {/* Flow v2 step 7: /search's content folded into /stalls-feed's own
         search box (step 6) -- redirect, carrying a `?q=` term across. */}
     <Route path="/search" element={<SearchRedirect />} />
-    <Route path="/live-rooms" element={
-      <ProtectedRoute><Layout><LiveRoomsPage /></Layout></ProtectedRoute>
-    } />
+    {/* 1-on-1 Live merged into /conversations 2026-09-19 -- see
+        LegacyChatRedirect above. LiveRoomsPage.tsx is not deleted, only
+        unreachable by this path. */}
+    <Route path="/live-rooms" element={<ProtectedRoute><LegacyChatRedirect /></ProtectedRoute>} />
 
     <Route path="/create-live-room" element={
       <ProtectedRoute><Layout><CreateLiveRoomPage /></Layout></ProtectedRoute>

@@ -172,7 +172,7 @@ export default function DashboardTribeStats() {
           </div>
         </>
       ), "#f59e0b")}
-      {tile("/chatapp?filter=unread", <MessageCircle size={20} />, "Unread", unread, <div style={subLine}>{unread ? "tap to read" : "all caught up"}</div>, "#22d3ee")}
+      {tile("/conversations", <MessageCircle size={20} />, "Unread", unread, <div style={subLine}>{unread ? "tap to read" : "all caught up"}</div>, "#22d3ee")}
       {tile("/settings/payouts", <Wallet size={20} />, "My Wallet",
         !walletAddress
           ? "Connect"

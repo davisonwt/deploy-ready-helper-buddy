@@ -14,6 +14,11 @@ const ALLOWED_PATHS = [
   "/onboarding/security",
   "/communications-hub",
   "/chatapp",
+  // /communications-hub and /chatapp now redirect here (2026-09-19) --
+  // kept in the list above too since RequireSecuritySetup re-checks
+  // location.pathname against the POST-redirect URL, not just the one the
+  // user typed/tapped.
+  "/conversations",
   "/logout",
 ];
 
