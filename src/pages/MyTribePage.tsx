@@ -4,7 +4,7 @@ import { ArrowLeft, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
-import { TRIBE_FRONT_URL, TRIBE_INTERIOR_URL, TRIBE_BOARD, TRIBE_HOTSPOTS, type TribeHotspotId } from '@/lib/tribe/tribeLayout';
+import { TRIBE_FRONT_URL, TRIBE_INTERIOR_URL, TRIBE_BOARD, TRIBE_LOWER_BOARD, TRIBE_HOTSPOTS, type TribeHotspotId } from '@/lib/tribe/tribeLayout';
 import TribeInviteSheetContent from '@/components/tribe/TribeInviteSheetContent';
 import TribeFollowingSheetContent from '@/components/tribe/TribeFollowingSheetContent';
 
@@ -133,6 +133,32 @@ function BoardName({ name, boardPxWidth }: { name: string; boardPxWidth: number 
 }
 
 /**
+ * "my tribe" is baked into front.webp's hanging banner -- there is no
+ * blank version of this board the way TRIBE_BOARD above has. This patches
+ * over it with a same-toned rectangle and renders "tribe" on top, sized
+ * and colored to match the carved banner text around it (sampled directly
+ * from the image: background ~rgb(59,39,18), lettering ~rgb(230,190,120)).
+ * A CSS patch, not a redrawn asset -- said plainly because it is the
+ * honest limit of what a code change can do here.
+ */
+function LowerBoardLabel({ boardPxWidth }: { boardPxWidth: number }) {
+  const fontSize = Math.max(18, boardPxWidth * 0.19);
+  return (
+    <div
+      className="flex h-full w-full items-center justify-center rounded-[6px]"
+      style={{ background: 'linear-gradient(180deg, #4a3018 0%, #3b2712 55%, #2e1d0c 100%)' }}
+    >
+      <span
+        className="inline-block whitespace-nowrap font-serif lowercase"
+        style={{ fontSize, letterSpacing: '0.02em', color: '#e6be78', textShadow: '0 1px 1px rgba(0,0,0,0.6)' }}
+      >
+        tribe
+      </span>
+    </div>
+  );
+}
+
+/**
  * My Tribe, phase 1: a walk-through place instead of a plain page --
  * front (village gate, the viewer's own name carved into the blank
  * board) tap -> interior (village square), same pannable-on-portrait /
@@ -211,6 +237,7 @@ export default function MyTribePage() {
 
   if (!entered) {
     const boardPxWidth = frontRect ? (TRIBE_BOARD.w / 100) * frontRect.width : 0;
+    const lowerBoardPxWidth = frontRect ? (TRIBE_LOWER_BOARD.w / 100) * frontRect.width : 0;
     return (
       <div className="fixed inset-0 z-[9999] bg-black">
         {backLink}
@@ -233,6 +260,19 @@ export default function MyTribePage() {
                 }}
               >
                 <BoardName name={viewerName} boardPxWidth={boardPxWidth} />
+              </div>
+            )}
+            {frontRect && (
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  left: frontRect.offsetX + (TRIBE_LOWER_BOARD.x / 100) * frontRect.width,
+                  top: frontRect.offsetY + (TRIBE_LOWER_BOARD.y / 100) * frontRect.height,
+                  width: (TRIBE_LOWER_BOARD.w / 100) * frontRect.width,
+                  height: (TRIBE_LOWER_BOARD.h / 100) * frontRect.height,
+                }}
+              >
+                <LowerBoardLabel boardPxWidth={lowerBoardPxWidth} />
               </div>
             )}
           </div>

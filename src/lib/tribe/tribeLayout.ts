@@ -18,6 +18,19 @@ export const TRIBE_INTERIOR_URL = `${SUPABASE_URL}/storage/v1/object/public/stal
 /** Percentages of the front image's own natural width/height (same convention as StallHotspot). The blank wooden board on the gate arch, above the "my tribe" banner -- the viewer's own name is rendered here. */
 export const TRIBE_BOARD = { x: 36.39, y: 8.93, w: 28.68, h: 13.39 };
 
+/**
+ * The hanging banner below TRIBE_BOARD, baked into front.webp with "my
+ * tribe" painted on it (there is no separate blank version of this board
+ * to render text onto, unlike TRIBE_BOARD above) -- this rect is where a
+ * same-toned patch + replacement text is overlaid to read "tribe" instead
+ * (MyTribePage.tsx's LowerBoardLabel), not a real asset edit. Measured the
+ * same way as TRIBE_BOARD/TRIBE_HOTSPOTS: cropped this box out of the real
+ * image and visually confirmed it contains "my tribe" with a small margin
+ * and nothing else (scripts/studio/ has no record of this one since it
+ * was measured interactively, not via a saved script).
+ */
+export const TRIBE_LOWER_BOARD = { x: 40, y: 27, w: 21, h: 10 };
+
 export type TribeHotspotId = 'village' | 'invite' | 'following' | 'rewards';
 
 export interface TribeHotspot {
