@@ -19,7 +19,24 @@
 -- this exact room open in another tab -- that's client-side state, not
 -- visible to a DB trigger. notify_member's own existing dedupe (skips an
 -- identical unread notification) is the only spam guard in place.
+--
+-- 2026-09-19, same day, before this ever went live: Global Chat (one
+-- room every member is auto-joined to) is excluded entirely -- a room with
+-- every member would otherwise notify every member on every message. Not
+-- "gosat announcements only" -- excluded outright, simpler and
+-- unambiguous; badge/unread count via the existing realtime subscription
+-- still works normally. General per-recipient mute
+-- (chat_participants.notifications_muted) added in the same pass, since
+-- it's a one-line addition to the same loop and Global Chat needs a mute
+-- option somewhere -- column is generic (any room), but only Global
+-- Chat's UI exposes a toggle for it in this pass.
 
+ALTER TABLE public.chat_participants
+  ADD COLUMN IF NOT EXISTS notifications_muted boolean NOT NULL DEFAULT false;
+
+-- Sentinel id, same convention as this codebase's other hardcoded pinned
+-- ids (Scripture Study, Grove Station, Companions Village). Created by the
+-- migration that runs after this one.
 CREATE OR REPLACE FUNCTION public.notify_chat_message_participants()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -41,6 +58,13 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- Global Chat: every member is a participant, so this trigger's normal
+  -- "notify every other active participant" would notify the entire
+  -- membership on every message. Excluded outright.
+  IF NEW.room_id = '00000000-0000-0000-0000-000000000001'::uuid THEN
+    RETURN NEW;
+  END IF;
+
   SELECT COALESCE(display_name, first_name, username, 'Someone')
     INTO v_sender_name
   FROM public.profiles_public
@@ -51,6 +75,7 @@ BEGIN
     FROM public.chat_participants cp
     WHERE cp.room_id = NEW.room_id
       AND cp.is_active = true
+      AND cp.notifications_muted = false
       AND cp.user_id <> NEW.sender_id
   LOOP
     BEGIN

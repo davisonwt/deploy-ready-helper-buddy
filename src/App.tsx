@@ -34,7 +34,6 @@ import { NavigationMonitor } from "@/components/monitoring/NavigationMonitor";
 import { DeadLinkDetector } from "@/components/monitoring/DeadLinkDetector";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { PayoutSetupBanner } from "@/components/PayoutSetupBanner";
-import GroundskeeperWidget from "@/components/grove/GroundskeeperWidget";
 import { BuildUpdateBanner } from "@/components/BuildUpdateBanner";
 import AppRoutes, { LoadingFallback } from "./routes/AppRoutes";
 import SolanaPaymentHost from "@/components/payments/SolanaPaymentHost";
@@ -46,17 +45,24 @@ function ReferralCaptureMount() {
 }
 
 /**
- * The three fixed-bottom-right global widgets (basket FAB, wallet chip,
- * pine-tree GroundskeeperWidget) -- hidden while a stall interior is open
- * (AppContext.stallInteriorOpen) since its own fixed bottom tile strip has
- * no room to coexist with them. Farm-Stalls batch 2, item 1.
+ * The two fixed-bottom-right global widgets (basket FAB, wallet chip) --
+ * hidden while a stall interior is open (AppContext.stallInteriorOpen)
+ * since its own fixed bottom tile strip has no room to coexist with them.
+ * Farm-Stalls batch 2, item 1.
  *
  * Also hidden on the routes where the page's own controls have to be
  * reachable. These are small and rounded, which is exactly why they were
  * missed: a hit test 2px inside the overlap lands in a transparent corner
  * and reports clear. Sampling across the overlap instead, the wallet chip
- * and the pine tree cover "Pet sitting" and "Cleaning" on /sow/hand and
- * the Delete button on /my-listings, both at 390x844.
+ * covers "Pet sitting" and "Cleaning" on /sow/hand and the Delete button
+ * on /my-listings, both at 390x844.
+ *
+ * The pine-tree GroundskeeperWidget that used to sit here (Davison,
+ * 2026-09-19) is removed from global chrome entirely -- it was the only
+ * always-visible entry point to the Groundskeeper AI concierge, not an
+ * audio/sound control. The feature itself is not deleted: it's still
+ * reachable at /my-companions via a Companions Village stall's own
+ * hotspots, same as before this change.
  */
 function GlobalChrome() {
   const { stallInteriorOpen } = useAppContext();
@@ -66,7 +72,6 @@ function GlobalChrome() {
     <>
       <FloatingBasketButton />
       <TileErrorBoundary name="wallet balance" inline><WalletBalanceChip /></TileErrorBoundary>
-      <GroundskeeperWidget />
     </>
   );
 }

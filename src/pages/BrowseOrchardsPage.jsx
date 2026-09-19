@@ -949,9 +949,9 @@ export default function BrowseOrchardsPage() {
             🌱 Plant Seed
           </LivingButton>
         </Link>
-        <Link to="/conversations" style={{ flex: 1, textDecoration: 'none' }}>
+        <Link to="/conversations?c=00000000-0000-0000-0000-000000000001" style={{ flex: 1, textDecoration: 'none' }}>
           <LivingButton variant="share" height={48} borderRadius={14} fontSize={12} letterSpacing="1px">
-            💬 Chat
+            💬 Global Chat
           </LivingButton>
         </Link>
       </div>

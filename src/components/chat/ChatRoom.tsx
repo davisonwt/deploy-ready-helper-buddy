@@ -18,7 +18,9 @@ import {
   Square,
   DollarSign,
   Loader2,
-  Edit2
+  Edit2,
+  Bell,
+  BellOff
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ChatMessage from './ChatMessage';
@@ -116,6 +118,27 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
   // Donations
   const [showDonate, setShowDonate] = useState(false);
 
+  // Mute notifications for this room only -- chat_participants.notifications_muted,
+  // read by the chat_message_notify_participants trigger, which skips a
+  // recipient with this set. Generic (any room), but Global Chat is the
+  // room this exists for (a mandatory everyone-is-in-it room needs a way
+  // to go quiet without leaving it).
+  const [muted, setMuted] = useState(false);
+  const toggleMuted = async () => {
+    if (!user) return;
+    const next = !muted;
+    setMuted(next); // optimistic
+    const { error } = await supabase
+      .from('chat_participants')
+      .update({ notifications_muted: next })
+      .eq('room_id', roomId)
+      .eq('user_id', user.id);
+    if (error) {
+      setMuted(!next);
+      toast({ variant: 'destructive', title: 'Could not update mute setting', description: error.message });
+    }
+  };
+
 
   // Typing indicators
   const [usersTyping, setUsersTyping] = useState<string[]>([]);
@@ -178,6 +201,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
     fetchRoomInfo();
     fetchMessages();
     fetchParticipants();
+    supabase
+      .from('chat_participants')
+      .select('notifications_muted')
+      .eq('room_id', roomId)
+      .eq('user_id', userId)
+      .maybeSingle()
+      .then(({ data }) => setMuted(!!data?.notifications_muted));
     // Realtime: unique per-run channel topics, every .on() before
     // .subscribe(), and the cleanup is RETURNED so React removes the
     // channels before this effect runs again (room switch, auth refresh,
@@ -977,8 +1007,18 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
             >
               <Phone className="h-4 w-4" />
             </Button>
-            
-            
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleMuted}
+              aria-label={muted ? 'Unmute this room' : 'Mute this room'}
+              title={muted ? 'Unmute this room' : 'Mute this room'}
+            >
+              {muted ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+            </Button>
+
+
             {!embedded && (
             <Button
               variant="ghost"

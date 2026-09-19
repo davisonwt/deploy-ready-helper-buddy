@@ -65,6 +65,14 @@ function TribeSheet({ title, onClose, children }: { title: string; onClose: () =
 function BoardName({ name, boardPxWidth }: { name: string; boardPxWidth: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [scale, setScale] = useState(1);
+  // The sign exists to be read: a real base size proportional to the
+  // board's own measured pixel width, not a fixed Tailwind class (the
+  // board's rendered size varies with viewport/image scale). Was missing
+  // entirely -- the shrink-only effect below never scales UP, so a short
+  // name like "Louw's" rendered at ~16px browser default against a board
+  // several hundred px wide. The shrink-only transform still guards a long
+  // name from overflowing, unchanged.
+  const fontSize = Math.max(24, boardPxWidth * 0.12);
   useEffect(() => {
     const el = ref.current;
     if (!el || !boardPxWidth) return;
@@ -75,7 +83,7 @@ function BoardName({ name, boardPxWidth }: { name: string; boardPxWidth: number 
     <span
       ref={ref}
       className="inline-block whitespace-nowrap font-serif"
-      style={{ transform: `scale(${scale})`, transformOrigin: 'center', color: '#2b1a0d', textShadow: '0 1px 0 rgba(255,214,170,0.4)' }}
+      style={{ fontSize, transform: `scale(${scale})`, transformOrigin: 'center', color: '#2b1a0d', textShadow: '0 1px 0 rgba(255,214,170,0.4)' }}
     >
       {name}&rsquo;s
     </span>

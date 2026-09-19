@@ -1457,77 +1457,213 @@ export type Database = {
           },
         ]
       }
+      booking_live_locations: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          revoked_at: string | null
+          shared_by_user_id: string
+          updated_at: string
+          url: string
+          url_host: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          revoked_at?: string | null
+          shared_by_user_id: string
+          updated_at?: string
+          url: string
+          url_host: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          revoked_at?: string | null
+          shared_by_user_id?: string
+          updated_at?: string
+          url?: string
+          url_host?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_live_locations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_ratings: {
+        Row: {
+          booking_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          provider_replied_at: string | null
+          provider_reply: string | null
+          provider_user_id: string
+          rater_user_id: string
+          stars: number
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          provider_replied_at?: string | null
+          provider_reply?: string | null
+          provider_user_id: string
+          rater_user_id: string
+          stars: number
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          provider_replied_at?: string | null
+          provider_reply?: string | null
+          provider_user_id?: string
+          rater_user_id?: string
+          stars?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_ratings_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
+          accepted_at: string | null
           amount: number
+          arrived_at: string | null
+          booking_kind: string | null
+          cancelled_at: string | null
+          collected_at: string | null
           company_id: string
+          completed_at: string | null
           created_at: string
           currency: string
+          declined_at: string | null
           ends_at: string | null
+          eta_given_at: string | null
+          eta_minutes: number | null
           expires_at: string
           grower_user_id: string
           id: string
+          in_transit_at: string | null
+          no_show_at: string | null
+          no_show_fee: number | null
           note: string | null
+          on_my_way_at: string | null
           payment_reference: string | null
+          payment_status: string
           pillow_unit_id: string | null
           processor_fee: number | null
           product_id: string
           provider: string | null
+          provider_nudged_at: string | null
           provider_order_id: string | null
           quantity: number
           rate_unit: string
           s2g_fee: number
           sower_user_id: string
+          started_at: string | null
           starts_at: string
           status: string
           total: number
           updated_at: string
         }
         Insert: {
+          accepted_at?: string | null
           amount: number
+          arrived_at?: string | null
+          booking_kind?: string | null
+          cancelled_at?: string | null
+          collected_at?: string | null
           company_id: string
+          completed_at?: string | null
           created_at?: string
           currency: string
+          declined_at?: string | null
           ends_at?: string | null
+          eta_given_at?: string | null
+          eta_minutes?: number | null
           expires_at?: string
           grower_user_id: string
           id?: string
+          in_transit_at?: string | null
+          no_show_at?: string | null
+          no_show_fee?: number | null
           note?: string | null
+          on_my_way_at?: string | null
           payment_reference?: string | null
+          payment_status?: string
           pillow_unit_id?: string | null
           processor_fee?: number | null
           product_id: string
           provider?: string | null
+          provider_nudged_at?: string | null
           provider_order_id?: string | null
           quantity: number
           rate_unit: string
           s2g_fee: number
           sower_user_id: string
+          started_at?: string | null
           starts_at: string
           status?: string
           total: number
           updated_at?: string
         }
         Update: {
+          accepted_at?: string | null
           amount?: number
+          arrived_at?: string | null
+          booking_kind?: string | null
+          cancelled_at?: string | null
+          collected_at?: string | null
           company_id?: string
+          completed_at?: string | null
           created_at?: string
           currency?: string
+          declined_at?: string | null
           ends_at?: string | null
+          eta_given_at?: string | null
+          eta_minutes?: number | null
           expires_at?: string
           grower_user_id?: string
           id?: string
+          in_transit_at?: string | null
+          no_show_at?: string | null
+          no_show_fee?: number | null
           note?: string | null
+          on_my_way_at?: string | null
           payment_reference?: string | null
+          payment_status?: string
           pillow_unit_id?: string | null
           processor_fee?: number | null
           product_id?: string
           provider?: string | null
+          provider_nudged_at?: string | null
           provider_order_id?: string | null
           quantity?: number
           rate_unit?: string
           s2g_fee?: number
           sower_user_id?: string
+          started_at?: string | null
           starts_at?: string
           status?: string
           total?: number
@@ -1923,6 +2059,8 @@ export type Database = {
           ai_generated: boolean | null
           content: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           embedding: string | null
           emotional_tone: string | null
           file_name: string | null
@@ -1945,6 +2083,8 @@ export type Database = {
           ai_generated?: boolean | null
           content?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           embedding?: string | null
           emotional_tone?: string | null
           file_name?: string | null
@@ -1967,6 +2107,8 @@ export type Database = {
           ai_generated?: boolean | null
           content?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           embedding?: string | null
           emotional_tone?: string | null
           file_name?: string | null
@@ -2026,6 +2168,7 @@ export type Database = {
           kicked_at: string | null
           kicked_by: string | null
           last_read_at: string | null
+          notifications_muted: boolean
           profile_id: string | null
           room_id: string
           user_id: string
@@ -2039,6 +2182,7 @@ export type Database = {
           kicked_at?: string | null
           kicked_by?: string | null
           last_read_at?: string | null
+          notifications_muted?: boolean
           profile_id?: string | null
           room_id: string
           user_id: string
@@ -2052,6 +2196,7 @@ export type Database = {
           kicked_at?: string | null
           kicked_by?: string | null
           last_read_at?: string | null
+          notifications_muted?: boolean
           profile_id?: string | null
           room_id?: string
           user_id?: string
@@ -17204,6 +17349,16 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_rating_v: {
+        Row: {
+          is_new_provider: boolean | null
+          provider_user_id: string | null
+          public_average: number | null
+          rating_count: number | null
+          raw_average: number | null
+        }
+        Relationships: []
+      }
       public_live_streams: {
         Row: {
           created_at: string | null
@@ -17338,6 +17493,10 @@ export type Database = {
             }
             Returns: boolean
           }
+      booking_no_show_claimable: {
+        Args: { p_booking_id: string }
+        Returns: boolean
+      }
       books_backfill_products: {
         Args: { _business_id: string }
         Returns: number
@@ -17577,6 +17736,7 @@ export type Database = {
         Returns: boolean
       }
       expire_bookings: { Args: never; Returns: Json }
+      expire_stale_booking_requests: { Args: never; Returns: number }
       expire_stale_orders: { Args: never; Returns: Json }
       expire_stale_xrp_quotes: { Args: never; Returns: undefined }
       finalize_basket_order: {
@@ -18205,6 +18365,7 @@ export type Database = {
         Returns: boolean
       }
       liability_snapshot: { Args: { _environment?: string }; Returns: Json }
+      live_location_host: { Args: { p_url: string }; Returns: string }
       log_admin_action: {
         Args: {
           action_details?: Json
@@ -18662,6 +18823,10 @@ export type Database = {
           username: string
         }[]
       }
+      security_answer_check: {
+        Args: { p_answer: string; p_hash: string }
+        Returns: string
+      }
       send_chat_message: {
         Args: {
           p_content?: string
@@ -18676,6 +18841,8 @@ export type Database = {
           ai_generated: boolean | null
           content: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           embedding: string | null
           emotional_tone: string | null
           file_name: string | null
@@ -19058,6 +19225,7 @@ export type Database = {
         Returns: {
           locked: boolean
           message: string
+          reason: string
           success: boolean
           token: string
         }[]
