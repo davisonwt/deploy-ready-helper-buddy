@@ -222,12 +222,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
   }, [roomId, userId]);
 
   useEffect(() => {
-    // Scroll to bottom when new messages arrive
+    // Scroll to bottom when new messages arrive. scrollAreaRef is now the
+    // scrollable element itself (a plain overflow-y-auto div, not Radix
+    // ScrollArea), so no nested viewport to query for.
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -808,13 +807,21 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
   }
 
   return (
-    <div className="flex h-full min-h-[600px]">
+    // No min-h floor -- ChatRoom.tsx must fit whatever height its parent
+    // actually gives it (a full page, or a height-constrained sheet like
+    // StallChatSheet.tsx). A hardcoded min-h-[600px] here forced this
+    // component past a sheet's own bounds on any viewport shorter than
+    // 600px (844x390 landscape, a 560px laptop), pushing the composer out
+    // of reach with the message list not scrolling to compensate --
+    // same bug class as ShareSeedDialog.tsx's 2026-09-17 fix, and min-h-0
+    // is just as load-bearing here on every flex child in the chain.
+    <div className="flex h-full min-h-0">
       {rail && (
         <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-[#8B5CF6]/25 bg-[#14101F]/90 overflow-y-auto">
           {rail}
         </aside>
       )}
-      <div className="flex flex-col flex-1 min-w-0 bg-[#0E1B15] text-[#F3F7F0]">
+      <div className="flex min-h-0 flex-1 flex-col min-w-0 bg-[#0E1B15] text-[#F3F7F0]">
         {rail && (
           <div className="lg:hidden border-b border-[#8B5CF6]/25 bg-[#14101F]/90">
             {rail}
@@ -1029,7 +1036,21 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
             </Button>
             )}
 
-            {roomInfo?.created_by === user?.id && (
+            {/* Not for direct (1:1) rooms, ever, and not embedded. Found
+                2026-09-19: get_or_create_direct_room sets created_by to
+                whoever RPC'd it first -- the visitor, for the stall-chat
+                button -- so "creator" here does not mean "the sower's
+                room" or anything like ownership; it just means "whoever
+                tapped first," and this button let that person unilaterally
+                wipe the room, its messages, and the other participant's
+                membership. A 1:1 DM has no one who should hold that power
+                over the other side. Group rooms keep it -- a real creator/
+                moderator concept still makes sense there. RLS hardened to
+                match (chat_rooms_delete now excludes room_type='direct'
+                even for the creator; admin/gosat unaffected) -- this
+                button being hidden was never the actual security boundary,
+                just the visible one. */}
+            {!embedded && roomInfo?.room_type !== 'direct' && roomInfo?.created_by === user?.id && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -1119,8 +1140,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
         </DockedCallPane>
       )}
 
-      {/* Messages Area */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+      {/* Messages Area -- a plain overflow container, NOT Radix ScrollArea.
+          ScrollArea's inner viewport is h-full (height:100%), which only
+          resolves against a parent with a definite height; here the parent
+          is a flex item sized by flex-1, whose computed height stays auto,
+          so the viewport grew to its content and the composer footer below
+          landed off-screen with nothing scrollable to reach it -- same
+          fix as ShareSeedDialog.tsx's 2026-09-17 member list. */}
+      <div ref={scrollAreaRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
         {/* Typing Indicator */}
         {usersTyping.length > 0 && (
           <div className="flex items-center gap-2 text-xs text-[#8AA99A] mb-3 p-2 bg-[#123330]/40 rounded-lg border border-[#4FA876]/15">
@@ -1230,10 +1257,12 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
             );
           })}
         </div>
-      </ScrollArea>
+      </div>
 
-      {/* Input Area */}
-      <div className="border-t border-[#4FA876]/15 bg-[#0E1B15]/95 backdrop-blur p-4">
+      {/* Input Area -- shrink-0 so the flex-1 message list above never
+          squeezes the composer, and so it stays visibly at its content
+          size even before the list has anything to scroll. */}
+      <div className="shrink-0 border-t border-[#4FA876]/15 bg-[#0E1B15]/95 backdrop-blur p-4">
         {replyingTo && (
           <div className="mb-2 p-2 bg-[#123330]/50 rounded-lg border-l-2 border-[#F2C14E] text-xs flex items-center justify-between text-[#F3F7F0]">
             <div>
