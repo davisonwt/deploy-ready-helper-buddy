@@ -29,7 +29,7 @@ export default function GlobalRadioPlayer() {
       <button
         type="button"
         onClick={() => setSheetOpen(true)}
-        aria-label="What's playing on Grove Station"
+        aria-label={state.reconnecting ? 'Grove Station reconnecting' : "What's playing on Grove Station"}
         // z-[9000] used to sit UNDER StallInteriorView's own root
         // (z-[9999] -- the Cockpit is a StallInteriorView), making the
         // pill visually present but unreachable on the exact page its own
@@ -38,7 +38,8 @@ export default function GlobalRadioPlayer() {
         // sheet correctly covers the pill instead of floating over it.
         className="fixed bottom-4 right-4 z-[10010] flex items-center gap-2 rounded-full border border-amber-500/30 bg-[#140c06]/95 px-3 py-2 text-amber-100 shadow-lg backdrop-blur"
       >
-        <Radio className="h-4 w-4 text-amber-300 animate-pulse" />
+        <Radio className={`h-4 w-4 text-amber-300 ${state.reconnecting ? 'animate-spin' : 'animate-pulse'}`} />
+        {state.reconnecting && <span className="text-xs text-amber-200">Reconnecting…</span>}
         <span
           role="button"
           tabIndex={0}

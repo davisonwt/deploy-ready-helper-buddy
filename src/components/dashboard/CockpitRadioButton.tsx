@@ -29,7 +29,7 @@ export default function CockpitRadioButton() {
       fontSize={12}
       letterSpacing="1px"
     >
-      📻 {state.isPlaying ? 'Stop' : 'Radio'}
+      📻 {state.reconnecting ? 'Reconnecting…' : state.isPlaying ? 'Stop' : 'Radio'}
     </LivingButton>
   );
 }

@@ -7,23 +7,53 @@
 // connection has to be the SAME element across navigation, not torn down
 // and recreated, or it audibly glitches/reconnects.
 //
-// 2026-09-19: replaced the old third-party Icecast URL (dead --
-// s9.voscast.com never resolved) with a real station -- every sower's
-// uploaded music, looped continuously, playout computed server-side
-// (supabase/functions/_shared/radioSchedule.ts) so every listener hears
-// the same track at the same moment. Audio itself is only ever reached
-// through radio-stream, which takes no track selection from the client --
-// see that function's own comment for the full protection model.
+// 2026-09-19: replaced the old third-party Icecast URL (dead) with a real
+// station -- every sower's uploaded music, looped continuously, playout
+// computed server-side (supabase/functions/_shared/radioSchedule.ts).
 //
-// Ducking: ducks (pauses, does not volume-duck -- simpler, no "restore
-// volume after" state) the moment either of the two OTHER existing global
-// audio signals report something active: a Gathering Room call/live
-// session (activeLiveSession.ts) or a track preview
-// (previewPlaybackStore.ts). Neither of those call sites needed any
-// change -- this just subscribes to what they already publish. Does NOT
-// auto-resume afterward, by design (Davison, 2026-09-19): resuming audio
-// a member didn't ask for is the wrong default, and browser autoplay
-// policy would likely block it without a fresh gesture anyway.
+// 2026-09-19, third report from real listening (playback dying after 2-5
+// songs): the first version of this file transitioned tracks ONLY via a
+// 15s setInterval poll, with no listener on the audio element's own
+// `ended`/`error` events at all. Browsers throttle (often to ~once/minute,
+// sometimes fully suspend) setInterval timers in a backgrounded tab, and
+// iOS suspends JS almost entirely on screen lock even while background
+// audio keeps playing -- so the CURRENT track played out fine, `ended`
+// fired into a void with nothing listening, and nothing ever reloaded
+// .src onto the next track. One missed transition during any background
+// stretch permanently stopped a session that looked perfectly fine in a
+// foregrounded, short-lived test harness.
+//
+// Now layered so no single failure mode is load-bearing:
+//   - `ended`   -- the primary transition trigger. Event-driven, not
+//                  timer-driven; media element events are serviced even
+//                  when generic JS timers are throttled.
+//   - `error`   -- any decode/network error on the current stream
+//                  schedules a retry immediately.
+//   - stall watchdog -- a short interval checks audio.currentTime is
+//                  actually advancing; a silent stall (network cut with
+//                  no clean error) that doesn't progress for
+//                  STALL_GRACE_MS forces a retune.
+//   - visibilitychange -- the instant the tab is foregrounded again,
+//                  resync immediately and self-heal if audio quietly died
+//                  while backgrounded.
+//   - periodic poll -- a slower backstop that also self-heals a silently
+//                  paused element.
+// Every path that would otherwise go silent instead calls scheduleRetry(),
+// which retries with exponential backoff FOREVER (as long as the user's
+// own intent, state.isPlaying, is still true) -- never a dead end. The
+// pill surfaces state.reconnecting during a retry; nothing else changes
+// for the listener.
+//
+// Ducking: ducks (pauses) the moment either of the two OTHER existing
+// global audio signals report something active: a Gathering Room
+// call/live session (activeLiveSession.ts) or a track preview
+// (previewPlaybackStore.ts). Does NOT auto-resume afterward, by design
+// (Davison, 2026-09-19) -- resuming audio a member didn't ask for is the
+// wrong default. stopRadio() (called both by an explicit user stop and by
+// ducking) clears all retry/watchdog state cleanly either way, so a later
+// startRadio() -- whether the user resuming after a duck, or a fresh
+// session -- never inherits stale retry counters or a stuck
+// "reconnecting" flag.
 
 import { ensureFreshSession } from '@/lib/payments/invokeFunction';
 import { subscribeActiveLiveSession, getActiveLiveSession } from '@/lib/liveSession/activeLiveSession';
@@ -33,11 +63,19 @@ const SUPABASE_URL = 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
 const STREAM_ENDPOINT = `${SUPABASE_URL}/functions/v1/radio-stream`;
 const NOW_PLAYING_ENDPOINT = `${SUPABASE_URL}/functions/v1/radio-now-playing`;
 
-// How often to re-check what's live while playing. Short enough that a
-// track change is noticed promptly (worst case: this long past the
-// previous track's actual end before the player catches up and reloads
-// .src onto the new one), long enough not to hammer the function.
-const POLL_MS = 15_000;
+const POLL_MS = 10_000;
+const RETRY_BASE_MS = 1_000;
+const RETRY_MAX_MS = 20_000;
+const WATCHDOG_INTERVAL_MS = 5_000;
+const STALL_GRACE_MS = 10_000;
+
+function log(...args: unknown[]) {
+  // eslint-disable-next-line no-console
+  console.log('[radio]', new Date().toISOString(), ...args);
+}
+function logError(...args: unknown[]) {
+  console.error('[radio]', new Date().toISOString(), ...args);
+}
 
 export interface RadioTrackInfo {
   id: string;
@@ -53,6 +91,8 @@ export interface RadioTrackInfo {
 export interface RadioState {
   isPlaying: boolean;
   loading: boolean;
+  /** True while a retry is in flight after an error/stall/failed tune -- surfaced on the pill as "Reconnecting...", nothing else. */
+  reconnecting: boolean;
   track: RadioTrackInfo | null;
   offsetSeconds: number;
   poolSize: number;
@@ -61,10 +101,17 @@ export interface RadioState {
 type Listener = () => void;
 
 let audio: HTMLAudioElement | null = null;
-let state: RadioState = { isPlaying: false, loading: false, track: null, offsetSeconds: 0, poolSize: 0 };
+let state: RadioState = { isPlaying: false, loading: false, reconnecting: false, track: null, offsetSeconds: 0, poolSize: 0 };
 const listeners = new Set<Listener>();
 let pollTimer: ReturnType<typeof setInterval> | null = null;
+let watchdogTimer: ReturnType<typeof setInterval> | null = null;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+let retryAttempt = 0;
+let lastWatchdogTime = 0;
+let lastWatchdogProgressAt = 0;
+let tuneInFlight = false;
 let duckingWired = false;
+let visibilityWired = false;
 
 function notify() {
   listeners.forEach((l) => l());
@@ -79,81 +126,216 @@ function wireDuckingOnce() {
   if (duckingWired) return;
   duckingWired = true;
   subscribeActiveLiveSession(() => {
-    if (getActiveLiveSession() && state.isPlaying) stopRadio();
+    if (getActiveLiveSession() && state.isPlaying) {
+      log('ducking: active live session started -- pausing radio');
+      stopRadio();
+    }
   });
   subscribeToPreviewPlayback(() => {
-    if (getCurrentlyPlayingId() && state.isPlaying) stopRadio();
+    if (getCurrentlyPlayingId() && state.isPlaying) {
+      log('ducking: track preview started -- pausing radio');
+      stopRadio();
+    }
   });
+}
+
+function wireVisibilityOnce() {
+  if (visibilityWired || typeof document === 'undefined') return;
+  visibilityWired = true;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || !state.isPlaying) return;
+    log('visibilitychange: tab foregrounded while playing -- resyncing');
+    if (audio && audio.paused) {
+      logError('visibilitychange: audio was paused (likely died while backgrounded) -- forcing retune');
+      void tuneToLive(true, 'visibilitychange self-heal');
+    } else {
+      void pollOnce();
+    }
+  });
+}
+
+function clearRetry() {
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
+}
+
+function scheduleRetry(reason: string) {
+  if (!state.isPlaying) {
+    log(`scheduleRetry skipped (user intent is stopped) -- reason was: ${reason}`);
+    return;
+  }
+  clearRetry();
+  retryAttempt += 1;
+  const delay = Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** (retryAttempt - 1));
+  setState({ reconnecting: true });
+  logError(`retry #${retryAttempt} scheduled in ${delay}ms -- reason: ${reason}`);
+  retryTimer = setTimeout(() => {
+    if (!state.isPlaying) {
+      log('retry fired but user intent is now stopped -- doing nothing');
+      return;
+    }
+    log(`retry #${retryAttempt} firing now`);
+    void tuneToLive(true, `retry #${retryAttempt} (${reason})`);
+  }, delay);
 }
 
 function ensureAudio(): HTMLAudioElement {
   if (!audio) {
     audio = new Audio();
     audio.preload = 'none';
-    audio.addEventListener('pause', () => setState({ isPlaying: false }));
-    audio.addEventListener('play', () => setState({ isPlaying: true }));
-    audio.addEventListener('error', () => setState({ isPlaying: false, loading: false }));
+    audio.addEventListener('pause', () => {
+      log('event: pause');
+      setState({ isPlaying: false });
+    });
+    audio.addEventListener('play', () => {
+      log('event: play (requested)');
+      setState({ isPlaying: true });
+    });
+    audio.addEventListener('playing', () => {
+      log('event: playing (audio actually resumed/started)');
+      retryAttempt = 0;
+      clearRetry();
+      setState({ reconnecting: false });
+    });
+    audio.addEventListener('ended', () => {
+      log('event: ended -- track finished naturally, tuning to next');
+      void tuneToLive(true, 'ended');
+    });
+    audio.addEventListener('error', () => {
+      const err = audio?.error;
+      logError('event: error', err ? { code: err.code, message: err.message } : 'unknown');
+      if (state.isPlaying) scheduleRetry('audio element error event');
+    });
+    audio.addEventListener('stalled', () => {
+      logError('event: stalled (buffer starved) -- watchdog will force a retune if this does not self-resolve');
+    });
   }
   return audio;
+}
+
+function startWatchdog() {
+  if (watchdogTimer) return;
+  lastWatchdogTime = audio?.currentTime ?? 0;
+  lastWatchdogProgressAt = Date.now();
+  watchdogTimer = setInterval(() => {
+    if (!audio || !state.isPlaying || tuneInFlight) return;
+    const ct = audio.currentTime;
+    if (ct > lastWatchdogTime + 0.1) {
+      lastWatchdogTime = ct;
+      lastWatchdogProgressAt = Date.now();
+      return;
+    }
+    const stalledFor = Date.now() - lastWatchdogProgressAt;
+    if (stalledFor > STALL_GRACE_MS && !audio.paused) {
+      logError(`watchdog: no playback progress for ${stalledFor}ms while nominally playing -- forcing retune`);
+      lastWatchdogProgressAt = Date.now();
+      scheduleRetry('stall watchdog: no currentTime progress');
+    }
+  }, WATCHDOG_INTERVAL_MS);
+}
+
+function stopWatchdog() {
+  if (watchdogTimer) {
+    clearInterval(watchdogTimer);
+    watchdogTimer = null;
+  }
 }
 
 async function fetchNowPlaying(): Promise<{ track: RadioTrackInfo | null; offsetSeconds: number; poolSize: number } | null> {
   const session = await ensureFreshSession();
   const token = session?.access_token;
-  if (!token) return null;
+  if (!token) {
+    logError('fetchNowPlaying: no valid session/token');
+    return null;
+  }
   try {
     const res = await fetch(NOW_PLAYING_ENDPOINT, { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      logError(`fetchNowPlaying: HTTP ${res.status}`);
+      return null;
+    }
     const data = await res.json();
     if (!data.playing) return { track: null, offsetSeconds: 0, poolSize: data.poolSize ?? 0 };
     return { track: data.track, offsetSeconds: data.offsetSeconds ?? 0, poolSize: data.poolSize ?? 0 };
-  } catch {
+  } catch (e) {
+    logError('fetchNowPlaying: fetch threw', e);
     return null;
   }
 }
 
 /** Reloads .src onto whatever's live right now and seeks to its live
- *  offset. Called on startRadio() (shouldPlay always true there) and
- *  whenever polling notices the playing track has changed (shouldPlay
- *  reflects whether playback was already under way). Never called with a
- *  caller-chosen track -- there is no such parameter to pass. */
-async function tuneToLive(shouldPlay: boolean) {
-  const session = await ensureFreshSession();
-  const token = session?.access_token;
-  if (!token) {
-    setState({ isPlaying: false, loading: false });
+ *  offset. Never called with a caller-chosen track -- there is no such
+ *  parameter to pass. On any failure at any step, schedules a retry
+ *  instead of giving up -- this function is the single place silence
+ *  either recovers or doesn't, so it must never just stop. */
+async function tuneToLive(shouldPlay: boolean, reason: string) {
+  if (tuneInFlight) {
+    log(`tuneToLive skipped -- already in flight (reason was: ${reason})`);
     return;
   }
-  const el = ensureAudio();
-  el.src = `${STREAM_ENDPOINT}?token=${encodeURIComponent(token)}`;
-  const onLoaded = () => {
-    el.currentTime = state.offsetSeconds;
-    el.removeEventListener('loadedmetadata', onLoaded);
-  };
-  el.addEventListener('loadedmetadata', onLoaded);
-  if (shouldPlay) {
-    try {
-      await el.play();
-    } catch {
-      setState({ isPlaying: false, loading: false });
+  tuneInFlight = true;
+  log(`tuneToLive starting -- reason: ${reason}`);
+  try {
+    const result = await fetchNowPlaying();
+    if (!result || !result.track) {
+      logError('tuneToLive: no track available from radio-now-playing');
+      if (shouldPlay) scheduleRetry('no track available');
+      return;
     }
+    const trackChanged = result.track.id !== state.track?.id;
+    setState({ track: result.track, offsetSeconds: result.offsetSeconds, poolSize: result.poolSize, loading: false });
+    log(`tuneToLive: now-playing resolved -- track="${result.track.title}" offset=${result.offsetSeconds}s trackChanged=${trackChanged}`);
+
+    const session = await ensureFreshSession();
+    const token = session?.access_token;
+    if (!token) {
+      logError('tuneToLive: no valid session/token to build stream URL');
+      if (shouldPlay) scheduleRetry('no session token');
+      return;
+    }
+
+    const el = ensureAudio();
+    el.src = `${STREAM_ENDPOINT}?token=${encodeURIComponent(token)}`;
+    const targetOffset = result.offsetSeconds;
+    const onLoaded = () => {
+      el.currentTime = targetOffset;
+      el.removeEventListener('loadedmetadata', onLoaded);
+    };
+    el.addEventListener('loadedmetadata', onLoaded);
+
+    if (shouldPlay) {
+      await el.play();
+      log('tuneToLive: play() resolved successfully');
+    }
+  } catch (e) {
+    logError('tuneToLive: threw', e);
+    if (shouldPlay) scheduleRetry(`tuneToLive exception: ${e instanceof Error ? e.message : String(e)}`);
+  } finally {
+    tuneInFlight = false;
   }
 }
 
 async function pollOnce() {
+  if (tuneInFlight) return;
   const result = await fetchNowPlaying();
   if (!result) return;
   const trackChanged = result.track?.id !== state.track?.id;
-  const wasPlaying = state.isPlaying;
   setState({ track: result.track, offsetSeconds: result.offsetSeconds, poolSize: result.poolSize, loading: false });
-  if (trackChanged && wasPlaying) {
-    await tuneToLive(true);
+  if (!state.isPlaying) return;
+  if (trackChanged) {
+    log('pollOnce: detected a track change the ended-event path missed -- tuning (backstop)');
+    await tuneToLive(true, 'poll backstop: track changed');
+  } else if (audio && audio.paused) {
+    logError('pollOnce: isPlaying=true but audio.paused=true -- self-healing');
+    await tuneToLive(true, 'poll backstop: silently paused');
   }
 }
 
 function startPolling() {
   if (pollTimer) return;
-  pollTimer = setInterval(pollOnce, POLL_MS);
+  pollTimer = setInterval(() => { void pollOnce(); }, POLL_MS);
 }
 
 function stopPolling() {
@@ -165,17 +347,26 @@ function stopPolling() {
 
 export function startRadio() {
   wireDuckingOnce();
-  setState({ loading: true });
+  wireVisibilityOnce();
+  log('startRadio called');
+  retryAttempt = 0;
+  clearRetry();
+  setState({ loading: true, reconnecting: false });
   (async () => {
-    await pollOnce();
-    await tuneToLive(true);
+    await tuneToLive(true, 'startRadio');
     startPolling();
+    startWatchdog();
   })();
 }
 
 export function stopRadio() {
+  log('stopRadio called');
   audio?.pause();
   stopPolling();
+  stopWatchdog();
+  clearRetry();
+  retryAttempt = 0;
+  setState({ reconnecting: false });
 }
 
 export function getRadioState(): RadioState {
@@ -184,10 +375,8 @@ export function getRadioState(): RadioState {
 
 export function subscribeRadio(listener: Listener): () => void {
   wireDuckingOnce();
+  wireVisibilityOnce();
   listeners.add(listener);
-  // A late subscriber (e.g. a component mounting on a page reached after
-  // playback already started elsewhere) should see current metadata
-  // without waiting for the next poll tick.
   if (state.isPlaying && !state.track) void pollOnce();
   return () => listeners.delete(listener);
 }

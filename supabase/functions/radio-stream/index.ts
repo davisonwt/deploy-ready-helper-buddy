@@ -28,8 +28,14 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { computeCurrentTrack, fetchRadioTracks } from "../_shared/radioSchedule.ts";
 
 const MIN_TTL_SECONDS = 60;
-const TTL_MARGIN_SECONDS = 30;
-const MAX_TTL_SECONDS = 20 * 60;
+const TTL_MARGIN_SECONDS = 45;
+// 2026-09-19: was 20 minutes, sized as "no realistic track is longer than
+// this." A cap that can fall short of a real track's remaining length is
+// exactly the wrong kind of cap for a stream that must never go silent --
+// it doesn't limit exposure (the URL is already scoped to one track), it
+// just risks the URL expiring mid-track for anything unusually long. Set
+// high enough that it is never the reason a real listen dies.
+const MAX_TTL_SECONDS = 4 * 60 * 60;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
