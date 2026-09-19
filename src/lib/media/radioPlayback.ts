@@ -68,6 +68,14 @@ const RETRY_BASE_MS = 1_000;
 const RETRY_MAX_MS = 20_000;
 const WATCHDOG_INTERVAL_MS = 5_000;
 const STALL_GRACE_MS = 10_000;
+// Found live: a track whose stored `duration` overstates its real file
+// length seeks past the real end on every tune, firing `ended` again
+// almost immediately -- a tight loop reloading every ~3s for as long as
+// the (wrong) stored duration says the track's slot lasts, since the
+// schedule won't move to the next track until then. A real song is never
+// this short; treat an ended-this-fast as an anomaly needing backoff,
+// not a normal transition to act on immediately.
+const MIN_SANE_TRACK_MS = 5_000;
 
 // vite.config.ts marks console.log/info/debug as "pure" and strips them
 // from production bundles entirely (kept: warn/error, for Sentry-style
@@ -116,6 +124,7 @@ let retryTimer: ReturnType<typeof setTimeout> | null = null;
 let retryAttempt = 0;
 let lastWatchdogTime = 0;
 let lastWatchdogProgressAt = 0;
+let lastTuneCompletedAt = 0;
 let tuneInFlight = false;
 let duckingWired = false;
 let visibilityWired = false;
@@ -214,9 +223,29 @@ function ensureAudio(): HTMLAudioElement {
       log('event: playing (audio actually resumed/started)');
       retryAttempt = 0;
       clearRetry();
+      // Found live (2026-09-19, ~42min real run): the watchdog's "last
+      // known good position" was a single high-water mark for the whole
+      // session, never reset on a track change. Track 2 starts near
+      // currentTime=2s while the mark was still track 1's ending ~230s --
+      // a later track's time can never climb back above an earlier
+      // track's peak, so every watchdog tick after the FIRST transition
+      // read as "stalled" forever, forcing a reload every ~10-15s for the
+      // rest of the session. 'playing' fires exactly when audio actually
+      // starts rendering after any reload/seek, for any reason (ended,
+      // error-retry, watchdog-retry, poll backstop, startRadio) -- the one
+      // reliable place to re-baseline it.
+      lastWatchdogTime = audio?.currentTime ?? 0;
+      lastWatchdogProgressAt = Date.now();
+      lastTuneCompletedAt = Date.now();
       setState({ reconnecting: false });
     });
     audio.addEventListener('ended', () => {
+      const sinceTune = Date.now() - lastTuneCompletedAt;
+      if (sinceTune < MIN_SANE_TRACK_MS) {
+        logError(`event: ended only ${sinceTune}ms after starting -- not a real play-through (stored duration likely overstates the real file), backing off instead of retuning immediately`);
+        scheduleRetry('ended anomalously soon after starting');
+        return;
+      }
       log('event: ended -- track finished naturally, tuning to next');
       void tuneToLive(true, 'ended');
     });

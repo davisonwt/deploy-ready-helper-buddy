@@ -105,6 +105,26 @@ function maxRecoveryGapMs(lines: string[]): number {
   return maxGap;
 }
 
+/** Recovering quickly isn't enough on its own -- a bug that thrashes
+ *  (reload every few seconds, each one individually "recovering" fine)
+ *  passed the gap check above while still being unlistenable. Counts how
+ *  many times two consecutive "playing" confirmations were less than
+ *  MIN_SANE_GAP_MS apart -- real tracks are minutes long, so more than an
+ *  occasional one-off reconnect this fast means something is looping. */
+function suspiciouslyFastPlayingGaps(lines: string[]): number {
+  const MIN_SANE_GAP_MS = 5000;
+  const ts = (l: string) => {
+    const m = l.match(/\[radio\]\s+(\S+)/);
+    return m ? new Date(m[1]).getTime() : NaN;
+  };
+  const playingTimes = lines.filter((l) => l.includes('event: playing')).map(ts).filter((t) => !Number.isNaN(t));
+  let count = 0;
+  for (let i = 1; i < playingTimes.length; i++) {
+    if (playingTimes[i] - playingTimes[i - 1] < MIN_SANE_GAP_MS) count++;
+  }
+  return count;
+}
+
 test.describe.serial('Radio reliability -- real listening conditions', () => {
   test.skip(!EMAIL || !PASS, 'TEST_A_EMAIL/PASSWORD required in .env.test.');
 
@@ -156,11 +176,13 @@ test.describe.serial('Radio reliability -- real listening conditions', () => {
     const errorCount = countOccurrences(logs, 'event: error');
     const retryCount = countOccurrences(logs, 'retry #');
     const gap = maxRecoveryGapMs(logs);
+    const fastGaps = suspiciouslyFastPlayingGaps(logs);
 
     console.log('----- RADIO RELIABILITY EVIDENCE (desktop, ~42 real minutes) -----');
     console.log(`playing confirmations: ${playingCount}`);
     console.log(`ended events: ${endedCount}, error events: ${errorCount}, retries scheduled: ${retryCount}`);
     console.log(`max gap between trouble and next recovery: ${gap}ms`);
+    console.log(`suspiciously fast playing-to-playing gaps (<5s, real tracks are minutes): ${fastGaps}`);
     console.log('--- full timestamped [radio] log ---');
     logs.forEach((l) => console.log(l));
     console.log('----- END EVIDENCE -----');
@@ -173,6 +195,11 @@ test.describe.serial('Radio reliability -- real listening conditions', () => {
     // Any trouble that happened must have recovered within a bounded window
     // (generous -- backoff caps at 20s per retry, allow a few retries).
     expect(gap).toBeLessThan(90_000);
+    // Recovering fast isn't enough on its own -- caught a real bug where
+    // every individual reload "recovered" within ~2s while the player
+    // thrashed a reload every ~3-15s for most of the session. A couple of
+    // one-off fast reconnects are fine; dozens are a loop, not resilience.
+    expect(fastGaps).toBeLessThanOrEqual(3);
 
     await page.evaluate(() => {
       // Best-effort stop so we don't leave audio playing against the account.
