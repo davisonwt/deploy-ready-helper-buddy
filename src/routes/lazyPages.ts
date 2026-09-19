@@ -46,6 +46,8 @@ export const MyTribePage = lazy(() => import('@/pages/MyTribePage'));
 export const MemberProfilePage = lazy(() => import('@/pages/MemberProfilePage'));
 
 export const ChatApp = lazy(() => import('@/pages/ChatApp'));
+// Phase 1A/1B-lite: the unified conversation list, alongside ChatApp.
+export const ConversationsPage = lazy(() => import('@/pages/ConversationsPage'));
 export const CommunityChatsPage = lazy(() => import('@/pages/CommunityChatsPage'));
 export const GroveFeedPage = lazy(() => import('@/pages/GroveFeedPage'));
 export const CommunicationsHub = lazy(() =>

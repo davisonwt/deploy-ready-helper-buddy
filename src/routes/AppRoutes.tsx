@@ -154,6 +154,7 @@ import {
   WanderingDirectoryPage,
   PlantASeedPage,
   ChatApp,
+  ConversationsPage,
   CommunityChatsPage,
   SessionPage,
   ClassroomPage,
@@ -457,6 +458,15 @@ const AppRoutes = () => (
       <ProtectedRoute>
         <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading...</div></div>}>
           <ChatApp />
+        </Suspense>
+      </ProtectedRoute>
+    } />
+    {/* Phase 1A/1B-lite: the unified conversation list, built alongside
+        /chatapp. Nothing about /chatapp changes. */}
+    <Route path="/conversations" element={
+      <ProtectedRoute>
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading...</div></div>}>
+          <ConversationsPage />
         </Suspense>
       </ProtectedRoute>
     } />
