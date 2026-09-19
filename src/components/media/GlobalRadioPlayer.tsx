@@ -10,7 +10,7 @@ import { getRadioState, subscribeRadio, stopRadio, type RadioState } from '@/lib
  * so a member is never stuck with sound they can't find the source of,
  * even several navigations away from the Cockpit control that started it.
  * No volume/now-playing clutter here on purpose; that lives on the
- * Cockpit's own RadioBanner.
+ * Cockpit's own bottom-bar radio button (CockpitRadioButton.tsx).
  */
 export default function GlobalRadioPlayer() {
   const [state, setState] = useState<RadioState>(getRadioState());

@@ -10,7 +10,7 @@ import { resolveStallHotspots } from '@/lib/stalls/stallTypes'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import OwnerMenuItems from '@/components/owner/OwnerMenuItems'
 import SettlementConsentBanner from '@/components/dashboard/SettlementConsentBanner'
-import RadioBanner from '@/components/dashboard/RadioBanner'
+import CockpitRadioButton from '@/components/dashboard/CockpitRadioButton'
 import type { StallHotspot, StallTier } from '@/lib/stalls/stallTypes'
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard'
 import { useActiveLiveSession } from '@/hooks/useActiveLiveSession'
@@ -173,6 +173,9 @@ export default function CockpitPage() {
           💬 Global Chat
         </LivingButton>
       </Link>
+      <div style={{ flex: 1 }}>
+        <CockpitRadioButton />
+      </div>
     </div>
   )
 
@@ -184,7 +187,6 @@ export default function CockpitPage() {
   const consentNagContent = (
     <div style={{ padding: '10px 12px 0' }} className="space-y-2">
       <SettlementConsentBanner />
-      <RadioBanner />
     </div>
   )
 
