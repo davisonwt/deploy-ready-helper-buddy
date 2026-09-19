@@ -29,7 +29,7 @@ export const TRIBE_BOARD = { x: 36.39, y: 8.93, w: 28.68, h: 13.39 };
  * and nothing else (scripts/studio/ has no record of this one since it
  * was measured interactively, not via a saved script).
  */
-export const TRIBE_LOWER_BOARD = { x: 40, y: 27, w: 21, h: 10 };
+export const TRIBE_LOWER_BOARD = { x: 39, y: 26.25, w: 23, h: 11.5 };
 
 export type TribeHotspotId = 'village' | 'invite' | 'following' | 'rewards';
 

@@ -145,8 +145,14 @@ function LowerBoardLabel({ boardPxWidth }: { boardPxWidth: number }) {
   const fontSize = Math.max(18, boardPxWidth * 0.19);
   return (
     <div
-      className="flex h-full w-full items-center justify-center rounded-[6px]"
-      style={{ background: 'linear-gradient(180deg, #4a3018 0%, #3b2712 55%, #2e1d0c 100%)' }}
+      className="flex h-full w-full items-center justify-center"
+      style={{
+        background: 'linear-gradient(180deg, #4a3018 0%, #3b2712 55%, #2e1d0c 100%)',
+        // The real banner has a shallow ribbon curve, not square corners --
+        // an elliptical radius reads as that curve instead of a sticker's
+        // straight edge over it.
+        borderRadius: '50% / 22%',
+      }}
     >
       <span
         className="inline-block whitespace-nowrap font-serif lowercase"
