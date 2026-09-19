@@ -102,43 +102,51 @@ export default function StoryPhotoUpload({ pathPrefix, value, onChange }: Props)
 
   return (
     <div className="space-y-1.5">
-      <label
-        htmlFor={inputId}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={onDrop}
-        className={`relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed cursor-pointer overflow-hidden transition-colors shrink-0
-          ${dragOver ? 'border-primary bg-primary/5' : error ? 'border-destructive/60' : 'border-border hover:border-primary/60'}`}
-      >
-        {busy ? (
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-        ) : value ? (
-          <>
+      {/* The remove button lives OUTSIDE the label -- the label clips to a
+          circle via overflow-hidden (rounded-full), and a button
+          positioned in its corner (top-right) sits in the square
+          bounding-box area the circle's own curve cuts away, clipped out
+          along with it. A sibling of the (non-clipped) outer wrapper
+          instead, so it's never behind its own container's mask. */}
+      <div className="relative h-24 w-24 shrink-0">
+        <label
+          htmlFor={inputId}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          className={`flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed cursor-pointer overflow-hidden transition-colors
+            ${dragOver ? 'border-primary bg-primary/5' : error ? 'border-destructive/60' : 'border-border hover:border-primary/60'}`}
+        >
+          {busy ? (
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          ) : value ? (
             <img src={bustNonce > 0 ? `${value.url}${value.url.includes('?') ? '&' : '?'}v=${bustNonce}` : value.url} alt="Your story photo" className="h-full w-full object-cover" />
-            <button
-              type="button"
-              onClick={(e) => { e.preventDefault(); void clear(); }}
-              aria-label="Remove photo"
-              className="absolute top-0.5 right-0.5 rounded-full bg-background/80 p-1 hover:bg-destructive hover:text-destructive-foreground"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </>
-        ) : (
-          <div className="flex flex-col items-center text-center px-1">
-            <User className="h-5 w-5 text-muted-foreground" />
-            <ImagePlus className="h-3 w-3 -mt-1 text-muted-foreground" />
-          </div>
+          ) : (
+            <div className="flex flex-col items-center text-center px-1">
+              <User className="h-5 w-5 text-muted-foreground" />
+              <ImagePlus className="h-3 w-3 -mt-1 text-muted-foreground" />
+            </div>
+          )}
+          <input
+            id={inputId}
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+          />
+        </label>
+        {value && !busy && (
+          <button
+            type="button"
+            onClick={() => void clear()}
+            aria-label="Remove photo"
+            className="absolute -top-1 -right-1 rounded-full border border-border bg-background p-1 shadow hover:bg-destructive hover:text-destructive-foreground"
+          >
+            <X className="h-3 w-3" />
+          </button>
         )}
-        <input
-          id={inputId}
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-        />
-      </label>
+      </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
