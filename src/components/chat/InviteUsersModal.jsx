@@ -102,7 +102,7 @@ export default function InviteUsersModal({ isOpen, onClose, roomId, roomName }) 
         type: 'chat_invite',
         title: 'Chat Room Invitation',
         message: `You've been invited to join "${roomName || 'a chat room'}"`,
-        action_url: '/chatapp'
+        action_url: '/conversations'
       }))
 
       await supabase

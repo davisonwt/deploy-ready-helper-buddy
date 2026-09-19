@@ -142,7 +142,7 @@ export default function ShareSeedDialog({
           _type: 'seed_share',
           _title: 'A seed was shared with you',
           _message: `${sharerName} shared "${title}" with you.`,
-          _action_url: '/chatapp',
+          _action_url: '/conversations',
         } as any);
         if (noteErr) {
           // The message landed, so this is not a failed share. Say so rather

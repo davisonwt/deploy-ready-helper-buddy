@@ -3,9 +3,16 @@ import { test, expect, type Page } from '@playwright/test';
 /**
  * Live verification that direct messages are visible to their recipients.
  *
- * Before the fix, ChatApp passed roomType="group" with the filter controls
- * hidden, and ChatList drops direct rooms under that filter, so no DM had
- * ever reached a recipient's screen.
+ * Before the original fix, ChatApp passed roomType="group" with the filter
+ * controls hidden, and ChatList drops direct rooms under that filter, so no
+ * DM had ever reached a recipient's screen.
+ *
+ * 2026-09-19: /chatapp now redirects to /conversations (the unified list --
+ * no Private/Community toggle by design, everything is one list). Updated
+ * to open through /conversations instead of asserting a toggle that no
+ * longer exists; the actual regression this guards against (a direct room
+ * silently dropped or shown as the raw "Direct Chat" placeholder) still
+ * applies there and is still checked.
  *
  * Run: npx playwright test --config=playwright.live.config.ts direct-messages
  */
@@ -30,30 +37,29 @@ async function login(page: Page, email: string, pass: string) {
   await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 30000 }).catch(() => {});
 }
 
-async function openChatApp(page: Page) {
-  await page.goto('/chatapp', { waitUntil: 'domcontentloaded' });
+async function openConversations(page: Page) {
+  await page.goto('/conversations', { waitUntil: 'domcontentloaded' });
   // Wait for the list to settle rather than a fixed pause.
-  await page.waitForSelector('text=/Private|Community|No conversations yet/', { timeout: 40000 });
+  await page.locator('[data-testid="conversation-list"]')
+    .or(page.getByText(/No conversations yet/))
+    .first()
+    .waitFor({ state: 'visible', timeout: 40000 });
 }
 
 test.describe.serial('Direct messages reach their recipient', () => {
   test.skip(!A_EMAIL || !A_PASS || !B_EMAIL || !B_PASS, 'Two test accounts are required in .env.test.');
 
-  test('1. the Private/Community toggle renders at all', async ({ page }) => {
+  test('1. the unified conversation list renders at all', async ({ page }) => {
     await login(page, B_EMAIL, B_PASS);
-    await openChatApp(page);
-    await expect(page.getByRole('button', { name: 'Private', exact: true })).toBeVisible({ timeout: 30000 });
-    await expect(page.getByRole('button', { name: 'Community', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'All', exact: true })).toBeVisible();
+    await openConversations(page);
+    await expect(page.getByText('Conversations', { exact: true })).toBeVisible({ timeout: 30000 });
   });
 
   test('2. account B sees direct rooms, named after the other person, not "Chat"', async ({ page }) => {
     await login(page, B_EMAIL, B_PASS);
-    await openChatApp(page);
+    await openConversations(page);
 
-    await page.getByRole('button', { name: 'Private', exact: true }).click();
-
-    // At least one direct conversation is listed.
+    // At least one conversation is listed.
     await expect(page.getByText(/No conversations yet/)).toHaveCount(0, { timeout: 30000 });
 
     // None of them may render as the stored placeholder.
@@ -65,11 +71,13 @@ test.describe.serial('Direct messages reach their recipient', () => {
 
   test('3. the pre-existing A-to-B room opens and its messages render', async ({ page }) => {
     await login(page, B_EMAIL, B_PASS);
-    await openChatApp(page);
-    await page.getByRole('button', { name: 'Private', exact: true }).click();
+    await openConversations(page);
 
     await page.getByText(/davisontest1/i).first().click();
-    await page.waitForURL(new RegExp(`room=${AB_ROOM}|/communications-hub`), { timeout: 30000 });
+    // Any direct room with A opening is the check here (account B may have
+    // more than one room with A by now) -- AB_ROOM's own id is not asserted,
+    // just that clicking a named row actually opens a room, not a no-op.
+    await page.waitForURL(/[?&]c=/, { timeout: 30000 });
 
     // The room actually has content, not an empty shell.
     await expect(page.locator('body')).not.toContainText('Failed to load', { timeout: 20000 });
@@ -78,8 +86,7 @@ test.describe.serial('Direct messages reach their recipient', () => {
   test('4. the real share to Louw is visible from the sender side', async ({ page }) => {
     test.skip(!GOSAT_EMAIL || !GOSAT_PASS, 'The owner account is required for the Louw room.');
     await login(page, GOSAT_EMAIL, GOSAT_PASS);
-    await openChatApp(page);
-    await page.getByRole('button', { name: 'Private', exact: true }).click();
+    await openConversations(page);
 
     await expect(page.getByText(/No conversations yet/)).toHaveCount(0, { timeout: 30000 });
     await expect(page.getByText('Direct Chat', { exact: true })).toHaveCount(0);
