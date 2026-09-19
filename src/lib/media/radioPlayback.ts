@@ -69,9 +69,16 @@ const RETRY_MAX_MS = 20_000;
 const WATCHDOG_INTERVAL_MS = 5_000;
 const STALL_GRACE_MS = 10_000;
 
+// vite.config.ts marks console.log/info/debug as "pure" and strips them
+// from production bundles entirely (kept: warn/error, for Sentry-style
+// runtime monitoring) -- found live: every non-error [radio] line here
+// was silently compiled away on www.sow2growapp.com, so a "no playing
+// event logged" test failure proved nothing about actual playback, only
+// that the log call never ran. console.warn is the least-alarming level
+// that actually survives, so normal transitions use it; only real
+// failures use error.
 function log(...args: unknown[]) {
-  // eslint-disable-next-line no-console
-  console.log('[radio]', new Date().toISOString(), ...args);
+  console.warn('[radio]', new Date().toISOString(), ...args);
 }
 function logError(...args: unknown[]) {
   console.error('[radio]', new Date().toISOString(), ...args);
@@ -112,6 +119,16 @@ let lastWatchdogProgressAt = 0;
 let tuneInFlight = false;
 let duckingWired = false;
 let visibilityWired = false;
+
+// Diagnostic hook only -- the Audio() element is never in the DOM, so
+// there is otherwise no way for a live verification (or a future
+// incident) to read ground-truth playback state from outside this module.
+if (typeof window !== 'undefined') {
+  (window as unknown as { __radioDebug?: unknown }).__radioDebug = {
+    getState: () => state,
+    getAudio: () => audio,
+  };
+}
 
 function notify() {
   listeners.forEach((l) => l());
