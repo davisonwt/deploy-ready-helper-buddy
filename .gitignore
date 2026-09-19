@@ -44,7 +44,6 @@ supabase/.temp/
 # contrast audit output (scripts/contrast-audit.mjs)
 scripts/.contrast-audit.json
 
-.swarm/memory.db
 .vercel
 .env*
 
