@@ -59,7 +59,7 @@ describe('room realtime channels', () => {
     const { roomChannel, typingChannel } = subscribeRoomRealtime(client, 'room-1', noopHandlers);
     expect(roomChannel.topic).toMatch(/^room:room-1:/);
     expect(typingChannel.topic).toMatch(/^typing:room-1:/);
-    expect(roomChannel.handlers.map((h) => h.filter.table)).toEqual(['chat_messages', 'chat_rooms', 'chat_rooms']);
+    expect(roomChannel.handlers.map((h) => h.filter.table)).toEqual(['chat_messages', 'chat_messages', 'chat_rooms', 'chat_rooms']);
     expect(typingChannel.handlers.map((h) => h.filter.table)).toEqual(['typing']);
     expect(roomChannel.subscribed).toBe(true);
     expect(typingChannel.subscribed).toBe(true);
@@ -84,5 +84,19 @@ describe('room realtime channels', () => {
     s.cleanup();
     expect(client.removed).toHaveLength(2);
     expect(client.registry.size).toBe(0);
+  });
+
+  it('registers a chat_messages UPDATE listener (delete-for-everyone needs this to land live)', () => {
+    const client = new StubClient();
+    const { roomChannel } = subscribeRoomRealtime(client, 'room-3', {
+      ...noopHandlers,
+      onMessageUpdate: () => {},
+    });
+    expect(roomChannel.handlers.map((h) => [h.filter.table, h.filter.event])).toEqual([
+      ['chat_messages', 'INSERT'],
+      ['chat_messages', 'UPDATE'],
+      ['chat_rooms', 'DELETE'],
+      ['chat_rooms', 'UPDATE'],
+    ]);
   });
 });

@@ -48,9 +48,17 @@ interface ChatRoomProps {
   rail?: React.ReactNode;
   /** When true, each message wrapper plays a "drop in + impact ring" animation. SkillDrop-only. Respects prefers-reduced-motion. */
   dropAnimation?: boolean;
+  /**
+   * 'tap' (default): click to start recording, click again to stop -- /chatapp's
+   * existing behavior, unchanged. 'hold': WhatsApp-style press-and-hold to
+   * record, release to send, slide up past a threshold to cancel --
+   * /conversations only. Every other recording behavior (useMediaRecorder,
+   * upload, moderation, send) is identical either way.
+   */
+  recordGesture?: 'tap' | 'hold';
 }
 
-export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, instructorId, rail, dropAnimation }) => {
+export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, instructorId, rail, dropAnimation, recordGesture = 'tap' }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { startCall, currentCall, endCall } = useCallManager();
@@ -84,6 +92,12 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
   
   // Voice + video clip recording (uses chat-media bucket via useMediaRecorder)
   const recorder = useMediaRecorder();
+  // Hold-gesture (recordGesture="hold") slide-to-cancel tracking: the Y
+  // coordinate the press started at, and whether the current hold has
+  // already crossed the cancel threshold (so a late pointerup doesn't send).
+  const holdStartYRef = useRef<number | null>(null);
+  const holdCancelledRef = useRef(false);
+  const HOLD_CANCEL_DISTANCE_PX = 60;
 
 
   // Donations
@@ -443,6 +457,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
           setMessages(prev => (prev.some(m => m.id === msg.id) ? prev : [...prev, { ...msg, sender_profile: profile || null }]));
         }
       },
+      // Right now this only carries delete-for-everyone (deleted_at) to
+      // every OTHER participant live, without a reload -- the deleter's own
+      // screen already updated optimistically in handleDeleteMessage.
+      onMessageUpdate: (payload) => {
+        const updated = payload.new;
+        if (!updated?.id) return;
+        setMessages(prev => prev.map(msg => (msg.id === updated.id ? { ...msg, ...updated } : msg)));
+      },
       onRoomDeleted: () => {
         toast({ title: 'Chat removed', description: 'This chat was deleted.' });
         onBack?.();
@@ -534,18 +556,29 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
       setSending(false);
     }
   };
+  // Delete for everyone, any message type, no time limit. A soft delete
+  // (deleted_at) so every participant sees "This message was deleted"
+  // instead of the thread silently rewriting itself, plus a real removal of
+  // the underlying storage object (voice note/video/attachment) so it stops
+  // being fetchable by its stored URL. Both happen server-side in
+  // delete-chat-message -- see that function for why (no bucket has a
+  // per-message DELETE policy, so only the service role can remove the
+  // object; sender-only is enforced there too, not just by this client
+  // check).
   const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm('Delete this message?')) return;
+    if (!confirm('Delete this message for everyone?')) return;
     try {
-      const { error } = await supabase
-        .from('chat_messages')
-        .delete()
-        .eq('id', messageId)
-        .eq('sender_id', user.id);
-
+      const { data, error } = await supabase.functions.invoke('delete-chat-message', {
+        body: { messageId },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.message || data.error);
 
-      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      setMessages(prev => prev.map(msg => (
+        msg.id === messageId
+          ? { ...msg, deleted_at: new Date().toISOString(), content: null, file_url: null, file_name: null, file_type: null, file_size: null }
+          : msg
+      )));
       toast({ title: 'Message deleted' });
     } catch (error: any) {
       toast({
@@ -583,7 +616,21 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
     }
   };
 
+  // 15MB: a user-picked file (e.g. a full-res phone video) can be far
+  // bigger than anything the in-app recorder produces (60s voice / 15s
+  // video are a few MB at most) -- mobile data is the constraint, not the
+  // server, so this is checked before upload starts, not after a timeout.
+  const MAX_ATTACHMENT_BYTES = 15 * 1024 * 1024;
+
   const handleFileUpload = async (file) => {
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      toast({
+        variant: 'destructive',
+        title: 'File too large',
+        description: `${file.name} is over 15MB. Try a shorter clip or a smaller image.`,
+      });
+      return;
+    }
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
@@ -680,8 +727,33 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
   };
 
   const startRecording = () => recordAndSend('audio', 60);
-  const startVideoClip = () => recordAndSend('video', 30);
+  // 15s, not the old 30s: a message-thread clip doesn't need 30s, and this
+  // is mobile data, not server load, that the cap protects against.
+  const startVideoClip = () => recordAndSend('video', 15);
   const stopRecording = () => recorder.stop();
+
+  // recordGesture="hold" only: press-and-hold to record, release to send,
+  // slide up past HOLD_CANCEL_DISTANCE_PX to cancel. Reuses the exact same
+  // startRecording/startVideoClip/recorder.cancel() as the tap gesture --
+  // only how they're triggered changes.
+  const handleHoldStart = (kind: 'audio' | 'video') => (e: React.PointerEvent) => {
+    if (recorder.recording) return;
+    holdStartYRef.current = e.clientY;
+    holdCancelledRef.current = false;
+    if (kind === 'audio') startRecording(); else startVideoClip();
+  };
+  const handleHoldMove = (e: React.PointerEvent) => {
+    if (!recorder.recording || holdStartYRef.current === null || holdCancelledRef.current) return;
+    if (holdStartYRef.current - e.clientY > HOLD_CANCEL_DISTANCE_PX) {
+      holdCancelledRef.current = true;
+      recorder.cancel();
+    }
+  };
+  const handleHoldEnd = () => {
+    if (!recorder.recording) return;
+    if (!holdCancelledRef.current) recorder.stop();
+    holdStartYRef.current = null;
+  };
 
 
   if (loading) {
@@ -792,16 +864,38 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
             <Button
               variant={recorder.recording && recorder.kind === 'audio' ? 'destructive' : 'ghost'}
               size="sm"
-              onClick={recorder.recording && recorder.kind === 'audio' ? stopRecording : startRecording}
-              title={recorder.recording && recorder.kind === 'audio' ? `Stop (${recorder.elapsed}s)` : 'Record voice note'}
+              {...(recordGesture === 'hold'
+                ? {
+                    onPointerDown: handleHoldStart('audio'),
+                    onPointerUp: handleHoldEnd,
+                    onPointerLeave: handleHoldEnd,
+                    onPointerMove: handleHoldMove,
+                  }
+                : { onClick: recorder.recording && recorder.kind === 'audio' ? stopRecording : startRecording })}
+              title={
+                recorder.recording && recorder.kind === 'audio'
+                  ? `${recordGesture === 'hold' ? 'Slide up to cancel' : 'Stop'} (${recorder.elapsed}s)`
+                  : recordGesture === 'hold' ? 'Hold to record a voice note' : 'Record voice note'
+              }
             >
               <Mic className="h-4 w-4" />
             </Button>
             <Button
               variant={recorder.recording && recorder.kind === 'video' ? 'destructive' : 'ghost'}
               size="sm"
-              onClick={recorder.recording && recorder.kind === 'video' ? stopRecording : startVideoClip}
-              title={recorder.recording && recorder.kind === 'video' ? `Stop (${recorder.elapsed}s)` : 'Record video clip'}
+              {...(recordGesture === 'hold'
+                ? {
+                    onPointerDown: handleHoldStart('video'),
+                    onPointerUp: handleHoldEnd,
+                    onPointerLeave: handleHoldEnd,
+                    onPointerMove: handleHoldMove,
+                  }
+                : { onClick: recorder.recording && recorder.kind === 'video' ? stopRecording : startVideoClip })}
+              title={
+                recorder.recording && recorder.kind === 'video'
+                  ? `${recordGesture === 'hold' ? 'Slide up to cancel' : 'Stop'} (${recorder.elapsed}s)`
+                  : recordGesture === 'hold' ? 'Hold to record a video message' : 'Record video clip'
+              }
             >
               {recorder.recording && recorder.kind === 'video' ? <Square className="h-4 w-4" /> : <Video className="h-4 w-4" />}
             </Button>

@@ -19,6 +19,10 @@ type Payload = { new?: any; old?: any };
 
 export interface RoomRealtimeHandlers {
   onMessageInsert: (payload: Payload) => void | Promise<void>;
+  /** Optional: a chat_messages row in this room changed (e.g. edited, or
+   * soft-deleted via deleted_at) -- lets every participant's thread update
+   * live instead of only on next reload. Omit to ignore UPDATEs. */
+  onMessageUpdate?: (payload: Payload) => void | Promise<void>;
   onRoomDeleted: () => void;
   onRoomUpdated: (payload: Payload) => void;
   onTyping: (payload: Payload) => void;
@@ -47,6 +51,11 @@ export function subscribeRoomRealtime(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${roomId}` },
       (payload: Payload) => { void handlers.onMessageInsert(payload); },
+    )
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${roomId}` },
+      (payload: Payload) => { if (handlers.onMessageUpdate) void handlers.onMessageUpdate(payload); },
     )
     .on(
       'postgres_changes',

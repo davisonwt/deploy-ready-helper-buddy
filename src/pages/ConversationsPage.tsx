@@ -3,8 +3,10 @@
  *
  * Built ALONGSIDE the old ChatApp on its own route. It reads and writes the
  * same chat_rooms / chat_messages / chat_participants rows, migrates
- * nothing, and modifies none of the old surfaces. If anything here is
- * wrong, /chatapp still works exactly as it did.
+ * nothing, and renders ChatRoom exactly as /chatapp does except for
+ * `recordGesture="hold"` (WhatsApp-style press-and-hold recording, added
+ * 2026-09-19 -- see ChatRoom.tsx's recordGesture prop). That prop defaults
+ * to 'tap' everywhere else, so /chatapp's own behavior is unchanged.
  *
  * The call docks IN PLACE -- DockedCallPane + CallErrorBoundary +
  * JitsiRoom(fullscreen=false), the same shape OneOnOneRoom.tsx already
@@ -178,7 +180,7 @@ export default function ConversationsPage() {
         )}
 
         <div className="min-h-0 flex-1">
-          <ChatRoom roomId={openId} onBack={backToList} backLabel="Conversations" />
+          <ChatRoom roomId={openId} onBack={backToList} backLabel="Conversations" recordGesture="hold" />
         </div>
       </div>
     );
