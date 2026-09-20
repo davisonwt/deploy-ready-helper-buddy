@@ -77,15 +77,21 @@ function startWelcomeAudio(url: string, setPlaying: (playing: boolean) => void):
 }
 
 /** "Replay stall greeting" -- a glow pill attached to the title block,
- *  never a floating element. Idle: gentle slow pulse. Playing: brighter,
- *  faster pulse, no layout shift (same fixed size either state). Tapping
- *  while playing restarts from the start -- handled by the caller
- *  (handleReplayWelcomeAudio), not this component. */
+ *  never a floating element, always a real sibling <button> (never nested
+ *  inside another interactive element -- the exact bug class 9988a977
+ *  fixed for the radio pill: a control nested inside another button/link
+ *  is invalid HTML with unreliable hit-testing, and one tap can fire both
+ *  handlers). Idle: gentle slow pulse. Playing: brighter, faster pulse, no
+ *  layout shift (same fixed size either state). Tapping while playing
+ *  restarts from the start -- handled by the caller (handleReplayWelcomeAudio),
+ *  not this component. stopPropagation is defensive: nothing in the title
+ *  block is currently tappable, but this must still do nothing but play
+ *  the greeting if that ever changes. */
 function WelcomeGreetingPill({ isPlaying, onClick, className = '' }: { isPlaying: boolean; onClick: () => void; className?: string }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
       aria-label="Replay stall greeting"
       title="Replay stall greeting"
       className={`shrink-0 inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-amber-400/50 bg-amber-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-200 ${className}`}
