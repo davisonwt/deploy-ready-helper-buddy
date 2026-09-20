@@ -211,13 +211,13 @@ function ensureAudio(): HTMLAudioElement {
   if (!audio) {
     audio = new Audio();
     audio.preload = 'none';
+    // Neither of these touches state.isPlaying -- see the 2026-09-20 fix
+    // note above startRadio()/stopRadio() for why. Diagnostic logging only.
     audio.addEventListener('pause', () => {
       log('event: pause');
-      setState({ isPlaying: false });
     });
     audio.addEventListener('play', () => {
       log('event: play (requested)');
-      setState({ isPlaying: true });
     });
     audio.addEventListener('playing', () => {
       log('event: playing (audio actually resumed/started)');
@@ -391,13 +391,32 @@ function stopPolling() {
   }
 }
 
+// Bug, live 2026-09-20 (Davison: "the RADIO button no longer works"):
+// state.isPlaying used to double as both "the user wants the radio on"
+// (what scheduleRetry's own guard means to check, per this file's own
+// header comment: "retries ... as long as the user's own intent,
+// state.isPlaying, is still true") AND "the native <audio> element is
+// currently producing sound" (set by the `play`/`pause` event listeners
+// above). Those are not the same thing. Reproduced live: a track whose
+// stored duration overstates the real file seeks past its real end,
+// firing a native `pause` immediately before `ended` -- ordinary
+// HTMLMediaElement behavior, nothing to do with the user -- which used to
+// flip state.isPlaying to false via the `pause` listener. By the time the
+// `ended` handler called scheduleRetry() a few milliseconds later,
+// scheduleRetry's own guard read isPlaying as already false and skipped
+// the retry ("user intent is stopped"), permanently abandoning recovery
+// even though the user never touched anything. Fix: state.isPlaying now
+// changes ONLY here, on an explicit startRadio()/stopRadio() call --
+// never from a native media event -- so a transient pause/ended blip
+// mid-stream can no longer be mistaken for the user asking to stop.
+
 export function startRadio() {
   wireDuckingOnce();
   wireVisibilityOnce();
   log('startRadio called');
   retryAttempt = 0;
   clearRetry();
-  setState({ loading: true, reconnecting: false });
+  setState({ isPlaying: true, loading: true, reconnecting: false });
   (async () => {
     await tuneToLive(true, 'startRadio');
     startPolling();
@@ -412,7 +431,7 @@ export function stopRadio() {
   stopWatchdog();
   clearRetry();
   retryAttempt = 0;
-  setState({ reconnecting: false });
+  setState({ isPlaying: false, reconnecting: false });
 }
 
 export function getRadioState(): RadioState {
