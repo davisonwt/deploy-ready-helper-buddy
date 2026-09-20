@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
 import { shareStallLink } from '@/lib/referral';
 import StallImageUpload, { type StallImageResult } from '@/components/stalls/StallImageUpload';
+import StallWelcomeAudioUpload, { type StallWelcomeAudioResult } from '@/components/stalls/StallWelcomeAudioUpload';
 import { type StallPdfResult } from '@/components/stalls/StallPdfUpload';
 import { type StoryPhotoResult } from '@/components/stalls/StoryPhotoUpload';
 import StoryFields from '@/components/stalls/StoryFields';
@@ -141,6 +142,7 @@ export default function StallBuildPage() {
   const [storyPhoto, setStoryPhoto] = useState<StoryPhotoResult | null>(null);
   const [front, setFront] = useState<StallImageResult | null>(null);
   const [interior, setInterior] = useState<StallImageResult | null>(null);
+  const [welcomeAudio, setWelcomeAudio] = useState<StallWelcomeAudioResult | null>(null);
   const [tiles, setTiles] = useState<TileDraft[]>([emptyTile(), emptyTile(), emptyTile()]);
   const [hotspots, setHotspots] = useState<StallHotspot[]>([]);
   // Which interior URL `hotspots` was last seeded from (template pre-mark
@@ -239,6 +241,7 @@ export default function StallBuildPage() {
           setStoryPhoto({ url: data.story_photo_path, storagePath: `${user.id}/story-photo.webp` });
         }
         if (data.front_image_path) setFront({ url: data.front_image_path, storagePath: null });
+        if (data.welcome_audio_path) setWelcomeAudio({ url: data.welcome_audio_path, storagePath: null });
         if (data.interior_image_path) {
           setInterior({ url: data.interior_image_path, storagePath: null });
           savedInteriorUrl.current = data.interior_image_path;
@@ -314,6 +317,7 @@ export default function StallBuildPage() {
           story_photo_path: storyPhoto?.url ?? null,
           front_image_path: front.url,
           interior_image_path: interior.url,
+          welcome_audio_path: welcomeAudio?.url ?? null,
           tiles: tilesPayload as unknown as Json,
           hotspots: hotspots as unknown as Json,
           published: true,
@@ -470,6 +474,7 @@ export default function StallBuildPage() {
               <InteriorHotspotPreview url={interior.url} templates={templates} hotspots={hotspots} />
             </div>
           )}
+          <StallWelcomeAudioUpload pathPrefix={pathPrefix} value={welcomeAudio} onChange={setWelcomeAudio} />
         </div>
       )}
 

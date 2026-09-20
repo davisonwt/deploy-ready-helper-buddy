@@ -158,7 +158,7 @@ export async function uploadSegmentAudio(userId: string, slotId: string, file: F
   const { error: uploadError } = await supabase.storage.from('dj-rundown-segments').upload(path, file, { upsert: false });
   if (uploadError) throw uploadError;
 
-  const { durationSeconds } = await invokePaymentFunction<{ durationSeconds: number }>('probe-audio-duration', { path });
+  const { durationSeconds } = await invokePaymentFunction<{ durationSeconds: number }>('probe-audio-duration', { path, bucket: 'dj-rundown-segments' });
   return { path, durationSeconds };
 }
 

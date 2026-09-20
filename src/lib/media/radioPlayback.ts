@@ -478,6 +478,23 @@ export function stopRadio() {
   setState({ isPlaying: false, reconnecting: false });
 }
 
+// Volume-ducking (2026-09-20, for a stall's welcome voice note): distinct
+// from wireDuckingOnce()'s call/preview handling above, which PAUSES the
+// radio outright and does not auto-resume, by design. A welcome note is a
+// short, one-shot, non-user-initiated sound playing OVER the radio, not
+// competing for the same "am I listening to something" slot a call does
+// -- pausing and never resuming would silently kill the radio for a
+// visitor who never asked for that. Ducks to 20% for the note's duration
+// and restores to full afterward; a no-op if the radio isn't currently
+// playing (audio is null; nothing to duck).
+export function duckRadioVolume(factor: number) {
+  if (audio) audio.volume = Math.max(0, Math.min(1, factor));
+}
+
+export function restoreRadioVolume() {
+  if (audio) audio.volume = 1;
+}
+
 export function getRadioState(): RadioState {
   return state;
 }

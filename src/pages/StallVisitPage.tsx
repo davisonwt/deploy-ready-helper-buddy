@@ -20,6 +20,7 @@ interface StallRow {
   tier: StallTier;
   front_image_path: string | null;
   interior_image_path: string | null;
+  welcome_audio_path: string | null;
   hotspots: StallHotspot[] | null;
   published: boolean;
   enter_via_front: boolean;
@@ -84,7 +85,7 @@ export default function StallVisitPage() {
 
       const { data } = await supabase
         .from('stalls')
-        .select('id, user_id, name, tagline, tier, front_image_path, interior_image_path, hotspots, published, enter_via_front')
+        .select('id, user_id, name, tagline, tier, front_image_path, interior_image_path, welcome_audio_path, hotspots, published, enter_via_front')
         .eq('user_id', ownerId)
         .maybeSingle();
       if (alive) setStall((data as unknown as StallRow | null) ?? null);
@@ -198,6 +199,7 @@ export default function StallVisitPage() {
         interiorImageUrl={stall.interior_image_path}
         stallName={stall.name}
         hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
+        welcomeAudioUrl={stall.welcome_audio_path}
         isOwner={isOwner}
         onClose={stall.enter_via_front ? () => setEntered(false) : handleClose}
       />

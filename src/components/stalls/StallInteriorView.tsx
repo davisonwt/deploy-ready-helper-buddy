@@ -20,6 +20,9 @@ import StallChatSheet from './StallChatSheet';
 import OwnerMenuItems from '@/components/owner/OwnerMenuItems';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
 import type { StallHotspot, TileKind } from '@/lib/stalls/stallTypes';
+import { getRadioState, subscribeRadio, duckRadioVolume, restoreRadioVolume } from '@/lib/media/radioPlayback';
+import { subscribeActiveLiveSession, getActiveLiveSession } from '@/lib/liveSession/activeLiveSession';
+import { subscribeToPreviewPlayback, getCurrentlyPlayingId } from '@/lib/media/previewPlaybackStore';
 
 /**
  * Scripture Study gathering room (minimum version, 2026-09-13): the one
@@ -43,6 +46,8 @@ interface Props {
   interiorImageUrl: string;
   stallName: string;
   hotspots: StallHotspot[];
+  /** Owner's welcome voice note (stalls bucket) -- plays once per visitor per browser session, never for the owner. */
+  welcomeAudioUrl?: string | null;
   onClose: () => void;
   /** True for the owner previewing their own stall -- shows the Owner Menu trigger top-left instead of nothing (batch 2b, task 4: otherwise identical to the visitor view). */
   isOwner?: boolean;
@@ -197,7 +202,7 @@ export function StallDrawer({ side, open, onClose, children }: { side: 'left' | 
   );
 }
 
-export default function StallInteriorView({ ownerId, username, interiorImageUrl, stallName, hotspots, onClose, isOwner, hideClose, bottomBar, topBanner }: Props) {
+export default function StallInteriorView({ ownerId, username, interiorImageUrl, stallName, hotspots, welcomeAudioUrl, onClose, isOwner, hideClose, bottomBar, topBanner }: Props) {
   const { setStallInteriorOpen } = useAppContext();
   // Publishes this bar's real, measured height (not a hardcoded guess)
   // into --bottom-chrome-h -- see src/lib/layout/bottomChrome.ts's own
@@ -422,6 +427,55 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
     })();
     return () => { alive = false; };
   }, [ownerId, user, effectiveIsOwner]);
+
+  // Welcome voice note (2026-09-20): plays once per visitor per browser
+  // session on entering the interior -- never for the owner (same
+  // !user || effectiveIsOwner guard the visit-tracking effect above
+  // uses), never on the front. Ducks the radio to 20% (not the pause-
+  // and-never-resume shape wireDuckingOnce() uses for calls/previews --
+  // a short one-shot note playing OVER the radio isn't the radio losing
+  // its turn the way an actual call is) and restores it when the note
+  // ends, is left early (leaving the interior unmounts this effect), or
+  // any other audio signal (the visitor starting the radio themselves, a
+  // live session, a track preview) starts while it's still playing.
+  useEffect(() => {
+    if (!welcomeAudioUrl || !user || effectiveIsOwner) return;
+    const sessionKey = `s2g:welcome-audio-played:${ownerId}`;
+    let alreadyPlayed = false;
+    try { alreadyPlayed = !!sessionStorage.getItem(sessionKey); } catch { /* private mode */ }
+    if (alreadyPlayed) return;
+
+    const welcomeAudioEl = new Audio(welcomeAudioUrl);
+    let stopped = false;
+    const wasRadioPlaying = getRadioState().isPlaying;
+
+    const stop = () => {
+      if (stopped) return;
+      stopped = true;
+      welcomeAudioEl.pause();
+      if (wasRadioPlaying) restoreRadioVolume();
+    };
+
+    const unsubRadio = subscribeRadio(() => {
+      if (!wasRadioPlaying && getRadioState().isPlaying) stop();
+    });
+    const unsubLive = subscribeActiveLiveSession(() => { if (getActiveLiveSession()) stop(); });
+    const unsubPreview = subscribeToPreviewPlayback(() => { if (getCurrentlyPlayingId()) stop(); });
+
+    if (wasRadioPlaying) duckRadioVolume(0.2);
+    welcomeAudioEl.addEventListener('ended', () => { if (wasRadioPlaying) restoreRadioVolume(); });
+    welcomeAudioEl.play().catch(() => { /* autoplay blocked -- silent, same as this app's other no-retry auto-plays (SeedCard preview) */ });
+
+    try { sessionStorage.setItem(sessionKey, '1'); } catch { /* private mode */ }
+
+    return () => {
+      stop();
+      unsubRadio();
+      unsubLive();
+      unsubPreview();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [welcomeAudioUrl, ownerId, effectiveIsOwner, !!user]);
 
   useEffect(() => {
     if (!showRoomHint) return;

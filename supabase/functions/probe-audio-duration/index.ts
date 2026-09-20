@@ -1,8 +1,9 @@
-// Server-side duration probe for Grove Station rundown segment uploads
-// (opening/talk/advert/jingle/handover). Called right after the DJ's own
-// browser uploads their clip to dj-rundown-segments -- this function reads
-// it back and reports its REAL duration, which the client then stores on
-// the segment row. Never trusts a client-supplied number.
+// Server-side duration probe for owner-uploaded audio: Grove Station
+// rundown segments (dj-rundown-segments bucket) and stall welcome voice
+// notes (stalls bucket, 2026-09-20). Called right after the owner's own
+// browser uploads their clip -- this function reads it back and reports
+// its REAL duration, which the client then stores. Never trusts a
+// client-supplied number.
 //
 // No ffmpeg/ffprobe in the edge runtime -- probes via the same pure
 // byte-level WAV/MP3 parsing audioTrim.ts already uses for previews
@@ -14,7 +15,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { probeAudioDurationSeconds } from "../_shared/audioDuration.ts";
 
-const BUCKET = "dj-rundown-segments";
+// Both buckets use the SAME owner-folder convention (uid as the first
+// path segment) -- allowlisted explicitly rather than accepting any
+// bucket name, so this can't be pointed at something it wasn't scoped for.
+const ALLOWED_BUCKETS = new Set(["dj-rundown-segments", "stalls"]);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -35,15 +39,16 @@ Deno.serve(async (req) => {
     const { data: userData, error: userError } = await authClient.auth.getUser(token);
     if (userError || !userData?.user) return json({ error: "unauthorized" }, 401);
 
-    const { path } = await req.json();
+    const { path, bucket } = await req.json();
     if (!path || typeof path !== "string") return json({ error: "path required" }, 400);
+    if (!bucket || !ALLOWED_BUCKETS.has(bucket)) return json({ error: "unsupported_bucket" }, 400);
     // Own-folder only -- same boundary as the storage RLS policy itself,
     // checked again here since this function reads via the service role
     // (which bypasses RLS) rather than the caller's own session.
     if (!path.startsWith(`${userData.user.id}/`)) return json({ error: "forbidden" }, 403);
 
     const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-    const { data: file, error: downloadError } = await service.storage.from(BUCKET).download(path);
+    const { data: file, error: downloadError } = await service.storage.from(bucket).download(path);
     if (downloadError || !file) return json({ error: "file_not_found" }, 404);
 
     const bytes = new Uint8Array(await file.arrayBuffer());
