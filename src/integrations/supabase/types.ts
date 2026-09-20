@@ -9730,6 +9730,8 @@ export type Database = {
           id: string
           instagram_url: string | null
           is_chatapp_verified: boolean | null
+          is_system: boolean
+          is_test: boolean
           last_login: string | null
           last_name: string | null
           latitude: number | null
@@ -9794,6 +9796,8 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           is_chatapp_verified?: boolean | null
+          is_system?: boolean
+          is_test?: boolean
           last_login?: string | null
           last_name?: string | null
           latitude?: number | null
@@ -9858,6 +9862,8 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           is_chatapp_verified?: boolean | null
+          is_system?: boolean
+          is_test?: boolean
           last_login?: string | null
           last_name?: string | null
           latitude?: number | null
@@ -17939,6 +17945,15 @@ export type Database = {
         }[]
       }
       get_my_whisperer_wallet: { Args: never; Returns: string }
+      get_nav_counts: {
+        Args: never
+        Returns: {
+          my_listings: number
+          my_tribe: number
+          sleeping_seeds: number
+          tribal_gardens: number
+        }[]
+      }
       get_or_create_community_room: { Args: never; Returns: string }
       get_or_create_direct_room: {
         Args: { user1_id: string; user2_id: string }
@@ -18135,6 +18150,7 @@ export type Database = {
         Args: { _username: string }
         Returns: string
       }
+      get_total_member_count: { Args: never; Returns: number }
       get_trending_streams: {
         Args: { limit_count?: number }
         Returns: {

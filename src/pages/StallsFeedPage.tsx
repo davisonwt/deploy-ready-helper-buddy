@@ -434,7 +434,14 @@ export default function StallsFeedPage() {
     if (!villageFilter && tribeMine && tribeUserIds!.length === 0) { setCards([]); return; }
     if (testUserIds === null) return;
     (async () => {
-      let q = supabase
+      // Typed as `any`: this now branches through five conditional
+      // reassignments (.not/.eq/.is/.contains/.in below), and letting TS
+      // infer+union the PostgrestFilterBuilder generic across all of them
+      // hits "type instantiation excessively deep" (TS2589) -- the fifth
+      // branch (testUserIds exclusion) was what tipped it over. stallRows
+      // below is already manually cast, so nothing downstream relies on
+      // this chain's inferred type.
+      let q: any = supabase
         .from('stalls')
         .select('id, user_id, name, tagline, tier, categories, front_image_path')
         .eq('published', true)
