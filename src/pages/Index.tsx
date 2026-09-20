@@ -625,7 +625,7 @@ function IndexContent() {
       </section>
 
       <footer className="px-4 py-6 text-center text-xs text-amber-100/40 border-t border-amber-500/10">
-        364yhvh community farm
+        364yhvh community farm · <Link to="/disclaimer" className="underline hover:text-amber-100/70">Disclaimer</Link>
       </footer>
 
       <VoiceCommands

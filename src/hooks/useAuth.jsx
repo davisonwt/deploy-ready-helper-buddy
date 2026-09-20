@@ -240,6 +240,17 @@ export class AuthProviderClass extends React.Component {
         await logAttempt(false, error)
         return staleAware({ success: false, error: error.message, code: error.code || error.name })
       }
+      // Every signup form (RegisterPage, QuickRegistration, JoinPage's
+      // invite flow) blocks its own submit until its own required
+      // Disclaimer checkbox is ticked -- this is the one shared place that
+      // stamps the acceptance, since all three call this same register().
+      // Best-effort: a failure here must not fail a signup that already
+      // succeeded server-side.
+      if (data?.user?.id) {
+        try {
+          await supabase.from('profiles').update({ disclaimer_accepted_at: new Date().toISOString() }).eq('user_id', data.user.id)
+        } catch {}
+      }
       // Best-effort: also call claim_referral_code RPC after signup so it sticks even if trigger missed it
       if (referral_code && data?.user?.id) {
         try {

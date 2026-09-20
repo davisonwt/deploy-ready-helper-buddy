@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
 import { getInvitePreview, claimCustomerInvite, type InvitePreview } from '@/hooks/useJobInvoicing';
 import { validatePassword, getPasswordValidationFeedback } from '@/lib/utils';
@@ -24,6 +25,7 @@ export default function JoinPage() {
   const [lastName, setLastName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [claiming, setClaiming] = useState(false);
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
 
   useEffect(() => {
     if (!token) { setPreview(null); return; }
@@ -72,6 +74,7 @@ export default function JoinPage() {
 
   const submitRegister = async () => {
     if (!firstName.trim() || !lastName.trim()) return toast.error('Enter your name');
+    if (!disclaimerAccepted) return toast.error('Please accept the Disclaimer to continue');
     if (!validatePassword(password)) {
       const feedback = getPasswordValidationFeedback(password);
       toast.error(feedback.feedback.join('. ') || 'Choose a stronger password');
@@ -142,7 +145,28 @@ export default function JoinPage() {
             <Input id="join-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
 
-          <Button className="w-full" disabled={submitting} onClick={mode === 'login' ? submitLogin : submitRegister}>
+          {mode === 'register' && (
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="join-disclaimer-accept"
+                checked={disclaimerAccepted}
+                onCheckedChange={(checked) => setDisclaimerAccepted(checked === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="join-disclaimer-accept" className="text-sm font-normal">
+                I have read and accept the{' '}
+                <Link to="/disclaimer" target="_blank" rel="noopener noreferrer" className="underline">
+                  Disclaimer
+                </Link>
+              </Label>
+            </div>
+          )}
+
+          <Button
+            className="w-full"
+            disabled={submitting || (mode === 'register' && !disclaimerAccepted)}
+            onClick={mode === 'login' ? submitLogin : submitRegister}
+          >
             {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {mode === 'login' ? 'Log in and join' : 'Create account and join'}
           </Button>

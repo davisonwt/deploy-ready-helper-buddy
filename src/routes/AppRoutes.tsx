@@ -95,6 +95,7 @@ import {
   StorePage,
   PrivacyPage,
   TermsPage,
+  DisclaimerPage,
   MyOrdersPage,
   MySeedsPage,
   EscrowQueuePage,
@@ -285,6 +286,7 @@ const AppRoutes = () => (
     } />
     <Route path="/privacy" element={<Suspense fallback={<LoadingFallback />}><PrivacyPage /></Suspense>} />
     <Route path="/terms" element={<Suspense fallback={<LoadingFallback />}><TermsPage /></Suspense>} />
+    <Route path="/disclaimer" element={<Suspense fallback={<LoadingFallback />}><DisclaimerPage /></Suspense>} />
     <Route path="/.lovable/oauth/consent" element={
       <Suspense fallback={<LoadingFallback />}><OAuthConsent /></Suspense>
     } />

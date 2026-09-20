@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   User, 
   Mail, 
@@ -49,12 +50,18 @@ export function QuickRegistration() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
 
   const { register } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSubmit = async () => {
+    if (!disclaimerAccepted) {
+      setError('Please accept the Disclaimer to continue');
+      return;
+    }
+
     // Use strong password validation (10+ chars with complexity requirements)
     if (!validatePassword(formData.password)) {
       const feedback = getPasswordValidationFeedback(formData.password);
@@ -251,8 +258,23 @@ export function QuickRegistration() {
                 </div>
               </div>
 
+              <div className="flex items-start gap-2 text-left">
+                <Checkbox
+                  id="quick-disclaimer-accept"
+                  checked={disclaimerAccepted}
+                  onCheckedChange={(checked) => setDisclaimerAccepted(checked === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="quick-disclaimer-accept" className="text-sm text-gray-700">
+                  I have read and accept the{' '}
+                  <Link to="/disclaimer" target="_blank" rel="noopener noreferrer" className="text-green-600 underline hover:text-green-700">
+                    Disclaimer
+                  </Link>
+                </label>
+              </div>
+
               <div className="flex gap-3">
-                <Button 
+                <Button
                   onClick={() => setStep(1)}
                   variant="outline"
                   className="flex-1"
@@ -260,9 +282,9 @@ export function QuickRegistration() {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
-                <Button 
+                <Button
                   onClick={handleSubmit}
-                  disabled={loading}
+                  disabled={loading || !disclaimerAccepted}
                   className="flex-1"
                   size="lg"
                 >
@@ -278,11 +300,11 @@ export function QuickRegistration() {
               </div>
 
               <div className="text-center">
-                <Button 
+                <Button
                   onClick={handleSubmit}
                   variant="ghost"
                   className="text-gray-500 text-sm"
-                  disabled={loading}
+                  disabled={loading || !disclaimerAccepted}
                 >
                   Skip for now
                 </Button>

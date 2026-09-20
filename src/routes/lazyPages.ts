@@ -161,6 +161,7 @@ export const RegisterWanderingPage = lazy(() => import('@/pages/RegisterWanderin
 export const StorePage = lazy(() => import('@/pages/StorePage'));
 export const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'));
 export const TermsPage = lazy(() => import('@/pages/TermsPage'));
+export const DisclaimerPage = lazy(() => import('@/pages/DisclaimerPage'));
 export const MyOrdersPage = lazy(() => import('@/pages/MyOrdersPage'));
 export const MySeedsPage = lazy(() => import('@/pages/MySeedsPage'));
 export const EscrowQueuePage = lazy(() => import('@/pages/EscrowQueuePage'));

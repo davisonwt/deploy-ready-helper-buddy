@@ -9720,6 +9720,7 @@ export type Database = {
           country: string | null
           created_at: string
           date_of_birth: string | null
+          disclaimer_accepted_at: string | null
           display_name: string | null
           email: string | null
           facebook_url: string | null
@@ -9786,6 +9787,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
+          disclaimer_accepted_at?: string | null
           display_name?: string | null
           email?: string | null
           facebook_url?: string | null
@@ -9852,6 +9854,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
+          disclaimer_accepted_at?: string | null
           display_name?: string | null
           email?: string | null
           facebook_url?: string | null

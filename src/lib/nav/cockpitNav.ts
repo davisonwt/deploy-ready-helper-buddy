@@ -83,6 +83,7 @@ export const COCKPIT_NAV_MORE: CockpitNavItem[] = [
   { label: 'Prescriptions', sub: 'Your submitted prescriptions', emoji: '📋', path: '/my-garden/prescriptions', color: '#84cc16' },
   { label: 'Bulk directory', sub: 'Wholesale seed directory', emoji: '📦', path: '/bulk/directory', color: '#f59e0b' },
   { label: 'Settings', sub: 'Payout settings', emoji: '⚙️', path: '/settings/payouts', color: '#64748b' },
+  { label: 'Disclaimer', sub: 'Platform terms and liability', emoji: '📜', path: '/disclaimer', color: '#94a3b8' },
   { label: "Gosat's Boardroom", sub: 'Elder management', emoji: '🏛', path: '/stall/gosatsboardroom', color: '#7c3aed', gated: true },
 ];
 

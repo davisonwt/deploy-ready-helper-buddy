@@ -5,6 +5,7 @@ import { storePendingReturn } from "@/lib/returnTo"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
+import { Checkbox } from "../components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectScrollUpButton, SelectScrollDownButton } from "../components/ui/select"
 import { SecureInput } from "../components/ui/secure-input"
 import { Sprout, Lock, Eye, EyeOff, ArrowLeft, Info, Check, X } from "lucide-react"
@@ -36,6 +37,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [showQuickRegistration, setShowQuickRegistration] = useState(false)
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false)
   
   const { register } = useAuth()
   const navigate = useNavigate()
@@ -75,6 +77,14 @@ export default function RegisterPage() {
     e.preventDefault()
     setLoading(true)
     setError("")
+
+    if (!disclaimerAccepted) {
+      const msg = "Please accept the Disclaimer to continue"
+      setError(msg)
+      toast({ variant: "destructive", title: "Disclaimer required", description: msg })
+      setLoading(false)
+      return
+    }
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
@@ -555,11 +565,26 @@ export default function RegisterPage() {
                   </button>
                 </div>
               </div>
-              
-              <Button 
-                type="submit" 
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-blue-300"
+
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="disclaimer-accept"
+                  checked={disclaimerAccepted}
+                  onCheckedChange={(checked) => setDisclaimerAccepted(checked === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="disclaimer-accept" className="text-sm text-gray-700">
+                  I have read and accept the{' '}
+                  <Link to="/disclaimer" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-700">
+                    Disclaimer
+                  </Link>
+                </label>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={loading || !disclaimerAccepted}
+                className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center justify-center">
                   {loading && <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3"></div>}
