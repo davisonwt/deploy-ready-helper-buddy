@@ -1,20 +1,6 @@
 {
   "music": [],
-  "books_writing": [
-    {
-      "id": "farm-stall-1",
-      "label": "Farm Stall",
-      "front": "/stalls/templates/farm-stall-front.png",
-      "interior": "/stalls/templates/farm-stall-interior.png",
-      "hotspots": [
-        { "kind": "books", "label": "Books", "x": 5.9, "y": 67.0, "w": 20.6, "h": 20.0 },
-        { "kind": "music", "label": "Music", "x": 28.4, "y": 67.0, "w": 20.6, "h": 20.0 },
-        { "kind": "lyrics", "label": "Lyrics", "x": 50.8, "y": 67.0, "w": 20.6, "h": 20.0 },
-        { "kind": "story", "label": "My Story", "x": 73.4, "y": 67.0, "w": 20.8, "h": 20.0 },
-        { "kind": "mugs", "label": "Mugs", "x": 7.8, "y": 50.3, "w": 7.6, "h": 10.0, "caption": "Every one needs a coffee to read a good book" }
-      ]
-    }
-  ],
+  "books_writing": [],
   "art_craft": [],
   "faith_teaching": [],
   "trades_services": [],
