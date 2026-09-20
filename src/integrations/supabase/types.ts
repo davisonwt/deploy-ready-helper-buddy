@@ -18052,6 +18052,8 @@ export type Database = {
           my_tribe: number
           sleeping_seeds: number
           tribal_gardens: number
+          wandering_hearts_female: number
+          wandering_hearts_male: number
         }[]
       }
       get_or_create_community_room: { Args: never; Returns: string }

@@ -10,6 +10,7 @@ import { MatchScreen } from '@/components/tribal-hearts/MatchScreen';
 import { MatchesList } from '@/components/tribal-hearts/MatchesList';
 import { WanderingHeartsChat } from '@/components/tribal-hearts/WanderingHeartsChat';
 import { useTribalHearts } from '@/hooks/useTribalHearts';
+import { useNavCounts } from '@/hooks/useNavCounts';
 import { useAuth } from '@/hooks/useAuth';
 import { TribalAudio } from '@/hooks/useTribalHeartsAudio';
 import { toast } from '@/hooks/use-toast';
@@ -22,6 +23,7 @@ const logoImg = '/wandering-hearts/logo.png';
 const TribalHeartsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth() as any;
+  const navCounts = useNavCounts();
   const {
     profiles,
     myProfile,
@@ -255,6 +257,19 @@ const TribalHeartsPage: React.FC = () => {
             {sparksRemaining} ✨ left today
           </span>
         </div>
+        {/* Same numbers the Cockpit nav row shows -- one RPC
+            (get_nav_counts), badge = page rule. Real (non-seed) members
+            only. Icon + number, never color alone. */}
+        {navCounts && (
+          <div className="mx-auto max-w-sm flex items-center justify-center gap-2 mt-2 text-xs">
+            <span className="flex items-center gap-1 rounded-full px-2.5 py-1 font-semibold" style={{ backgroundColor: '#93c5fd22', color: '#93c5fd' }}>
+              ♂ {navCounts.wandering_hearts_male}
+            </span>
+            <span className="flex items-center gap-1 rounded-full px-2.5 py-1 font-semibold" style={{ backgroundColor: '#f9a8d422', color: '#f9a8d4' }}>
+              ♀ {navCounts.wandering_hearts_female}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Main content */}

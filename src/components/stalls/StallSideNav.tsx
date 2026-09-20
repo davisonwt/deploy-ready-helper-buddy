@@ -13,10 +13,8 @@ import { BOTTOM_CHROME_PADDING_STYLE } from '@/lib/layout/bottomChrome';
  * its own case below (the live liveSeeds.length, not this map) -- reusing
  * the exact same realtime store the Live Now page itself reads is the
  * only way that badge can never disagree with the page. Wandering Hearts
- * has no entry at all: its real destination (/stall/wanderinghearts) has
- * no member-count anywhere on it to match against (checked directly,
- * supabase/migrations/20260920140000_nav_counts_rpc.sql's own comment has
- * the full reasoning) -- no badge, not a placeholder.
+ * is ALSO its own case below (two counts, not one) -- see
+ * WANDERING_HEARTS_PATH.
  */
 const NAV_COUNT_KEY: Record<string, keyof NavCounts> = {
   '/stalls-feed': 'tribal_gardens',
@@ -24,6 +22,10 @@ const NAV_COUNT_KEY: Record<string, keyof NavCounts> = {
   '/my-listings': 'my_listings',
   '/my-tribe': 'my_tribe',
 };
+
+// Real (non-seed) member counts by gender, per the same
+// get_nav_counts() RPC -- icon + number, never color alone, per spec.
+const WANDERING_HEARTS_PATH = '/stall/wanderinghearts';
 
 interface Props {
   /** Called on every tap, before navigating (or before the action fires) -- lets the caller close the stall interior first. */
@@ -87,7 +89,8 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
     const rowClassName = `flex items-center gap-2.5 px-3 py-2 hover:bg-amber-500/10 transition-colors ${
       bordered ? 'border-t border-amber-500/10' : ''
     }`;
-    const badge = badgeFor(item);
+    const isWanderingHearts = item.path === WANDERING_HEARTS_PATH;
+    const badge = isWanderingHearts ? null : badgeFor(item);
     return (
       <Link key={item.label} to={item.path} className={rowClassName} onClick={onNavigate}>
         <span className="text-base leading-none w-5 text-center shrink-0" style={{ color: item.color }}>{item.emoji}</span>
@@ -101,6 +104,16 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
             style={{ backgroundColor: `${item.color}22`, color: item.color }}
           >
             {badge}
+          </span>
+        )}
+        {isWanderingHearts && navCounts && (
+          <span className="shrink-0 flex items-center gap-1">
+            <span className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none" style={{ backgroundColor: '#93c5fd22', color: '#93c5fd' }}>
+              ♂ {navCounts.wandering_hearts_male}
+            </span>
+            <span className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none" style={{ backgroundColor: '#f9a8d422', color: '#f9a8d4' }}>
+              ♀ {navCounts.wandering_hearts_female}
+            </span>
           </span>
         )}
       </Link>

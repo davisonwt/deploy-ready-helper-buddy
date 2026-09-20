@@ -5,17 +5,16 @@
 // renders StallSideNav twice, `hidden lg:flex` / inside a drawer), so a
 // per-component interval would double the RPC calls for no reason.
 //
-// get_nav_counts() (supabase/migrations/20260920140000_nav_counts_rpc.sql)
-// covers four of the six badges -- Tribal Gardens, Sleeping Seeds, My
-// Listings, My Tribe. The other two are NOT part of this store:
-//   - Live Now has its own hook, useTribalLiveOrchard() -- reusing that
-//     store directly (not this one) is what guarantees the nav badge can
-//     never disagree with the Live Now page, since both read the exact
-//     same realtime presence value, not two independent computations of
-//     "the same thing".
-//   - Wandering Hearts has no badge at all (see the migration's own
-//     comment for why) -- there is no `wandering_hearts` field here to
-//     leave at some placeholder value; it's simply absent.
+// get_nav_counts() (supabase/migrations/20260920140000_nav_counts_rpc.sql,
+// extended by 20260920240000_nav_counts_wandering_hearts.sql) covers five
+// of the six badges -- Tribal Gardens, Sleeping Seeds, My Listings, My
+// Tribe, and Wandering Hearts (as two counts, male/female, real
+// non-seed profiles only). Live Now is the one NOT part of this store:
+// it has its own hook, useTribalLiveOrchard() -- reusing that store
+// directly (not this one) is what guarantees the nav badge can never
+// disagree with the Live Now page, since both read the exact same
+// realtime presence value, not two independent computations of "the
+// same thing".
 //
 // Refresh: fetch on first subscribe, then every 60s while the tab is
 // visible -- paused while hidden (no point polling a nav nobody can see),
@@ -30,6 +29,8 @@ export interface NavCounts {
   sleeping_seeds: number;
   my_listings: number;
   my_tribe: number;
+  wandering_hearts_male: number;
+  wandering_hearts_female: number;
 }
 
 type Listener = () => void;
@@ -59,6 +60,8 @@ async function fetchCounts() {
           sleeping_seeds: row.sleeping_seeds ?? 0,
           my_listings: row.my_listings ?? 0,
           my_tribe: row.my_tribe ?? 0,
+          wandering_hearts_male: row.wandering_hearts_male ?? 0,
+          wandering_hearts_female: row.wandering_hearts_female ?? 0,
         };
         notify();
       }

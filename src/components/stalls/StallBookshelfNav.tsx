@@ -7,13 +7,16 @@ import { useNavCounts, type NavCounts } from '@/hooks/useNavCounts';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 
 /** Same mapping as StallSideNav.tsx -- see that file's own comment for why
- *  Live Now and Wandering Hearts aren't in this map. */
+ *  Live Now and Wandering Hearts aren't in this map (each is its own
+ *  special case below). */
 const NAV_COUNT_KEY: Record<string, keyof NavCounts> = {
   '/stalls-feed': 'tribal_gardens',
   '/sleeping': 'sleeping_seeds',
   '/my-listings': 'my_listings',
   '/my-tribe': 'my_tribe',
 };
+
+const WANDERING_HEARTS_PATH = '/stall/wanderinghearts';
 
 interface Props {
   /** Called on every tap, before navigating (or before the action fires). */
@@ -72,7 +75,8 @@ export default function StallBookshelfNav({ onNavigate, className = '' }: Props)
     <div className={`bg-[#0d0805] ${className}`}>
       <div className="flex items-end gap-2 overflow-x-auto px-4 pt-4 pb-0 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {spines.map((item, i) => {
-          const badge = badgeFor(item);
+          const isWanderingHearts = item.path === WANDERING_HEARTS_PATH;
+          const badge = isWanderingHearts ? null : badgeFor(item);
           return (
           <button
             key={item.path}
@@ -87,6 +91,16 @@ export default function StallBookshelfNav({ onNavigate, className = '' }: Props)
                 style={{ backgroundColor: `${item.color}dd`, color: '#fff' }}
               >
                 {badge}
+              </span>
+            )}
+            {isWanderingHearts && navCounts && (
+              <span className="absolute -top-1.5 left-0 right-0 flex items-center justify-center gap-0.5">
+                <span className="rounded-full px-1 py-0.5 text-[8px] font-bold leading-none border border-black/40" style={{ backgroundColor: '#93c5fddd', color: '#1e1b4b' }}>
+                  ♂{navCounts.wandering_hearts_male}
+                </span>
+                <span className="rounded-full px-1 py-0.5 text-[8px] font-bold leading-none border border-black/40" style={{ backgroundColor: '#f9a8d4dd', color: '#500724' }}>
+                  ♀{navCounts.wandering_hearts_female}
+                </span>
               </span>
             )}
             <span className="text-base" aria-hidden>{item.emoji}</span>
