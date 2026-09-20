@@ -1,7 +1,7 @@
 import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2, Radio, MessageCircle } from 'lucide-react';
+import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2, Radio, MessageCircle, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -37,6 +37,65 @@ import { subscribeToPreviewPlayback, getCurrentlyPlayingId } from '@/lib/media/p
  * 20260913235500_scripture_study_stall.sql.
  */
 const SCRIPTURE_STUDY_USER_ID = '50f485b8-8aa0-462f-a01d-9c2f18d2105e';
+
+/**
+ * One playback path for the welcome voice note, shared by the auto-play
+ * effect (entry, once per session) and the manual "Replay stall greeting"
+ * pill -- extracted out of what used to be a single inline effect so a
+ * manual replay never re-implements the ducking/interrupt logic. Same
+ * duck-to-20%-and-restore shape as before (see the effect below for why
+ * this is a volume duck, not the pause-and-never-resume shape everything
+ * else in this codebase uses). Returns a stop() function; calling it more
+ * than once is a no-op.
+ */
+function startWelcomeAudio(url: string, setPlaying: (playing: boolean) => void): () => void {
+  const el = new Audio(url);
+  let stopped = false;
+  const wasRadioPlaying = getRadioState().isPlaying;
+
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    el.pause();
+    if (wasRadioPlaying) restoreRadioVolume();
+    setPlaying(false);
+    unsubRadio();
+    unsubLive();
+    unsubPreview();
+  };
+
+  const unsubRadio = subscribeRadio(() => { if (!wasRadioPlaying && getRadioState().isPlaying) stop(); });
+  const unsubLive = subscribeActiveLiveSession(() => { if (getActiveLiveSession()) stop(); });
+  const unsubPreview = subscribeToPreviewPlayback(() => { if (getCurrentlyPlayingId()) stop(); });
+
+  if (wasRadioPlaying) duckRadioVolume(0.2);
+  el.addEventListener('ended', stop);
+  setPlaying(true);
+  el.play().catch(() => { stop(); /* autoplay blocked -- silent, same as this app's other no-retry auto-plays */ });
+
+  return stop;
+}
+
+/** "Replay stall greeting" -- a glow pill attached to the title block,
+ *  never a floating element. Idle: gentle slow pulse. Playing: brighter,
+ *  faster pulse, no layout shift (same fixed size either state). Tapping
+ *  while playing restarts from the start -- handled by the caller
+ *  (handleReplayWelcomeAudio), not this component. */
+function WelcomeGreetingPill({ isPlaying, onClick, className = '' }: { isPlaying: boolean; onClick: () => void; className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Replay stall greeting"
+      title="Replay stall greeting"
+      className={`shrink-0 inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-amber-400/50 bg-amber-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-200 ${className}`}
+      style={{ animation: isPlaying ? 's2g-welcome-pulse-playing 1.3s ease-in-out infinite' : 's2g-welcome-pulse-idle 2.8s ease-in-out infinite' }}
+    >
+      <Volume2 className="h-3 w-3 shrink-0" />
+      Replay stall greeting
+    </button>
+  );
+}
 
 interface Props {
   /** Stall owner's user id -- the sheet pulls THEIR published items, never the viewer's. */
@@ -431,51 +490,47 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   // Welcome voice note (2026-09-20): plays once per visitor per browser
   // session on entering the interior -- never for the owner (same
   // !user || effectiveIsOwner guard the visit-tracking effect above
-  // uses), never on the front. Ducks the radio to 20% (not the pause-
-  // and-never-resume shape wireDuckingOnce() uses for calls/previews --
-  // a short one-shot note playing OVER the radio isn't the radio losing
-  // its turn the way an actual call is) and restores it when the note
-  // ends, is left early (leaving the interior unmounts this effect), or
-  // any other audio signal (the visitor starting the radio themselves, a
-  // live session, a track preview) starts while it's still playing.
+  // uses), never on the front. Playback itself (ducking, interrupt-on-
+  // other-audio) lives in startWelcomeAudio, shared with the manual
+  // "Replay stall greeting" pill below -- this effect's own job is just
+  // the once-per-session gate.
+  const [isWelcomeAudioPlaying, setIsWelcomeAudioPlaying] = useState(false);
+  const stopWelcomeAudioRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     if (!welcomeAudioUrl || !user || effectiveIsOwner) return;
     const sessionKey = `s2g:welcome-audio-played:${ownerId}`;
     let alreadyPlayed = false;
     try { alreadyPlayed = !!sessionStorage.getItem(sessionKey); } catch { /* private mode */ }
     if (alreadyPlayed) return;
-
-    const welcomeAudioEl = new Audio(welcomeAudioUrl);
-    let stopped = false;
-    const wasRadioPlaying = getRadioState().isPlaying;
-
-    const stop = () => {
-      if (stopped) return;
-      stopped = true;
-      welcomeAudioEl.pause();
-      if (wasRadioPlaying) restoreRadioVolume();
-    };
-
-    const unsubRadio = subscribeRadio(() => {
-      if (!wasRadioPlaying && getRadioState().isPlaying) stop();
-    });
-    const unsubLive = subscribeActiveLiveSession(() => { if (getActiveLiveSession()) stop(); });
-    const unsubPreview = subscribeToPreviewPlayback(() => { if (getCurrentlyPlayingId()) stop(); });
-
-    if (wasRadioPlaying) duckRadioVolume(0.2);
-    welcomeAudioEl.addEventListener('ended', () => { if (wasRadioPlaying) restoreRadioVolume(); });
-    welcomeAudioEl.play().catch(() => { /* autoplay blocked -- silent, same as this app's other no-retry auto-plays (SeedCard preview) */ });
-
     try { sessionStorage.setItem(sessionKey, '1'); } catch { /* private mode */ }
 
+    const stop = startWelcomeAudio(welcomeAudioUrl, setIsWelcomeAudioPlaying);
+    stopWelcomeAudioRef.current = stop;
     return () => {
       stop();
-      unsubRadio();
-      unsubLive();
-      unsubPreview();
+      if (stopWelcomeAudioRef.current === stop) stopWelcomeAudioRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [welcomeAudioUrl, ownerId, effectiveIsOwner, !!user]);
+
+  // Leaving the interior (unmount) must never leave the note playing
+  // behind -- covers both the auto-play instance and a manually replayed
+  // one, whichever is currently in the ref.
+  useEffect(() => {
+    return () => { stopWelcomeAudioRef.current?.(); };
+  }, []);
+
+  // Manual replay -- available to owner and visitor alike (unlike
+  // auto-play, which never fires for the owner), never touches the
+  // once-per-session key above so it can't change what the NEXT visitor
+  // auto-hears. Tap while already playing restarts from the start: stop
+  // the current instance, then start a fresh one.
+  const handleReplayWelcomeAudio = () => {
+    if (!welcomeAudioUrl) return;
+    stopWelcomeAudioRef.current?.();
+    stopWelcomeAudioRef.current = startWelcomeAudio(welcomeAudioUrl, setIsWelcomeAudioPlaying);
+  };
 
   useEffect(() => {
     if (!showRoomHint) return;
@@ -644,6 +699,13 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black flex flex-col overflow-hidden max-lg:portrait:overflow-y-auto max-lg:portrait:pb-[var(--bottom-chrome-h,0px)]">
+      {/* "Replay stall greeting" pill glow -- subtle and slow, not
+          flashing. Idle pulses gently; playing brightens and speeds up
+          slightly, same fixed size both states (no layout shift). */}
+      <style>{`
+        @keyframes s2g-welcome-pulse-idle { 0%, 100% { box-shadow: 0 0 6px rgba(245,158,11,0.35); } 50% { box-shadow: 0 0 14px rgba(245,158,11,0.6); } }
+        @keyframes s2g-welcome-pulse-playing { 0%, 100% { box-shadow: 0 0 12px rgba(245,158,11,0.75); } 50% { box-shadow: 0 0 22px rgba(245,158,11,1); } }
+      `}</style>
       {/* Mobile portrait (<1024px, portrait) -- header (≡ / name / ✕ for a
           visitor; owner gets a pencil before the ✕ too, opening the same
           Edit-stall menu the landscape/desktop branch has -- the tile-nav
@@ -803,6 +865,17 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
             </Button>
           )}
         </div>
+
+        {/* Beneath the name, not crammed into the row above -- that row is
+            already ≡ + name + up to 3 more icons in a 48px bar, no room for
+            a labelled pill without truncating the name down to nothing.
+            Sticky at the exact height of the row above so both stay
+            pinned together. */}
+        {welcomeAudioUrl && (
+          <div className="sticky top-[48px] z-20 flex items-center justify-center px-4 py-1.5 bg-[#0d0805]/95 backdrop-blur-sm border-b border-amber-500/15">
+            <WelcomeGreetingPill isPlaying={isWelcomeAudioPlaying} onClick={handleReplayWelcomeAudio} />
+          </div>
+        )}
 
         <div className="relative w-full">
           <div ref={mobileContainerRef} className="relative w-full">
@@ -982,14 +1055,24 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
             )}
           </div>
 
-          <p className="absolute bottom-3 left-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/80 drop-shadow">
-            {ownerIsLive && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-lg">
-                <Radio className="h-3 w-3" /> LIVE
-              </span>
+          {/* right-4 + truncate on the name (neither existed before) --
+              added alongside the replay pill: an inline pill has nowhere
+              to go if a long stall name is free to run under it forever,
+              since this row was previously left+unbounded with no right
+              edge at all. */}
+          <div className="absolute bottom-3 left-4 right-4 flex items-center gap-2">
+            <p className="min-w-0 flex-1 truncate flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/80 drop-shadow">
+              {ownerIsLive && (
+                <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-lg">
+                  <Radio className="h-3 w-3" /> LIVE
+                </span>
+              )}
+              <span className="truncate">{stallName}</span>
+            </p>
+            {welcomeAudioUrl && (
+              <WelcomeGreetingPill isPlaying={isWelcomeAudioPlaying} onClick={handleReplayWelcomeAudio} />
             )}
-            {stallName}
-          </p>
+          </div>
         </div>
 
         <StallTodayPanel className="hidden lg:flex lg:flex-col lg:w-[220px] lg:shrink-0 lg:border-l lg:border-amber-500/15" ownerId={ownerId} isOwner={effectiveIsOwner} />

@@ -28,6 +28,7 @@ interface StallRow {
   interior_image_path: string | null;
   hotspots: StallHotspot[] | null;
   published: boolean;
+  welcome_audio_path: string | null;
 }
 
 /**
@@ -55,7 +56,7 @@ export default function CockpitPage() {
     let alive = true
     supabase
       .from('stalls')
-      .select('name, tier, front_image_path, interior_image_path, hotspots, published')
+      .select('name, tier, front_image_path, interior_image_path, hotspots, published, welcome_audio_path')
       .eq('user_id', user.id)
       .maybeSingle()
       .then(({ data }) => { if (alive) setStall((data as unknown as StallRow | null) ?? null) })
@@ -266,6 +267,7 @@ export default function CockpitPage() {
         interiorImageUrl={stall.interior_image_path}
         stallName={stall.name}
         hotspots={resolveStallHotspots(stall.interior_image_path, stall.hotspots, templates)}
+        welcomeAudioUrl={stall.welcome_audio_path}
         isOwner
         hideClose
         onClose={() => {}}
