@@ -46,7 +46,7 @@ export default function StallTodayPanel({ className = '', stacked = false, owner
   const stats = useCommunityGrowthStats();
   const { user } = useAuth();
   const address = user?.solana_wallet_address || null;
-  const { balance, error, loading } = useLiveWalletBalance(address);
+  const { balance, error, loading, refetch } = useLiveWalletBalance(address);
   const { count: visitorCount, loading: visitorCountLoading } = useStallVisitorCount(ownerId, isOwner);
 
   const dayType = sacred.isSabbath ? 'Sabbath' : sacred.isFeast ? sacred.feastName || 'Feast Day' : 'Regular Day';
@@ -83,19 +83,38 @@ export default function StallTodayPanel({ className = '', stacked = false, owner
       <Section>
         <h3 className="font-serif text-xs tracking-[0.12em] uppercase text-amber-400/80 mb-2">💰 Wallet</h3>
         {user && (
-          <Link
-            to="/settings/payouts"
-            className={`flex items-center justify-between rounded-lg border px-3 py-2 transition-colors ${
-              low ? 'border-orange-500/40 bg-orange-500/10' : 'border-amber-500/15 bg-black/25 hover:bg-black/35'
-            }`}
-          >
-            <span className="flex items-center gap-1.5 text-xs text-amber-100/70">
-              <Wallet className="h-3.5 w-3.5" /> {address ? 'USDC balance' : 'Connect wallet'}
-            </span>
-            <span className={`text-sm font-semibold ${low ? 'text-orange-300' : 'text-amber-200'}`}>
-              {!address ? '—' : loading && balance === null && !error ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : error ? '?' : `$${(balance ?? 0).toFixed(2)}`}
-            </span>
-          </Link>
+          // Three distinct states, never a bare "?" (2026-09-20 bug: a
+          // failed balance read rendered as an unexplained question mark
+          // with no way to act on it). A failed read is its own row --
+          // a button that retries, not the Link to payout settings the
+          // healthy/loading states use, since tapping it should fix the
+          // problem in place rather than navigate away from it.
+          address && error ? (
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="flex w-full items-center justify-between rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-2 text-left transition-colors hover:bg-orange-500/15"
+            >
+              <span className="flex items-center gap-1.5 text-xs text-amber-100/70">
+                <Wallet className="h-3.5 w-3.5" /> USDC balance
+              </span>
+              <span className="text-xs font-semibold text-orange-300">Balance unavailable — tap to retry</span>
+            </button>
+          ) : (
+            <Link
+              to="/settings/payouts"
+              className={`flex items-center justify-between rounded-lg border px-3 py-2 transition-colors ${
+                low ? 'border-orange-500/40 bg-orange-500/10' : 'border-amber-500/15 bg-black/25 hover:bg-black/35'
+              }`}
+            >
+              <span className="flex items-center gap-1.5 text-xs text-amber-100/70">
+                <Wallet className="h-3.5 w-3.5" /> {address ? 'USDC balance' : 'Connect wallet'}
+              </span>
+              <span className={`text-sm font-semibold ${low ? 'text-orange-300' : 'text-amber-200'}`}>
+                {!address ? '—' : loading && balance === null ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : `$${(balance ?? 0).toFixed(2)}`}
+              </span>
+            </Link>
+          )
         )}
       </Section>
 

@@ -32,12 +32,32 @@ const inflight = new Map<string, Promise<number>>();
 // 500 from the function rendered as a confident "$0.00" (2026-09-06 My
 // Wallet tile bug). Now a failure throws, the hook reports it, and only a
 // real answer from the chain is ever cached.
+// get-wallet-balance already retries the Solana RPC itself twice
+// (supabase/functions/_shared/liveBalance.ts) before giving up with a 503
+// + `retryable: true` -- a busy public RPC can still outlast that. This is
+// a second, client-side bounded retry on top of it, gated on that same
+// explicit flag (never on a hard failure like unauthorized or bad input),
+// so a multi-second blip resolves on its own instead of surfacing an
+// error state to the member at all.
+const RETRYABLE_ATTEMPTS = 2;
+const RETRY_DELAY_MS = 1000;
+
 async function fetchBalance(address: string): Promise<number> {
-  const { balance } = await invokePaymentFunction<{ balance: number }>('get-wallet-balance', { address });
-  if (typeof balance !== 'number' || !Number.isFinite(balance)) {
-    throw new Error('The balance service returned no number.');
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= RETRYABLE_ATTEMPTS; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * attempt));
+    try {
+      const { balance } = await invokePaymentFunction<{ balance: number }>('get-wallet-balance', { address });
+      if (typeof balance !== 'number' || !Number.isFinite(balance)) {
+        throw new Error('The balance service returned no number.');
+      }
+      return balance;
+    } catch (err) {
+      lastErr = err;
+      if (!(err as { retryable?: boolean })?.retryable) throw err;
+    }
   }
-  return balance;
+  throw lastErr;
 }
 
 export function describeBalanceError(err: unknown): string {

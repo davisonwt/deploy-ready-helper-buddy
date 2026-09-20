@@ -124,7 +124,15 @@ export async function invokePaymentFunction<T = any>(
 
   if (!response.ok) {
     const serverMessage = parsed?.error || parsed?.message || raw?.slice(0, 200);
-    throw new Error(serverMessage || `Payment service returned ${response.status}.`);
+    // status/retryable are additive properties on a plain Error -- existing
+    // callers that only ever read `.message` are unaffected; a caller that
+    // wants to distinguish a retryable upstream failure (e.g. get-wallet-
+    // balance's 503 "Solana network is busy") from a hard failure (bad
+    // input, auth) can check `.retryable` instead of pattern-matching text.
+    throw Object.assign(new Error(serverMessage || `Payment service returned ${response.status}.`), {
+      status: response.status,
+      retryable: parsed?.retryable === true,
+    });
   }
   if (!raw || parsed === null) {
     throw new Error('The payment service returned an invalid response. Please try again.');
