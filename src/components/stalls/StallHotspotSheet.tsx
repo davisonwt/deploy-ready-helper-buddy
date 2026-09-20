@@ -466,7 +466,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
       row.removeEventListener('scroll', updateScrollState);
       window.removeEventListener('resize', updateScrollState);
     };
-  }, [items.length]);
+  }, [items?.length]);
 
   // Arriving back from a SeedCard Message action (scrollToItemId set) --
   // once the real item this sheet's asking about has actually loaded,
