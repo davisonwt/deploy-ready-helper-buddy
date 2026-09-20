@@ -178,6 +178,32 @@ green gets trusted.
   `test.skip` against the names `.env.test` actually defines. Note that
   `?? ''` is NOT a default; it is exactly what makes the skip fire.
 
+## Test fixtures
+Live verifications create their own fixtures at run start and **DELETE
+them at run end**. No test stall, seed, slot, or upload may outlive its
+run -- not "cleaned up eventually," not "left for the next session to
+find," gone before the report is written.
+
+Every verification report ends with an explicit residue check: list what
+was created, prove it's gone (a count query, a screenshot, a "0 rows
+left" -- something checkable, not just "cleaned up"). A report that
+claims cleanup without showing the check is the same failure mode as a
+spec that skips silently and reports green.
+
+A run that needs a stall to test against creates a minimal one (no
+template, unpublished unless the test specifically needs published) and
+tears it down in the same run -- never reuses a "the test stall" left
+over from a previous session, and never leaves one behind for a future
+session to reuse. Reuse is exactly how "Sabbath Test Stall" on
+davisontest1 became a persistent fixture that had to be torn down
+explicitly on 2026-09-21, complete with 14 unrelated leftover product
+rows and 8 stray storage objects from earlier, uncleaned rounds.
+
+This costs real time on every run that needs a stall/seed/slot to exist
+-- setup and teardown are now mandatory work, not something to skip
+because "davisontest1 already has one." State that cost plainly when it
+applies; do not quietly build a persistent fixture to avoid paying it.
+
 ## Golden rule: crypto on S2G is Solana, via Phantom
 
 **Do not propose NOWPayments.** It has been raised and rejected more than
