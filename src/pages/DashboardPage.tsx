@@ -84,15 +84,21 @@ export default function CockpitPage() {
   const [adHocTitle, setAdHocTitle] = useState('')
   // Total S2G member count on the Global Chat button -- profiles is the
   // canonical user list (1:1 with auth.users, confirmed 96/96 live
-  // 2026-09-20), same table BasicAnalytics.tsx already counts for "total
-  // users". Fetched once on mount, no realtime subscription -- a member
-  // count drifting by a few while the Cockpit is open is not worth a
-  // channel subscription for.
+  // 2026-09-20). Found live: a direct client-side count(*) against
+  // profiles returns 1, not 96 -- its RLS (profiles_select_self_or_admin)
+  // restricts an ordinary member to their own row. public_profiles is
+  // openly readable but isn't 1:1 with real users either (102 rows, not
+  // 96) so it overcounts. get_total_member_count() (supabase/migrations/
+  // 20260920120000_total_member_count_rpc.sql) is a SECURITY DEFINER RPC,
+  // same pattern get_my_tribe_members() already uses, that exposes only
+  // the aggregate integer -- no per-row data. Fetched once on mount, no
+  // realtime subscription -- a member count drifting by a few while the
+  // Cockpit is open is not worth a channel subscription for.
   const [totalMemberCount, setTotalMemberCount] = useState<number | null>(null)
   useEffect(() => {
     let alive = true
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).then(({ count }) => {
-      if (alive) setTotalMemberCount(count ?? null)
+    supabase.rpc('get_total_member_count' as any).then(({ data }) => {
+      if (alive) setTotalMemberCount(typeof data === 'number' ? data : null)
     })
     return () => { alive = false }
   }, [])
