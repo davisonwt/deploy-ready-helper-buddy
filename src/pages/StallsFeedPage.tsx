@@ -149,6 +149,26 @@ export default function StallsFeedPage() {
   // there's no room for both regardless of viewport width.
   const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
   const [searchOpen, setSearchOpen] = useState(() => searchParams.has('q'));
+  // Test-account stalls (davisontest1/2 -- profiles.is_test, not
+  // is_system, which also legitimately covers real S2G-run stall
+  // accounts that belong here) must never appear on this public browsing
+  // surface, for any chip, or in the sower combobox below. Fetched once,
+  // null until resolved so the main query effect (which depends on this)
+  // doesn't fire with an empty exclusion list and flash a test stall
+  // before it loads. stalls.user_id has no FK to profiles (only to
+  // auth.users), so PostgREST can't embed-join the two -- this is the
+  // small, one-time id list a client-side `.not('user_id','in',...)`
+  // needs instead.
+  const [testUserIds, setTestUserIds] = useState<string[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data } = await supabase.from('profiles').select('user_id').eq('is_test', true);
+      if (alive) setTestUserIds(((data ?? []) as { user_id: string }[]).map((r) => r.user_id));
+    })();
+    return () => { alive = false; };
+  }, []);
+
   // Search-as-combobox: a chip-independent, one-time list of every sower
   // with a published stall (not `cards`, which is scoped to whatever
   // category chip is active -- the combobox must offer every sower
@@ -159,13 +179,16 @@ export default function StallsFeedPage() {
   const comboboxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (testUserIds === null) return; // wait for the exclusion list -- never flash a test stall first
     let alive = true;
     (async () => {
-      const { data: stallRows } = await supabase
+      let q = supabase
         .from('stalls')
         .select('user_id, name')
         .eq('published', true)
         .is('village', null);
+      if (testUserIds.length > 0) q = q.not('user_id', 'in', `(${testUserIds.join(',')})`);
+      const { data: stallRows } = await q;
       const rows = (stallRows ?? []) as { user_id: string; name: string }[];
       if (rows.length === 0) { if (alive) setAllStallOwners([]); return; }
       const { data: profileRows } = await supabase
@@ -188,7 +211,7 @@ export default function StallsFeedPage() {
       if (alive) setAllStallOwners(list);
     })();
     return () => { alive = false; };
-  }, []);
+  }, [testUserIds]);
 
   // Matches sower name/username AND stall name -- "Kar" must find Karoo
   // Honey's owner (Angelique Wessels / wesselsangelique3), whose own name
@@ -404,9 +427,12 @@ export default function StallsFeedPage() {
       return () => { alive = false; };
     }
     // tribeMine's own id list isn't ready yet -- wait rather than run an
-    // unfiltered query first and flash the wrong stalls.
+    // unfiltered query first and flash the wrong stalls. Same for the
+    // test-account exclusion list -- a real member must never see
+    // davisontest1/2's stall here, not even for one render before it loads.
     if (!villageFilter && tribeMine && tribeUserIds === null) return;
     if (!villageFilter && tribeMine && tribeUserIds!.length === 0) { setCards([]); return; }
+    if (testUserIds === null) return;
     (async () => {
       let q = supabase
         .from('stalls')
@@ -415,6 +441,7 @@ export default function StallsFeedPage() {
         .not('front_image_path', 'is', null)
         .order('created_at', { ascending: false })
         .limit(50);
+      if (testUserIds.length > 0) q = q.not('user_id', 'in', `(${testUserIds.join(',')})`);
       if (villageFilter) {
         // Dedicated village feed -- village-tagged stalls only, chip/
         // tribeMine don't apply here (see villageFilter's own doc comment).
@@ -457,7 +484,7 @@ export default function StallsFeedPage() {
       }
     })();
     return () => { alive = false; };
-  }, [chip, tribeMine, tribeUserIds, villageFilter]);
+  }, [chip, tribeMine, tribeUserIds, villageFilter, testUserIds]);
 
   const openStall = (card: StallCard) => {
     // Save which stall is being entered -- see FEED_SCROLL_STATE_KEY's own
