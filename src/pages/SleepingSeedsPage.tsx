@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useWorldwideLocation } from '@/hooks/useWorldwideLocation';
+import { useNavCounts } from '@/hooks/useNavCounts';
 import LocationBar from '@/components/sleeping/LocationBar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -137,6 +138,15 @@ export default function SleepingSeedsPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const unit = useMemo(() => unitForViewer(), []);
+  // Same get_nav_counts().sleeping_seeds the Cockpit nav badge reads
+  // (useNavCounts is a module-level singleton -- this is not a second
+  // query) -- Davison's decision, 2026-09-20: keep the badge as the
+  // global "all active, all members" total, and make this page state
+  // that same number plainly rather than let it silently disagree with
+  // a proximity-bound near-you list. The near-you list, radius and empty
+  // states below are unchanged -- this is a worldwide COUNT, not
+  // worldwide browsing.
+  const navCounts = useNavCounts();
 
   const tabParam = (params.get('tab') as TabKey) || 'wheels';
   const tab: TabKey = ['wheels', 'pillows', 'hands'].includes(tabParam) ? tabParam : 'wheels';
@@ -268,6 +278,11 @@ export default function SleepingSeedsPage() {
         <p className="text-sm text-muted-foreground mt-1">
           Vehicles, places to stay and helping hands near you.
         </p>
+        {navCounts !== null && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {navCounts.sleeping_seeds} active listing{navCounts.sleeping_seeds === 1 ? '' : 's'} worldwide
+          </p>
+        )}
       </header>
 
       <div className="mb-5">
