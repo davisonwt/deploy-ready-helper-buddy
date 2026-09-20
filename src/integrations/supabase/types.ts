@@ -11054,6 +11054,60 @@ export type Database = {
         }
         Relationships: []
       }
+      radio_rundown_segments: {
+        Row: {
+          audio_path: string | null
+          doc_path: string | null
+          duration_seconds: number
+          id: string
+          image_path: string | null
+          kind: string
+          notes: string | null
+          position: number
+          slot_id: string
+          track_product_id: string | null
+        }
+        Insert: {
+          audio_path?: string | null
+          doc_path?: string | null
+          duration_seconds: number
+          id?: string
+          image_path?: string | null
+          kind: string
+          notes?: string | null
+          position: number
+          slot_id: string
+          track_product_id?: string | null
+        }
+        Update: {
+          audio_path?: string | null
+          doc_path?: string | null
+          duration_seconds?: number
+          id?: string
+          image_path?: string | null
+          kind?: string
+          notes?: string | null
+          position?: number
+          slot_id?: string
+          track_product_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_rundown_segments_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "radio_slots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_rundown_segments_track_product_id_fkey"
+            columns: ["track_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       radio_schedule: {
         Row: {
           ai_backup_enabled: boolean | null
@@ -11502,6 +11556,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      radio_slots: {
+        Row: {
+          ad_price: number | null
+          created_at: string
+          dj_user_id: string
+          id: string
+          mode: string
+          starts_at: string
+          status: string
+          title: string | null
+        }
+        Insert: {
+          ad_price?: number | null
+          created_at?: string
+          dj_user_id: string
+          id?: string
+          mode: string
+          starts_at: string
+          status?: string
+          title?: string | null
+        }
+        Update: {
+          ad_price?: number | null
+          created_at?: string
+          dj_user_id?: string
+          id?: string
+          mode?: string
+          starts_at?: string
+          status?: string
+          title?: string | null
+        }
+        Relationships: []
       }
       radio_station_config: {
         Row: {

@@ -20,7 +20,7 @@ export default function DashboardTribeStats() {
   const [purchases, setPurchases] = useState({ count: 0, total: 0 });
   const [unread, setUnread] = useState(0);
   const walletAddress: string | null = user?.solana_wallet_address || null;
-  const { balance: walletBalance, error: walletBalanceError, loading: walletBalanceLoading } = useLiveWalletBalance(walletAddress);
+  const { balance: walletBalance, error: walletBalanceError, loading: walletBalanceLoading, refetch: refetchWalletBalance } = useLiveWalletBalance(walletAddress);
 
   const reload = React.useCallback(async () => {
     if (!user?.id) return;
@@ -124,19 +124,21 @@ export default function DashboardTribeStats() {
 
   const subLine = { fontSize: 11, color: "#94a3b8", marginTop: 2 };
 
-  const tile = (to, icon, label, value, sub, color) => (
-    <Link to={to} style={{
-      flex: 1, minWidth: 160, textDecoration: "none",
-      background: "linear-gradient(135deg, rgba(15,23,42,0.9), rgba(2,6,23,0.95))",
-      border: `1px solid ${color}55`,
-      borderRadius: 14, padding: "14px 16px",
-      display: "flex", alignItems: "center", gap: 12,
-      boxShadow: `0 0 24px ${color}22`,
-      transition: "transform .15s",
-    }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}
-    >
+  const tileInnerStyle = (color: string) => ({
+    flex: 1, minWidth: 160, textDecoration: "none",
+    background: "linear-gradient(135deg, rgba(15,23,42,0.9), rgba(2,6,23,0.95))",
+    border: `1px solid ${color}55`,
+    borderRadius: 14, padding: "14px 16px",
+    display: "flex", alignItems: "center", gap: 12,
+    boxShadow: `0 0 24px ${color}22`,
+    transition: "transform .15s",
+  } as const);
+  const tileHoverProps = {
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => (e.currentTarget.style.transform = "translateY(-2px)"),
+    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => (e.currentTarget.style.transform = "none"),
+  };
+  const tileContent = (icon: React.ReactNode, label: string, value: React.ReactNode, sub: React.ReactNode, color: string) => (
+    <>
       <div style={{
         width: 44, height: 44, borderRadius: 12, background: `${color}22`,
         display: "flex", alignItems: "center", justifyContent: "center", color,
@@ -147,7 +149,23 @@ export default function DashboardTribeStats() {
         <div style={{ fontSize: 20, fontWeight: 800, color: "#f1f5f9", lineHeight: 1.1 }}>{value}</div>
         {sub}
       </div>
+    </>
+  );
+  const tile = (to: string, icon: React.ReactNode, label: string, value: React.ReactNode, sub: React.ReactNode, color: string) => (
+    <Link to={to} style={tileInnerStyle(color)} {...tileHoverProps}>
+      {tileContent(icon, label, value, sub, color)}
     </Link>
+  );
+  // Bare-tile "N/A" wasn't enough on its own (Davison, 2026-09-20): a Link
+  // to payout settings is the wrong affordance for a transient fetch
+  // failure -- settings can't fix an RPC error, and nothing tells a member
+  // the tile doubles as retry. Match WalletBalanceChip's shipped pattern:
+  // an explicit button that calls refetch(), same visual shape as the
+  // other tiles, in place of the Link only for this error state.
+  const retryTile = (icon: React.ReactNode, label: string, value: React.ReactNode, sub: React.ReactNode, color: string, onRetry: () => void) => (
+    <button type="button" onClick={onRetry} style={{ ...tileInnerStyle(color), textAlign: "left", cursor: "pointer" }} {...tileHoverProps}>
+      {tileContent(icon, label, value, sub, color)}
+    </button>
   );
 
   return (
@@ -173,25 +191,28 @@ export default function DashboardTribeStats() {
         </>
       ), "#f59e0b")}
       {tile("/conversations", <MessageCircle size={20} />, "Unread", unread, <div style={subLine}>{unread ? "tap to read" : "all caught up"}</div>, "#22d3ee")}
-      {tile("/settings/payouts", <Wallet size={20} />, "My Wallet",
-        !walletAddress
-          ? "Connect"
-          : walletBalanceLoading && walletBalance === null && !walletBalanceError
-            ? "…"
-            : walletBalanceError
-              ? "N/A"
-              : `$${(walletBalance ?? 0).toFixed(2)}`,
-        (
-          <div style={subLine}>
-            {!walletAddress
-              ? "no wallet linked yet"
-              : walletBalanceError
-                ? "couldn't read balance — tap to retry"
-                : walletBalance !== null && walletBalance < WALLET_LOW_BALANCE_THRESHOLD
-                  ? "low — top up in Phantom"
-                  : "mainnet USDC, live"}
-          </div>
-        ), "#a78bfa")}
+      {walletAddress && walletBalanceError
+        ? retryTile(
+            <Wallet size={20} />, "My Wallet", "Unavailable",
+            <div style={subLine}>couldn't read balance — tap to retry</div>,
+            "#a78bfa",
+            () => refetchWalletBalance(),
+          )
+        : tile("/settings/payouts", <Wallet size={20} />, "My Wallet",
+            !walletAddress
+              ? "Connect"
+              : walletBalanceLoading && walletBalance === null
+                ? "…"
+                : `$${(walletBalance ?? 0).toFixed(2)}`,
+            (
+              <div style={subLine}>
+                {!walletAddress
+                  ? "no wallet linked yet"
+                  : walletBalance !== null && walletBalance < WALLET_LOW_BALANCE_THRESHOLD
+                    ? "low — top up in Phantom"
+                    : "mainnet USDC, live"}
+              </div>
+            ), "#a78bfa")}
     </div>
   );
 }

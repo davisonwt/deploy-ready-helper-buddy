@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { getRadioState, subscribeRadio, type RadioTrackInfo } from '@/lib/media/radioPlayback';
+import { getRadioState, subscribeRadio, type RadioTrackInfo, type RadioSegmentInfo, type RadioSlotInfo } from '@/lib/media/radioPlayback';
 import SeedCard from '@/components/seeds/SeedCard';
 import ShareSeedDialog from '@/components/share/ShareSeedDialog';
 import StallChatSheet from '@/components/stalls/StallChatSheet';
@@ -27,12 +27,19 @@ interface Props {
 export default function NowPlayingSheet({ onClose }: Props) {
   const { user } = useAuth();
   const [track, setTrack] = useState<RadioTrackInfo | null>(getRadioState().track);
+  const [segment, setSegment] = useState<RadioSegmentInfo | null>(getRadioState().segment);
+  const [slot, setSlot] = useState<RadioSlotInfo | null>(getRadioState().slot);
   const [giftOpen, setGiftOpen] = useState(false);
   const [chatRoomId, setChatRoomId] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [resolvingChat, setResolvingChat] = useState(false);
 
-  useEffect(() => subscribeRadio(() => setTrack(getRadioState().track)), []);
+  useEffect(() => subscribeRadio(() => {
+    const s = getRadioState();
+    setTrack(s.track);
+    setSegment(s.segment);
+    setSlot(s.slot);
+  }), []);
 
   const openChat = async () => {
     if (!user || !track || resolvingChat) return;
@@ -64,9 +71,23 @@ export default function NowPlayingSheet({ onClose }: Props) {
           </button>
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto p-4">
-          {!track ? (
+          {!track && !segment ? (
             <p className="py-10 text-center text-sm text-amber-100/60">Nothing live right now.</p>
-          ) : (
+          ) : segment ? (
+            // Grove Station DJ Slots: a talk/opening/advert/jingle/handover
+            // segment has no product behind it -- DJ + show title + segment
+            // image, per spec, not the full Bestow/Gift SeedCard treatment.
+            <div className="space-y-4 text-center">
+              {segment.imageUrl && (
+                <img src={segment.imageUrl} alt="" className="w-full rounded-xl object-cover max-h-64" />
+              )}
+              <div>
+                <div className="font-serif text-xl text-amber-100">{slot?.title || 'Grove Station'}</div>
+                <div className="text-sm text-amber-100/70 capitalize mt-1">{segment.kind} — {slot?.djName ?? 'a DJ'}</div>
+                {segment.notes && <p className="text-sm text-amber-100/60 mt-3 whitespace-pre-wrap">{segment.notes}</p>}
+              </div>
+            </div>
+          ) : track ? (
             <SeedCard
               id={track.id}
               kind="music"
@@ -84,7 +105,7 @@ export default function NowPlayingSheet({ onClose }: Props) {
               onGift={() => setGiftOpen(true)}
               onMessageOverride={openChat}
             />
-          )}
+          ) : null}
         </div>
       </div>
       {track && giftOpen && (

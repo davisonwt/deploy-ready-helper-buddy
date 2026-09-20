@@ -103,12 +103,38 @@ export interface RadioTrackInfo {
   price: number | null;
 }
 
+// Grove Station DJ Slots (2026-09-20): a scheduled slot's non-song segment
+// (opening/talk/advert/jingle/handover) has no product behind it, so no
+// `track` -- this is the distinct "DJ + show title + segment image" shape
+// instead. `track` and `segment` are never both set at once.
+export interface RadioSegmentInfo {
+  id: string;
+  kind: 'opening' | 'talk' | 'advert' | 'jingle' | 'handover';
+  durationSeconds: number;
+  imageUrl: string | null;
+  notes: string | null;
+}
+
+export interface RadioSlotInfo {
+  id: string;
+  djUserId?: string;
+  djName: string;
+  djUsername: string | null;
+  title: string | null;
+  mode: 'live' | 'prerecorded';
+  adPrice: number | null;
+}
+
 export interface RadioState {
   isPlaying: boolean;
   loading: boolean;
   /** True while a retry is in flight after an error/stall/failed tune -- surfaced on the pill as "Reconnecting...", nothing else. */
   reconnecting: boolean;
   track: RadioTrackInfo | null;
+  /** Set instead of `track` while a scheduled slot's non-song segment is live. */
+  segment: RadioSegmentInfo | null;
+  /** Set alongside `track` OR `segment` while a scheduled slot is live; null during plain autopilot. */
+  slot: RadioSlotInfo | null;
   offsetSeconds: number;
   poolSize: number;
 }
@@ -116,7 +142,7 @@ export interface RadioState {
 type Listener = () => void;
 
 let audio: HTMLAudioElement | null = null;
-let state: RadioState = { isPlaying: false, loading: false, reconnecting: false, track: null, offsetSeconds: 0, poolSize: 0 };
+let state: RadioState = { isPlaying: false, loading: false, reconnecting: false, track: null, segment: null, slot: null, offsetSeconds: 0, poolSize: 0 };
 const listeners = new Set<Listener>();
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let watchdogTimer: ReturnType<typeof setInterval> | null = null;
@@ -289,7 +315,15 @@ function stopWatchdog() {
   }
 }
 
-async function fetchNowPlaying(): Promise<{ track: RadioTrackInfo | null; offsetSeconds: number; poolSize: number } | null> {
+interface NowPlayingResult {
+  track: RadioTrackInfo | null;
+  segment: RadioSegmentInfo | null;
+  slot: RadioSlotInfo | null;
+  offsetSeconds: number;
+  poolSize: number;
+}
+
+async function fetchNowPlaying(): Promise<NowPlayingResult | null> {
   const session = await ensureFreshSession();
   const token = session?.access_token;
   if (!token) {
@@ -303,12 +337,22 @@ async function fetchNowPlaying(): Promise<{ track: RadioTrackInfo | null; offset
       return null;
     }
     const data = await res.json();
-    if (!data.playing) return { track: null, offsetSeconds: 0, poolSize: data.poolSize ?? 0 };
-    return { track: data.track, offsetSeconds: data.offsetSeconds ?? 0, poolSize: data.poolSize ?? 0 };
+    if (!data.playing) return { track: null, segment: null, slot: null, offsetSeconds: 0, poolSize: data.poolSize ?? 0 };
+    return {
+      track: data.track ?? null,
+      segment: data.segment ?? null,
+      slot: data.slot ?? null,
+      offsetSeconds: data.offsetSeconds ?? 0,
+      poolSize: data.poolSize ?? 0,
+    };
   } catch (e) {
     logError('fetchNowPlaying: fetch threw', e);
     return null;
   }
+}
+
+function currentKey(result: Pick<NowPlayingResult, 'track' | 'segment'>): string | null {
+  return result.track?.id ?? result.segment?.id ?? null;
 }
 
 /** Reloads .src onto whatever's live right now and seeks to its live
@@ -325,14 +369,14 @@ async function tuneToLive(shouldPlay: boolean, reason: string) {
   log(`tuneToLive starting -- reason: ${reason}`);
   try {
     const result = await fetchNowPlaying();
-    if (!result || !result.track) {
-      logError('tuneToLive: no track available from radio-now-playing');
-      if (shouldPlay) scheduleRetry('no track available');
+    if (!result || (!result.track && !result.segment)) {
+      logError('tuneToLive: nothing available from radio-now-playing');
+      if (shouldPlay) scheduleRetry('no track/segment available');
       return;
     }
-    const trackChanged = result.track.id !== state.track?.id;
-    setState({ track: result.track, offsetSeconds: result.offsetSeconds, poolSize: result.poolSize, loading: false });
-    log(`tuneToLive: now-playing resolved -- track="${result.track.title}" offset=${result.offsetSeconds}s trackChanged=${trackChanged}`);
+    const trackChanged = currentKey(result) !== currentKey(state);
+    setState({ track: result.track, segment: result.segment, slot: result.slot, offsetSeconds: result.offsetSeconds, poolSize: result.poolSize, loading: false });
+    log(`tuneToLive: now-playing resolved -- ${result.track ? `track="${result.track.title}"` : `segment kind="${result.segment?.kind}"`} offset=${result.offsetSeconds}s trackChanged=${trackChanged}`);
 
     const session = await ensureFreshSession();
     const token = session?.access_token;
@@ -367,8 +411,8 @@ async function pollOnce() {
   if (tuneInFlight) return;
   const result = await fetchNowPlaying();
   if (!result) return;
-  const trackChanged = result.track?.id !== state.track?.id;
-  setState({ track: result.track, offsetSeconds: result.offsetSeconds, poolSize: result.poolSize, loading: false });
+  const trackChanged = currentKey(result) !== currentKey(state);
+  setState({ track: result.track, segment: result.segment, slot: result.slot, offsetSeconds: result.offsetSeconds, poolSize: result.poolSize, loading: false });
   if (!state.isPlaying) return;
   if (trackChanged) {
     log('pollOnce: detected a track change the ended-event path missed -- tuning (backstop)');
@@ -442,6 +486,6 @@ export function subscribeRadio(listener: Listener): () => void {
   wireDuckingOnce();
   wireVisibilityOnce();
   listeners.add(listener);
-  if (state.isPlaying && !state.track) void pollOnce();
+  if (state.isPlaying && !state.track && !state.segment) void pollOnce();
   return () => listeners.delete(listener);
 }

@@ -23,11 +23,9 @@ import TimezoneSlotAssignment from '@/components/radio/TimezoneSlotAssignment'
 import GlobalDJScheduler from '@/components/radio/GlobalDJScheduler'
 import AdminRadioManagement from '@/components/radio/AdminRadioManagement'
 import PersonnelSlotAssignment from '@/components/radio/PersonnelSlotAssignment'
-import { StationStats } from '@/components/radio/StationStats'
 import { CreateDJProfileForm } from '@/components/radio/CreateDJProfileForm'
 import RadioSetupWizard from '@/components/radio/RadioSetupWizard'
 import DJPlaylistManager from '@/components/radio/DJPlaylistManager'
-import { MyApprovedSlots } from '@/components/radio/MyApprovedSlots'
 import { CoHostInvites } from '@/components/radio/CoHostInvites'
 import PublicMusicLibrary from '@/components/radio/PublicMusicLibrary'
 
@@ -67,26 +65,12 @@ const radioOptions = {
     color: { bg: '#957DAD', text: '#FFFFFF', buttonBg: '#FFE156', buttonText: '#2A2A2A', opacity: 0.95 },
     features: ['Show Approvals', 'System Settings', 'User Management', 'Content Moderation']
   },
-  analytics: {
-    name: 'Station Analytics',
-    description: 'Performance metrics, listener statistics, and comprehensive reporting dashboard',
-    icon: BarChart3,
-    color: { bg: '#FFB7B7', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
-    features: ['Listener Stats', 'Performance Metrics', 'Show Analytics', 'Trend Analysis']
-  },
   profiles: {
     name: 'DJ Profiles',
     description: 'DJ profile creation, management, and specialized skill assignment',
     icon: Mic,
     color: { bg: '#E0BBE4', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
     features: ['Profile Creation', 'Skill Management', 'Bio & Specialties', 'Emergency Availability']
-  },
-  myslots: {
-    name: 'My Radio Slots',
-    description: 'View your approved time slots and start broadcasting with one click',
-    icon: Radio,
-    color: { bg: '#FF6B6B', text: '#FFFFFF', buttonBg: '#FF3838', buttonText: '#FFFFFF', opacity: 0.95 },
-    features: ['Approved Slots', 'Go Live Button', 'Schedule Overview', 'Quick Start']
   },
   cohosts: {
     name: 'Co-Host Invitations',
@@ -501,23 +485,6 @@ export default function RadioManagementPage() {
               </Card>
             )}
             
-            {selectedOption === 'analytics' && (
-              <Card className="h-full bg-white/95 backdrop-blur-sm shadow-xl">
-                <CardHeader>
-                  <CardTitle 
-                    className="flex items-center gap-2" 
-                    style={{ color: colors.text }}
-                  >
-                    <BarChart3 className="h-5 w-5" />
-                    Station Analytics & Performance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="h-full overflow-auto">
-                  <StationStats />
-                </CardContent>
-              </Card>
-            )}
-            
             {selectedOption === 'profiles' && (
               <div className="h-full space-y-6">
                 <Card className="bg-white/95 backdrop-blur-sm shadow-xl">
@@ -566,12 +533,6 @@ export default function RadioManagementPage() {
               </div>
             )}
             
-            {selectedOption === 'myslots' && (
-              <div className="h-full space-y-6">
-                <MyApprovedSlots />
-              </div>
-            )}
-
             {selectedOption === 'cohosts' && (
               <div className="h-full space-y-6">
                 <CoHostInvites />

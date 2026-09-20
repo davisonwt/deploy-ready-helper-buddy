@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useGroveStation } from '@/hooks/useGroveStation'
 import { useRoles } from '@/hooks/useRoles'
-import RadioSlotApplicationPage from '@/pages/RadioSlotApplicationPage'
+import { useAuth } from '@/hooks/useAuth'
 import RadioSessions from '@/pages/RadioSessions'
 import RadioGenerator from '@/pages/RadioGenerator'
 import RadioManagementPage from '@/pages/RadioManagementPage'
@@ -26,34 +26,26 @@ import {
   Clock,
   Star,
   MessageSquare,
-  TrendingUp,
   Headphones,
   Globe,
   Music,
-  ListMusic,
-  Zap
+  ListMusic
 } from 'lucide-react'
 import { CreateDJProfileForm } from '@/components/radio/CreateDJProfileForm'
-import { EnhancedScheduleShowForm } from '@/components/radio/EnhancedScheduleShowForm'
 import { LiveStreamInterface } from '@/components/radio/LiveStreamInterface'
 import { LiveStreamListener } from '@/components/radio/LiveStreamListener'
-import { RadioScheduleGrid } from '@/components/radio/RadioScheduleGrid'
-import { StationStats } from '@/components/radio/StationStats'
-import TimezoneSlotAssignment from '@/components/radio/TimezoneSlotAssignment'
-import GlobalDJScheduler from '@/components/radio/GlobalDJScheduler'
 import DJMusicLibrary from '@/components/radio/DJMusicLibrary'
 import DJPlaylistManager from '@/components/radio/DJPlaylistManager'
-import AutomatedSessionScheduler from '@/components/radio/AutomatedSessionScheduler'
 import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface'
+import SlotBookingCalendar from '@/components/radio/SlotBookingCalendar'
+import RundownBuilder from '@/components/radio/RundownBuilder'
 
 export default function GroveStationPage() {
   const {
     stationConfig,
     currentShow,
-    schedule,
     djs,
     userDJProfile,
-    stats,
     loading,
     isDJ,
     canGoLive,
@@ -61,22 +53,29 @@ export default function GroveStationPage() {
     updateShowStatus,
     submitFeedback
   } = useGroveStation()
+  const { user } = useAuth()
   const { isAdminOrGosat, hasRole } = useRoles()
   const canManageRadio = isAdminOrGosat || hasRole('radio_admin')
   const navigate = useNavigate()
   // Flow v2 step 11: the 7 radio routes consolidate into tabs here --
   // `?tab=` lets the redirects from those old paths land on the right
   // one (StallBuildPage/StallsFeedPage already use this same pattern).
+  // 'apply' and 'stats' were removed 2026-09-20 along with the old
+  // approval-gated booking flow (RadioSlotApplicationWizard dies with it;
+  // StationStats read radio_djs/radio_schedule/radio_stats, all
+  // permanently stale under the new open-booking radio_slots model) -- a
+  // stray `?tab=apply` or `?tab=stats` link now falls back to 'listen'
+  // via the GROVE_TABS.includes() check below, not a crash.
   const [searchParams] = useSearchParams()
-  const GROVE_TABS = ['listen', 'schedule', 'djs', 'broadcast', 'stats', 'apply', 'sessions', 'generator', 'management', 'admin']
+  const GROVE_TABS = ['listen', 'schedule', 'djs', 'broadcast', 'sessions', 'generator', 'management', 'admin']
   const [activeTab, setActiveTab] = useState(() => {
     const requested = searchParams.get('tab')
     return GROVE_TABS.includes(requested) ? requested : 'listen'
   })
+  const [openRundownSlotId, setOpenRundownSlotId] = useState(null)
 
   const [isPlaying, setIsPlaying] = useState(false)
   const [showCreateDJ, setShowCreateDJ] = useState(false)
-  const [showScheduleForm, setShowScheduleForm] = useState(false)
   const [showLiveInterface, setShowLiveInterface] = useState(false)
 
   const handlePlayPause = () => {
@@ -193,21 +192,6 @@ export default function GroveStationPage() {
                 >
                   <Mic className="h-5 w-5" />
                   <span>Go Live</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="stats"
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-900 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200"
-                >
-                  <TrendingUp className="h-5 w-5" />
-                  <span>Stats</span>
-                </TabsTrigger>
-                {/* Flow v2 step 11: consolidated radio routes */}
-                <TabsTrigger
-                  value="apply"
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg bg-emerald-100 hover:bg-emerald-200"
-                >
-                  <Zap className="h-5 w-5" />
-                  <span>Apply for a Slot</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="sessions"
@@ -355,46 +339,24 @@ export default function GroveStationPage() {
             )}
           </TabsContent>
 
-          {/* Schedule Tab */}
+          {/* Schedule Tab -- open-booking Grove Station DJ Slots (Phase 1).
+              Replaces the old approval-gated Book Time Slot / RadioScheduleGrid /
+              GlobalDJScheduler / TimezoneSlotAssignment flow (2026-09-20): any
+              member books a free 2h slot directly, no DJ profile or approval
+              step. Those components/tables (radio_schedule, radio_djs-as-a-gate)
+              are retired from this tab; nothing here reads them any more. */}
           <TabsContent value="schedule" className="space-y-6 p-6 bg-card">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">24/7 Schedule</h2>
-                <p className="text-muted-foreground">See what's playing when</p>
-              </div>
-              {isDJ && (
-                <Button onClick={() => setShowScheduleForm(true)} className="bg-blue-700 hover:bg-blue-800 text-white rounded-xl">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Book Time Slot
-                </Button>
-              )}
+            <div>
+              <h2 className="text-2xl font-bold">24/7 Schedule</h2>
+              <p className="text-muted-foreground">Book a 2-hour slot, or see what's playing when.</p>
             </div>
-            <RadioScheduleGrid schedule={schedule} />
-            
-            <div className="mt-8 space-y-8">
-              <div>
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Globe className="h-5 w-5 text-primary" />
-                  🌍 Global Heretics Coverage Scheduler
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Manage worldwide 24/7 coverage by assigning heretics to their optimal daylight hours (6 AM - 8 PM local time).
-                  Ensure listeners always have someone broadcasting during reasonable hours somewhere in the world.
-                </p>
-                <GlobalDJScheduler />
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Globe className="h-5 w-5 text-primary" />
-                  📅 Multi-Timezone Slot Assignment
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Detailed scheduling interface with timezone conversion for specific date management.
-                </p>
-                <TimezoneSlotAssignment />
-              </div>
-            </div>
+            {user?.id && (
+              openRundownSlotId ? (
+                <RundownBuilder slotId={openRundownSlotId} djUserId={user.id} onBack={() => setOpenRundownSlotId(null)} />
+              ) : (
+                <SlotBookingCalendar djUserId={user.id} onOpenRundown={setOpenRundownSlotId} />
+              )
+            )}
           </TabsContent>
 
           {/* DJs Tab */}
@@ -489,10 +451,6 @@ export default function GroveStationPage() {
                         <ListMusic className="h-4 w-4 mr-2" />
                         Playlists
                       </TabsTrigger>
-                      <TabsTrigger value="automation">
-                        <Zap className="h-4 w-4 mr-2" />
-                        Automation
-                      </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="profile" className="space-y-6">
@@ -572,10 +530,6 @@ export default function GroveStationPage() {
                     <TabsContent value="playlists">
                       <DJPlaylistManager />
                     </TabsContent>
-
-                    <TabsContent value="automation">
-                      <AutomatedSessionScheduler />
-                    </TabsContent>
                   </Tabs>
                 )}
               </div>
@@ -595,11 +549,6 @@ export default function GroveStationPage() {
             )}
           </TabsContent>
 
-          {/* Stats Tab */}
-          <TabsContent value="stats" className="space-y-6 p-6 bg-card">
-            <StationStats stats={stats} />
-          </TabsContent>
-
           {/* Flow v2 step 11: consolidated radio routes. [contain:layout]
               same as StallBuildPage's step 9 embeds, defensively, since
               these were all built as standalone pages too. Children are
@@ -610,10 +559,9 @@ export default function GroveStationPage() {
               (UniversalLiveSessionInterface, used by the pre-existing
               Broadcast tab) hit Supabase's own "cannot add
               postgres_changes callbacks after subscribe()" guard, a real
-              crash confirmed via a live repro, not assumed. */}
-          <TabsContent value="apply" className="relative [contain:layout] p-6 bg-card">
-            {activeTab === 'apply' && <RadioSlotApplicationPage />}
-          </TabsContent>
+              crash confirmed via a live repro, not assumed.
+              ('apply' and 'stats' tabs retired 2026-09-20 -- see the
+              GROVE_TABS comment above.) */}
           <TabsContent value="sessions" className="relative [contain:layout] p-6 bg-card">
             {activeTab === 'sessions' && <RadioSessions />}
           </TabsContent>
@@ -640,17 +588,9 @@ export default function GroveStationPage() {
 
       {/* Modals */}
         {showCreateDJ && (
-          <CreateDJProfileForm 
+          <CreateDJProfileForm
             open={showCreateDJ}
             onClose={() => setShowCreateDJ(false)}
-          />
-        )}
-
-        {showScheduleForm && (
-          <EnhancedScheduleShowForm
-            open={showScheduleForm}
-            onClose={() => setShowScheduleForm(false)}
-            djProfile={userDJProfile}
           />
         )}
       </div>
