@@ -59,6 +59,16 @@ export function computeCurrentTrack(tracks: RadioTrack[], nowMs: number): Curren
   return { track: last, offsetSeconds: Math.max(0, last.durationSeconds - 1), index: tracks.length - 1, cycleSeconds };
 }
 
+// Uploads with a video-container extension mixed into the type='music'
+// pool don't play reliably through a plain <audio> element. Tested
+// 2026-09-20 against the 3 real .MOV rows in this pool at the time: one
+// (H.264+AAC) played fine, but the other two (HEVC+AAC) both hard-failed
+// with MEDIA_ELEMENT_ERROR/"Format error" -- no HEVC decoder, zero
+// playback, not a quality issue. This query has no way to see a file's
+// video codec, only its container, so the container is excluded outright
+// rather than gambling per-file on which codec a future upload used.
+const VIDEO_CONTAINER_EXTENSIONS = ['.mov', '.mp4', '.mkv', '.avi', '.webm', '.m4v'];
+
 // deno-lint-ignore no-explicit-any
 export async function fetchRadioTracks(service: any): Promise<RadioTrack[]> {
   // Two-step fetch-then-merge (same pattern useConversations.ts uses)
@@ -68,14 +78,15 @@ export async function fetchRadioTracks(service: any): Promise<RadioTrack[]> {
   // few hundred rows.
   const { data: products, error: productsError } = await service
     .from('products')
-    .select('id, title, duration, cover_image_url, sower_id, price')
+    .select('id, title, duration, cover_image_url, sower_id, price, file_url')
     .eq('type', 'music')
     .eq('status', 'active')
     .gt('duration', 0)
     .order('created_at', { ascending: true })
     .order('id', { ascending: true });
   if (productsError) throw productsError;
-  const rows = (products ?? []) as Array<{ id: string; title: string; duration: number; cover_image_url: string | null; sower_id: string; price: number | null }>;
+  const allRows = (products ?? []) as Array<{ id: string; title: string; duration: number; cover_image_url: string | null; sower_id: string; price: number | null; file_url: string | null }>;
+  const rows = allRows.filter((r) => !VIDEO_CONTAINER_EXTENSIONS.some((ext) => r.file_url?.toLowerCase().endsWith(ext)));
   if (rows.length === 0) return [];
 
   const sowerIds = [...new Set(rows.map((r) => r.sower_id).filter(Boolean))];
