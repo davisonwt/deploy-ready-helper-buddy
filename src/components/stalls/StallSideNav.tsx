@@ -5,6 +5,7 @@ import { COCKPIT_NAV, COCKPIT_NAV_MORE, SCRIPTURE_STUDY_LINK, type CockpitNavIte
 import { useRoles } from '@/hooks/useRoles';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavCounts, type NavCounts } from '@/hooks/useNavCounts';
+import { useUnreadMessageCounts } from '@/hooks/useUnreadMessageCounts';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { BOTTOM_CHROME_PADDING_STYLE } from '@/lib/layout/bottomChrome';
 
@@ -26,6 +27,11 @@ const NAV_COUNT_KEY: Record<string, keyof NavCounts> = {
 // Real (non-seed) member counts by gender, per the same
 // get_nav_counts() RPC -- icon + number, never color alone, per spec.
 const WANDERING_HEARTS_PATH = '/stall/wanderinghearts';
+
+// ChatApp is its own case too: Classroom and SkillDrop (in COCKPIT_NAV_MORE)
+// share this same /conversations path for their own different reasons, so
+// this is keyed on the label, not the path, to avoid badging all three.
+const CHAT_APP_LABEL = 'ChatApp';
 
 interface Props {
   /** Called on every tap, before navigating (or before the action fires) -- lets the caller close the stall interior first. */
@@ -49,11 +55,15 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
   // the old AdminButton dropdown used before it was replaced by this nav
   // entry.
   const canSeeGated = isAdminOrGosat || roles.includes('radio_admin');
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
   const visibleMore = COCKPIT_NAV_MORE.filter((item) => !item.gated || canSeeGated);
   const navCounts = useNavCounts();
+  // Same singleton hook as the Cockpit bottom-bar pill and the
+  // conversations list (useUnreadMessageCounts, commit 4eb22a9c) -- one
+  // source, so this can never disagree with either.
+  const { totalUnread } = useUnreadMessageCounts(user?.id);
   // Live Now's own store, not get_nav_counts() -- see NAV_COUNT_KEY's own
   // comment for why this one is different.
   const { liveSeeds } = useTribalLiveOrchard();
@@ -76,8 +86,8 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
    *  value LiveNowPage.tsx renders, since both read this same shared
    *  store -- never a separately-computed number that could disagree.
    *  Every other item: get_nav_counts(), or no badge at all (Wandering
-   *  Hearts). null (still loading) renders no badge rather than a
-   *  misleading 0. */
+   *  Hearts and ChatApp, both their own special cases below). null (still
+   *  loading) renders no badge rather than a misleading 0. */
   const badgeFor = (item: CockpitNavItem): number | null => {
     if (item.path === '/live-now') return liveSeeds.length;
     const key = NAV_COUNT_KEY[item.path];
@@ -90,7 +100,8 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
       bordered ? 'border-t border-amber-500/10' : ''
     }`;
     const isWanderingHearts = item.path === WANDERING_HEARTS_PATH;
-    const badge = isWanderingHearts ? null : badgeFor(item);
+    const isChatApp = item.label === CHAT_APP_LABEL;
+    const badge = (isWanderingHearts || isChatApp) ? null : badgeFor(item);
     return (
       <Link key={item.label} to={item.path} className={rowClassName} onClick={onNavigate}>
         <span className="text-base leading-none w-5 text-center shrink-0" style={{ color: item.color }}>{item.emoji}</span>
@@ -106,8 +117,16 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
             {badge}
           </span>
         )}
+        {isChatApp && totalUnread > 0 && (
+          <span
+            className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none"
+            style={{ backgroundColor: '#ef4444', color: '#fff' }}
+          >
+            {totalUnread > 99 ? '99+' : totalUnread}
+          </span>
+        )}
         {isWanderingHearts && navCounts && (
-          <span className="shrink-0 flex items-center gap-1">
+          <span className="shrink-0 flex flex-col items-end gap-0.5">
             <span className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none" style={{ backgroundColor: '#93c5fd22', color: '#93c5fd' }}>
               ♂ {navCounts.wandering_hearts_male}
             </span>

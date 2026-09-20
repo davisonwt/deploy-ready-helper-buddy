@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { COCKPIT_NAV, COCKPIT_NAV_MORE, type CockpitNavItem } from '@/lib/nav/cockpitNav';
 import { useRoles } from '@/hooks/useRoles';
+import { useAuth } from '@/hooks/useAuth';
 import { useNavCounts, type NavCounts } from '@/hooks/useNavCounts';
+import { useUnreadMessageCounts } from '@/hooks/useUnreadMessageCounts';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 
 /** Same mapping as StallSideNav.tsx -- see that file's own comment for why
- *  Live Now and Wandering Hearts aren't in this map (each is its own
- *  special case below). */
+ *  Live Now, Wandering Hearts and ChatApp aren't in this map (each is its
+ *  own special case below). */
 const NAV_COUNT_KEY: Record<string, keyof NavCounts> = {
   '/stalls-feed': 'tribal_gardens',
   '/sleeping': 'sleeping_seeds',
@@ -17,6 +19,10 @@ const NAV_COUNT_KEY: Record<string, keyof NavCounts> = {
 };
 
 const WANDERING_HEARTS_PATH = '/stall/wanderinghearts';
+// Classroom and SkillDrop (COCKPIT_NAV_MORE) share this same /conversations
+// path for their own reasons -- keyed on the label, not the path, so only
+// the actual ChatApp row gets the unread pill.
+const CHAT_APP_LABEL = 'ChatApp';
 
 interface Props {
   /** Called on every tap, before navigating (or before the action fires). */
@@ -57,6 +63,11 @@ export default function StallBookshelfNav({ onNavigate, className = '' }: Props)
   const visibleMore = COCKPIT_NAV_MORE.filter((item) => !item.gated || canSeeGated);
   const spines: CockpitNavItem[] = moreOpen ? [...COCKPIT_NAV, ...visibleMore] : COCKPIT_NAV;
   const navCounts = useNavCounts();
+  const { user } = useAuth();
+  // Same singleton hook as the Cockpit bottom-bar pill and the
+  // conversations list (useUnreadMessageCounts, commit 4eb22a9c) -- one
+  // source, so this can never disagree with either.
+  const { totalUnread } = useUnreadMessageCounts(user?.id);
   const { liveSeeds } = useTribalLiveOrchard();
 
   const badgeFor = (item: CockpitNavItem): number | null => {
@@ -76,7 +87,8 @@ export default function StallBookshelfNav({ onNavigate, className = '' }: Props)
       <div className="flex items-end gap-2 overflow-x-auto px-4 pt-4 pb-0 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {spines.map((item, i) => {
           const isWanderingHearts = item.path === WANDERING_HEARTS_PATH;
-          const badge = isWanderingHearts ? null : badgeFor(item);
+          const isChatApp = item.label === CHAT_APP_LABEL;
+          const badge = (isWanderingHearts || isChatApp) ? null : badgeFor(item);
           return (
           <button
             key={item.path}
@@ -93,6 +105,20 @@ export default function StallBookshelfNav({ onNavigate, className = '' }: Props)
                 {badge}
               </span>
             )}
+            {isChatApp && totalUnread > 0 && (
+              <span
+                className="absolute -top-1.5 -right-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none border border-black/40"
+                style={{ backgroundColor: '#ef4444dd', color: '#fff' }}
+              >
+                {totalUnread > 99 ? '99+' : totalUnread}
+              </span>
+            )}
+            {/* Kept side-by-side here, unlike StallSideNav's stacked pair --
+                this overlay sits on a -top-1.5 negative offset above a w-12
+                (48px) spine, borrowing from the shelf's own pt-4 padding.
+                Stacking two rows needs more vertical room than that padding
+                gives before colliding with whatever sits above the shelf;
+                side-by-side already fits cleanly at this width. */}
             {isWanderingHearts && navCounts && (
               <span className="absolute -top-1.5 left-0 right-0 flex items-center justify-center gap-0.5">
                 <span className="rounded-full px-1 py-0.5 text-[8px] font-bold leading-none border border-black/40" style={{ backgroundColor: '#93c5fddd', color: '#1e1b4b' }}>
