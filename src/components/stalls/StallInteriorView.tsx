@@ -49,9 +49,14 @@ interface Props {
   /**
    * Flow v2 step 13: DashboardPage.jsx now renders this directly as
    * /cockpit's entire content -- there's no dashboard underneath to close
-   * back to. Swaps the close (X) button for a Log out button in the same
-   * corner slot instead of just hiding it, since this is otherwise the
-   * only screen an owner lands on with no other way to sign out.
+   * back to, so the corner close (X) button is hidden outright rather
+   * than shown with nowhere to go. Used to swap it for a Log out button
+   * in the same slot instead (this was otherwise the only screen an owner
+   * landed on with no way to sign out) -- since removed: StallSideNav's
+   * own logout row is always present on this exact screen (permanent
+   * column >=1024px, or the nav drawer below it), making that swap a
+   * second logout control for the same page. One logout control app-wide,
+   * per Davison's 2026-09-20 instruction.
    */
   hideClose?: boolean;
   /**
@@ -200,7 +205,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   // content (the radio button's "Radio"/"Stop"/"Reconnecting…" label,
   // or the separate floating radio pill) changed size.
   const bottomBarRef = useBottomChromeElement<HTMLDivElement>('stall-bottom-bar', !!bottomBar);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   // Pre-flight (2026-09-13, Davison): same "who's alive in the orchard
   // right now" presence used for the Tribal Gardens feed's LIVE badge
@@ -279,10 +284,6 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
     setShowJoinSheet(true);
   }, [user, scriptureStudyPresence]);
   const navigate = useNavigate();
-  const handleLogout = async () => {
-    try { await logout(); } catch { /* ignore -- navigate away regardless */ }
-    navigate('/login');
-  };
   const [openKind, setOpenKind] = useState<StallHotspot['kind'] | null>(() => readKindFromHash() as StallHotspot['kind'] | null);
   // The specific hotspot's own label, captured at tap time -- "the sheet
   // opens by kind + label" (object hotspots batch): many boxes can share a
@@ -735,17 +736,16 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
               above the sheet's own close, in the same thumb's reach. A member
               aiming to shut the shelf hit this instead and was thrown out of
               the stall (or back to the front gate, where one exists). */}
-          {!openKind && (
+          {!openKind && !hideClose && (
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              onClick={hideClose ? handleLogout : onClose}
+              onClick={onClose}
               className="shrink-0 text-white hover:bg-white/20 rounded-full"
-              aria-label={hideClose ? 'Log out' : 'Leave stall'}
-              title={hideClose ? 'Log out' : undefined}
+              aria-label="Leave stall"
             >
-              {hideClose ? <LogOut className="h-4 w-4" /> : <X className="h-6 w-6" />}
+              <X className="h-6 w-6" />
             </Button>
           )}
         </div>
@@ -854,17 +854,16 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
                 <Share2 className="h-4 w-4" />
               </button>
             )}
-            {!openKind && (
+            {!openKind && !hideClose && (
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                onClick={hideClose ? handleLogout : onClose}
+                onClick={onClose}
                 className="text-white hover:bg-white/20 rounded-full"
-                aria-label={hideClose ? 'Log out' : 'Leave stall'}
-                title={hideClose ? 'Log out' : undefined}
+                aria-label="Leave stall"
               >
-                {hideClose ? <LogOut className="h-4 w-4" /> : <X className="h-6 w-6" />}
+                <X className="h-6 w-6" />
               </Button>
             )}
           </div>
