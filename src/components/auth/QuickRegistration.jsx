@@ -267,6 +267,14 @@ export function QuickRegistration() {
                 />
                 <label htmlFor="quick-disclaimer-accept" className="text-sm text-gray-700">
                   I have read and accept the{' '}
+                  <Link to="/terms" target="_blank" rel="noopener noreferrer" className="text-green-600 underline hover:text-green-700">
+                    Terms
+                  </Link>
+                  {', '}
+                  <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-green-600 underline hover:text-green-700">
+                    Privacy Policy
+                  </Link>
+                  {' and '}
                   <Link to="/disclaimer" target="_blank" rel="noopener noreferrer" className="text-green-600 underline hover:text-green-700">
                     Disclaimer
                   </Link>

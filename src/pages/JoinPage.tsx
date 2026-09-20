@@ -155,6 +155,14 @@ export default function JoinPage() {
               />
               <Label htmlFor="join-disclaimer-accept" className="text-sm font-normal">
                 I have read and accept the{' '}
+                <Link to="/terms" target="_blank" rel="noopener noreferrer" className="underline">
+                  Terms
+                </Link>
+                {', '}
+                <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="underline">
+                  Privacy Policy
+                </Link>
+                {' and '}
                 <Link to="/disclaimer" target="_blank" rel="noopener noreferrer" className="underline">
                   Disclaimer
                 </Link>
