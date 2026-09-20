@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Radio, Square } from 'lucide-react';
 import { getRadioState, subscribeRadio, stopRadio, type RadioState } from '@/lib/media/radioPlayback';
 import NowPlayingSheet from '@/components/radio/NowPlayingSheet';
+import { useBottomChromeElement } from '@/lib/layout/bottomChrome';
 
 /**
  * Mounted once, above <Routes> (AppRoutes.tsx), next to
@@ -19,6 +20,12 @@ import NowPlayingSheet from '@/components/radio/NowPlayingSheet';
 export default function GlobalRadioPlayer() {
   const [state, setState] = useState<RadioState>(getRadioState());
   const [sheetOpen, setSheetOpen] = useState(false);
+  // Registers this pill's own real height into --bottom-chrome-h
+  // (src/lib/layout/bottomChrome.ts) on every page it floats over --
+  // including ones with no bottom bar of their own -- and unregisters
+  // the instant radio stops, so a scroll container that padded for it
+  // shrinks back down with no dead gap left behind.
+  const pillRef = useBottomChromeElement<HTMLButtonElement>('global-radio-pill', state.isPlaying);
 
   useEffect(() => subscribeRadio(() => setState(getRadioState())), []);
 
@@ -27,6 +34,7 @@ export default function GlobalRadioPlayer() {
   return (
     <>
       <button
+        ref={pillRef}
         type="button"
         onClick={() => setSheetOpen(true)}
         aria-label={state.reconnecting ? 'Grove Station reconnecting' : "What's playing on Grove Station"}

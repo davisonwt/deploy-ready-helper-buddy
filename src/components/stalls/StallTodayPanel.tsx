@@ -6,6 +6,7 @@ import { useCommunityGrowthStats } from '@/hooks/useCommunityGrowthStats';
 import { useStallVisitorCount } from '@/hooks/useStallVisitorCount';
 import { useAuth } from '@/hooks/useAuth';
 import { useLiveWalletBalance } from '@/lib/payments/liveWalletBalance';
+import { BOTTOM_CHROME_PADDING_STYLE } from '@/lib/layout/bottomChrome';
 
 interface Props {
   className?: string;
@@ -66,7 +67,19 @@ export default function StallTodayPanel({ className = '', stacked = false, owner
   const Divider = stacked ? () => null : () => <div className="border-t border-amber-500/10" />;
 
   return (
-    <div className={`${stacked ? 'flex flex-col gap-3' : 'gap-5'} bg-[#140c06] px-4 py-4 ${stacked ? '' : 'overflow-y-auto'} ${className}`}>
+    <div
+      className={`${stacked ? 'flex flex-col gap-3' : 'gap-5'} bg-[#140c06] px-4 py-4 ${stacked ? '' : 'overflow-y-auto'} ${className}`}
+      // Only the desktop (non-stacked) variant owns its own scroll -- the
+      // last row (Your Growth) sat trapped under the fixed bottom bar/
+      // radio pill with no bottom padding accounting for either at all.
+      // The stacked mobile-portrait variant scrolls at a parent level
+      // instead (StallInteriorView.tsx's own root div, `max-lg:portrait:
+      // overflow-y-auto`) -- fixed there directly, via a Tailwind
+      // arbitrary-value class reading the same --bottom-chrome-h var,
+      // since an inline style on that div would also apply (harmlessly,
+      // but needlessly) to the desktop/landscape layout it also wraps.
+      style={stacked ? undefined : BOTTOM_CHROME_PADDING_STYLE}
+    >
       <Section>
         <h3 className="font-serif text-xs tracking-[0.12em] uppercase text-amber-400/80 mb-2">💰 Wallet</h3>
         {user && (

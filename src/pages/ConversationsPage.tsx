@@ -26,6 +26,7 @@ import { ChatRoom } from '@/components/chat/ChatRoom';
 import { DockedCallPane } from '@/components/media/DockedCallPane';
 import { CallErrorBoundary } from '@/components/media/CallErrorBoundary';
 import JitsiRoom from '@/components/jitsi/JitsiRoom';
+import { BOTTOM_CHROME_PADDING_STYLE } from '@/lib/layout/bottomChrome';
 
 function whenLabel(iso: string | null): string {
   if (!iso) return '';
@@ -189,7 +190,13 @@ export default function ConversationsPage() {
   // --- The list -------------------------------------------------------------
   return (
     <div className="min-h-[100dvh] bg-background">
-      <div className="mx-auto max-w-2xl px-4 py-4">
+      {/* Natural page scroll (no overflow-y-auto here), but the floating
+          radio pill (GlobalRadioPlayer.tsx) is fixed-position over whatever
+          content the page has already scrolled to -- with no bottom padding
+          reserved, the last conversation row can land at exactly the pill's
+          screen position with no further page content below to scroll past
+          it. Same bottomChrome.ts mechanism as the Cockpit right panel. */}
+      <div className="mx-auto max-w-2xl px-4 py-4" style={BOTTOM_CHROME_PADDING_STYLE}>
         <div className="mb-4 flex items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1.5">
             <ArrowLeft className="h-4 w-4" /> Home

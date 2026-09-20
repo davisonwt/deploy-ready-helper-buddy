@@ -11,6 +11,7 @@ import { useContainImageRect } from '@/hooks/useContainImageRect';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { useRoles } from '@/hooks/useRoles';
 import { shareStallLink } from '@/lib/referral';
+import { useBottomChromeElement } from '@/lib/layout/bottomChrome';
 import StallHotspotSheet from './StallHotspotSheet';
 import StallSideNav from './StallSideNav';
 import StallTodayPanel from './StallTodayPanel';
@@ -193,6 +194,12 @@ export function StallDrawer({ side, open, onClose, children }: { side: 'left' | 
 
 export default function StallInteriorView({ ownerId, username, interiorImageUrl, stallName, hotspots, onClose, isOwner, hideClose, bottomBar, topBanner }: Props) {
   const { setStallInteriorOpen } = useAppContext();
+  // Publishes this bar's real, measured height (not a hardcoded guess)
+  // into --bottom-chrome-h -- see src/lib/layout/bottomChrome.ts's own
+  // doc comment for why a fixed guess broke every time the bar's own
+  // content (the radio button's "Radio"/"Stop"/"Reconnecting…" label,
+  // or the separate floating radio pill) changed size.
+  const bottomBarRef = useBottomChromeElement<HTMLDivElement>('stall-bottom-bar', !!bottomBar);
   const { user, logout } = useAuth();
   const { toast } = useToast();
   // Pre-flight (2026-09-13, Davison): same "who's alive in the orchard
@@ -581,7 +588,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   const activeLabel = openLabel ?? activeHotspot?.label;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black flex flex-col overflow-hidden max-lg:portrait:overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] bg-black flex flex-col overflow-hidden max-lg:portrait:overflow-y-auto max-lg:portrait:pb-[var(--bottom-chrome-h,0px)]">
       {/* Mobile portrait (<1024px, portrait) -- header (≡ / name / ✕ for a
           visitor; owner gets a pencil before the ✕ too, opening the same
           Edit-stall menu the landscape/desktop branch has -- the tile-nav
@@ -982,7 +989,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           z-[1000]) so those naturally cover these instead of the reverse --
           see the Props.bottomBar/topBanner doc comment above. */}
       {topBanner && <div className="fixed inset-x-0 top-0 z-[500]">{topBanner}</div>}
-      {bottomBar && <div className="fixed inset-x-0 bottom-0 z-[500]">{bottomBar}</div>}
+      {bottomBar && <div ref={bottomBarRef} className="fixed inset-x-0 bottom-0 z-[500]">{bottomBar}</div>}
     </div>
   );
 }

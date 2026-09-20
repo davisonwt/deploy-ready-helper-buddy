@@ -6,6 +6,7 @@ import { useRoles } from '@/hooks/useRoles';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavCounts, type NavCounts } from '@/hooks/useNavCounts';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
+import { BOTTOM_CHROME_PADDING_STYLE } from '@/lib/layout/bottomChrome';
 
 /**
  * Which nav item gets which count, and where it comes from. Live Now is
@@ -155,22 +156,16 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
         <span className="truncate">{SCRIPTURE_STUDY_LINK.label}</span>
       </Link>
 
-      {/* pb-24: reported live, 2026-09-15 -- on a short-enough viewport,
-          the last item(s) here (the "More" toggle, or a COCKPIT_NAV_MORE
-          item once expanded) scroll to a position that's still physically
-          covered by DashboardPage/StallInteriorView's own bottomBar (the
-          Plant-Seed/Go-Live/Chat row), a page-level `fixed inset-x-0
-          bottom-0 z-[500]` bar this component has no direct knowledge of --
-          same bug class the header Log-out button hit earlier today, just
-          here it's "the scroll boundary doesn't clear the bar" rather than
-          "a fixed item sits under it." Confirmed live: that bar's own
-          subtree intercepts pointer events on a button "scrolled into
-          view" but still visually underneath it. Bottom padding here gives
-          the last item room to clear it regardless of the bar's exact
-          height, at the cost of some empty space at the end of the list on
-          pages/contexts that render this nav without that bar -- a minor
-          cosmetic tradeoff against a genuinely unreachable nav item. */}
-      <nav className="flex-1 min-h-0 overflow-y-auto py-1 pb-24">
+      {/* Was a hardcoded pb-24 (2026-09-15): the last item(s) here scrolled
+          to a position still covered by the fixed bottom bar, which this
+          component has no direct knowledge of. A fixed guess is only ever
+          correct for one bar height and leaves either a trapped row or a
+          dead empty gap for every other state (bar absent, radio pill
+          changing the bar's real height) -- converted onto the same
+          measured mechanism the Cockpit right panel now uses
+          (src/lib/layout/bottomChrome.ts), which shrinks to exactly 0 on
+          a page/context that renders this nav with no bar at all. */}
+      <nav className="flex-1 min-h-0 overflow-y-auto py-1" style={BOTTOM_CHROME_PADDING_STYLE}>
         {COCKPIT_NAV.map((item, i) => renderRow(item, i > 0))}
 
         {/* Flow v2 step 8: everything KEEP-but-secondary lives behind this

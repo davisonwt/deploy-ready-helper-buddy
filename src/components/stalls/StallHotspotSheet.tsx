@@ -9,6 +9,7 @@ import { deleteRow } from '@/components/garden/seedCardBuilders';
 import { toast } from 'sonner';
 import { TILE_KINDS, type TileKind } from '@/lib/stalls/stallTypes';
 import ShareSeedDialog from '@/components/share/ShareSeedDialog';
+import { BOTTOM_CHROME_PADDING_STYLE } from '@/lib/layout/bottomChrome';
 
 interface Props {
   ownerId: string;
@@ -526,7 +527,17 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        {/* This sheet is `fixed inset-x-0 bottom-0` at its own z-[10001] --
+            the floating radio pill (GlobalRadioPlayer.tsx) renders above it
+            at z-[10010], so its own safe-area-only bottom padding wasn't
+            enough to keep the last row clear once the pill (or any other
+            registered chrome) is present. Adds to the safe-area inset
+            rather than replacing it -- both are real, independent
+            reservations. */}
+        <div
+          className="flex-1 min-h-0 overflow-y-auto px-5"
+          style={{ paddingBottom: `calc(max(1.25rem, env(safe-area-inset-bottom)) + ${BOTTOM_CHROME_PADDING_STYLE.paddingBottom})` }}
+        >
           {STATIC_TEXT_KINDS.has(kind) ? (
             <div className="py-6 font-serif text-amber-100/85 leading-relaxed whitespace-pre-line">
               {text || 'Coming soon.'}
