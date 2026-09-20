@@ -107,17 +107,40 @@ export const updateProduct = async (
 };
 
 /**
- * Delete a product by id. Throws on error.
- * Used by: ProductCard.
+ * Delete a product by id. A sower's right to delete their own content
+ * wins over any radio rundown it was ever added to (2026-09-20) --
+ * radio_rundown_segments.track_product_id is ON DELETE SET NULL, so this
+ * always succeeds; `affectedRundowns` reports how many segments just lost
+ * their track, for the caller's own toast. Never throws the raw Postgres
+ * error text -- see mapProductDeleteError.
+ * Used by: MyListingsPage, MyProductsPage.
  */
-export const deleteProduct = async (id: string): Promise<void> => {
+export const deleteProduct = async (id: string): Promise<{ affectedRundowns: number }> => {
+  const { count } = await supabase
+    .from('radio_rundown_segments')
+    .select('id', { count: 'exact', head: true })
+    .eq('track_product_id', id);
+
   const { error } = await supabase
     .from('products')
     .delete()
     .eq('id', id);
 
-  if (error) throw error;
+  if (error) throw mapProductDeleteError(error);
+  return { affectedRundowns: count ?? 0 };
 };
+
+/** A member must never see raw Postgres/constraint text for their own
+ *  delete. 23503 (foreign_key_violation) is the one Postgres error class
+ *  a plain delete can still hit if some future FK against `products`
+ *  isn't SET NULL/CASCADE -- everything else already is (checked
+ *  2026-09-20; radio_rundown_segments was the only exception). */
+function mapProductDeleteError(error: { message?: string; code?: string }): Error {
+  if (error.code === '23503') {
+    return new Error("This can't be deleted right now because something else still depends on it.");
+  }
+  return new Error(error.message || 'Could not delete.');
+}
 
 // ============================================================================
 // B3 helpers — bespoke listing queries.

@@ -68,7 +68,14 @@ export default function RundownBuilder({ slotId, djUserId, onBack }: Props) {
     return () => { cancelled = true; clearTimeout(t); };
   }, [songQuery, addKind]);
 
-  const totalSeconds = useMemo(() => segments.reduce((sum, s) => sum + s.duration_seconds, 0), [segments]);
+  // A song whose product the sower deleted (track_product_id nulled by
+  // ON DELETE SET NULL, 2026-09-20) can't play -- it contributes zero
+  // airtime here too, matching submit-radio-slot's own recompute, so the
+  // total never counts a gap autopilot is the one actually filling.
+  const totalSeconds = useMemo(() => segments.reduce((sum, s) => {
+    const isRemovedTrack = s.kind === 'song' && !s.track_product_id;
+    return isRemovedTrack ? sum : sum + s.duration_seconds;
+  }, 0), [segments]);
   const overshoot = totalSeconds > SLOT_SECONDS;
   // Rundown lock (2026-09-20): editable only while 'draft' -- matches the
   // RLS policy exactly (radio_rundown_segments_draft_lock migration), so
@@ -184,7 +191,9 @@ export default function RundownBuilder({ slotId, djUserId, onBack }: Props) {
       </div>
 
       <div className="space-y-2">
-        {segments.map((seg, i) => (
+        {segments.map((seg, i) => {
+          const isRemovedTrack = seg.kind === 'song' && !seg.track_product_id;
+          return (
           <Card key={seg.id}>
             <CardContent className="p-3 flex items-center gap-3">
               <div className="flex flex-col">
@@ -192,10 +201,20 @@ export default function RundownBuilder({ slotId, djUserId, onBack }: Props) {
                 <Button size="icon" variant="ghost" className="h-5 w-5" disabled={i === segments.length - 1 || !isEditable} onClick={() => move(i, 1)}><ArrowDown className="h-3.5 w-3.5" /></Button>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <Badge variant="secondary" className="text-[10px] capitalize">{KIND_LABEL[seg.kind]}</Badge>
-                  <span className="text-xs text-muted-foreground font-mono">{Math.round(seg.duration_seconds)}s</span>
-                </div>
+                {isRemovedTrack ? (
+                  <>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Badge variant="secondary" className="text-[10px] capitalize">{KIND_LABEL[seg.kind]}</Badge>
+                      <span className="text-xs text-destructive">removed by sower — autopilot fills this gap</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">{seg.track_title_snapshot || 'Untitled track'}</div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <Badge variant="secondary" className="text-[10px] capitalize">{KIND_LABEL[seg.kind]}</Badge>
+                    <span className="text-xs text-muted-foreground font-mono">{Math.round(seg.duration_seconds)}s</span>
+                  </div>
+                )}
                 {seg.notes && <div className="text-xs text-muted-foreground truncate">{seg.notes}</div>}
                 {isEditable && seg.kind !== 'song' && (
                   <div className="flex gap-2 mt-1">
@@ -215,7 +234,8 @@ export default function RundownBuilder({ slotId, djUserId, onBack }: Props) {
               )}
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
         {segments.length === 0 && <div className="text-sm text-muted-foreground text-center py-4">No segments yet.</div>}
       </div>
 

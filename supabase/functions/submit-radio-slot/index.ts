@@ -79,7 +79,12 @@ Deno.serve(async (req) => {
     for (const row of rows) {
       if (row.kind === "song") {
         if (!row.track_product_id) {
-          return json({ error: "broken_segment", message: `Song segment ${row.id} has no product reference.` }, 500);
+          // Its sower deleted the track (ON DELETE SET NULL, 2026-09-20) --
+          // that delete must never be blocked by a rundown, so this segment
+          // just contributes zero airtime instead of failing submission.
+          // Not pushed to `recomputed`: duration_seconds has its own CHECK
+          // (> 0), and there is nothing real left to persist for it.
+          continue;
         }
         const { data: product, error: productError } = await service
           .from("products")

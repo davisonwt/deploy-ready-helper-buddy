@@ -220,11 +220,17 @@ export default function MyListingsPage() {
     if (!window.confirm(`Delete "${row.title}"? This cannot be undone.`)) return;
     setBusyId(row.id);
     try {
-      await deleteProduct(row.id);
-      toast.success(`"${row.title}" deleted.`);
+      const { affectedRundowns } = await deleteProduct(row.id);
+      toast.success(
+        affectedRundowns > 0
+          ? `"${row.title}" deleted. Also removed from ${affectedRundowns} radio rundown${affectedRundowns === 1 ? '' : 's'}.`
+          : `"${row.title}" deleted.`
+      );
       refetch?.();
     } catch (e: any) {
-      toast.error(`Could not delete: ${e?.message ?? 'unknown error'}`);
+      // deleteProduct() already maps any DB error to a human message --
+      // never surface raw Postgres/constraint text here.
+      toast.error(e?.message ?? 'Could not delete.');
     } finally {
       setBusyId(null);
     }

@@ -78,12 +78,18 @@ export default function MyProductsPage() {
     if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) return;
     setDeletingId(productId);
     try {
-      await deleteProduct(productId);
-      toast.success('Product deleted successfully');
+      const { affectedRundowns } = await deleteProduct(productId);
+      toast.success(
+        affectedRundowns > 0
+          ? `Product deleted. Also removed from ${affectedRundowns} radio rundown${affectedRundowns === 1 ? '' : 's'}.`
+          : 'Product deleted successfully'
+      );
       refetch();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting product:', error);
-      toast.error('Failed to delete product');
+      // deleteProduct() already maps any DB error to a human message --
+      // never surface raw Postgres/constraint text here.
+      toast.error(error?.message ?? 'Failed to delete product');
     } finally {
       setDeletingId(null);
     }

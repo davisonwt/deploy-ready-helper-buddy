@@ -25,6 +25,11 @@ export interface RundownSegment {
   kind: SegmentKind;
   duration_seconds: number;
   track_product_id: string | null;
+  /** Snapshotted at add time (2026-09-20) -- a sower deleting their own
+   *  song nulls track_product_id (ON DELETE SET NULL) rather than being
+   *  blocked; this survives that so the builder can still show what the
+   *  segment used to be. */
+  track_title_snapshot: string | null;
   audio_path: string | null;
   doc_path: string | null;
   image_path: string | null;
@@ -112,6 +117,7 @@ export async function addSongSegment(slotId: string, position: number, track: So
     .insert({
       slot_id: slotId, position, kind: 'song',
       duration_seconds: track.durationSeconds, track_product_id: track.id,
+      track_title_snapshot: track.title,
     })
     .select('*').single();
   if (error) throw error;

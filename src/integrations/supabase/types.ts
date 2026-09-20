@@ -1,3 +1,4 @@
+WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
 export type Json =
   | string
   | number
@@ -11066,6 +11067,7 @@ export type Database = {
           position: number
           slot_id: string
           track_product_id: string | null
+          track_title_snapshot: string | null
         }
         Insert: {
           audio_path?: string | null
@@ -11078,6 +11080,7 @@ export type Database = {
           position: number
           slot_id: string
           track_product_id?: string | null
+          track_title_snapshot?: string | null
         }
         Update: {
           audio_path?: string | null
@@ -11090,6 +11093,7 @@ export type Database = {
           position?: number
           slot_id?: string
           track_product_id?: string | null
+          track_title_snapshot?: string | null
         }
         Relationships: [
           {
