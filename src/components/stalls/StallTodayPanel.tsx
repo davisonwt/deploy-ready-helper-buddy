@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Loader2, Eye, ShoppingBasket } from 'lucide-react';
+import { Wallet, Loader2, Eye, ShoppingBasket, ChevronDown } from 'lucide-react';
 import { useSacredNow } from '@/hooks/useSacredNow';
 import { useCommunityGrowthStats } from '@/hooks/useCommunityGrowthStats';
 import { useStallVisitorCount } from '@/hooks/useStallVisitorCount';
@@ -23,6 +23,9 @@ interface Props {
 }
 
 const LOW_BALANCE_THRESHOLD = 5;
+/** Device preference, not per-stall -- same key regardless of whose stall
+ *  is open. Collapsed by default (no saved value yet). */
+const STATS_COLLAPSED_KEY = 's2g:stall-today-panel-collapsed';
 
 /**
  * Today/calendar card + Omer + Your Growth, restyled gold-on-dark-wood for
@@ -60,6 +63,26 @@ export default function StallTodayPanel({ className = '', stacked = false, owner
   // build out real persistence for a wallet-panel row.
   const { itemCount: basketItemCount } = useProductBasket();
 
+  // Mobile-portrait only (stacked) -- on desktop/landscape this whole
+  // section stack was never the crowding problem (permanent right column
+  // or an on-demand drawer, both already sized to their own chrome), so
+  // it stays exactly as it always has: no strip, no collapse, always
+  // expanded. Collapsed by default on first visit; a saved value always
+  // wins after that, so a member's own choice sticks across visits.
+  const [collapsed, setCollapsed] = useState(() => {
+    if (!stacked) return false;
+    try {
+      const saved = localStorage.getItem(STATS_COLLAPSED_KEY);
+      return saved === null ? true : saved === '1';
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    if (!stacked) return;
+    try { localStorage.setItem(STATS_COLLAPSED_KEY, collapsed ? '1' : '0'); } catch { /* private mode */ }
+  }, [collapsed, stacked]);
+
   const dayType = sacred.isSabbath ? 'Sabbath' : sacred.isFeast ? sacred.feastName || 'Feast Day' : 'Regular Day';
   const low = !!address && balance !== null && balance < LOW_BALANCE_THRESHOLD;
 
@@ -69,6 +92,21 @@ export default function StallTodayPanel({ className = '', stacked = false, owner
     { label: 'Active sowers', val: stats.sowers },
     { label: 'Harvest forming', val: stats.members },
   ];
+
+  // Compact strip value -- same address/error/loading/balance already read
+  // above for the full Wallet card, never a second query. Error shows its
+  // own compact state (never a stale/last-good number) per the same
+  // "three distinct states, never a bare guess" rule the full card follows.
+  const walletStrip = !user ? null : address && error ? (
+    <span className="flex items-center gap-1 text-orange-300">
+      <Wallet className="h-3.5 w-3.5" /> Unavailable
+    </span>
+  ) : (
+    <span className={`flex items-center gap-1 ${low ? 'text-orange-300' : 'text-amber-100/80'}`}>
+      <Wallet className="h-3.5 w-3.5" />
+      {!address ? '—' : loading && balance === null ? <Loader2 className="h-3 w-3 animate-spin" /> : `$${(balance ?? 0).toFixed(2)}`}
+    </span>
+  );
 
   const Section = stacked
     ? ({ children }: { children: ReactNode }) => (
@@ -91,6 +129,32 @@ export default function StallTodayPanel({ className = '', stacked = false, owner
       // but needlessly) to the desktop/landscape layout it also wraps.
       style={stacked ? undefined : BOTTOM_CHROME_PADDING_STYLE}
     >
+      {stacked && (
+        // One block, collapsed by default -- was 5 full cards pushing the
+        // stall image itself off-screen on mobile portrait. Tap anywhere
+        // on the strip toggles; desktop/landscape (stacked=false) never
+        // renders this at all, so nothing here touches that layout.
+        <button
+          type="button"
+          onClick={() => setCollapsed((v) => !v)}
+          aria-expanded={!collapsed}
+          className="flex w-full items-center gap-3 rounded-lg border border-amber-500/15 bg-black/25 px-3 py-2.5 text-left text-xs"
+        >
+          {walletStrip}
+          {isOwner && ownerId && (
+            <span className="flex items-center gap-1 text-amber-100/80">
+              <Eye className="h-3.5 w-3.5" />
+              {visitorCountLoading && visitorCount === null ? <Loader2 className="h-3 w-3 animate-spin" /> : visitorCount ?? 0}
+            </span>
+          )}
+          <span className="flex-1 min-w-0 truncate text-right font-serif tracking-[0.1em] uppercase text-amber-400/70">
+            Stall stats
+          </span>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-amber-400/70 transition-transform ${collapsed ? '' : 'rotate-180'}`} />
+        </button>
+      )}
+      {(!stacked || !collapsed) && (
+      <>
       <Section>
         <h3 className="font-serif text-xs tracking-[0.12em] uppercase text-amber-400/80 mb-2">💰 Wallet</h3>
         {user && (
@@ -193,6 +257,8 @@ export default function StallTodayPanel({ className = '', stacked = false, owner
           ))}
         </div>
       </Section>
+      </>
+      )}
     </div>
   );
 }
