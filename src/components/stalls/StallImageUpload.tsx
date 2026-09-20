@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatSizeMessage, mapStorageUploadError } from '@/lib/uploadErrors';
 import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 import { resizeImage, type ResizeMode } from '@/lib/media/resizeImage';
+import { detectAnimatedImage } from '@/lib/media/detectAnimatedImage';
 import type { StallTemplate } from '@/lib/stalls/stallTypes';
 
 export interface StallImageResult {
@@ -67,6 +68,47 @@ export default function StallImageUpload({
     setError(null);
     setBusy(true);
     try {
+      // Animated GIF/WebP: never resize through resizeImage()'s <canvas>
+      // step -- drawImage() only ever captures one frame, silently
+      // flattening any animation before it reaches storage. Store the
+      // original bytes as-is when dimensions already comply with the same
+      // rules a static image gets; reject with a clear message otherwise
+      // rather than silently degrading it to a still image. detectAnimatedImage
+      // returns null when it can't verify (ImageDecoder unsupported, or
+      // any decode error) -- treated the same as "not animated" here, i.e.
+      // falls through to the existing resize path, never a false positive.
+      const animCheck = await detectAnimatedImage(file);
+      if (animCheck?.isAnimated) {
+        if (animCheck.width < MIN_WIDTH_PX) {
+          setError(`This image is only ${animCheck.width}px wide — please use one at least ${MIN_WIDTH_PX}px wide so it doesn't look blurry once it's live.`);
+          return;
+        }
+        if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+          setError(formatSizeMessage(file, MAX_UPLOAD_SIZE_BYTES));
+          return;
+        }
+        const ext = file.type === 'image/gif' ? 'gif' : 'webp';
+        const path = `${pathPrefix}/${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from('stalls').upload(path, file, {
+          cacheControl: '3600',
+          contentType: file.type,
+          upsert: false,
+        });
+        if (uploadErr) {
+          setError(mapStorageUploadError(uploadErr, file, MAX_UPLOAD_SIZE_BYTES, MIME_REJECTION_MESSAGE));
+          return;
+        }
+        const { verdict, reason } = await moderateStorageUpload('stalls', path, 'image');
+        if (verdict !== 'allow') {
+          setError(moderationRejectionMessage(reason));
+          await supabase.storage.from('stalls').remove([path]);
+          return;
+        }
+        const { data: pub } = supabase.storage.from('stalls').getPublicUrl(path);
+        onChange({ url: pub.publicUrl, storagePath: path });
+        return;
+      }
+
       const resized = await resizeImage(file, mode, maxSize);
 
       // resizeImage never upscales -- a source narrower than this comes
