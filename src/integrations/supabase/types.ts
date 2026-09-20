@@ -14044,6 +14044,7 @@ export type Database = {
           updated_at: string
           user_id: string
           village: string | null
+          welcome_audio_path: string | null
         }
         Insert: {
           categories: string[]
@@ -14065,6 +14066,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           village?: string | null
+          welcome_audio_path?: string | null
         }
         Update: {
           categories?: string[]
@@ -14086,6 +14088,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           village?: string | null
+          welcome_audio_path?: string | null
         }
         Relationships: []
       }
@@ -17899,6 +17902,13 @@ export type Database = {
       get_config_drift_signals: {
         Args: { expected_triggers: string[]; money_tables: string[] }
         Returns: Json
+      }
+      get_conversation_unread_counts: {
+        Args: never
+        Returns: {
+          room_id: string
+          unread_count: number
+        }[]
       }
       get_cron_job_health: {
         Args: { job_names: string[] }

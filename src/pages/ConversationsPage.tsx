@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useConversations, type Conversation } from '@/lib/conversations/useConversations';
+import { useUnreadMessageCounts } from '@/hooks/useUnreadMessageCounts';
 import { NewConversationDialog } from '@/components/conversations/NewConversationDialog';
 import { ChatRoom } from '@/components/chat/ChatRoom';
 import { DockedCallPane } from '@/components/media/DockedCallPane';
@@ -38,7 +39,7 @@ function whenLabel(iso: string | null): string {
   return then.toLocaleDateString();
 }
 
-function ConversationRow({ c, onOpen }: { c: Conversation; onOpen: (id: string) => void }) {
+function ConversationRow({ c, onOpen, unreadCount }: { c: Conversation; onOpen: (id: string) => void; unreadCount: number }) {
   const faces = c.people.slice(0, 3);
   return (
     <button
@@ -61,12 +62,22 @@ function ConversationRow({ c, onOpen }: { c: Conversation; onOpen: (id: string) 
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="truncate text-sm font-semibold">{c.title}</span>
+          <span className={`truncate text-sm ${unreadCount > 0 ? 'font-bold' : 'font-semibold'}`}>{c.title}</span>
           <span className="shrink-0 text-xs text-muted-foreground">{whenLabel(c.lastMessageAt)}</span>
         </div>
-        <p className="truncate text-xs text-muted-foreground">
-          {c.lastMessage ?? 'No messages yet'}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="truncate text-xs text-muted-foreground">
+            {c.lastMessage ?? 'No messages yet'}
+          </p>
+          {unreadCount > 0 && (
+            <span
+              data-testid="conversation-unread-badge"
+              className="shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold leading-none text-primary-foreground"
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </div>
       </div>
     </button>
   );
@@ -79,6 +90,7 @@ export default function ConversationsPage() {
   const openId = searchParams.get('c');
 
   const { conversations, loading, error, reload } = useConversations(user?.id);
+  const { unreadByRoom, refetch: refetchUnread } = useUnreadMessageCounts(user?.id);
   const [newOpen, setNewOpen] = useState(false);
   const [showPeople, setShowPeople] = useState(false);
   const [call, setCall] = useState<{ audioOnly: boolean } | null>(null);
@@ -89,6 +101,11 @@ export default function ConversationsPage() {
     setCall(null);
     setShowPeople(false);
     setSearchParams({ c: id }, { replace: false });
+    // ChatRoom marks the room read on its own mount -- this just refetches
+    // the shared unread counts a beat later so the list's badge (and the
+    // bottom-bar pill, same hook elsewhere) drop without waiting on the
+    // 60s poll/debounced realtime tick.
+    setTimeout(() => { void refetchUnread(); }, 400);
   };
 
   const backToList = () => {
@@ -229,7 +246,7 @@ export default function ConversationsPage() {
           <ul className="space-y-1" data-testid="conversation-list">
             {conversations.map((c) => (
               <li key={c.id}>
-                <ConversationRow c={c} onOpen={open} />
+                <ConversationRow c={c} onOpen={open} unreadCount={unreadByRoom[c.id] ?? 0} />
               </li>
             ))}
           </ul>

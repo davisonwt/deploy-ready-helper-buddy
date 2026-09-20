@@ -230,12 +230,33 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
 
 
   const userId = user?.id;
+
+  // Unread counter (2026-09-20): no chat presence mechanism exists in this
+  // codebase to know "the member still has this room open" -- so instead
+  // of a presence flag, this room is marked read on open AND re-marked
+  // read every time a new message arrives while it stays mounted (see
+  // onMessageInsert below). Between those two points, a message that
+  // arrives is unread; while this component is actually on screen, it
+  // never lingers as unread. Best-effort, matches UnreadInbox.tsx's own
+  // fire-and-forget shape (the only other call site that ever wrote this
+  // column before now).
+  const markAsRead = () => {
+    if (!roomId || !userId) return;
+    supabase
+      .from('chat_participants')
+      .update({ last_read_at: new Date().toISOString() })
+      .eq('room_id', roomId)
+      .eq('user_id', userId)
+      .then(() => {}, () => {});
+  };
+
   useEffect(() => {
     if (!roomId || !userId) return;
     console.debug('[ChatRoom] init', { roomId, userId });
     fetchRoomInfo();
     fetchMessages();
     fetchParticipants();
+    markAsRead();
     supabase
       .from('chat_participants')
       .select('notifications_muted')
@@ -532,6 +553,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
             .maybeSingle();
 
           setMessages(prev => (prev.some(m => m.id === msg.id) ? prev : [...prev, { ...msg, sender_profile: profile || null }]));
+          markAsRead();
         }
       },
       // Right now this only carries delete-for-everyone (deleted_at) to

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useUnreadMessageCounts } from '@/hooks/useUnreadMessageCounts'
 import { supabase } from "@/integrations/supabase/client"
 import LivingButton from '../components/LivingButton'
 import StallInteriorView from '@/components/stalls/StallInteriorView'
@@ -44,6 +45,7 @@ interface StallRow {
  */
 export default function CockpitPage() {
   const { user } = useAuth()
+  const { totalUnread } = useUnreadMessageCounts(user?.id)
   const templates = useStallTemplates()
   const [stall, setStall] = useState<StallRow | null | undefined>(undefined) // undefined = loading, null = none yet
   const [plantMenuOpen, setPlantMenuOpen] = useState(false)
@@ -196,7 +198,7 @@ export default function CockpitPage() {
           🔴 Go Live
         </LivingButton>
       </div>
-      <Link to="/conversations?c=00000000-0000-0000-0000-000000000001" style={{ flex: 1, textDecoration: 'none' }}>
+      <Link to="/conversations?c=00000000-0000-0000-0000-000000000001" style={{ flex: 1, textDecoration: 'none', position: 'relative' }}>
         <LivingButton variant="share" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
           💬 Global Chat
           {totalMemberCount !== null && (
@@ -210,6 +212,22 @@ export default function CockpitPage() {
             </span>
           )}
         </LivingButton>
+        {/* Unread messages -- a distinct count from totalMemberCount above
+            (member roster size, not unread state). Hidden at 0. */}
+        {totalUnread > 0 && (
+          <span
+            data-testid="unread-message-pill"
+            style={{
+              position: 'absolute', top: -6, right: -6,
+              minWidth: 18, height: 18, padding: '0 4px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: 999, background: '#ef4444', color: '#fff',
+              fontSize: 10, fontWeight: 800, border: '2px solid #080d17',
+            }}
+          >
+            {totalUnread > 99 ? '99+' : totalUnread}
+          </span>
+        )}
       </Link>
       <div style={{ flex: 1 }}>
         <CockpitRadioButton />
