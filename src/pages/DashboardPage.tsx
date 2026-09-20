@@ -18,7 +18,7 @@ import { setActiveLiveSession } from '@/lib/liveSession/activeLiveSession'
 import { insertProduct } from '@/api/products'
 import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId'
 import { toast } from 'sonner'
-import { X } from 'lucide-react'
+import { Users, X } from 'lucide-react'
 
 interface StallRow {
   name: string;
@@ -82,6 +82,20 @@ export default function CockpitPage() {
   const activeLive = useActiveLiveSession()
   const [titleSheetOpen, setTitleSheetOpen] = useState(false)
   const [adHocTitle, setAdHocTitle] = useState('')
+  // Total S2G member count on the Global Chat button -- profiles is the
+  // canonical user list (1:1 with auth.users, confirmed 96/96 live
+  // 2026-09-20), same table BasicAnalytics.tsx already counts for "total
+  // users". Fetched once on mount, no realtime subscription -- a member
+  // count drifting by a few while the Cockpit is open is not worth a
+  // channel subscription for.
+  const [totalMemberCount, setTotalMemberCount] = useState<number | null>(null)
+  useEffect(() => {
+    let alive = true
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).then(({ count }) => {
+      if (alive) setTotalMemberCount(count ?? null)
+    })
+    return () => { alive = false }
+  }, [])
   const [startingLive, setStartingLive] = useState(false)
   const [endFlowOpen, setEndFlowOpen] = useState(false)
   const [endedTitle, setEndedTitle] = useState('')
@@ -171,6 +185,16 @@ export default function CockpitPage() {
       <Link to="/conversations?c=00000000-0000-0000-0000-000000000001" style={{ flex: 1, textDecoration: 'none' }}>
         <LivingButton variant="share" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
           💬 Global Chat
+          {totalMemberCount !== null && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 3,
+              padding: '2px 6px', borderRadius: 999,
+              background: 'rgba(255,255,255,0.12)',
+              fontSize: 10, fontWeight: 700, letterSpacing: 'normal', textTransform: 'none',
+            }}>
+              <Users size={10} /> {totalMemberCount}
+            </span>
+          )}
         </LivingButton>
       </Link>
       <div style={{ flex: 1 }}>
