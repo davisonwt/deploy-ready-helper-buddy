@@ -29,7 +29,7 @@ export default function WalletBalanceChip() {
   const { user } = useAuth();
   const location = useLocation();
   const address: string | null = user?.solana_wallet_address || null;
-  const { balance, error, loading } = useLiveWalletBalance(address);
+  const { balance, error, loading, refetch } = useLiveWalletBalance(address);
 
   // Same page the dashboard tile and the "Connect wallet" flow both use --
   // this is the only place wallet-address connect/change UI lives (see
@@ -48,6 +48,25 @@ export default function WalletBalanceChip() {
 
   const low = !!address && balance !== null && balance < LOW_BALANCE_THRESHOLD;
 
+  // Bare "Balance?" bug (2026-09-20, same class as StallTodayPanel's own
+  // fix): a failed read is its own tappable state -- a button that
+  // retries in place, not the Link to payout settings the other three
+  // states use.
+  if (address && error) {
+    return (
+      <button
+        type="button"
+        onClick={() => refetch()}
+        className="fixed bottom-6 right-24 z-50 flex items-center gap-1.5 rounded-full border border-orange-500/50 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-600 shadow-lg backdrop-blur transition-colors hover:bg-orange-500/15 dark:text-orange-300"
+        aria-label="Wallet balance unavailable — tap to retry"
+        title={error}
+      >
+        <Wallet className="h-3.5 w-3.5" />
+        Tap to retry
+      </button>
+    );
+  }
+
   return (
     <Link
       to="/settings/payouts"
@@ -59,16 +78,14 @@ export default function WalletBalanceChip() {
             ? 'border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-300'
             : 'border-border bg-background/90 text-foreground',
       )}
-      aria-label={!address ? 'Connect your wallet' : error ? 'Wallet balance could not be read' : `Wallet balance ${(balance ?? 0).toFixed(2)} USDC on mainnet`}
-      title={!address ? undefined : error ? error : 'Mainnet USDC in your connected wallet'}
+      aria-label={!address ? 'Connect your wallet' : `Wallet balance ${(balance ?? 0).toFixed(2)} USDC on mainnet`}
+      title={!address ? undefined : 'Mainnet USDC in your connected wallet'}
     >
       <Wallet className="h-3.5 w-3.5" />
       {!address ? (
         'Connect wallet'
-      ) : loading && balance === null && !error ? (
+      ) : loading && balance === null ? (
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-      ) : error ? (
-        'Balance?'
       ) : (
         `$${(balance ?? 0).toFixed(2)}`
       )}

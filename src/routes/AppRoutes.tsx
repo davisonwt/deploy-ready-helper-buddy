@@ -743,9 +743,16 @@ const AppRoutes = () => (
     <Route path="/create-live-room" element={
       <ProtectedRoute><Layout><CreateLiveRoomPage /></Layout></ProtectedRoute>
     } />
-    <Route path="/products" element={
-      <Layout><Suspense fallback={<LoadingFallback />}><ProductsPage /></Suspense></Layout>
-    } />
+    {/* Flow v2, docs/FLOW-V2-MAP.md line 77: "MERGE INTO /stalls-feed --
+        general marketplace browse folds into Tribal Gardens" -- same
+        redirect-with-replace pattern as /browse-orchards below. No single
+        chip fits "general marketplace" the way orchard fits
+        /browse-orchards, so this lands on the default chip rather than a
+        forced one. /products/upload, /products/edit/:id and
+        /products/basket are untouched -- they're real routes reached
+        internally (MyProductsPage's own Add/Edit actions, and the
+        checkout basket respectively), not this browse page's own UI. */}
+    <Route path="/products" element={<Navigate to="/stalls-feed" replace />} />
     {/* Flow v2 step 10: absorbed into /stall/build's Products tab (step
         9). /products/upload and /products/edit/:id stay real routes,
         deliberately NOT redirected -- MyProductsPage's own "Add"/"Edit"

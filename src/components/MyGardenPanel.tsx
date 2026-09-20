@@ -48,22 +48,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     closeGarden()
   }
 
-      const quickRain = () => {
-        const rainAmount = 0.50;
-        if (typeof window !== 'undefined') {
-          if (window.launchConfetti) {
-            window.launchConfetti();
-          }
-          if (window.floatingScore) {
-            window.floatingScore(rainAmount, window.innerWidth - 100, window.innerHeight - 100);
-          }
-        }
-        playSoundEffect('quickRain', 1.0);
-        alert("0.50 USDC sent to a random creator!")
-        closeGarden()
-      }
-
-  // Garden cards - EXACTLY matching "My Content" dropdown items
+      // Garden cards - EXACTLY matching "My Content" dropdown items
   const gardenCards = [
     { href: '/my-orchards', title: 'My S2G Orchards', subtitle: '3 growing · +12 fruits today' },
     { href: '/books', title: 'Books — Business Bookkeeping', subtitle: 'Invoices · expenses · payroll' },
@@ -99,7 +84,6 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     { href: '/sow', label: 'Drop Music', color: 'bg-pink-600 hover:bg-pink-500' },
     { href: '/products/upload', label: 'Sell Art or Files', color: 'bg-yellow-600 hover:bg-yellow-500' },
     { href: '/seller/business-settings', label: 'Business Settings', color: 'bg-blue-600 hover:bg-blue-500' },
-    { href: '#', label: 'Rain Now', color: 'bg-red-600 hover:bg-red-500', onClick: quickRain } // Quick Rain action
   ]
 
   // Tribal Tiers — SeedFlows by scale (mirrors dashboard tier card)
@@ -159,32 +143,16 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
 
             {/* Quick actions grid */}
             <div className="grid grid-cols-2 gap-5">
-              {quickActions.map((action, index) => {
-                if (action.onClick) {
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        action.onClick?.();
-                        closeGarden();
-                      }}
-                      className={`${action.color} rounded-3xl p-8 text-center font-bold text-xl shadow-2xl hover:scale-105 transition`}
-                    >
-                      {action.label}
-                    </button>
-                  );
-                }
-                return (
-                  <Link
-                    key={index}
-                    to={action.href}
-                    onClick={closeGarden}
-                    className={`${action.color} rounded-3xl p-8 text-center font-bold text-xl shadow-2xl hover:scale-105 transition`}
-                  >
-                    {action.label}
-                  </Link>
-                );
-              })}
+              {quickActions.map((action, index) => (
+                <Link
+                  key={index}
+                  to={action.href}
+                  onClick={closeGarden}
+                  className={`${action.color} rounded-3xl p-8 text-center font-bold text-xl shadow-2xl hover:scale-105 transition`}
+                >
+                  {action.label}
+                </Link>
+              ))}
             </div>
 
             {/* Tribal Tiers — SeedFlows by scale */}
@@ -270,19 +238,17 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
               <div className="text-2xl font-bold mt-2">Tap me – something beautiful grows…</div>
             </div>
 
-            {/* Bottom fun buttons */}
+            {/* Bottom fun button -- was a 2-up row with a "Quick Rain 0.50
+                USDC" button alongside this one. Removed (2026-09-20):
+                Let It Rain was retired app-wide (Davison decision, Flow v2
+                step 9) -- the Heart tip picker on a SeedCard is the
+                replacement now, not a separate quick-rain feature. */}
             <div className="flex gap-5">
               <button
                 onClick={surpriseMe}
                 className="flex-1 bg-teal-600 hover:bg-teal-500 py-5 rounded-xl font-bold text-xl transition"
               >
                 Surprise Me
-              </button>
-              <button
-                onClick={quickRain}
-                className="flex-1 bg-red-600 hover:bg-red-500 py-5 rounded-xl font-bold text-xl transition"
-              >
-                Quick Rain 0.50 USDC
               </button>
             </div>
           </div>

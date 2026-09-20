@@ -179,7 +179,7 @@ export default function DashboardTribeStats() {
           : walletBalanceLoading && walletBalance === null && !walletBalanceError
             ? "…"
             : walletBalanceError
-              ? "?"
+              ? "N/A"
               : `$${(walletBalance ?? 0).toFixed(2)}`,
         (
           <div style={subLine}>
