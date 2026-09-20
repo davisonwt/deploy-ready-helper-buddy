@@ -7,6 +7,7 @@ import { useContainImageRect } from '@/hooks/useContainImageRect';
 import { TRIBE_FRONT_URL, TRIBE_INTERIOR_URL, TRIBE_BOARD, TRIBE_LOWER_BOARD, TRIBE_HOTSPOTS, type TribeHotspotId } from '@/lib/tribe/tribeLayout';
 import TribeInviteSheetContent from '@/components/tribe/TribeInviteSheetContent';
 import TribeFollowingSheetContent from '@/components/tribe/TribeFollowingSheetContent';
+import TribeRosterPanel from '@/components/tribe/TribeRosterPanel';
 
 const SHEET_TITLE: Record<Exclude<TribeHotspotId, 'village'>, string> = {
   invite: 'Invite',
@@ -341,6 +342,8 @@ export default function MyTribePage() {
       >
         <X className="h-5 w-5" />
       </button>
+
+      <TribeRosterPanel />
 
       {openSheet && (
         <TribeSheet title={SHEET_TITLE[openSheet]} onClose={() => setOpenSheet(null)}>

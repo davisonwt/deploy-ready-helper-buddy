@@ -190,6 +190,11 @@ export class AuthProviderClass extends React.Component {
   }
 
   register = async (userData) => {
+    // Hoisted above logAttempt so the log reflects whatever code was
+    // actually resolved (URL ?ref= / localStorage), not just an explicit
+    // userData.referral_code that no caller ever sets -- see logAttempt below.
+    let referral_code = userData.referral_code || null
+
     const logAttempt = async (success, error) => {
       try {
         await supabase.from('signup_attempts').insert({
@@ -200,7 +205,7 @@ export class AuthProviderClass extends React.Component {
           error_code: error?.code || error?.name || null,
           error_message: error?.message || (typeof error === 'string' ? error : null),
           user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
-          referral_code: userData.referral_code || null,
+          referral_code,
         })
       } catch (logErr) {
         console.error('Failed to log signup attempt:', logErr)
@@ -210,7 +215,6 @@ export class AuthProviderClass extends React.Component {
     try {
       const currentDomain = window.location.origin
       // Pull pending referral code (URL ?ref= or saved by useReferralCapture)
-      let referral_code = userData.referral_code || null
       if (!referral_code) {
         try {
           const u = new URL(window.location.href)
@@ -251,11 +255,22 @@ export class AuthProviderClass extends React.Component {
           await supabase.from('profiles').update({ disclaimer_accepted_at: new Date().toISOString() }).eq('user_id', data.user.id)
         } catch {}
       }
-      // Best-effort: also call claim_referral_code RPC after signup so it sticks even if trigger missed it
+      // Best-effort: also call claim_referral_code RPC after signup so it sticks even if trigger missed it.
+      // Only clear the pending code on CONFIRMED success -- claim_referral_code is a single-attempt,
+      // first-referrer-wins call with no server-side retry, so clearing it unconditionally (as this used
+      // to do) permanently destroys the only evidence of a pending code if this call fails or errors,
+      // with no way to retry later. Leaving it in localStorage on failure lets useReferralCapture's
+      // retry-on-mount pick it up on the user's next authenticated page load instead.
       if (referral_code && data?.user?.id) {
         try {
-          const { data: claimResult } = await supabase.rpc('claim_referral_code', { p_code: referral_code })
-          localStorage.removeItem('s2g_pending_ref')
+          const { data: claimResult, error: claimError } = await supabase.rpc('claim_referral_code', { p_code: referral_code })
+          if (claimError) {
+            console.error('[referral] claim_referral_code errored:', claimError)
+          } else if (!claimResult?.success) {
+            console.warn('[referral] claim_referral_code did not succeed:', claimResult)
+          } else {
+            localStorage.removeItem('s2g_pending_ref')
+          }
           // Stall invite links ("come see my shop"): process_referral (run
           // by claim_referral_code) already stamped profiles.referred_by
           // and auto-followed the inviter server-side -- this just queues
@@ -273,7 +288,9 @@ export class AuthProviderClass extends React.Component {
               storePendingWelcomeInviter(referrerProfile.display_name)
             }
           }
-        } catch {}
+        } catch (claimErr) {
+          console.error('[referral] claim_referral_code threw:', claimErr)
+        }
       }
       await logAttempt(true, null)
       return { success: true, user: data.user }
