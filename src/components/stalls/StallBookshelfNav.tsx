@@ -3,6 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { COCKPIT_NAV, COCKPIT_NAV_MORE, type CockpitNavItem } from '@/lib/nav/cockpitNav';
 import { useRoles } from '@/hooks/useRoles';
+import { useNavCounts, type NavCounts } from '@/hooks/useNavCounts';
+import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
+
+/** Same mapping as StallSideNav.tsx -- see that file's own comment for why
+ *  Live Now and Wandering Hearts aren't in this map. */
+const NAV_COUNT_KEY: Record<string, keyof NavCounts> = {
+  '/stalls-feed': 'tribal_gardens',
+  '/sleeping': 'sleeping_seeds',
+  '/my-listings': 'my_listings',
+  '/my-tribe': 'my_tribe',
+};
 
 interface Props {
   /** Called on every tap, before navigating (or before the action fires). */
@@ -42,6 +53,15 @@ export default function StallBookshelfNav({ onNavigate, className = '' }: Props)
   const [moreOpen, setMoreOpen] = useState(false);
   const visibleMore = COCKPIT_NAV_MORE.filter((item) => !item.gated || canSeeGated);
   const spines: CockpitNavItem[] = moreOpen ? [...COCKPIT_NAV, ...visibleMore] : COCKPIT_NAV;
+  const navCounts = useNavCounts();
+  const { liveSeeds } = useTribalLiveOrchard();
+
+  const badgeFor = (item: CockpitNavItem): number | null => {
+    if (item.path === '/live-now') return liveSeeds.length;
+    const key = NAV_COUNT_KEY[item.path];
+    if (!key) return null;
+    return navCounts ? navCounts[key] : null;
+  };
 
   const handleTap = (path: string) => {
     navigate(path);
@@ -51,14 +71,24 @@ export default function StallBookshelfNav({ onNavigate, className = '' }: Props)
   return (
     <div className={`bg-[#0d0805] ${className}`}>
       <div className="flex items-end gap-2 overflow-x-auto px-4 pt-4 pb-0 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {spines.map((item, i) => (
+        {spines.map((item, i) => {
+          const badge = badgeFor(item);
+          return (
           <button
             key={item.path}
             type="button"
             onClick={() => handleTap(item.path)}
             aria-label={item.label}
-            className={`snap-start shrink-0 w-12 h-40 rounded-t-md border border-black/40 bg-gradient-to-b ${SPINE_TONES[i % SPINE_TONES.length]} shadow-[0_2px_6px_rgba(0,0,0,0.5)] flex flex-col items-center justify-between py-3 active:scale-95 transition-transform`}
+            className={`relative snap-start shrink-0 w-12 h-40 rounded-t-md border border-black/40 bg-gradient-to-b ${SPINE_TONES[i % SPINE_TONES.length]} shadow-[0_2px_6px_rgba(0,0,0,0.5)] flex flex-col items-center justify-between py-3 active:scale-95 transition-transform`}
           >
+            {badge !== null && (
+              <span
+                className="absolute -top-1.5 -right-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none border border-black/40"
+                style={{ backgroundColor: `${item.color}dd`, color: '#fff' }}
+              >
+                {badge}
+              </span>
+            )}
             <span className="text-base" aria-hidden>{item.emoji}</span>
             <span
               className="font-serif text-[11px] font-semibold text-amber-200/90 tracking-wide whitespace-nowrap"
@@ -67,7 +97,8 @@ export default function StallBookshelfNav({ onNavigate, className = '' }: Props)
               {item.label}
             </span>
           </button>
-        ))}
+          );
+        })}
         <button
           type="button"
           onClick={() => setMoreOpen((v) => !v)}

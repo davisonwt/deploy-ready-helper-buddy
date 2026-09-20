@@ -4,6 +4,25 @@ import { ChevronDown, ChevronUp, LogOut } from 'lucide-react';
 import { COCKPIT_NAV, COCKPIT_NAV_MORE, SCRIPTURE_STUDY_LINK, type CockpitNavItem } from '@/lib/nav/cockpitNav';
 import { useRoles } from '@/hooks/useRoles';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavCounts, type NavCounts } from '@/hooks/useNavCounts';
+import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
+
+/**
+ * Which nav item gets which count, and where it comes from. Live Now is
+ * its own case below (the live liveSeeds.length, not this map) -- reusing
+ * the exact same realtime store the Live Now page itself reads is the
+ * only way that badge can never disagree with the page. Wandering Hearts
+ * has no entry at all: its real destination (/stall/wanderinghearts) has
+ * no member-count anywhere on it to match against (checked directly,
+ * supabase/migrations/20260920140000_nav_counts_rpc.sql's own comment has
+ * the full reasoning) -- no badge, not a placeholder.
+ */
+const NAV_COUNT_KEY: Record<string, keyof NavCounts> = {
+  '/stalls-feed': 'tribal_gardens',
+  '/sleeping': 'sleeping_seeds',
+  '/my-listings': 'my_listings',
+  '/my-tribe': 'my_tribe',
+};
 
 interface Props {
   /** Called on every tap, before navigating (or before the action fires) -- lets the caller close the stall interior first. */
@@ -31,6 +50,10 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
   const visibleMore = COCKPIT_NAV_MORE.filter((item) => !item.gated || canSeeGated);
+  const navCounts = useNavCounts();
+  // Live Now's own store, not get_nav_counts() -- see NAV_COUNT_KEY's own
+  // comment for why this one is different.
+  const { liveSeeds } = useTribalLiveOrchard();
 
   // Bug report, 2026-09-15: no logout option anywhere in the app UI -- true
   // for any member whose stall isn't published yet (EmptyPlotView has no
@@ -46,14 +69,39 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
     navigate('/login');
   };
 
+  /** Live Now: the live liveSeeds.length itself, byte-for-byte the same
+   *  value LiveNowPage.tsx renders, since both read this same shared
+   *  store -- never a separately-computed number that could disagree.
+   *  Every other item: get_nav_counts(), or no badge at all (Wandering
+   *  Hearts). null (still loading) renders no badge rather than a
+   *  misleading 0. */
+  const badgeFor = (item: CockpitNavItem): number | null => {
+    if (item.path === '/live-now') return liveSeeds.length;
+    const key = NAV_COUNT_KEY[item.path];
+    if (!key) return null;
+    return navCounts ? navCounts[key] : null;
+  };
+
   const renderRow = (item: CockpitNavItem, bordered: boolean) => {
     const rowClassName = `flex items-center gap-2.5 px-3 py-2 hover:bg-amber-500/10 transition-colors ${
       bordered ? 'border-t border-amber-500/10' : ''
     }`;
+    const badge = badgeFor(item);
     return (
       <Link key={item.label} to={item.path} className={rowClassName} onClick={onNavigate}>
         <span className="text-base leading-none w-5 text-center shrink-0" style={{ color: item.color }}>{item.emoji}</span>
-        <span className="truncate font-serif text-[13px] text-amber-100/90">{item.label}</span>
+        <span className="truncate font-serif text-[13px] text-amber-100/90 flex-1 min-w-0">{item.label}</span>
+        {/* Neutral count pill, not an unread-style dot -- Live Now's own
+            item.color is already red, so it naturally gets that red
+            styling here too, with no special-casing needed. */}
+        {badge !== null && (
+          <span
+            className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none"
+            style={{ backgroundColor: `${item.color}22`, color: item.color }}
+          >
+            {badge}
+          </span>
+        )}
       </Link>
     );
   };
