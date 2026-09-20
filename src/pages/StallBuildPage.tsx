@@ -7,7 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Store, ClipboardList, ImageIcon, DoorOpen, LayoutGrid, Eye } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Store, ClipboardList, ImageIcon, DoorOpen, LayoutGrid, Eye, TriangleAlert } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
@@ -161,22 +165,47 @@ export default function StallBuildPage() {
   // category used to be "the" one.
   const categoryTemplates: StallTemplate[] = templates?.[categories[0]] ?? [];
 
-  // "template interiors ship with their boxes pre-marked": whenever the
-  // interior image changes to a URL we haven't seeded boxes for yet, seed
-  // from the matching template's own hotspots (if any) as an editable
-  // starting point -- a fresh upload with no template match just starts
-  // empty, prompting the sower to draw their own. Never overwrites boxes
-  // already loaded from this stall's own saved row (seededForUrl is set
-  // for the loaded interior_image_path on mount, above) or boxes the
-  // sower has already started editing for THIS url.
+  // Bug, live 2026-09-20 (data-loss risk): this used to wipe `hotspots`
+  // to [] on EVERY interior change that didn't match a registered
+  // template -- which, since the wizard's own template registry is
+  // empty for every category (2026-09-20 deregistration), meant ANY
+  // interior swap by a real member silently erased their own placed
+  // hotspots, with no warning, before they'd even reached Publish.
+  // Reproduced live against davisontest1's stall: 4 saved hotspots, one
+  // interior re-upload, wizard's own MIN_HOTSPOTS gate then blocked
+  // Next with zero marked -- confirmed via a real HTTP round trip that
+  // this local-state wipe is exactly what handlePublish's upsert would
+  // have written straight to stalls.hotspots.
+  //
+  // Fixed default: an interior change now KEEPS whatever hotspots are
+  // already marked -- an interior swap must never silently erase a
+  // member's own placed hotspots. Only a REAL template match (the
+  // original, still-legitimate "template interiors ship pre-marked"
+  // case) auto-seeds; explicit clearing is the "Start fresh" control
+  // below (handleStartFresh), a deliberate owner choice with its own
+  // confirmation, not a side effect of picking a new photo.
   useEffect(() => {
     if (!interior?.url || !templates) return;
     if (seededForUrl.current === interior.url) return;
-    const template = resolveStallHotspots(interior.url, null, templates);
     const isRealTemplateMatch = Object.values(templates).some((list) => list.some((t) => t.interior === interior.url && t.hotspots?.length));
     seededForUrl.current = interior.url;
-    setHotspots(isRealTemplateMatch ? template.map((h) => ({ ...h, id: newHotspotId() })) : []);
+    if (isRealTemplateMatch) {
+      const template = resolveStallHotspots(interior.url, null, templates);
+      setHotspots(template.map((h) => ({ ...h, id: newHotspotId() })));
+    }
   }, [interior?.url, templates]);
+
+  // Which interior URL the stall's own saved row actually had (set once,
+  // on load, alongside seededForUrl above) -- lets the hotspot step show
+  // "check these still line up" only when the interior genuinely changed
+  // since the last save, not on a brand-new stall with nothing to warn
+  // about yet.
+  const savedInteriorUrl = useRef<string | null>(null);
+  const interiorChangedSinceSave = !!savedInteriorUrl.current && interior?.url !== savedInteriorUrl.current;
+
+  const handleStartFresh = () => {
+    setHotspots([]);
+  };
 
   // Keyed on user?.id, NOT the whole `user` object: useAuth's AuthProviderClass
   // hands out a brand-new `user` object reference on every onAuthStateChange
@@ -210,7 +239,10 @@ export default function StallBuildPage() {
           setStoryPhoto({ url: data.story_photo_path, storagePath: `${user.id}/story-photo.webp` });
         }
         if (data.front_image_path) setFront({ url: data.front_image_path, storagePath: null });
-        if (data.interior_image_path) setInterior({ url: data.interior_image_path, storagePath: null });
+        if (data.interior_image_path) {
+          setInterior({ url: data.interior_image_path, storagePath: null });
+          savedInteriorUrl.current = data.interior_image_path;
+        }
         const savedHotspots = Array.isArray(data.hotspots) ? (data.hotspots as unknown as StallHotspot[]) : [];
         if (savedHotspots.length > 0) {
           setHotspots(savedHotspots.map((h) => (h.id ? h : { ...h, id: newHotspotId() })));
@@ -442,7 +474,37 @@ export default function StallBuildPage() {
       )}
 
       {step === 3 && interior && (
-        <HotspotEditor imageUrl={interior.url} value={hotspots} onChange={setHotspots} />
+        <div className="space-y-3">
+          {interiorChangedSinceSave && hotspots.length > 0 && (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-100">
+              <TriangleAlert className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" />
+              <span>Your painted buttons will stay where they were; check they still line up with your new picture.</span>
+            </div>
+          )}
+          <HotspotEditor imageUrl={interior.url} value={hotspots} onChange={setHotspots} />
+          {hotspots.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button type="button" variant="ghost" size="sm" className="text-xs text-amber-100/50 hover:text-amber-100/80">
+                  Start fresh (clear all shelves)
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear all marked shelves?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This removes all {hotspots.length} of your marked shelves so you can mark fresh ones on the new
+                    picture. This can't be undone once you publish.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleStartFresh}>Start fresh</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
       )}
 
       {step === 4 && (
