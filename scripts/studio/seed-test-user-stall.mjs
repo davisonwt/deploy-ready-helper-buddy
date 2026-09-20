@@ -14,38 +14,35 @@ if (existsSync(envTest)) {
 const SUPABASE_URL = 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
 const ANON_KEY = 'sb_publishable_Z8-I1gu2Q1yid1Q4jKRf7Q_jSGcsVpa';
 
-// 1. Find Davison's real, published stall (public data, readable by anon
-// via stalls_read_published) by the user_id prefix given: 04754d57-...
-const anon = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false } });
-const { data: published, error: pubErr } = await anon
-  .from('stalls')
-  .select('user_id, name, tagline, tier, category, front_image_path, interior_image_path, hotspots, published')
-  .eq('published', true);
-if (pubErr) { console.log('published stalls query error:', pubErr.message); process.exit(1); }
+// 2026-09-20: this used to find Davison's real, published stall and copy
+// its front_image_path/interior_image_path straight onto this test row
+// "so the pre-flight is realistic" -- found live, that's exactly how
+// Sabbath Test Stall ended up displaying his personal branded photo to
+// every visitor of the Tribal Gardens feed (its front.webp was a byte-
+// for-byte copy of his; confirmed via matching MD5). Fixed at the data
+// layer (scripts/studio/fix-davison-image-bug-20260920.sql, which
+// deleted that row) and at the DB layer (supabase/migrations/
+// 20260920121500_stall_image_ownership_guard.sql, a trigger that now
+// REJECTS any stalls row whose front/interior path points at a
+// different user's own storage folder) -- but the real fix is not
+// reading a live member's account at all. This now points at the same
+// shared, sanctioned "Farm Stall" template (public/stalls/templates/)
+// the wizard's own "start from a template" button offers, with that
+// template's own known-good hotspot layout (templates.json) -- a
+// populated-looking preview for QA, with no dependency on which real
+// accounts happen to exist or what they've published.
 
-const source = (published ?? []).find((s) => s.user_id.startsWith('04754d57'));
-if (!source) {
-  console.log('Could not find a published stall with user_id starting 04754d57 among', published?.length, 'published stalls.');
-  console.log('user_ids seen:', published?.map((s) => s.user_id));
-  process.exit(1);
-}
-console.log('Source stall found:', { user_id: source.user_id, name: source.name, tier: source.tier, category: source.category, hotspots: source.hotspots });
+const FARM_STALL_TEMPLATE = {
+  front: '/stalls/templates/farm-stall-front.png',
+  interior: '/stalls/templates/farm-stall-interior.png',
+  hotspots: [
+    { kind: 'books', label: 'Books', x: 5.9, y: 67.0, w: 20.6, h: 20.0 },
+    { kind: 'music', label: 'Music', x: 28.4, y: 67.0, w: 20.6, h: 20.0 },
+    { kind: 'lyrics', label: 'Lyrics', x: 50.8, y: 67.0, w: 20.6, h: 20.0 },
+    { kind: 'story', label: 'My Story', x: 73.4, y: 67.0, w: 20.8, h: 20.0 },
+  ],
+};
 
-// scripts/studio/move-stall-to-davison.sql's own intended hotspot layout
-// for this exact interior image (books/music/lyrics/story painted signs)
-// -- the live row's own `hotspots` column reads back null right now (that
-// migration may not have landed, or got reset), so this is the known-good
-// layout for this specific artwork rather than trusting a null copy.
-const REAL_HOTSPOTS = [
-  { kind: 'books', label: 'Books', x: 6.2, y: 68.5, w: 20.0, h: 21.2 },
-  { kind: 'music', label: 'Music', x: 28.5, y: 68.5, w: 20.0, h: 21.2 },
-  { kind: 'lyrics', label: 'Lyrics', x: 50.8, y: 68.5, w: 20.3, h: 21.2 },
-  { kind: 'story', label: 'My Story', x: 73.4, y: 68.5, w: 20.4, h: 21.2 },
-];
-
-// 2. Sign in as TEST_USER and insert (or replace) their own stalls row,
-// copying the real front/interior images + hotspots so the pre-flight is
-// realistic, but with its own name so it's clearly the test stall.
 const testUserClient = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false } });
 const { data: auth, error: authErr } = await testUserClient.auth.signInWithPassword({
   email: process.env.TEST_USER_EMAIL,
@@ -59,12 +56,13 @@ const { data: upserted, error: upsertErr } = await testUserClient
     {
       user_id: auth.user.id,
       name: 'Sabbath Test Stall',
-      tagline: source.tagline ?? null,
-      tier: source.tier,
-      category: source.category,
-      front_image_path: source.front_image_path,
-      interior_image_path: source.interior_image_path,
-      hotspots: REAL_HOTSPOTS,
+      tagline: null,
+      tier: 'farm_stall',
+      category: 'music',
+      categories: ['music', 'books_writing'],
+      front_image_path: FARM_STALL_TEMPLATE.front,
+      interior_image_path: FARM_STALL_TEMPLATE.interior,
+      hotspots: FARM_STALL_TEMPLATE.hotspots,
       published: true,
     },
     { onConflict: 'user_id' },
