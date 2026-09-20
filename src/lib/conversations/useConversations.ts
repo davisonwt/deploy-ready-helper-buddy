@@ -118,10 +118,14 @@ export function useConversations(userId: string | undefined) {
       }
 
       // 4. The latest message per room, for the preview line and ordering.
+      // Deleted messages are excluded so the preview falls back to the
+      // latest surviving message (or null -> "No messages yet"), never a
+      // deleted one's now-nulled content.
       const { data: messages } = await supabase
         .from('chat_messages')
         .select('room_id, content, created_at')
         .in('room_id', roomIds)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(400);
 

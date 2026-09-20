@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useUnreadMessageCounts } from '@/hooks/useUnreadMessageCounts';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -16,8 +17,6 @@ interface InboxRow {
   lastMessage: string;
   lastMessageAt: string | null;
 }
-
-const EPOCH = '1970-01-01';
 
 function previewText(msg: { content?: string | null; message_type?: string | null; sender_id?: string | null } | null): string {
   if (!msg) return 'No messages yet';
@@ -42,13 +41,14 @@ export function UnreadInbox({ onOpenRoom, onBack }: UnreadInboxProps) {
   const { user } = useAuth();
   const [rows, setRows] = useState<InboxRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const { unreadByRoom } = useUnreadMessageCounts(user?.id);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
     try {
       const { data: parts } = await supabase
         .from('chat_participants')
-        .select('room_id, last_read_at')
+        .select('room_id')
         .eq('user_id', user.id)
         .eq('is_active', true);
       const participantRows = parts || [];
@@ -57,7 +57,6 @@ export function UnreadInbox({ onOpenRoom, onBack }: UnreadInboxProps) {
         return;
       }
       const roomIds = participantRows.map((p) => p.room_id);
-      const lastReadByRoom = new Map(participantRows.map((p) => [p.room_id, p.last_read_at || EPOCH]));
 
       const { data: rooms } = await supabase
         .from('chat_rooms')
@@ -91,33 +90,26 @@ export function UnreadInbox({ onOpenRoom, onBack }: UnreadInboxProps) {
       }
 
       const enriched = await Promise.all((rooms || []).map(async (room) => {
-        const lastReadAt = lastReadByRoom.get(room.id) || EPOCH;
-
+        // Deleted messages are excluded so the preview falls back to the
+        // latest surviving message, never a deleted one's nulled content.
         const { data: lastMsgRows } = await supabase
           .from('chat_messages')
           .select('content, message_type, sender_id, created_at')
           .eq('room_id', room.id)
+          .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(1);
         const lastMsg = lastMsgRows?.[0] || null;
-
-        // sender_id.neq.<id> alone is plain SQL <>, which is NULL (excluded)
-        // for a NULL sender_id — silently dropping every system message
-        // (thank-yous, receipts). This OR reads as "sender_id IS DISTINCT
-        // FROM me" instead — the same rule DashboardTribeStats' Unread tile
-        // uses, so this inbox's counts always match what the tile shows.
-        const { count } = await supabase
-          .from('chat_messages')
-          .select('id', { count: 'exact', head: true })
-          .eq('room_id', room.id)
-          .or(`sender_id.is.null,sender_id.neq.${user.id}`)
-          .gt('created_at', lastReadAt);
 
         return {
           roomId: room.id,
           name: room.room_type === 'direct' ? (otherNameByRoom.get(room.id) || room.name) : room.name,
           roomType: room.room_type,
-          unreadCount: count || 0,
+          // One source for unread counts (get_conversation_unread_counts via
+          // useUnreadMessageCounts) — this inbox no longer runs its own
+          // per-room count query, so it can't drift from the bottom-bar
+          // pill or the conversations list.
+          unreadCount: unreadByRoom[room.id] || 0,
           lastMessage: previewText(lastMsg),
           lastMessageAt: lastMsg?.created_at ?? room.updated_at,
         } as InboxRow;
@@ -138,7 +130,7 @@ export function UnreadInbox({ onOpenRoom, onBack }: UnreadInboxProps) {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, unreadByRoom]);
 
   useEffect(() => {
     load();

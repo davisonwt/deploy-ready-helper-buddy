@@ -656,8 +656,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
     }
   };
   // Delete for everyone, any message type, no time limit. A soft delete
-  // (deleted_at) so every participant sees "This message was deleted"
-  // instead of the thread silently rewriting itself, plus a real removal of
+  // (deleted_at) -- the row survives for Trust & Safety, but the message
+  // disappears from render entirely for every participant (filtered out
+  // in the messages.map above), no placeholder -- plus a real removal of
   // the underlying storage object (voice note/video/attachment) so it stops
   // being fetchable by its stored URL. Both happen server-side in
   // delete-chat-message -- see that function for why (no bucket has a
@@ -1233,7 +1234,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, backLabel, i
         )}
 
         <div className="space-y-4">
-          {messages.map((msg) => {
+          {messages.filter((msg) => !msg.deleted_at).map((msg) => {
             const isEditing = editingMessageId === msg.id;
             const isOwn = msg.sender_id === user.id;
 

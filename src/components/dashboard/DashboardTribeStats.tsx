@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveWalletBalance } from "@/lib/payments/liveWalletBalance";
+import { useUnreadMessageCounts } from "@/hooks/useUnreadMessageCounts";
 import { Users, Coins, MessageCircle, Wallet } from "lucide-react";
 
 const WALLET_LOW_BALANCE_THRESHOLD = 5;
@@ -18,7 +19,11 @@ export default function DashboardTribeStats() {
   const [tribeCount, setTribeCount] = useState(0);
   const [bestowals, setBestowals] = useState({ count: 0, total: 0 });
   const [purchases, setPurchases] = useState({ count: 0, total: 0 });
-  const [unread, setUnread] = useState(0);
+  // One source for unread counts (get_conversation_unread_counts via
+  // useUnreadMessageCounts) — this tile no longer runs its own unread
+  // loop, so it can't drift from the bottom-bar pill or the conversations
+  // list.
+  const { totalUnread: unread } = useUnreadMessageCounts(user?.id);
   const walletAddress: string | null = user?.solana_wallet_address || null;
   const { balance: walletBalance, error: walletBalanceError, loading: walletBalanceLoading, refetch: refetchWalletBalance } = useLiveWalletBalance(walletAddress);
 
@@ -80,29 +85,6 @@ export default function DashboardTribeStats() {
         total: (rows || []).reduce((s, r) => s + Number(r.buyer_total || 0), 0),
       });
     } catch {}
-
-    // Unread messages
-    try {
-      const { data: parts } = await supabase
-        .from("chat_participants")
-        .select("room_id, last_read_at")
-        .eq("user_id", user.id);
-      let totalUnread = 0;
-      for (const p of parts || []) {
-        // .neq('sender_id', user.id) would translate to plain SQL `<>`,
-        // which is NULL (excluded) for a NULL sender_id — silently dropping
-        // every system message (Sow2Grow thank-yous, receipts). Use an OR
-        // so it reads as "sender_id IS DISTINCT FROM me" instead.
-        const { count: c } = await supabase
-          .from("chat_messages")
-          .select("id", { count: "exact", head: true })
-          .eq("room_id", p.room_id)
-          .or(`sender_id.is.null,sender_id.neq.${user.id}`)
-          .gt("created_at", p.last_read_at || "1970-01-01");
-        totalUnread += c || 0;
-      }
-      setUnread(totalUnread);
-    } catch {}
   }, [user?.id]);
 
   useEffect(() => {
@@ -117,7 +99,6 @@ export default function DashboardTribeStats() {
       .on("postgres_changes", { event: "*", schema: "public", table: "content_purchases" }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "basket_orders" }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "topups" }, reload)
-      .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, reload)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [user?.id, reload]);

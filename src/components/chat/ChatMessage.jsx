@@ -33,22 +33,6 @@ const ChatMessage = ({ message, isOwn = false, onDelete, isInstructor, instructo
   const isCredentialVerification = message.system_metadata?.type === 'credential_verification';
   const isVerified = message.system_metadata?.verified;
   
-  // Delete-for-everyone: the row still exists (a report already filed
-  // against it keeps its evidence), but every participant sees this
-  // placeholder instead of the original content/media, regardless of what
-  // message_type it was.
-  if (message.deleted_at) {
-    return (
-      <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
-        <div className="flex-1 max-w-[80%] flex flex-col" style={{ alignItems: isOwn ? 'flex-end' : 'flex-start' }}>
-          <div className="rounded-lg px-3 py-2 border border-dashed border-muted-foreground/40 bg-muted/30">
-            <p className="text-sm italic text-muted-foreground">This message was deleted</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Post-bestowal receipt system message
   if (message.message_type === 'bestowal_receipt' && message.system_metadata) {
     return (

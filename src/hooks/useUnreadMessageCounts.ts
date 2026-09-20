@@ -1,14 +1,16 @@
 /**
- * One source for unread message counts, read by both the conversations
- * list's own per-row indicator and the bottom-bar Chat button's total
- * pill -- get_conversation_unread_counts() (2026-09-20 migration) is the
- * single query both read, so the two can never disagree the way
- * DashboardTribeStats.tsx and UnreadInbox.tsx's independent unread loops
- * already could.
+ * One source for unread message counts, read by the conversations list's
+ * own per-row indicator, the bottom-bar Chat button's total pill,
+ * DashboardTribeStats' Messages tile, and UnreadInbox --
+ * get_conversation_unread_counts() (2026-09-20 migration, deleted messages
+ * excluded as of the 20260920260000 follow-up) is the single query all
+ * four read, so none can disagree the way three independently-written
+ * unread loops already could.
  *
- * Refreshes on mount, on any chat_messages change (debounced), and every
- * 60s as a backstop -- there is no chat presence mechanism in this
- * codebase to know a room is "still open" more precisely than that.
+ * Refreshes on mount, on any chat_messages insert or update (a soft
+ * delete is an update -- debounced), and every 60s as a backstop -- there
+ * is no chat presence mechanism in this codebase to know a room is "still
+ * open" more precisely than that.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,6 +51,10 @@ export function useUnreadMessageCounts(userId: string | undefined) {
     const channel = supabase
       .channel(`unread-counts-${userId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, scheduleReload)
+      // A delete is a soft-delete UPDATE (deleted_at set), not a DELETE —
+      // without listening here, a deleted unread message would only drop
+      // off the badge on the next 60s poll instead of live.
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_messages' }, scheduleReload)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_participants' }, scheduleReload)
       .subscribe();
 
