@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useReferralCode } from "@/hooks/useReferralCode";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +8,7 @@ import { formatAppDate } from "@/lib/dates";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Check, Users, Linkedin, Mail, Facebook } from "lucide-react";
+import { Copy, Check, Users, Linkedin, Mail, Facebook, Store } from "lucide-react";
 import SignedImg from "@/components/media/SignedImg";
 
 /**
@@ -22,11 +23,17 @@ import SignedImg from "@/components/media/SignedImg";
  */
 export default function TribeInviteSheetContent() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { code, loading: codeLoading } = useReferralCode();
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const [stats, setStats] = useState({ total: 0, completed: 0 });
   const [tribe, setTribe] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // user_id -> username, for tribe members who have a published stall --
+  // most don't (measured live 2026-09-20: ~9 of 37 direct referrals do),
+  // so this is a lookup to gate the stall-link icon per row, not assumed
+  // from the member existing.
+  const [stallUsernames, setStallUsernames] = useState<Map<string, string>>(new Map());
 
   const inviteOrigin = (typeof window !== "undefined" && /lovable(project)?\.(app|com)|localhost|127\.0\.0\.1/.test(window.location.hostname))
     ? "https://sow2growapp.com"
@@ -60,6 +67,26 @@ export default function TribeInviteSheetContent() {
           total: enriched.length,
           completed: enriched.filter((r: any) => ["completed", "active", "joined"].includes(r.status)).length,
         });
+
+        // Stall-link indicator per row -- most direct referrals don't have
+        // a stall at all, so this is a lookup, not an assumption.
+        const memberIds = enriched.map((m: any) => m.referred_id).filter(Boolean);
+        if (memberIds.length > 0) {
+          const { data: stallRows } = await supabase
+            .from("stalls")
+            .select("user_id")
+            .in("user_id", memberIds)
+            .eq("published", true);
+          if (cancelled) return;
+          const withStall = new Set(((stallRows || []) as { user_id: string }[]).map((s) => s.user_id));
+          const usernames = new Map<string, string>();
+          for (const m of enriched) {
+            if (withStall.has(m.referred_id) && m.profile?.username) {
+              usernames.set(m.referred_id, m.profile.username);
+            }
+          }
+          setStallUsernames(usernames);
+        }
       } catch (err) {
         console.warn("[TribeInviteSheetContent] load failed:", err);
       } finally {
@@ -228,6 +255,17 @@ export default function TribeInviteSheetContent() {
                     <Badge variant={r.status === "completed" ? "default" : "secondary"}>
                       {r.status}
                     </Badge>
+                    {stallUsernames.has(r.referred_id) && (
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/stall/${stallUsernames.get(r.referred_id)}`)}
+                        aria-label={`Visit ${name}'s stall`}
+                        title={`Visit ${name}'s stall`}
+                        className="h-7 w-7 shrink-0 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-cyan-200 flex items-center justify-center hover:bg-cyan-500/20 hover:border-cyan-300/60 transition-colors"
+                      >
+                        <Store className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
