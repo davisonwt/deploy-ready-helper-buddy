@@ -1060,7 +1060,16 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
               to go if a long stall name is free to run under it forever,
               since this row was previously left+unbounded with no right
               edge at all. */}
-          <div className="absolute bottom-3 left-4 right-4 flex items-center gap-2">
+          {/* bottom-3 alone (the original value) never accounted for a
+              bottomBar prop's real height -- harmless while this row was
+              plain text, but the pill inside it is a real click target now.
+              DashboardPage.tsx's own bottom bar (Plant Seed/Live/Chat/Radio)
+              sits fixed at the viewport's bottom edge; --bottom-chrome-h
+              (published by useBottomChromeElement, already how the mobile
+              branch above accounts for the same bar) lifts this row clear
+              of it exactly when a bottomBar exists, 0px otherwise -- same
+              position as before on /stall/:username, which has no bottomBar. */}
+          <div className="absolute left-4 right-4 flex items-center gap-2" style={{ bottom: 'calc(0.75rem + var(--bottom-chrome-h, 0px))' }}>
             <p className="min-w-0 flex-1 truncate flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/80 drop-shadow">
               {ownerIsLive && (
                 <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-lg">
