@@ -354,7 +354,7 @@ export default function GroveStationPage() {
               openRundownSlotId ? (
                 <RundownBuilder slotId={openRundownSlotId} djUserId={user.id} onBack={() => setOpenRundownSlotId(null)} />
               ) : (
-                <SlotBookingCalendar djUserId={user.id} onOpenRundown={setOpenRundownSlotId} />
+                <SlotBookingCalendar djUserId={user.id} onOpenRundown={setOpenRundownSlotId} isGosatOrAdmin={isAdminOrGosat} />
               )
             )}
           </TabsContent>

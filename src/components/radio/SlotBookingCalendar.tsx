@@ -13,9 +13,14 @@ import {
 interface Props {
   djUserId: string;
   onOpenRundown: (slotId: string) => void;
+  /** gosat/admin can cancel ANY slot at ANY time (RLS: a second, role-gated
+   * UPDATE policy scoped to status='cancelled' only) -- the guarded 24h
+   * notice is a DJ-facing rule, not a "no one can ever pull a bad show"
+   * rule. */
+  isGosatOrAdmin?: boolean;
 }
 
-export default function SlotBookingCalendar({ djUserId, onOpenRundown }: Props) {
+export default function SlotBookingCalendar({ djUserId, onOpenRundown, isGosatOrAdmin }: Props) {
   const { toast } = useToast();
   const [slots, setSlots] = useState<RadioSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,12 +127,13 @@ export default function SlotBookingCalendar({ djUserId, onOpenRundown }: Props) 
                         )}
                       </div>
                     </div>
-                    {isMine && (
+                    {(isMine || isGosatOrAdmin) && existing.status !== 'cancelled' && (
                       <div className="flex flex-col gap-1 shrink-0">
-                        <Button size="sm" variant="outline" onClick={() => onOpenRundown(existing.id)}>Rundown</Button>
-                        {canCancel(existing) && (
+                        {isMine && <Button size="sm" variant="outline" onClick={() => onOpenRundown(existing.id)}>Rundown</Button>}
+                        {(canCancel(existing) || isGosatOrAdmin) && (
                           <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleCancel(existing)}>
-                            <X className="h-3.5 w-3.5 mr-1" /> Cancel
+                            <X className="h-3.5 w-3.5 mr-1" />
+                            {isGosatOrAdmin && !isMine ? 'Cancel (gosat)' : 'Cancel'}
                           </Button>
                         )}
                       </div>
