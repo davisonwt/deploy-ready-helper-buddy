@@ -70,7 +70,12 @@ export default function RundownBuilder({ slotId, djUserId, onBack }: Props) {
 
   const totalSeconds = useMemo(() => segments.reduce((sum, s) => sum + s.duration_seconds, 0), [segments]);
   const overshoot = totalSeconds > SLOT_SECONDS;
-  const isEditable = slot?.status === 'draft' || slot?.status === 'submitted';
+  // Rundown lock (2026-09-20): editable only while 'draft' -- matches the
+  // RLS policy exactly (radio_rundown_segments_draft_lock migration), so
+  // this is UI-convenience only, not the real gate. 'submitted' was never
+  // an actual reachable status (submit-radio-slot goes straight to
+  // 'scheduled' on success) so dropping it changes nothing observable.
+  const isEditable = slot?.status === 'draft';
 
   const nextPosition = segments.length;
 
