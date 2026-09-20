@@ -321,20 +321,24 @@ export default function StallsFeedPage() {
     return () => { alive = false; };
   }, []);
 
-  // "My village": union of who the viewer invited (referred_by) and who
-  // they follow (public.followers) -- only computed when tribeMine is on.
+  // "My village": direct (depth 1) tribe members -- same get_my_tribe_members()
+  // source and same depth=1 filter as the My Tribe nav badge and the tribe
+  // page's own roster (TribeRosterPanel.tsx), so this can't structurally
+  // drift from either. Previously read profiles.referred_by (only stamped
+  // forward from 2026-09-12, never backfilled) unioned with followers --
+  // that silently missed every pre-9-12 tribe member regardless of stall
+  // status. The stalls query below still filters to published=true, which
+  // is the legitimate "has something to show in a stall feed" cut for
+  // members without a stall -- not a second membership filter.
   useEffect(() => {
     if (!tribeMine || !user) { setTribeUserIds(tribeMine ? [] : null); return; }
     let alive = true;
     (async () => {
-      const [{ data: referredRows }, { data: followRows }] = await Promise.all([
-        supabase.from('profiles').select('user_id').eq('referred_by', user.id),
-        supabase.from('followers').select('following_id').eq('follower_id', user.id),
-      ]);
-      const ids = new Set<string>();
-      for (const r of (referredRows ?? []) as { user_id: string }[]) ids.add(r.user_id);
-      for (const r of (followRows ?? []) as { following_id: string }[]) ids.add(r.following_id);
-      if (alive) setTribeUserIds(Array.from(ids));
+      const { data: tribeRows } = await supabase.rpc('get_my_tribe_members' as any);
+      const ids = ((tribeRows || []) as any[])
+        .filter((m) => Number(m.depth || 1) === 1)
+        .map((m) => m.user_id as string);
+      if (alive) setTribeUserIds(ids);
     })();
     return () => { alive = false; };
   }, [tribeMine, user]);
