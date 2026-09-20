@@ -432,6 +432,42 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
     row.scrollBy({ left: dir * delta, behavior: 'smooth' });
   };
 
+  // Bug, live 2026-09-20: the right arrow (absolute right-1 over the
+  // WHOLE row) sat on top of the rightmost card's own "..." rail (also
+  // right-1, on the card's cover image), making it untappable -- a real
+  // member reported it. Fixed positionally, not with a pointer-events
+  // hack: lg:px-14 below reserves a real gutter (the arrow footprint is
+  // 4-40px inset; 56px of padding is comfortable clearance) that a card
+  // can never occupy at ANY scroll position, snap-center included --
+  // padding on a scrolling element extends its own scrollWidth, so the
+  // last/first card can still fully center itself clear of the arrow
+  // rather than being forced flush against the edge underneath it.
+  // Same fix removes the arrows' own overlap risk entirely regardless of
+  // vertical position, so top-1/2 needed no change.
+  //
+  // Also tracks real scroll position (not just `items.length > 1`) so
+  // each arrow hides at its own end, and hides both when the row doesn't
+  // actually overflow at all (e.g. few items on a very wide screen).
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const updateScrollState = () => {
+    const row = rowRef.current;
+    if (!row) return;
+    setCanScrollLeft(row.scrollLeft > 4);
+    setCanScrollRight(row.scrollLeft < row.scrollWidth - row.clientWidth - 4);
+  };
+  useEffect(() => {
+    updateScrollState();
+    const row = rowRef.current;
+    if (!row) return;
+    row.addEventListener('scroll', updateScrollState, { passive: true });
+    window.addEventListener('resize', updateScrollState);
+    return () => {
+      row.removeEventListener('scroll', updateScrollState);
+      window.removeEventListener('resize', updateScrollState);
+    };
+  }, [items.length]);
+
   // Arriving back from a SeedCard Message action (scrollToItemId set) --
   // once the real item this sheet's asking about has actually loaded,
   // scroll it into view instead of leaving the visitor to hunt for it
@@ -580,7 +616,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
             // row edges (scroll one card at a time) -- dots aren't needed,
             // the row is short enough to scan without a position indicator.
             <div className="relative">
-              <div ref={rowRef} className="flex gap-3 overflow-x-auto snap-x snap-mandatory py-3 -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div ref={rowRef} className="flex gap-3 overflow-x-auto snap-x snap-mandatory py-3 -mx-5 px-5 lg:px-14 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {items.map((item) => (
                   <div key={item.id} data-seed-id={item.id} className="shrink-0 snap-center w-[80%] lg:w-[calc(20%-0.6rem)] lg:max-w-[300px]">
                     <SeedCard
@@ -616,25 +652,25 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
                   </div>
                 ))}
               </div>
-              {items.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => scrollRow(-1)}
-                    aria-label="Scroll left"
-                    className="hidden lg:grid absolute left-1 top-1/2 -translate-y-1/2 z-10 h-9 w-9 place-items-center rounded-full bg-black/60 text-amber-100 backdrop-blur-md ring-1 ring-amber-500/25 hover:bg-black/80 transition"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => scrollRow(1)}
-                    aria-label="Scroll right"
-                    className="hidden lg:grid absolute right-1 top-1/2 -translate-y-1/2 z-10 h-9 w-9 place-items-center rounded-full bg-black/60 text-amber-100 backdrop-blur-md ring-1 ring-amber-500/25 hover:bg-black/80 transition"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </>
+              {canScrollLeft && (
+                <button
+                  type="button"
+                  onClick={() => scrollRow(-1)}
+                  aria-label="Scroll left"
+                  className="hidden lg:grid absolute left-1 top-1/2 -translate-y-1/2 z-10 h-9 w-9 place-items-center rounded-full bg-black/60 text-amber-100 backdrop-blur-md ring-1 ring-amber-500/25 hover:bg-black/80 transition"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+              )}
+              {canScrollRight && (
+                <button
+                  type="button"
+                  onClick={() => scrollRow(1)}
+                  aria-label="Scroll right"
+                  className="hidden lg:grid absolute right-1 top-1/2 -translate-y-1/2 z-10 h-9 w-9 place-items-center rounded-full bg-black/60 text-amber-100 backdrop-blur-md ring-1 ring-amber-500/25 hover:bg-black/80 transition"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               )}
             </div>
           )}
