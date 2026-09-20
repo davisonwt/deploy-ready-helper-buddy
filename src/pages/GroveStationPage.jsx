@@ -39,6 +39,7 @@ import DJPlaylistManager from '@/components/radio/DJPlaylistManager'
 import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface'
 import SlotBookingCalendar from '@/components/radio/SlotBookingCalendar'
 import RundownBuilder from '@/components/radio/RundownBuilder'
+import UpcomingShowsList from '@/components/radio/UpcomingShowsList'
 
 export default function GroveStationPage() {
   const {
@@ -230,6 +231,10 @@ export default function GroveStationPage() {
 
           {/* Listen Tab */}
           <TabsContent value="listen" className="space-y-6 p-6 bg-card">
+            {/* Stall interior's "Shows" hotspot destination -- see
+                UpcomingShowsList's own comment. */}
+            <UpcomingShowsList />
+
             {currentShow && (
               <LiveStreamListener 
                 liveSession={liveSession}
