@@ -149,6 +149,75 @@ export default function StallsFeedPage() {
   // there's no room for both regardless of viewport width.
   const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
   const [searchOpen, setSearchOpen] = useState(() => searchParams.has('q'));
+  // Search-as-combobox: a chip-independent, one-time list of every sower
+  // with a published stall (not `cards`, which is scoped to whatever
+  // category chip is active -- the combobox must offer every sower
+  // regardless of which chip happens to be selected). Same table/columns
+  // as the main feed query, just without the category filter.
+  const [allStallOwners, setAllStallOwners] = useState<{ user_id: string; username: string; label: string; stallName: string }[] | null>(null);
+  const [comboboxOpen, setComboboxOpen] = useState(false);
+  const comboboxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data: stallRows } = await supabase
+        .from('stalls')
+        .select('user_id, name')
+        .eq('published', true)
+        .is('village', null);
+      const rows = (stallRows ?? []) as { user_id: string; name: string }[];
+      if (rows.length === 0) { if (alive) setAllStallOwners([]); return; }
+      const { data: profileRows } = await supabase
+        .from('public_profiles' as any)
+        .select('user_id, username, display_name')
+        .in('user_id', rows.map((r) => r.user_id));
+      const profileByOwner = new Map(
+        ((profileRows ?? []) as unknown as { user_id: string; username: string | null; display_name: string | null }[])
+          .filter((p) => !!p.username)
+          .map((p) => [p.user_id, p]),
+      );
+      const list = rows
+        .map((r) => {
+          const p = profileByOwner.get(r.user_id);
+          if (!p?.username) return null;
+          return { user_id: r.user_id, username: p.username, label: p.display_name?.trim() || p.username, stallName: r.name };
+        })
+        .filter((x): x is { user_id: string; username: string; label: string; stallName: string } => !!x)
+        .sort((a, b) => a.label.localeCompare(b.label));
+      if (alive) setAllStallOwners(list);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  // Matches sower name/username AND stall name -- "Kar" must find Karoo
+  // Honey's owner (Angelique Wessels / wesselsangelique3), whose own name
+  // has no "kar" in it at all; only the stall's name does. Empty search
+  // shows the full alphabetical list, per "before typing."
+  const comboboxResults = useMemo(() => {
+    if (!allStallOwners) return [];
+    const q = search.trim().toLowerCase();
+    if (!q) return allStallOwners;
+    return allStallOwners.filter((o) =>
+      o.label.toLowerCase().includes(q) || o.username.toLowerCase().includes(q) || o.stallName.toLowerCase().includes(q),
+    );
+  }, [allStallOwners, search]);
+
+  useEffect(() => {
+    if (!comboboxOpen) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (comboboxRef.current && !comboboxRef.current.contains(e.target as Node)) setComboboxOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [comboboxOpen]);
+
+  function selectStallOwner(username: string) {
+    setComboboxOpen(false);
+    setSearchOpen(false);
+    setSearch('');
+    navigate(`/stall/${username}`);
+  }
   // Chip row scrolling: found live -- a bare overflow-x-auto container does
   // NOT map a plain vertical mouse-wheel scroll to horizontal movement in
   // any browser; that mapping only happens for an actual horizontal wheel,
@@ -585,7 +654,7 @@ export default function StallsFeedPage() {
                 always-open input pill on desktop, crowding the chip row
                 down to nothing) that expands into the same pill, with its
                 own collapse ✕ which also clears the query. */}
-            <div className="shrink-0">
+            <div className="shrink-0 relative" ref={comboboxRef}>
               {searchOpen ? (
                 <div className="flex-1 min-w-0 flex items-center gap-1.5 rounded-full bg-black/50 lg:bg-amber-500/10 lg:border lg:border-amber-500/25 px-3 py-1.5">
                   <Search className="h-4 w-4 shrink-0 text-white/70 lg:text-amber-300" />
@@ -594,19 +663,49 @@ export default function StallsFeedPage() {
                     autoFocus
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder={chip === 'orchard' ? "Search orchards…" : "Search stalls…"}
+                    onFocus={() => { if (chip !== 'orchard') setComboboxOpen(true); }}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setComboboxOpen(false); }}
+                    placeholder={chip === 'orchard' ? "Search orchards…" : "Search stalls or sowers…"}
                     className="w-36 lg:w-48 bg-transparent text-sm text-white lg:text-amber-100 placeholder:text-white/50 lg:placeholder:text-amber-300/50 outline-none"
                   />
                   <button
                     type="button"
-                    onClick={() => { setSearchOpen(false); setSearch(''); }}
+                    onClick={() => { setSearchOpen(false); setSearch(''); setComboboxOpen(false); }}
                     aria-label="Close search"
                     className="shrink-0 text-white/70 hover:text-white lg:text-amber-300 lg:hover:text-amber-100"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
-              ) : (
+              ) : null}
+              {/* Sower combobox -- opens on focus, before typing (empty
+                  search shows every sower with a stall, alphabetical);
+                  typing narrows it AND still drives the plain-text stall
+                  search on the feed below via the same `search` state.
+                  Not offered on the Orchards chip -- a different content
+                  type, not stalls. */}
+              {searchOpen && comboboxOpen && chip !== 'orchard' && (
+                <div className="absolute left-0 right-0 lg:right-auto top-full mt-1.5 w-full lg:w-64 max-h-72 overflow-y-auto rounded-xl bg-black/90 lg:bg-[#1a1109] border border-white/10 lg:border-amber-500/25 shadow-lg z-20">
+                  {allStallOwners === null ? (
+                    <div className="px-3 py-3 text-xs text-white/50 lg:text-amber-300/50">Loading sowers…</div>
+                  ) : comboboxResults.length === 0 ? (
+                    <div className="px-3 py-3 text-xs text-white/50 lg:text-amber-300/50">No sower matches “{search.trim()}”.</div>
+                  ) : (
+                    comboboxResults.map((o) => (
+                      <button
+                        key={o.user_id}
+                        type="button"
+                        onClick={() => selectStallOwner(o.username)}
+                        className="w-full flex flex-col items-start px-3 py-2 text-left hover:bg-white/10 lg:hover:bg-amber-500/10 transition-colors"
+                      >
+                        <span className="text-sm font-medium text-white lg:text-amber-100 truncate w-full">{o.label}</span>
+                        <span className="text-xs text-white/50 lg:text-amber-300/50 truncate w-full">{o.stallName}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+              {!searchOpen && (
                 <button
                   type="button"
                   onClick={() => setSearchOpen(true)}
