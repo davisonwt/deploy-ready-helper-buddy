@@ -35,17 +35,26 @@ import { formatAppDate } from '@/lib/dates';
 // and its individual Companions, Scripture Study) are real auth users
 // with real stalls, but they're not "members" for gosat/admin user
 // management -- reported live, 2026-09-15: mixed in with real members
-// with no way to tell them apart or filter them out. Fixed, reserved
-// set of usernames (members can never collide with these), confirmed
-// against the live profiles table -- a short list like this doesn't
-// need a schema change, just a client-side check.
+// with no way to tell them apart or filter them out.
+//
+// 2026-09-20: this was a client-side-only username Set with no backing
+// column, and it had a real gap -- Gosat's Boardroom was never in it, so
+// it counted as a "member" here despite being exactly the same kind of
+// account as the other four. profiles.is_system is now the persisted,
+// backfilled flag (supabase/migrations/20260920130000_profiles_is_system.sql)
+// the Cockpit's own member-count badge (get_total_member_count()) reads
+// too, so this list and that count can't drift apart again. The username
+// heuristic stays as a fallback only, for any row from before the
+// backfill or before is_system is set on creation.
 const SYSTEM_ACCOUNT_USERNAMES = new Set([
   'wanderinghearts',
   'grovestation',
   'companions',
   'scripturestudy',
+  'gosatsboardroom',
 ]);
 function isSystemAccount(profile) {
+  if (profile?.is_system === true) return true;
   const u = profile?.username?.toLowerCase();
   if (!u) return false;
   return SYSTEM_ACCOUNT_USERNAMES.has(u) || u.startsWith('companion-');

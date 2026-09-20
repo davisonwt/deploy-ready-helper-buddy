@@ -91,9 +91,17 @@ export default function CockpitPage() {
   // 96) so it overcounts. get_total_member_count() (supabase/migrations/
   // 20260920120000_total_member_count_rpc.sql) is a SECURITY DEFINER RPC,
   // same pattern get_my_tribe_members() already uses, that exposes only
-  // the aggregate integer -- no per-row data. Fetched once on mount, no
-  // realtime subscription -- a member count drifting by a few while the
-  // Cockpit is open is not worth a channel subscription for.
+  // the aggregate integer -- no per-row data.
+  //
+  // 2026-09-20, follow-up: also excludes profiles.is_system rows (S2G-run
+  // stall accounts, AI companions, Playwright test accounts) -- confirmed
+  // live, 96 total / 13 system / 83 real members, so the badge reads 83.
+  // Same is_system column UserManagementDashboard.jsx's Members/System
+  // split now reads, so the two can't drift apart again.
+  //
+  // Fetched once on mount, no realtime subscription -- a member count
+  // drifting by a few while the Cockpit is open is not worth a channel
+  // subscription for.
   const [totalMemberCount, setTotalMemberCount] = useState<number | null>(null)
   useEffect(() => {
     let alive = true
