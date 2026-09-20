@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Loader2, Eye } from 'lucide-react';
+import { Wallet, Loader2, Eye, ShoppingBasket } from 'lucide-react';
 import { useSacredNow } from '@/hooks/useSacredNow';
 import { useCommunityGrowthStats } from '@/hooks/useCommunityGrowthStats';
 import { useStallVisitorCount } from '@/hooks/useStallVisitorCount';
 import { useAuth } from '@/hooks/useAuth';
 import { useLiveWalletBalance } from '@/lib/payments/liveWalletBalance';
+import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { BOTTOM_CHROME_PADDING_STYLE } from '@/lib/layout/bottomChrome';
 
 interface Props {
@@ -48,6 +49,16 @@ export default function StallTodayPanel({ className = '', stacked = false, owner
   const address = user?.solana_wallet_address || null;
   const { balance, error, loading, refetch } = useLiveWalletBalance(address);
   const { count: visitorCount, loading: visitorCountLoading } = useStallVisitorCount(ownerId, isOwner);
+  // No server-persisted basket exists (diagnosed 2026-09-20: baskets/
+  // basket_items tables exist in Postgres but are wired to nothing, zero
+  // rows, zero code references; basket_orders is a completed/in-flight
+  // checkout record, not a live basket). itemCount is real and exactly
+  // matches /products/basket's own count (BestowalCheckout.tsx renders
+  // one row per basketItems entry) -- but it's this device's
+  // localStorage only, not a durable per-member count. Davison's own
+  // decision, 2026-09-20: ship the client-side count now rather than
+  // build out real persistence for a wallet-panel row.
+  const { itemCount: basketItemCount } = useProductBasket();
 
   const dayType = sacred.isSabbath ? 'Sabbath' : sacred.isFeast ? sacred.feastName || 'Feast Day' : 'Regular Day';
   const low = !!address && balance !== null && balance < LOW_BALANCE_THRESHOLD;
@@ -115,6 +126,19 @@ export default function StallTodayPanel({ className = '', stacked = false, owner
               </span>
             </Link>
           )
+        )}
+        {user && (
+          <Link
+            to="/products/basket"
+            className="mt-2 flex items-center justify-between rounded-lg border border-amber-500/15 bg-black/25 px-3 py-2 transition-colors hover:bg-black/35"
+          >
+            <span className="flex items-center gap-1.5 text-xs text-amber-100/70">
+              <ShoppingBasket className="h-3.5 w-3.5" /> My basket
+            </span>
+            <span className="text-sm font-semibold text-amber-200">
+              {basketItemCount} item{basketItemCount === 1 ? '' : 's'}
+            </span>
+          </Link>
         )}
       </Section>
 
