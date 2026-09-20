@@ -24,8 +24,10 @@ export default function GlobalRadioPlayer() {
   // (src/lib/layout/bottomChrome.ts) on every page it floats over --
   // including ones with no bottom bar of their own -- and unregisters
   // the instant radio stops, so a scroll container that padded for it
-  // shrinks back down with no dead gap left behind.
-  const pillRef = useBottomChromeElement<HTMLButtonElement>('global-radio-pill', state.isPlaying);
+  // shrinks back down with no dead gap left behind. Lives on the outer
+  // wrapper (not either inner button) so the measured intrusion matches
+  // the pill's real visual footprint including its own padding/border.
+  const pillRef = useBottomChromeElement<HTMLDivElement>('global-radio-pill', state.isPlaying);
 
   useEffect(() => subscribeRadio(() => setState(getRadioState())), []);
 
@@ -33,11 +35,17 @@ export default function GlobalRadioPlayer() {
 
   return (
     <>
-      <button
+      {/* Bug, live 2026-09-20: the Stop control used to be a
+          `role="button"` span NESTED INSIDE this pill's own outer
+          `<button>` -- invalid HTML (a button can't contain interactive
+          content) and unreliable to hit-test as a result. Reproduced
+          live: tapping the pill to open NowPlayingSheet also fired the
+          nested Stop handler and killed playback on the same tap.
+          Fixed by making the two controls siblings under a plain,
+          non-interactive div -- each its own real, unambiguous
+          `<button>`. */}
+      <div
         ref={pillRef}
-        type="button"
-        onClick={() => setSheetOpen(true)}
-        aria-label={state.reconnecting ? 'Grove Station reconnecting' : "What's playing on Grove Station"}
         // z-[9000] used to sit UNDER StallInteriorView's own root
         // (z-[9999] -- the Cockpit is a StallInteriorView), making the
         // pill visually present but unreachable on the exact page its own
@@ -46,20 +54,25 @@ export default function GlobalRadioPlayer() {
         // sheet correctly covers the pill instead of floating over it.
         className="fixed bottom-4 right-4 z-[10010] flex items-center gap-2 rounded-full border border-amber-500/30 bg-[#140c06]/95 px-3 py-2 text-amber-100 shadow-lg backdrop-blur"
       >
-        <Radio className={`h-4 w-4 text-amber-300 ${state.reconnecting ? 'animate-spin' : 'animate-pulse'}`} />
-        {state.reconnecting && <span className="text-xs text-amber-200">Reconnecting…</span>}
-        <span
-          role="button"
-          tabIndex={0}
-          onClick={(e) => { e.stopPropagation(); stopRadio(); }}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); stopRadio(); } }}
+        <button
+          type="button"
+          onClick={() => setSheetOpen(true)}
+          aria-label={state.reconnecting ? 'Grove Station reconnecting' : "What's playing on Grove Station"}
+          className="flex items-center gap-2"
+        >
+          <Radio className={`h-4 w-4 text-amber-300 ${state.reconnecting ? 'animate-spin' : 'animate-pulse'}`} />
+          {state.reconnecting && <span className="text-xs text-amber-200">Reconnecting…</span>}
+        </button>
+        <button
+          type="button"
+          onClick={() => stopRadio()}
           aria-label="Stop Grove Station Radio"
           title="Stop Grove Station Radio"
           className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/20 hover:bg-amber-500/30"
         >
           <Square className="h-3 w-3" />
-        </span>
-      </button>
+        </button>
+      </div>
       {sheetOpen && <NowPlayingSheet onClose={() => setSheetOpen(false)} />}
     </>
   );
