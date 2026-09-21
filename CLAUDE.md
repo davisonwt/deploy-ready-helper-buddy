@@ -204,6 +204,44 @@ This costs real time on every run that needs a stall/seed/slot to exist
 because "davisontest1 already has one." State that cost plainly when it
 applies; do not quietly build a persistent fixture to avoid paying it.
 
+## Golden rule: back up before you destroy anything
+
+Two separate rules, because the two backups cover different things and one
+of them covers nothing at all.
+
+**Before any destructive migration or bulk data operation, take a local
+database dump:**
+
+```
+pwsh -File scripts/studio/local-db-dump.ps1
+```
+
+It writes to `C:\Users\Ezra\S2G-backups\` -- outside the repo, and the
+script refuses to write anywhere inside it. The dump holds real member
+data: never commit it, never push it, never move it into the repo to "keep
+it with the code". The connection string is read from `$env:S2G_DB_URL` (or
+`DATABASE_URL` / `SUPABASE_DB_URL`) and is never hardcoded; put it in a
+gitignored file such as `.env.db`, which the `.env*` rule in `.gitignore`
+already covers.
+
+**Destructive Storage operations (bulk object deletes, teardowns) archive
+the exact bytes to a local folder outside the repo BEFORE deleting, and the
+report names the archive path. Database backups do NOT contain Storage file
+bytes -- a deleted object is gone forever.**
+
+That second rule is the one that is easy to get wrong, because a database
+backup feels like it covers everything. It does not. Supabase's daily
+backups are physical Postgres backups; every stall image, PDF, voice note
+and cover lives in S3 and is not in them. Measured 2026-09-21: daily
+backups on, 7 days present, **PITR off** -- so even for the database the
+granularity is one snapshot per morning.
+
+On 2026-09-21, 39 orphaned Gathering objects were deleted from the `stalls`
+bucket with only a written manifest of their names and sizes
+(`scripts/studio/gathering-orphans-2026-09-21.md`). The manifest says
+plainly that it is not a restore script. It should have been an archive of
+the bytes.
+
 ## Golden rule: repeated hotspots on a stall interior are the point
 
 Multiple hotspots of the same kind or the same label on one stall
