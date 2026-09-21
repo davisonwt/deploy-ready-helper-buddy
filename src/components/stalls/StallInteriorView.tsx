@@ -1,6 +1,7 @@
 import SignedImg from '@/components/media/SignedImg';
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useOverlayHistory } from '@/hooks/useOverlayHistory';
 import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2, Radio, MessageCircle, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
@@ -355,6 +356,11 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   }, [user, scriptureStudyPresence]);
   const navigate = useNavigate();
   const [openKind, setOpenKind] = useState<StallHotspot['kind'] | null>(() => readKindFromHash() as StallHotspot['kind'] | null);
+  // The interior can mount with a sheet already named in the URL -- a
+  // shared deep link, or Back from an item-detail page, which remounts
+  // this component with #stall-kind= still on it. That entry is adopted
+  // rather than doubled; see useOverlayHistory's rule 4.
+  const [openedFromHashOnMount] = useState(() => readKindFromHash() !== null);
   // The specific hotspot's own label, captured at tap time -- "the sheet
   // opens by kind + label" (object hotspots batch): many boxes can share a
   // kind, so this can't be re-derived from openKind alone. Falls back to
@@ -420,7 +426,10 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
     });
     if (error || !roomId) {
       toast({ variant: 'destructive', title: 'Could not start a conversation', description: error?.message });
-      setShowChatSheet(false);
+      // Through the same close path as every other one: opening the sheet
+      // already pushed a history entry, and dropping the sheet by state
+      // alone would leave that entry behind for Back to land on.
+      closeOverlay();
       return;
     }
     setChatRoomId(roomId);
@@ -728,25 +737,27 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
     };
   }, [setStallInteriorOpen]);
 
-  // Keeps the URL hash in sync with which sheet is open, without adding a
-  // history entry of its own -- only an actual item-detail navigation
-  // (StallHotspotSheet's openItemDetail) pushes history. Browser Back from
-  // there lands on this same URL+hash, and this component's initial state
-  // (readKindFromHash) re-opens the same sheet on remount.
+  // An open overlay owns exactly one history entry, so the phone's Back
+  // gesture closes it instead of leaving the stall. See
+  // hooks/useOverlayHistory.ts for the contract and the bug it came from
+  // (2026-09-21: Back out of the music shelf landed on /conversations).
   //
-  // Passes window.history.state through as the new entry's state (instead
-  // of null) -- this is a raw History API call bypassing React Router's
-  // own history object, so it never touches location.state as React
-  // Router tracks it, but it DOES overwrite the underlying browser entry's
-  // state if given null, which would silently erase the { from } origin
-  // state this same entry was navigated to with (StallVisitPage's
-  // handleClose reads it). Losing that here reintroduced the navigation
-  // loop this hash-sync was itself blamed for.
-  useEffect(() => {
-    const base = window.location.pathname + window.location.search;
-    const next = openKind ? `${base}#stall-kind=${openKind}` : base;
-    window.history.replaceState(window.history.state, '', next);
-  }, [openKind]);
+  // ONE hook for every overlay this component opens, not one per sheet:
+  // the chat sheet can be opened while a shelf is already up, and two
+  // hooks would each push their own entry and both answer the same Back.
+  // A single key means a single entry and a single answer.
+  const overlayKey = openKind ? `kind:${openKind}` : showChatSheet ? 'chat' : null;
+  const overlayHash = openKind ? `#stall-kind=${openKind}` : '';
+  const closeOpenOverlay = useCallback(() => {
+    if (openKind) { setOpenKind(null); setOpenLabel(null); return; }
+    if (showChatSheet) { setShowChatSheet(false); setChatRoomId(null); }
+  }, [openKind, showChatSheet]);
+  const { requestClose: closeOverlay } = useOverlayHistory({
+    overlayKey,
+    hash: overlayHash,
+    adoptCurrentEntry: openedFromHashOnMount,
+    onClose: closeOpenOverlay,
+  });
 
   // 'go_live' never renders as a paintable box for anyone but an admin/
   // gosat viewer -- everything else about it (including the guard inside
@@ -1206,7 +1217,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           label={activeLabel}
           text={activeHotspot.text ?? null}
           isOwner={effectiveIsOwner}
-          onClose={() => { setOpenKind(null); setOpenLabel(null); }}
+          onClose={closeOverlay}
           scrollToItemId={initialScrollSeedId}
           viewerCutoff={viewerCutoff}
         />
@@ -1217,7 +1228,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
       )}
 
       {showChatSheet && (
-        <StallChatSheet roomId={chatRoomId} onClose={() => setShowChatSheet(false)} />
+        <StallChatSheet roomId={chatRoomId} onClose={closeOverlay} />
       )}
 
       {scriptureRoom && (

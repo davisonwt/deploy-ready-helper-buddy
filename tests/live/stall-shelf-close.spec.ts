@@ -117,6 +117,31 @@ test.describe.serial('Closing a shelf', () => {
       expect(after.sheetOpen, `${kind}: the shelf did not close`).toBe(false);
       expect(after.leftStall, `${kind}: closing the shelf left the stall entirely`).toBe(false);
       expect(after.hotspots, `${kind}: the interior came back without its hotspots`).toBeGreaterThan(0);
+
+      // THE EXIT THIS SPEC USED TO MISS. It passed 7/7 all the while a
+      // member closing a shelf with the phone's Back gesture was thrown
+      // out of the stall onto whatever preceded it -- /conversations, if
+      // they arrived from a SeedCard in a chat. Tapping the right X and
+      // asserting the interior returns proves nothing about the gesture
+      // most people actually use to dismiss a sheet.
+      await btn.tap();
+      await page.waitForTimeout(3000);
+      expect((await view(page)).sheetOpen, `${kind}: the shelf did not reopen`).toBe(true);
+
+      await page.goBack();
+      await page.waitForTimeout(3000);
+      const afterBack = await view(page);
+      console.log(`[${kind}] after system Back: ${JSON.stringify(afterBack)}`);
+      expect(afterBack.sheetOpen, `${kind}: Back did not close the shelf`).toBe(false);
+      expect(afterBack.leftStall, `${kind}: Back with the shelf open left the stall`).toBe(false);
+      expect(afterBack.hotspots, `${kind}: the interior came back without its hotspots`).toBeGreaterThan(0);
+
+      // And the Back after that is free to leave -- that part was never broken.
+      await page.goBack();
+      await page.waitForTimeout(3000);
+      const secondBack = await view(page);
+      console.log(`[${kind}] after a second Back: ${JSON.stringify(secondBack)}`);
+      expect(secondBack.leftStall, `${kind}: a second Back should leave the stall`).toBe(true);
       await ctx.close();
     });
   }
