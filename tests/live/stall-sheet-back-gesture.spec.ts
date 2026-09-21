@@ -21,6 +21,8 @@ const P = process.env.TEST_GOSAT_PASSWORD;
 const PHONE = { ...devices['iPhone 12'] };
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 const STALL = '/stall/davison.taljaard';
+/** A stall the test account does NOT own, so visitor-only controls render. */
+const OTHER_STALL = '/stall/jtphotographer2';
 
 test.beforeAll(() => {
   if (!E || !P) {
@@ -44,12 +46,19 @@ async function login(page: Page) {
   throw new Error('login failed');
 }
 
-const where = (page: Page) => page.evaluate(() => ({
+// Neither the shelf sheet nor the chat sheet sets role="dialog" -- both are
+// plain fixed divs at z-[10001] (StallHotspotSheet.tsx:490,
+// StallChatSheet.tsx:29). Matching on that class is what actually detects
+// them; a role="dialog" probe silently never matches and reports every
+// sheet as closed.
+const SHEET = '[class*="z-[10001]"]';
+
+const where = (page: Page) => page.evaluate((sel) => ({
   path: location.pathname,
   hash: location.hash,
-  sheetOpen: /stall-kind=/.test(location.hash) || !!document.querySelector('[role="dialog"]'),
+  sheetOpen: /stall-kind=/.test(location.hash) || !!document.querySelector(sel),
   onStall: /^\/stall\//.test(location.pathname),
-}));
+}), SHEET);
 
 /** Puts /conversations directly behind the stall, as a SeedCard tap from a chat does. */
 async function arriveFromConversations(page: Page) {
@@ -105,28 +114,32 @@ test('switching shelves still costs exactly one Back', async ({ browser }) => {
   await login(page);
   await arriveFromConversations(page);
 
-  // Three kinds viewed in one run: without the replace-on-switch rule this
-  // would unwind through every one of them on the way out.
-  await openShelf(page, 'Music');
-  await openShelf(page, 'Books');
-  await openShelf(page, 'Lyrics');
-  const viewed = await where(page);
-  console.log(`[switch] after music -> books -> lyrics: ${JSON.stringify(viewed)}`);
-  expect(viewed.sheetOpen, 'no shelf open after switching').toBe(true);
-  expect(viewed.hash, 'the hash should name the shelf actually showing').toContain('lyrics');
-
-  await page.goBack();
-  await page.waitForTimeout(2500);
-  const closed = await where(page);
-  console.log(`[switch] one Back: ${JSON.stringify(closed)}`);
-  expect(closed.sheetOpen, 'one Back should close the shelf').toBe(false);
-  expect(closed.onStall, 'one Back should leave you on the stall').toBe(true);
-
+  // A shelf sheet is modal -- fixed inset-x-0 bottom-0, z-[10001], 85vh --
+  // so the hotspots underneath cannot be tapped while one is open. There is
+  // no way to switch kind directly on a phone; a member closes one shelf and
+  // opens the next. That is three separate open-runs, and the thing worth
+  // asserting is that three runs still cost ONE Back to get off the stall,
+  // not three. (The replace-on-switch branch in useOverlayHistory is still
+  // reached, by a hash change on an already-open sheet -- a deep link or the
+  // #stall-kind=...&seed= restore path -- it is just not reachable by tapping.)
+  for (const kind of ['Music', 'Books', 'Lyrics']) {
+    await openShelf(page, kind);
+    const open = await where(page);
+    expect(open.sheetOpen, `${kind}: did not open`).toBe(true);
+    await page.getByRole('button', { name: 'Close shelf', exact: true }).first().tap();
+    await page.waitForTimeout(2500);
+    const shut = await where(page);
+    console.log(`[switch] ${kind} opened then closed -> ${JSON.stringify(shut)}`);
+    expect(shut.sheetOpen, `${kind}: did not close`).toBe(false);
+    expect(shut.onStall, `${kind}: closing left the stall`).toBe(true);
+  }
+  // One Back, straight out: every close already spent its own entry, so
+  // nothing is left to unwind through.
   await page.goBack();
   await page.waitForTimeout(3000);
   const out = await where(page);
-  console.log(`[switch] second Back: ${JSON.stringify(out)}`);
-  expect(out.path, 'the second Back should leave -- not unwind through books and music')
+  console.log(`[switch] one Back after three shelves: ${JSON.stringify(out)}`);
+  expect(out.path, 'Back unwound through the shelves instead of leaving')
     .toBe('/conversations');
   await ctx.close();
 });
@@ -135,13 +148,18 @@ test('the chat sheet answers Back the same way', async ({ browser }) => {
   const ctx = await browser.newContext({ ...PHONE });
   const page = await ctx.newPage();
   await login(page);
-  await arriveFromConversations(page);
+  // Somebody else's stall: "Message the sower" is hidden for the owner
+  // (effectiveIsOwner), and the account here owns davison.taljaard.
+  await page.goto('/conversations', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(6000);
+  await page.goto(OTHER_STALL, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(8000);
 
   const msg = page.getByRole('button', { name: 'Message the sower' }).first();
   expect(await msg.count(), 'no "Message the sower" control on this stall').toBeGreaterThan(0);
   await msg.tap();
   await page.waitForTimeout(6000);
-  const opened = await page.evaluate(() => !!document.querySelector('[role="dialog"]'));
+  const opened = await page.evaluate((sel) => !!document.querySelector(sel), SHEET);
   console.log(`[chat] opened=${opened}`);
   expect(opened, 'the chat sheet did not open').toBe(true);
 
