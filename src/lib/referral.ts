@@ -11,46 +11,34 @@ import { toast } from "sonner";
 
 export type EnsureReferralCodeResult = {
   code: string;
-  affiliateId: string;
 };
 
 /**
- * Get (or lazily create) the current user's permanent referral code
- * stored in `affiliates.referral_code`.
+ * The current user's referral code.
+ *
+ * Minting lives in ONE place now -- the database. This function used to
+ * INSERT into `affiliates` itself whenever it could not find an active
+ * row, with no unique constraint on `user_id` to stop it: any burst of
+ * concurrent callers each inserted their own row. That is how one account
+ * reached 927 active codes (344 on 2026-06-12, 375 on 06-13, 207 on
+ * 09-06). 954 rows were deactivated on 2026-09-22 and a partial unique
+ * index, `affiliates_one_active_per_user`, now makes a second active row
+ * per member impossible.
+ *
+ * `ensure_my_referral_code()` is SECURITY DEFINER and reads auth.uid(),
+ * so it needs no userId argument; the parameter is kept so the call sites
+ * do not all have to change, and is only used as a "are we signed in at
+ * all" guard.
  */
 export async function ensureReferralCode(
   userId: string,
 ): Promise<EnsureReferralCodeResult> {
-  // 1) Try to read an existing affiliate row
-  const { data: existing, error: readErr } = await supabase
-    .from("affiliates")
-    .select("id, referral_code")
-    .eq("user_id", userId)
-    .eq("is_active", true)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (readErr && readErr.code !== "PGRST116") throw readErr;
-  if (existing?.referral_code) {
-    return { code: existing.referral_code, affiliateId: existing.id };
-  }
-
-  // 2) Generate a memorable code and insert
-  const code = "S2G-" + Math.random().toString(36).substring(2, 10).toUpperCase();
-  const { data: created, error: insertErr } = await supabase
-    .from("affiliates")
-    .insert({
-      user_id: userId,
-      referral_code: code,
-      earnings: 0,
-      commission_rate: 10,
-    })
-    .select("id, referral_code")
-    .single();
-
-  if (insertErr) throw insertErr;
-  return { code: created.referral_code, affiliateId: created.id };
+  if (!userId) throw new Error("ensureReferralCode: no signed-in user");
+  const { data, error } = await supabase.rpc("ensure_my_referral_code" as never);
+  if (error) throw error;
+  const code = data as unknown as string | null;
+  if (!code) throw new Error("ensureReferralCode: no code available");
+  return { code };
 }
 
 /**
