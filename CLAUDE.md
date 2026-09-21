@@ -204,6 +204,37 @@ This costs real time on every run that needs a stall/seed/slot to exist
 because "davisontest1 already has one." State that cost plainly when it
 applies; do not quietly build a persistent fixture to avoid paying it.
 
+## Golden rule: repeated hotspots on a stall interior are the point
+
+Multiple hotspots of the same kind or the same label on one stall
+interior are **intentional**. The interior is a room to explore: a
+sower's products, books and story pieces are hidden in different places
+in the image, and finding them is the mechanic. Two boxes opening the
+same shelf from opposite corners is a treasure hunt, not a bug.
+
+So:
+
+- **Never dedupe, consolidate or auto-clean same-kind hotspots**, and
+  never report them as an error, a warning or "drift" in an audit.
+- **No spec may assume label or kind uniqueness on any stall.** Locate a
+  hotspot with `.first()` or by position, compare label sets as
+  multisets, and never assert that a kind appears once.
+- A count that looks "too high" for a stall is not evidence of
+  duplication. Ask the owner before touching it; the answer is usually
+  that they put it there.
+
+Why this is written down: on 2026-09-21 davison.taljaard's 11 hotspots
+(3x story, 3x books, 3x music, lyrics, mugs) were taken for duplicates
+left behind by `0222fb67` and queued for cleanup. They were not. A
+snapshot from 2026-09-18 -- two days before that commit -- holds the same
+11 entries byte for byte, ids and order included. They are the hunt.
+Deleting the three "extra" boxes would also have broken five live specs
+that locate hotspots on that stall by stored label.
+
+`tests/live/stall-interior-framing.spec.ts` asserting 11 with repeated
+labels is the CORRECT shape, not a stale expectation to be tidied down
+to something prettier.
+
 ## Golden rule: crypto on S2G is Solana, via Phantom
 
 **Do not propose NOWPayments.** It has been raised and rejected more than
