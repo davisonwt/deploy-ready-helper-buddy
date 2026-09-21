@@ -222,6 +222,25 @@ function LegacyChatRoomIdRedirect() {
   return <Navigate to={id ? `/conversations?c=${encodeURIComponent(id)}` : '/conversations'} replace />;
 }
 
+// /wandering/* -- links of this shape reach us carrying a real, active
+// referral code but no page: nothing in this repo has ever routed
+// /wandering/<anything>, and nothing in it generates such a URL either
+// (checked across the full git history, 2026-09-22). They predate this
+// codebase or were written by hand. Whatever their origin, a person
+// following an invitation must not be dropped on a 404.
+//
+// There is no honest destination to map them to -- /sow/pillow is "become
+// a Wandering Pillow" and /seed/pillow/:id needs a listing id neither of
+// which the URL carries -- so they land on /register, which is what the
+// invitation was for. The ref is carried across explicitly rather than
+// left to useReferralCapture(), so attribution does not depend on
+// localStorage being writable.
+function LegacyWanderingRedirect() {
+  const location = useLocation();
+  const ref = new URLSearchParams(location.search).get('ref');
+  return <Navigate to={ref ? `/register?ref=${encodeURIComponent(ref)}` : '/register'} replace />;
+}
+
 const AppRoutes = () => (
   <>
     {/* Mounted once here, above every route -- not inside any specific
@@ -483,6 +502,10 @@ const AppRoutes = () => (
         equivalent resolution here and lands on the plain list -- a known,
         narrow gap, not silently pretended away. */}
     <Route path="/communications-hub" element={<ProtectedRoute allowIncompleteSetup><LegacyChatRedirect /></ProtectedRoute>} />
+    {/* Legacy/hand-written invite links: /wandering/<anything>?ref=CODE.
+        See LegacyWanderingRedirect above for why these land on /register. */}
+    <Route path="/wandering/*" element={<LegacyWanderingRedirect />} />
+
     {/* /chatapp merged into /conversations 2026-09-19 -- see
         LegacyChatRedirect above. ChatApp.tsx is not deleted, only
         unreachable by this path. */}
