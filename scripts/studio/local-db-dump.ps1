@@ -47,6 +47,29 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# --- percent-encode the password, so a raw ? @ # / in it cannot break parsing
+# A Supabase-generated password routinely contains characters that are
+# reserved in a URI. Unencoded, pg_dump reads everything after the first '?'
+# as a query string and fails with "missing key/value separator". Encoding it
+# here means the value in .env.db can be pasted straight from the dashboard.
+# Idempotent: an already-encoded password decodes and re-encodes unchanged.
+function Get-NormalizedPgUrl {
+  param([string]$Url)
+  if ($Url -notmatch '^(postgres(?:ql)?://)(.*)$') { return $Url }
+  $scheme = $Matches[1]
+  $rest   = $Matches[2]
+  $at = $rest.LastIndexOf('@')
+  if ($at -lt 0) { return $Url }
+  $userinfo = $rest.Substring(0, $at)
+  $hostpart = $rest.Substring($at + 1)
+  $colon = $userinfo.IndexOf(':')
+  if ($colon -lt 0) { return $Url }
+  $user = $userinfo.Substring(0, $colon)
+  $pass = $userinfo.Substring($colon + 1)
+  $enc  = [uri]::EscapeDataString([uri]::UnescapeDataString($pass))
+  return ($scheme + $user + ':' + $enc + '@' + $hostpart)
+}
+
 # --- never write inside the repo -------------------------------------------
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $resolvedOut = [System.IO.Path]::GetFullPath($OutDir)
@@ -82,6 +105,8 @@ if (-not $dbUrl) {
 
 # pg_dump is usually NOT on PATH after a winget install of PostgreSQL --
 # look where the installer actually puts it, newest major version first.
+if ($dbUrl) { $dbUrl = Get-NormalizedPgUrl -Url $dbUrl }
+
 $pgDump = (Get-Command pg_dump -ErrorAction SilentlyContinue).Source
 if (-not $pgDump) {
   $pgDump = Get-ChildItem 'C:\Program Files\PostgreSQL\*\bin\pg_dump.exe' -ErrorAction SilentlyContinue |

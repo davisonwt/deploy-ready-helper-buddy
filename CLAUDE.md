@@ -224,6 +224,14 @@ it with the code". The connection string is read from `$env:S2G_DB_URL` (or
 gitignored file such as `.env.db`, which the `.env*` rule in `.gitignore`
 already covers.
 
+It also runs unattended as the Windows Task Scheduler job **"S2G daily DB
+dump"**, daily at 07:00 local, with *Run task as soon as possible after a
+scheduled start is missed* on. Two honest limits: the PC has to be awake
+for it to fire, and a skipped day means the newest dump is the previous
+one -- up to 48 hours stale by the following morning. It is a
+laptop-availability backup, not a guarantee; Supabase's own dailies remain
+the floor, and PITR is off.
+
 **Destructive Storage operations (bulk object deletes, teardowns) archive
 the exact bytes to a local folder outside the repo BEFORE deleting, and the
 report names the archive path. Database backups do NOT contain Storage file
