@@ -39,7 +39,10 @@
 [CmdletBinding()]
 param(
   [string]$OutDir = 'C:\Users\Ezra\S2G-backups',
-  [string[]]$Schemas = @('public', 'auth', 'storage')
+  [string[]]$Schemas = @('public', 'auth', 'storage'),
+
+  # How many dated dumps to keep. Older ones are deleted after a successful run.
+  [int]$KeepDumps = 14
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,15 +59,53 @@ $stamp  = Get-Date -Format 'yyyy-MM-dd'
 $target = Join-Path $resolvedOut "s2g-dump-$stamp.sql"
 $schemaList = $Schemas -join ','
 
-# --- connection string, from the environment only --------------------------
+# --- connection string ------------------------------------------------------
+# Environment first. If it is not there, read it out of the gitignored
+# .env.db in the repo root -- Task Scheduler starts a process with no shell
+# profile, so a scheduled run has nothing but what this script loads itself.
 $dbUrl = $env:S2G_DB_URL
 if (-not $dbUrl) { $dbUrl = $env:DATABASE_URL }
 if (-not $dbUrl) { $dbUrl = $env:SUPABASE_DB_URL }
 
+if (-not $dbUrl) {
+  $envFile = Join-Path $repoRoot '.env.db'
+  if (Test-Path $envFile) {
+    foreach ($line in Get-Content $envFile) {
+      if ($line -match '^\s*(S2G_DB_URL|DATABASE_URL|SUPABASE_DB_URL)\s*=\s*(.+?)\s*$') {
+        $val = $Matches[2].Trim(([char]34), ([char]39))
+        if (-not $dbUrl) { $dbUrl = $val }
+      }
+    }
+    if ($dbUrl) { Write-Host "Connection string loaded from $envFile" }
+  }
+}
+
+# pg_dump is usually NOT on PATH after a winget install of PostgreSQL --
+# look where the installer actually puts it, newest major version first.
 $pgDump = (Get-Command pg_dump -ErrorAction SilentlyContinue).Source
+if (-not $pgDump) {
+  $pgDump = Get-ChildItem 'C:\Program Files\PostgreSQL\*\bin\pg_dump.exe' -ErrorAction SilentlyContinue |
+    Sort-Object { [int]($_.Directory.Parent.Name) } -Descending |
+    Select-Object -First 1 -ExpandProperty FullName
+}
 
 Write-Host "Target : $target"
 Write-Host "Schemas: $schemaList"
+
+if ($pgDump -and -not $dbUrl) {
+  throw @"
+pg_dump is installed ($pgDump) but no connection string is available.
+
+Set S2G_DB_URL, or put it in the gitignored file:
+    $repoRoot\.env.db
+as a single line:
+    S2G_DB_URL=postgresql://postgres.<ref>:<password>@aws-0-us-east-1.pooler.supabase.com:5432/postgres
+
+Copy it from Supabase -> Project Settings -> Database -> Connection string
+-> URI, with "Use connection pooling" ticked and mode Session (port 5432).
+Percent-encode any @ : / ? # & in the password.
+"@
+}
 
 if ($pgDump -and $dbUrl) {
   # Fastest and most faithful: pg_dump straight at the database, no Docker.
@@ -120,6 +161,18 @@ Write-Host "COPY blocks   : $copies"
 Write-Host "Looks like SQL: $([bool]($first -match '--|SET|CREATE|COPY'))"
 if ($size -lt 10240) { Write-Warning 'Dump is under 10 KB. That is almost certainly a failure, not a small database.' }
 if ($tables -eq 0)   { Write-Warning 'No CREATE TABLE statements. Schema did not land.' }
+# --- retention: keep the newest $KeepDumps, delete the rest -----------------
+$all = Get-ChildItem (Join-Path $resolvedOut 's2g-dump-*.sql') -ErrorAction SilentlyContinue |
+       Sort-Object LastWriteTime -Descending
+if ($all.Count -gt $KeepDumps) {
+  $old = $all | Select-Object -Skip $KeepDumps
+  foreach ($f in $old) {
+    Write-Host "Pruning old dump: $($f.Name)"
+    Remove-Item $f.FullName -Force
+  }
+}
+Write-Host "Dumps retained: $([math]::Min($all.Count, $KeepDumps)) of a $KeepDumps-day window"
+
 Write-Host ''
 Write-Host "Done: $target"
 Write-Host 'This file holds member data. Keep it out of the repo; never commit or push it.'
