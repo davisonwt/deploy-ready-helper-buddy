@@ -1,7 +1,7 @@
 import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2, Radio, MessageCircle, Volume2 } from 'lucide-react';
+import { X, Pencil, Menu, CalendarDays, Eye, LogOut, Share2, Radio, MessageCircle, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -438,12 +438,68 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   // were both already there and neither helped, because you cannot pan
   // towards something you have no idea exists.
   //
-  // It fits the width instead. The image is `w-full h-auto` and its
-  // wrapper is exactly that box, so the hotspots' plain x/y/w/h
-  // percentages still land correctly with no offset math, and every one is
-  // on screen the moment the interior opens.
+  // It fitted the width instead -- `w-full h-auto`. That put every hotspot
+  // on screen at once, but an interior is landscape (1216x816, 1536x1024)
+  // and a phone is not: at 393px wide the image came out 262px tall in a
+  // 660px window, a band across the top third with the stats strip under
+  // it and ~280px of black below that. Measured 2026-09-21 on Grove
+  // Station, J & T Photography and Davison's alike.
+  //
+  // So: full height, panned sideways again -- but the reason the ORIGINAL
+  // pan failed is written above and still applies. What is different is
+  // that the image is no longer a 2.9x strip in the window, and the pan
+  // now announces itself: edge fades plus a chevron on whichever side
+  // still has image on it, which is a standing affordance rather than the
+  // transient pill that did not help last time.
+  //
+  // The wrapper is still exactly the image's own box (`h-full w-max`
+  // around an `h-full w-auto` image, the same construction StallsFeedPage
+  // uses for a front card), so the hotspots' plain x/y/w/h percentages
+  // still land with no offset math -- and because the overlay sits INSIDE
+  // the panned wrapper, they track the image rather than the window.
   const mobileContainerRef = useRef<HTMLDivElement>(null);
   const mobileImgRef = useRef<HTMLImageElement>(null);
+  const mobilePanRef = useRef<HTMLDivElement>(null);
+  const mobileTopChromeRef = useRef<HTMLDivElement>(null);
+  /** Is there still image to the left / right of the current pan position? */
+  const [panMore, setPanMore] = useState({ left: false, right: false });
+
+  // The interior fills the viewport minus the chrome above and below it.
+  // The bar below is already measured (lib/layout/bottomChrome.ts); the
+  // block above is the 48px header PLUS the greeting pill row, which only
+  // exists on a stall that has a welcome note and whose height belongs to
+  // WelcomeGreetingPill, not here. Measured for the same reason
+  // bottomChrome measures: a hardcoded guess is right for one state and
+  // wrong for the other, and this one has two states.
+  useEffect(() => {
+    const el = mobileTopChromeRef.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const measure = () => {
+      const h = el.getBoundingClientRect().height;
+      // 0 means this branch is display:none (landscape/desktop), where the
+      // value is unused -- leave the fallback rather than publish a 0.
+      if (h > 0) root.style.setProperty('--stall-top-chrome-h', `${h}px`);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener('orientationchange', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('orientationchange', measure);
+      root.style.removeProperty('--stall-top-chrome-h');
+    };
+  }, [welcomeAudioUrl]);
+
+  /** Centre the pan on the image, and recompute which edges have more. */
+  const syncMobilePan = (centre: boolean) => {
+    const el = mobilePanRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    if (centre && max > 0) el.scrollLeft = max / 2;
+    setPanMore({ left: el.scrollLeft > 4, right: el.scrollLeft < max - 4 });
+  };
 
   // "New seeds" (supabase/migrations/20260912140000_stall_visits.sql) --
   // viewerCutoff is the viewer's own last_seen_at for THIS stall as of
@@ -735,12 +791,15 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           own max-lg:portrait:overflow-y-auto), same as before.
           Landscape phone and desktop keep the layout below unchanged. */}
       <div className="hidden max-lg:portrait:flex flex-col w-full">
+        {/* Header and greeting pill are ONE sticky block, measured as one
+            (mobileTopChromeRef) -- the interior below subtracts whatever
+            this actually comes to, so a stall with a welcome note and one
+            without both get an interior that ends exactly at the fold. */}
+        <div ref={mobileTopChromeRef} className="sticky top-0 z-20 shrink-0">
         {/* h-[48px] (a literal pixel value), not h-12 (3rem) -- below
             768px this app's own CSS drops the root font-size to 14px
-            (src/index.css), which would make h-12 render at 42px, 6px
-            short of the h-[calc(100dvh-48px)] the pan section below
-            subtracts against. Pixels on both sides keeps them exact. */}
-        <div className="sticky top-0 z-20 h-[48px] flex items-center justify-between gap-2 px-4 bg-[#0d0805]/95 backdrop-blur-sm border-b border-amber-500/15">
+            (src/index.css), which would make h-12 render at 42px. */}
+        <div className="h-[48px] flex items-center justify-between gap-2 px-4 bg-[#0d0805]/95 backdrop-blur-sm border-b border-amber-500/15">
           <button
             type="button"
             onClick={() => setIsNavDrawerOpen(true)}
@@ -875,21 +934,43 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
         {/* Beneath the name, not crammed into the row above -- that row is
             already ≡ + name + up to 3 more icons in a 48px bar, no room for
             a labelled pill without truncating the name down to nothing.
-            Sticky at the exact height of the row above so both stay
-            pinned together. */}
+            Inside the sticky block above, so both stay pinned together. */}
         {welcomeAudioUrl && (
-          <div className="sticky top-[48px] z-20 flex items-center justify-center px-4 py-1.5 bg-[#0d0805]/95 backdrop-blur-sm border-b border-amber-500/15">
+          <div className="flex items-center justify-center px-4 py-1.5 bg-[#0d0805]/95 backdrop-blur-sm border-b border-amber-500/15">
             <WelcomeGreetingPill isPlaying={isWelcomeAudioPlaying} onClick={handleReplayWelcomeAudio} />
           </div>
         )}
+        </div>
 
-        <div className="relative w-full">
-          <div ref={mobileContainerRef} className="relative w-full">
+        {/* Exactly one screenful: the interior ends at the fold, so the
+            stats panel below it is reached by scrolling rather than
+            sitting in the middle of a black void. */}
+        <div
+          className="relative shrink-0 w-full"
+          style={{ height: 'calc(100dvh - var(--stall-top-chrome-h, 48px) - var(--bottom-chrome-h, 0px))' }}
+        >
+          {/* No scroll-snap here, deliberately -- StallsFeedPage's front
+              card pairs `snap-x snap-mandatory` with a single `snap-center`
+              child because it WANTS to be pulled back to centre. An
+              interior has to reach its own edges, and a mandatory centre
+              snap is exactly what would stop it. */}
+          <div
+            ref={mobilePanRef}
+            data-pan-scroll
+            onScroll={() => syncMobilePan(false)}
+            className="h-full w-full overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            {/* h-full w-max around an h-full w-auto image: this box IS the
+                image's box, which is what keeps the percentage hotspots
+                below correct, and it is what scrolls, so they pan with it. */}
+            <div ref={mobileContainerRef} className="relative h-full w-max mx-auto">
               <SignedImg
                 ref={mobileImgRef}
                 src={interiorImageUrl}
                 alt={stallName}
-                className={`block w-full h-auto transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
+                onLoad={() => syncMobilePan(true)}
+                className={`block h-full w-auto max-w-none transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
               />
               {visibleHotspots.map((h, i) => (
                 <HotspotButton
@@ -906,12 +987,28 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
                   }}
                 />
               ))}
+            </div>
           </div>
+
+          {/* The affordance the first pan attempt lacked: a standing edge
+              fade + chevron on whichever side still has image on it, not a
+              pill that shows once and is gone. Fixed to the window, not the
+              image, so it stays put while the room slides underneath. */}
+          {panMore.left && (
+            <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-12 flex items-center justify-start bg-gradient-to-r from-black/70 to-transparent">
+              <ChevronLeft className="h-6 w-6 text-white/80 drop-shadow" />
+            </div>
+          )}
+          {panMore.right && (
+            <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-12 flex items-center justify-end bg-gradient-to-l from-black/70 to-transparent">
+              <ChevronRight className="h-6 w-6 text-white/80 drop-shadow" />
+            </div>
+          )}
 
           {showRoomHint && (
             <div className="pointer-events-none absolute inset-x-0 bottom-4 flex flex-col items-center gap-1.5">
               <span className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm">
-                👆 tap the things in the room
+                👆 tap the things in the room{(panMore.left || panMore.right) && ' — swipe to see more'}
               </span>
             </div>
           )}

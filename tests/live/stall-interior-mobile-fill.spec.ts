@@ -1,0 +1,233 @@
+import { test, expect, devices, type Page } from '@playwright/test';
+
+/**
+ * On mobile portrait the stall interior fills the screen.
+ *
+ * Before (measured live 2026-09-21 at 393x660): the image was `w-full
+ * h-auto`, so a 1216x816 interior came out 393x262 -- a band across the
+ * top 40%, the stats strip under it, and ~280px of black below that.
+ *
+ * After: header block, then the image at full remaining height, panned
+ * sideways, with the stats panel starting exactly at the fold.
+ *
+ * Run: npx playwright test --config=playwright.live.config.ts stall-interior-mobile-fill
+ *
+ * Creates nothing -- both stalls are published and already exist.
+ */
+
+const E = process.env.TEST_GOSAT_EMAIL;
+const P = process.env.TEST_GOSAT_PASSWORD;
+
+// 390x844 exactly, as reported.
+const PHONE = { ...devices['iPhone 12'] };
+
+/** A stall with in-image hotspots spread wide, and one with a welcome note. */
+const GROVE = '/stall/grovestation';
+const JT = '/stall/jtphotographer2';
+const DAVISON = '/stall/davison.taljaard';
+
+test.beforeAll(() => {
+  // Never a silent skip: if this cannot run, it says so and fails.
+  if (!E || !P) {
+    throw new Error(
+      'TEST_GOSAT_EMAIL / TEST_GOSAT_PASSWORD are not set. They live in .env.test, '
+      + 'which playwright.live.config.ts loads. This spec must not skip its way to green.',
+    );
+  }
+});
+
+async function login(page: Page) {
+  for (let i = 0; i < 2; i++) {
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
+    await page.fill('input[type="email"]', E!);
+    await page.fill('input[type="password"]', P!);
+    await page.click('button[type="submit"]');
+    const ok = await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 30000 })
+      .then(() => true).catch(() => false);
+    if (ok) return;
+  }
+  throw new Error('login failed');
+}
+
+/** Opens a stall interior, stepping through a front gate if there is one. */
+async function openInterior(page: Page, path: string) {
+  await page.goto(path, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(7000);
+  const enter = page.getByRole('button', { name: /^Enter/i }).first();
+  if (await enter.count()) {
+    await enter.tap();
+    await page.waitForTimeout(6000);
+  }
+  await page.waitForTimeout(2000);
+}
+
+/** Geometry of the interior as actually laid out. */
+function layout(page: Page) {
+  return page.evaluate(() => {
+    const pan = document.querySelector('[data-pan-scroll]') as HTMLElement | null;
+    const img = pan?.querySelector('img') as HTMLImageElement | null;
+    const panel = Array.from(document.querySelectorAll('button'))
+      .find((b) => /my stats|stall stats/i.test(b.innerText || ''));
+    const r = (el: Element | null | undefined) => {
+      if (!el) return null;
+      const b = el.getBoundingClientRect();
+      return { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height) };
+    };
+    return {
+      vw: window.innerWidth,
+      vh: window.innerHeight,
+      scrollY: window.scrollY,
+      docScrollH: document.documentElement.scrollHeight,
+      pan: r(pan),
+      img: r(img),
+      imgNatural: img ? `${img.naturalWidth}x${img.naturalHeight}` : null,
+      scrollLeft: pan ? Math.round(pan.scrollLeft) : null,
+      scrollWidth: pan ? Math.round(pan.scrollWidth) : null,
+      clientWidth: pan ? Math.round(pan.clientWidth) : null,
+      statsLabel: panel ? (panel.innerText || '').replace(/\s+/g, ' ').trim() : null,
+      stats: r(panel),
+      greetingPill: r(Array.from(document.querySelectorAll('button'))
+        .find((b) => /greeting|replay/i.test(b.innerText || '') || /greeting/i.test(b.getAttribute('aria-label') || ''))),
+      topChromeVar: getComputedStyle(document.documentElement).getPropertyValue('--stall-top-chrome-h').trim(),
+    };
+  });
+}
+
+/** Every in-image hotspot (excludes the header/chrome controls). */
+function hotspots(page: Page) {
+  return page.evaluate(() => {
+    const chrome = ['Close', 'Close shelf', 'Leave stall', 'Log out', 'Open menu', 'Owner menu',
+      'Share this stall', 'Dismiss banner', 'Message the sower', 'Exit visitor view',
+      'Open Today, Omer & Growth'];
+    const pan = document.querySelector('[data-pan-scroll]');
+    return Array.from(pan?.querySelectorAll('button[aria-label]') ?? [])
+      .filter((b) => !chrome.includes(b.getAttribute('aria-label') || ''))
+      .map((b) => b.getAttribute('aria-label') || '');
+  });
+}
+
+for (const [name, path] of [['Grove Station', GROVE], ['J & T Photography', JT]] as const) {
+  test(`${name}: the interior fills the screen, no band and no void`, async ({ browser }) => {
+    const ctx = await browser.newContext({ ...PHONE });
+    const page = await ctx.newPage();
+    await login(page);
+    await openInterior(page, path);
+
+    const g = await layout(page);
+    console.log(`[${name}] ${JSON.stringify(g)}`);
+    await page.screenshot({ path: `test-results/interior-fill-${path.split('/').pop()}.png` });
+
+    expect(g.vw, 'viewport width').toBe(390);
+    expect(g.pan, 'no pan container -- the mobile portrait branch did not render').not.toBeNull();
+
+    // The interior reaches the fold: top chrome + interior == one screen,
+    // give or take the bottom chrome and a rounding pixel.
+    const bottomOfInterior = g.pan!.y + g.pan!.h;
+    expect(bottomOfInterior, `interior ends at ${bottomOfInterior} of a ${g.vh}px screen -- that is the band`)
+      .toBeGreaterThanOrEqual(g.vh - 8);
+    expect(g.pan!.y, 'the interior should start right under the header block').toBeLessThanOrEqual(120);
+
+    // Image is full-height, and wider than the window (landscape interior).
+    expect(g.img!.h, 'the image does not fill the interior height').toBeGreaterThanOrEqual(g.pan!.h - 2);
+    expect(g.scrollWidth!, 'the image is not wider than the window, so nothing to pan')
+      .toBeGreaterThan(g.clientWidth!);
+
+    // Opens centred, not pinned to an edge.
+    const max = g.scrollWidth! - g.clientWidth!;
+    expect(Math.abs(g.scrollLeft! - max / 2), 'the pan did not open centred').toBeLessThanOrEqual(8);
+
+    // Stats sit below the fold, not in the middle of a void.
+    expect(g.stats, 'the stats strip is missing').not.toBeNull();
+    expect(g.stats!.y, 'the stats strip is above the fold -- it should be scrolled to')
+      .toBeGreaterThanOrEqual(g.vh - 8);
+    await ctx.close();
+  });
+
+  test(`${name}: pan reaches both edges and every hotspot opens`, async ({ browser }) => {
+    const ctx = await browser.newContext({ ...PHONE });
+    const page = await ctx.newPage();
+    await login(page);
+    await openInterior(page, path);
+
+    const labels = await hotspots(page);
+    console.log(`[${name}] hotspots: ${JSON.stringify(labels)}`);
+    expect(labels.length, 'no in-image hotspots found to test').toBeGreaterThan(0);
+
+    // Both edges are reachable.
+    const edges = await page.evaluate(() => {
+      const pan = document.querySelector('[data-pan-scroll]') as HTMLElement;
+      const max = pan.scrollWidth - pan.clientWidth;
+      pan.scrollLeft = 0; const atLeft = Math.round(pan.scrollLeft);
+      pan.scrollLeft = max; const atRight = Math.round(pan.scrollLeft);
+      pan.scrollLeft = max / 2;
+      return { max, atLeft, atRight };
+    });
+    console.log(`[${name}] edges: ${JSON.stringify(edges)}`);
+    expect(edges.atLeft, 'could not pan to the left edge').toBe(0);
+    expect(edges.atRight, 'could not pan to the right edge').toBe(edges.max);
+
+    // Each hotspot opens its shelf and closes back to the interior.
+    for (const label of labels) {
+      const btn = page.getByRole('button', { name: label, exact: true }).first();
+      await btn.tap(); // auto-pans the hotspot into view first
+      await page.waitForTimeout(2800);
+      const opened = await page.evaluate(() =>
+        /stall-kind=/.test(location.hash) || !!document.querySelector('[role="dialog"]'));
+      const close = page.getByRole('button', { name: 'Close shelf', exact: true }).first();
+      const hasClose = await close.count();
+      console.log(`[${name}] "${label}": opened=${opened} closeControl=${hasClose}`);
+      expect(opened, `"${label}" did not open its shelf`).toBe(true);
+      expect(hasClose, `"${label}" opened with no way to close it`).toBeGreaterThan(0);
+      await close.tap();
+      await page.waitForTimeout(2200);
+      const left = await page.evaluate(() => !/\/stall\//.test(location.pathname));
+      expect(left, `closing "${label}" left the stall`).toBe(false);
+    }
+    await ctx.close();
+  });
+}
+
+test('the stats strip reads MY STATS and expands', async ({ browser }) => {
+  const ctx = await browser.newContext({ ...PHONE });
+  const page = await ctx.newPage();
+  await login(page);
+  await openInterior(page, GROVE);
+
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(2000);
+  const g = await layout(page);
+  console.log('[stats] ' + JSON.stringify({ label: g.statsLabel, y: g.stats?.y, vh: g.vh }));
+  expect(g.statsLabel, 'the strip still names the stall, not the viewer').toMatch(/MY STATS/i);
+  expect(g.statsLabel, 'it should no longer read "stall stats"').not.toMatch(/STALL STATS/i);
+
+  const before = await page.evaluate(() => document.documentElement.scrollHeight);
+  await page.getByRole('button', { name: /my stats/i }).first().tap();
+  await page.waitForTimeout(2200);
+  const after = await page.evaluate(() => document.documentElement.scrollHeight);
+  console.log(`[stats] scrollHeight ${before} -> ${after}`);
+  await page.screenshot({ path: 'test-results/interior-fill-stats-expanded.png' });
+  expect(after, 'tapping the strip did not expand the panel').toBeGreaterThan(before);
+  await ctx.close();
+});
+
+test('a stall with a welcome note shows its greeting pill without scrolling', async ({ browser }) => {
+  const ctx = await browser.newContext({ ...PHONE });
+  const page = await ctx.newPage();
+  await login(page);
+  await openInterior(page, DAVISON);
+
+  const g = await layout(page);
+  console.log('[greeting] ' + JSON.stringify({ pill: g.greetingPill, topChrome: g.topChromeVar, pan: g.pan, vh: g.vh }));
+  await page.screenshot({ path: 'test-results/interior-fill-greeting.png' });
+
+  expect(g.greetingPill, 'the replay-greeting pill is not rendered').not.toBeNull();
+  expect(g.greetingPill!.y, 'the greeting pill is off screen at rest').toBeLessThan(g.vh);
+  expect(g.greetingPill!.y, 'the greeting pill needs scrolling to reach').toBeGreaterThanOrEqual(0);
+  // The measured top chrome must actually include the pill row, or the
+  // interior below would overshoot the fold by exactly the pill's height.
+  expect(g.topChromeVar, '--stall-top-chrome-h was never published').toMatch(/px$/);
+  expect(parseFloat(g.topChromeVar), 'top chrome measured as header-only, pill not counted')
+    .toBeGreaterThan(48);
+  expect(g.pan!.y, 'the interior starts above the pill').toBeGreaterThanOrEqual(parseFloat(g.topChromeVar) - 2);
+  await ctx.close();
+});

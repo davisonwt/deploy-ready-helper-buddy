@@ -134,6 +134,12 @@ export default function StallTodayPanel({ className = '', stacked = false, owner
         // stall image itself off-screen on mobile portrait. Tap anywhere
         // on the strip toggles; desktop/landscape (stacked=false) never
         // renders this at all, so nothing here touches that layout.
+        //
+        // "My stats", not "Stall stats": the balance in it is the VIEWER's
+        // own wallet (useLiveWalletBalance on user.solana_wallet_address),
+        // whoever's stall this is. Confirmed live 2026-09-21 -- the same
+        // $14.27 showed on Grove Station and J & T Photography -- where
+        // "Stall stats" reads as the owner's money.
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
@@ -148,7 +154,7 @@ export default function StallTodayPanel({ className = '', stacked = false, owner
             </span>
           )}
           <span className="flex-1 min-w-0 truncate text-right font-serif tracking-[0.1em] uppercase text-amber-400/70">
-            Stall stats
+            My stats
           </span>
           <ChevronDown className={`h-4 w-4 shrink-0 text-amber-400/70 transition-transform ${collapsed ? '' : 'rotate-180'}`} />
         </button>
