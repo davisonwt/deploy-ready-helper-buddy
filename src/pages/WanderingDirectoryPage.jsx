@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from '../hooks/useAuth'
 import WanderingMemberCard from '@/components/wandering/WanderingMemberCard'
 
+// Card links point back into this directory, filtered by role.
+// /wandering/<role>/<id> is NOT a route -- there is no per-member detail
+// page -- and neither is /wandering/<role>. Both used to be emitted and
+// both 404'd; see RegisterWanderingPage.tsx for the share link that
+// carried a valid referral code to a dead path.
 const ROLES = [
   { key: 'all', label: 'All', emoji: '🌿' },
   { key: 'wheel', label: 'Wandering Wheel', emoji: '🚗', table: 'wandering_roles' },
@@ -26,7 +31,14 @@ const ROLE_COLORS = {
 export default function WanderingDirectoryPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [activeRole, setActiveRole] = useState('all')
+  // ?role=<key> preselects a role, so a shared door link lands on the
+  // role it names instead of the unfiltered list. Unknown or absent falls
+  // back to 'all' rather than showing an empty directory.
+  const [searchParams] = useSearchParams()
+  const requestedRole = searchParams.get('role')
+  const [activeRole, setActiveRole] = useState(
+    ROLES.some(r => r.key === requestedRole) ? requestedRole : 'all'
+  )
   const [search, setSearch] = useState('')
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -210,7 +222,7 @@ export default function WanderingDirectoryPage() {
               tagline={m.tagline || getDesc(m)}
               photoUrl={getAvatar(m)}
               galleryUrls={m.gallery_urls}
-              linkTo={m._role === 'heart' ? '/tribal-hearts' : `/wandering/${m._role}/${m.id}`}
+              linkTo={m._role === 'heart' ? '/tribal-hearts' : `/wandering-directory?role=${m._role}`}
               bookLabel={m._role === 'heart' ? 'Connect' : m._role === 'whisperer' ? 'Invite' : 'Book'}
             />
           ))}

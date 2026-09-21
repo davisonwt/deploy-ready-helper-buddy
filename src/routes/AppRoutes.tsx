@@ -235,10 +235,25 @@ function LegacyChatRoomIdRedirect() {
 // invitation was for. The ref is carried across explicitly rather than
 // left to useReferralCapture(), so attribution does not depend on
 // localStorage being writable.
+const WANDERING_ROLES = new Set([
+  'wheel', 'hand', 'whisperer', 'pillow', 'field', 'heart', 'forge', 'story', 'hearth',
+]);
+
 function LegacyWanderingRedirect() {
   const location = useLocation();
   const ref = new URLSearchParams(location.search).get('ref');
-  return <Navigate to={ref ? `/register?ref=${encodeURIComponent(ref)}` : '/register'} replace />;
+  // /wandering/<role> and /wandering/<role>/<id> were emitted by
+  // RegisterWanderingPage's share as a member's "door". They resolve to
+  // the directory filtered to that role -- which is what the door was
+  // always meant to be. Sending these to /register instead would have
+  // bounced a signed-in member off their own share link.
+  const role = location.pathname.split('/')[2]?.toLowerCase();
+  const base = role && WANDERING_ROLES.has(role)
+    ? (role === 'heart' ? '/tribal-hearts' : `/wandering-directory?role=${encodeURIComponent(role)}`)
+    : '/register';
+  if (!ref) return <Navigate to={base} replace />;
+  const sep = base.includes('?') ? '&' : '?';
+  return <Navigate to={`${base}${sep}ref=${encodeURIComponent(ref)}`} replace />;
 }
 
 const AppRoutes = () => (

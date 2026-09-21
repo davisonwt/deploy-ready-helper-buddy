@@ -217,7 +217,15 @@ export default function RegisterWanderingPage() {
   }
 
   const meta = ROLE_META[role];
-  const doorLink = `/wandering/${role}`;
+  // /wandering/<role> has never been a route in this app. It was still
+  // handed to the share dialog below as `openPath`, so every "share my
+  // door" produced https://sow2growapp.com/wandering/<role>?ref=<code> --
+  // a correctly-referred link to a 404. Two of those are recorded in the
+  // database: davison.taljaard's /wandering/wheel on 2026-09-16 and
+  // chariwellnesspro's /wandering/pillow on 2026-09-21, the exact URL
+  // reported. The referral code on them was never the problem; the path
+  // was. The directory IS the door, filtered to this role.
+  const doorLink = `/wandering-directory?role=${role}`;
 
   const handleSubmit = async () => {
     if (!user) { toast.error('Please log in to unlock this role.'); return; }
