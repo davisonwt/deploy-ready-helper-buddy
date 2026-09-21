@@ -24,7 +24,10 @@ const PHONE = { ...devices['iPhone 12'] };
 /** A stall with in-image hotspots spread wide, and one with a welcome note. */
 const GROVE = '/stall/grovestation';
 const JT = '/stall/jtphotographer2';
-const DAVISON = '/stall/davison.taljaard';
+// The ONLY stall in the feed carrying a welcome note, checked across all
+// 16 published stalls on 2026-09-21. Davison's has none, so it proves
+// nothing about the pill.
+const WITH_GREETING = '/stall/primitivevsns';
 
 test.beforeAll(() => {
   // Never a silent skip: if this cannot run, it says so and fails.
@@ -166,22 +169,37 @@ for (const [name, path] of [['Grove Station', GROVE], ['J & T Photography', JT]]
     expect(edges.atLeft, 'could not pan to the left edge').toBe(0);
     expect(edges.atRight, 'could not pan to the right edge').toBe(edges.max);
 
-    // Each hotspot opens its shelf and closes back to the interior.
+    // Each hotspot does its job. Two kinds exist and both count as
+    // working: a shelf hotspot opens its sheet (J & T's album covers), and
+    // a 'nav' hotspot leaves for its wired destination instead -- Grove
+    // Station's On Air / Schedule / Shows / Advertise, wired in ddaae675,
+    // never open a sheet at all (StallInteriorView.handleHotspotTap).
     for (const label of labels) {
       const btn = page.getByRole('button', { name: label, exact: true }).first();
       await btn.tap(); // auto-pans the hotspot into view first
       await page.waitForTimeout(2800);
-      const opened = await page.evaluate(() =>
-        /stall-kind=/.test(location.hash) || !!document.querySelector('[role="dialog"]'));
-      const close = page.getByRole('button', { name: 'Close shelf', exact: true }).first();
-      const hasClose = await close.count();
-      console.log(`[${name}] "${label}": opened=${opened} closeControl=${hasClose}`);
-      expect(opened, `"${label}" did not open its shelf`).toBe(true);
-      expect(hasClose, `"${label}" opened with no way to close it`).toBeGreaterThan(0);
-      await close.tap();
-      await page.waitForTimeout(2200);
-      const left = await page.evaluate(() => !/\/stall\//.test(location.pathname));
-      expect(left, `closing "${label}" left the stall`).toBe(false);
+      const after = await page.evaluate(() => ({
+        sheet: /stall-kind=/.test(location.hash) || !!document.querySelector('[role="dialog"]'),
+        path: location.pathname,
+      }));
+      const navigated = !/^\/stall\//.test(after.path);
+      console.log(`[${name}] "${label}": sheet=${after.sheet} navigatedTo=${navigated ? after.path : '-'}`);
+      expect(
+        after.sheet || navigated,
+        `"${label}" did nothing at all -- no shelf opened and no navigation`,
+      ).toBe(true);
+
+      if (after.sheet) {
+        const close = page.getByRole('button', { name: 'Close shelf', exact: true }).first();
+        expect(await close.count(), `"${label}" opened with no way to close it`).toBeGreaterThan(0);
+        await close.tap();
+        await page.waitForTimeout(2200);
+        const left = await page.evaluate(() => !/\/stall\//.test(location.pathname));
+        expect(left, `closing "${label}" left the stall`).toBe(false);
+      } else {
+        // Went somewhere: come back and carry on down the list.
+        await openInterior(page, path);
+      }
     }
     await ctx.close();
   });
@@ -193,17 +211,31 @@ test('the stats strip reads MY STATS and expands', async ({ browser }) => {
   await login(page);
   await openInterior(page, GROVE);
 
-  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  // The interior is a `fixed inset-0` overlay that owns its own
+  // overflow-y-auto -- the document itself never scrolls here, so
+  // window.scrollTo and documentElement.scrollHeight both measure nothing.
+  const scrollToBottom = () => page.evaluate(() => {
+    let el = document.querySelector('[data-pan-scroll]')?.parentElement ?? null;
+    while (el && el.scrollHeight <= el.clientHeight) el = el.parentElement;
+    if (!el) throw new Error('no scrolling ancestor found above the interior');
+    el.scrollTop = el.scrollHeight;
+    return { scrollHeight: el.scrollHeight, clientHeight: el.clientHeight };
+  });
+
+  const scrolled = await scrollToBottom();
   await page.waitForTimeout(2000);
   const g = await layout(page);
-  console.log('[stats] ' + JSON.stringify({ label: g.statsLabel, y: g.stats?.y, vh: g.vh }));
+  console.log('[stats] ' + JSON.stringify({ label: g.statsLabel, y: g.stats?.y, vh: g.vh, ...scrolled }));
   expect(g.statsLabel, 'the strip still names the stall, not the viewer').toMatch(/MY STATS/i);
   expect(g.statsLabel, 'it should no longer read "stall stats"').not.toMatch(/STALL STATS/i);
+  // Scrolled to the bottom, the strip is now on screen -- proving it was
+  // reachable rather than stranded past the end of the scroll.
+  expect(g.stats!.y, 'the stats strip cannot be scrolled into view').toBeLessThan(g.vh);
 
-  const before = await page.evaluate(() => document.documentElement.scrollHeight);
+  const before = scrolled.scrollHeight;
   await page.getByRole('button', { name: /my stats/i }).first().tap();
   await page.waitForTimeout(2200);
-  const after = await page.evaluate(() => document.documentElement.scrollHeight);
+  const after = (await scrollToBottom()).scrollHeight;
   console.log(`[stats] scrollHeight ${before} -> ${after}`);
   await page.screenshot({ path: 'test-results/interior-fill-stats-expanded.png' });
   expect(after, 'tapping the strip did not expand the panel').toBeGreaterThan(before);
@@ -214,7 +246,7 @@ test('a stall with a welcome note shows its greeting pill without scrolling', as
   const ctx = await browser.newContext({ ...PHONE });
   const page = await ctx.newPage();
   await login(page);
-  await openInterior(page, DAVISON);
+  await openInterior(page, WITH_GREETING);
 
   const g = await layout(page);
   console.log('[greeting] ' + JSON.stringify({ pill: g.greetingPill, topChrome: g.topChromeVar, pan: g.pan, vh: g.vh }));
