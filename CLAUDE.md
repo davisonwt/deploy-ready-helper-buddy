@@ -330,6 +330,27 @@ a change applied to four of them leaves three doors open and reads as done.
 - Live in `supabase/functions/`. Required env vars for payment functions are documented in `README.md`.
 - Treat RLS policies as part of the security surface — don't bypass them from client code.
 
+## Session reporting rules
+
+These are about the session, not the code. They exist because a silent
+agent is indistinguishable from a stalled one.
+
+1. **Never end a turn on a silent wait.** If something is running, say what
+   it is, how long it has been going, the ETA, and when the next update
+   lands. "Running the typecheck (~10 min, started 14:02, next update when
+   it exits)" -- never a turn that just stops with work in flight.
+2. **Every wakeup while a task is running gets one status line.** One. Not
+   a re-plan, not a re-derivation of what is already known.
+3. **The moment a background task completes, its report is the FIRST
+   output** of that turn, before anything else is picked up.
+4. **"status?" means the status table and nothing else.** No tool calls, no
+   side work, no starting the next thing.
+5. **A new task arriving while work is pending:** say what is pending,
+   deliver any results not yet reported, then say whether the new task is
+   queued or runs in parallel -- all of that BEFORE starting it.
+6. **A re-pasted prompt for work already done** gets a one-line pointer to
+   the existing report. Do not re-run it.
+
 ## Speed rules
 1. Never stash/revert source to prove a test fails before restoring it. Trust the diff.
 2. No hermetic fixtures when `.env.test` creds exist — test against the live `TEST_BASE_URL` instead.
