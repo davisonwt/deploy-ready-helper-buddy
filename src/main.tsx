@@ -27,6 +27,7 @@ import { CryptoComProvider } from '@/providers/CryptoComProvider';
 import { clearRoleCache } from '@/hooks/useUserRoles';
 import {
   reloadOnceForStaleChunk,
+  requestGuardedReload,
   noteModulePreloadFailure,
   markAppLoadedSuccessfully,
 } from '@/lib/staleChunkReload';
@@ -113,13 +114,16 @@ if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
   // every new visitor. Only reload when a controller already existed
   // BEFORE this script ran, i.e. an old SW from a previous visit is being
   // replaced, not installed for the first time.
+  //
+  // Routed through the shared guard (lib/staleChunkReload.ts) rather than
+  // reloading outright: a tab resuming after a day of deploys can reach
+  // this AND a stale-chunk failure within the same second, and two
+  // independent reloads read as a loop from the member's side. Whichever
+  // arrives first spends the budget; the other is a no-op.
   const hadControllerAlready = !!navigator.serviceWorker.controller;
-  let refreshingForNewServiceWorker = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!hadControllerAlready) return;
-    if (refreshingForNewServiceWorker) return;
-    refreshingForNewServiceWorker = true;
-    window.location.reload();
+    requestGuardedReload('service-worker-controllerchange');
   });
 
   window.addEventListener('load', () => {

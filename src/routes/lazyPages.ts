@@ -1,9 +1,16 @@
 // Centralized lazy-loaded page imports.
 // Extracted verbatim from src/App.tsx — no behavioural changes.
 import React, { lazy } from 'react';
+import { noteModulePreloadFailure, requestGuardedReload } from '@/lib/staleChunkReload';
 
-// Retries a dynamic import once, then force-reloads the page.
-// Guards against stale chunk hashes after a new deploy.
+// Reloads once for a chunk that no longer exists after a deploy.
+//
+// This used to keep its own `chunk-retry:<key>` flag, one per page, which
+// meant each wrapped route carried a private reload budget that nothing
+// else could see -- four routes, four extra reloads available on top of
+// the shared guard's own. Same single budget as every other recovery path
+// now (lib/staleChunkReload.ts). When the guard refuses, the error is
+// rethrown so the boundary shows its card instead of the tab cycling.
 function lazyWithRetry<T extends { default: React.ComponentType<any> }>(
   factory: () => Promise<T>,
   key: string
@@ -12,14 +19,13 @@ function lazyWithRetry<T extends { default: React.ComponentType<any> }>(
     try {
       return await factory();
     } catch (error) {
-      const storageKey = `chunk-retry:${key}`;
-      const alreadyRetried = sessionStorage.getItem(storageKey);
-      if (!alreadyRetried) {
-        sessionStorage.setItem(storageKey, '1');
-        window.location.reload();
+      // A chunk demonstrably failed to load. Recorded unconditionally so
+      // ErrorBoundary can recognise the generic TypeError React.lazy
+      // raises moments later as this same failure.
+      noteModulePreloadFailure();
+      if (requestGuardedReload(`lazy-chunk:${key}`)) {
         return await new Promise<T>(() => {});
       }
-      sessionStorage.removeItem(storageKey);
       throw error;
     }
   });

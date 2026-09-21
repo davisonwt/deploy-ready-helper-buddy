@@ -122,10 +122,34 @@ export function markAppLoadedSuccessfully(): void {
  * the page is navigating away" and not also log or render an error state).
  */
 export function reloadOnceForStaleChunk(): boolean {
+  return requestGuardedReload('stale-chunk');
+}
+
+/**
+ * The ONE automatic reload in the app. Every path that wants to recover a
+ * tab by reloading it goes through here, so they share a single budget
+ * instead of each spending their own.
+ *
+ * Nothing about a member's morning is improved by a second opinion on
+ * whether to reload. Before this, three paths reloaded independently --
+ * this guard, lazyPages.ts's own per-chunk `chunk-retry:<key>` flag, and
+ * main.tsx's service-worker `controllerchange` handler, which reloaded
+ * unconditionally. A phone resuming a tab left open across a day of
+ * deploys could take all three in a row, which is what "spontaneous
+ * reloads" looked like from the member's side on 2026-09-21.
+ *
+ * A manual reload (BuildUpdateBanner's "Refresh to update", the error
+ * card's "Reload Page") is deliberately NOT routed through here -- a
+ * member who asks for a refresh gets one, every time.
+ */
+export function requestGuardedReload(reason: string): boolean {
   const now = Date.now();
   const last = readReloadAt();
   if (last > 0 && now - last < RELOAD_COOLDOWN_MS) return false;
   writeReloadAt(now);
+  // Left in place on purpose: when a member reports a reload, this is the
+  // only record of which path spent it.
+  console.warn(`[s2g] reloading once to recover: ${reason}`);
   window.location.reload();
   return true;
 }
