@@ -178,6 +178,59 @@ green gets trusted.
   `test.skip` against the names `.env.test` actually defines. Note that
   `?? ''` is NOT a default; it is exactly what makes the skip fire.
 
+## Golden rule: a live spec never mutates real member data
+
+A spec may edit, pause, publish, archive or delete **only rows it created
+itself, this run, under its own QA title**. The founder's account is not
+an exception -- `TEST_GOSAT_EMAIL` is `davison.taljaard@icloud.com`, a
+real member with real listings and a real stall, and 36 live specs sign
+in as him.
+
+Read his rows freely. Never write to them.
+
+"Act on it and put it back afterwards" is not a safe pattern and is not
+allowed. Both attempts at it in this repo failed open, and both failed
+**silently**:
+
+- **2026-09-22** -- `my-listings` test 4 clicked "Make unavailable" on
+  "Silver Hyundai Venue", then failed on the next assertion, so the
+  re-enable never ran. Its `afterAll` net looked for a "Make available"
+  button, found none, did nothing and logged nothing. The listing left
+  `/sleeping?tab=wheels` (the RPC requires `and d.availability`) while
+  still showing in My Listings, which is exactly how the owner found it.
+  The same spec did the same thing on **2026-09-17**.
+- **2026-09-22** -- `stall-hotspot-editor` deleted the mugs shelf from his
+  stall and published. Its header said "the caller restores the row
+  afterwards". There was no caller and no restore. Hotspots went 11 -> 10.
+
+The second one carries the sharper lesson: the obvious repair,
+re-running `scripts/studio/add-mug-hotspot.sql`, would have restored the
+**template's** box -- label "Mugs", x 11.5, w 6.5 -- when what was lost
+was the owner's own, renamed, moved and resized ("Coffee Mugs", x 3.697,
+w 12). The count would have read 11 again and his placement would have
+been gone. Restore from the dump, never from the thing that looks like
+it.
+
+How to do it instead, both now in `tests/live/support/fixtures.ts`:
+
+- Need a listing to edit, pause or delete? `createWheelListing()` makes
+  one and `sweepProducts()` removes it in `afterAll`.
+- Need a hotspot to delete? `addHotspot()` appends yours;
+  `restoreHotspots()` puts the whole array back **unconditionally** in
+  `afterAll` and fails loudly if the row does not come back the right
+  length.
+- Teardown belongs in `afterAll`, never in a final test: these files are
+  `test.describe.serial`, so one failure marks every later test "did not
+  run" and a cleanup test is skipped on exactly the runs that leak.
+- Scope every destructive locator to the fixture's own card, and assert
+  the target contains the QA title before clicking. `.first()` on an
+  unscoped locator took a real listing offline on 2026-09-17.
+
+Row counts do not catch this class of damage. A paused listing and a
+deleted hotspot both leave the counts unchanged, which is why the
+residue check now also asserts per-listing `availability` and `status`
+and per-stall `hotspots`/`tiles` lengths.
+
 ## Test fixtures
 Live verifications create their own fixtures at run start and **DELETE
 them at run end**. No test stall, seed, slot, or upload may outlive its
