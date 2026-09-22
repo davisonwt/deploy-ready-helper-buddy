@@ -39,7 +39,7 @@ const WHOLE = 'The Whole Shelf';
 let client: Awaited<ReturnType<typeof asUser>>['client'];
 let userId: string;
 let stallId: string;
-let interiorObjectPath: string;
+let objectPaths: string[] = [];
 let seedIds: string[] = [];
 let username = 'davisontest1';
 
@@ -58,7 +58,7 @@ test.describe.serial('per-hotspot seed subsets', () => {
 
     const created = await createStallFixture(client, userId, `QA Subset Stall ${STAMP}`);
     stallId = created.stallId;
-    interiorObjectPath = created.interiorObjectPath;
+    objectPaths = created.objectPaths;
 
     await setStallHotspots(client, stallId, [
       { id: 'qa-box-a', kind: 'books', label: NOOK, x: 5, y: 55, w: 22, h: 30, seed_ids: [seedIds[0], seedIds[1]] },
@@ -71,9 +71,9 @@ test.describe.serial('per-hotspot seed subsets', () => {
   test.afterAll(async () => {
     if (!client) return;
     if (stallId) await deleteStallFixture(client, stallId);
-    if (interiorObjectPath) {
-      const objects = await sweepStorage(client, 'stalls', [interiorObjectPath]);
-      console.log(`[TEARDOWN] interior image removed (${objects} object)`);
+    if (objectPaths.length) {
+      const objects = await sweepStorage(client, 'stalls', objectPaths);
+      console.log(`[TEARDOWN] stall images removed (${objects} of ${objectPaths.length} objects)`);
     }
     const swept = await sweepProducts(client, userId, TITLES);
     reportSweep('stall-hotspot-subsets', swept);

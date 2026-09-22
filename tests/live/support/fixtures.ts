@@ -1,6 +1,5 @@
 import type { Page } from '@playwright/test';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { deflateSync as zlibDeflate } from 'node:zlib';
 
 export const SUPA = 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
 export const PUBKEY = 'sb_publishable_Z8-I1gu2Q1yid1Q4jKRf7Q_jSGcsVpa';
@@ -470,44 +469,75 @@ export async function sweepTrackedUploads(
  * ------------------------------------------------------------------ */
 
 /**
- * A real 640x360 PNG, built here rather than embedded as 5KB of base64.
+ * A real 640x360 image, built here rather than embedded as base64.
  *
  * It has to be a genuine image with genuine dimensions: the interior's
  * hotspots are percentages of the RENDERED image box (useContainImageRect),
  * so a 1x1 placeholder gives the boxes nothing to be a percentage of and
  * nothing paints.
+ *
+ * GIF, not PNG: the `stalls` bucket's allowed_mime_types is
+ * image/webp + image/gif (plus audio/video/pdf) and REJECTS image/png
+ * outright -- "mime type image/png is not supported", which is how the
+ * first run of this spec failed. GIF is the one still-simple format on
+ * that list.
+ *
+ * The LZW here is the legal "uncompressed" form: every code is 9 bits and
+ * a CLEAR is emitted every 254 literals, before the decoder's dictionary
+ * could ever need a 10th bit. Verified by decoding it in real Chromium
+ * (naturalWidth 640, naturalHeight 360) rather than assumed.
  */
-function interiorPng(): Buffer {
-  const W = 640, H = 360;
-  const raw = Buffer.alloc((W * 3 + 1) * H);
-  let o = 0;
-  for (let y = 0; y < H; y++) {
-    raw[o++] = 0; // filter: none
-    for (let x = 0; x < W; x++) { raw[o++] = 40 + ((x * 40 / W) | 0); raw[o++] = 26; raw[o++] = 12; }
+function interiorGif(W = 640, H = 360): Buffer {
+  const head = Buffer.alloc(13);
+  head.write('GIF89a', 0, 'ascii');
+  head.writeUInt16LE(W, 6);
+  head.writeUInt16LE(H, 8);
+  head[10] = 0xF7; // global colour table present, 256 entries
+  head[11] = 0;
+  head[12] = 0;
+
+  const gct = Buffer.alloc(256 * 3);
+  for (let i = 0; i < 256; i++) {
+    gct[i * 3] = 20 + (i >> 2); gct[i * 3 + 1] = 12 + (i >> 3); gct[i * 3 + 2] = 8 + (i >> 4);
   }
-  const table: number[] = [];
-  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; table[n] = c >>> 0; }
-  const crc = (b: Buffer) => { let c = 0xFFFFFFFF; for (const x of b) c = table[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
-  const chunk = (type: string, data: Buffer) => {
-    const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
-    const td = Buffer.concat([Buffer.from(type), data]);
-    const cr = Buffer.alloc(4); cr.writeUInt32BE(crc(td));
-    return Buffer.concat([len, td, cr]);
+
+  const desc = Buffer.alloc(10);
+  desc[0] = 0x2C;
+  desc.writeUInt16LE(0, 1); desc.writeUInt16LE(0, 3);
+  desc.writeUInt16LE(W, 5); desc.writeUInt16LE(H, 7);
+  desc[9] = 0;
+
+  const CLEAR = 256, END = 257, BITS = 9;
+  const out: number[] = [];
+  let acc = 0, nbits = 0;
+  const emit = (code: number) => {
+    acc |= code << nbits; nbits += BITS;
+    while (nbits >= 8) { out.push(acc & 0xFF); acc >>= 8; nbits -= 8; }
   };
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(W, 0); ihdr.writeUInt32BE(H, 4); ihdr[8] = 8; ihdr[9] = 2; // 8-bit truecolour
-  return Buffer.concat([
-    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
-    chunk('IHDR', ihdr),
-    chunk('IDAT', zlibDeflate(raw)),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
+
+  emit(CLEAR);
+  let since = 0;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      emit(((x * 255 / W) | 0) & 0xFF);
+      if (++since === 254) { emit(CLEAR); since = 0; }
+    }
+  }
+  emit(END);
+  if (nbits > 0) out.push(acc & 0xFF);
+
+  const blocks: Buffer[] = [];
+  for (let i = 0; i < out.length; i += 255) {
+    const slice = out.slice(i, i + 255);
+    blocks.push(Buffer.from([slice.length]), Buffer.from(slice));
+  }
+  return Buffer.concat([head, gct, desc, Buffer.from([8]), ...blocks, Buffer.from([0x00, 0x3B])]);
 }
 
 /** Create a stall owned by `userId`. Fails loudly if one already exists, rather than adopting a member's real row. */
 export async function createStallFixture(
   client: SupabaseClient, userId: string, name: string,
-): Promise<{ stallId: string; interiorObjectPath: string }> {
+): Promise<{ stallId: string; objectPaths: string[] }> {
   const { data: existing } = await client.from('stalls').select('id, name').eq('user_id', userId).maybeSingle();
   if (existing) {
     throw new Error(
@@ -515,14 +545,24 @@ export async function createStallFixture(
       'This fixture refuses to touch a row it did not create -- remove the leftover first.',
     );
   }
-  // stalls_images_own_folder_only requires the URL to sit under this
-  // member's own folder in the stalls bucket -- not a borrowed image.
-  const interiorObjectPath = `${userId}/qa-interior-${Date.now()}.png`;
-  const { error: upErr } = await client.storage
-    .from('stalls')
-    .upload(interiorObjectPath, interiorPng(), { contentType: 'image/png', upsert: false });
-  if (upErr) throw new Error(`[fixtures] could not upload a fixture interior: ${upErr.message}`);
+  // BOTH images are required: StallVisitPage renders "This stall is still
+  // being built" unless front_image_path AND interior_image_path are set
+  // (StallVisitPage.tsx:174), which is how the first GIF run failed.
+  //
+  // stalls_images_own_folder_only requires each URL to sit under this
+  // member's own folder in the stalls bucket -- never a borrowed image.
+  const stamp = Date.now();
+  const interiorObjectPath = `${userId}/qa-interior-${stamp}.gif`;
+  const frontObjectPath = `${userId}/qa-front-${stamp}.gif`;
+  const bytes = interiorGif();
+  for (const path of [interiorObjectPath, frontObjectPath]) {
+    const { error: upErr } = await client.storage
+      .from('stalls')
+      .upload(path, bytes, { contentType: 'image/gif', upsert: false });
+    if (upErr) throw new Error(`[fixtures] could not upload ${path}: ${upErr.message}`);
+  }
   const { data: pub } = client.storage.from('stalls').getPublicUrl(interiorObjectPath);
+  const { data: frontPub } = client.storage.from('stalls').getPublicUrl(frontObjectPath);
 
   const { data, error } = await client
     .from('stalls')
@@ -534,6 +574,9 @@ export async function createStallFixture(
       tier: 'farm_stall',
       published: true,
       interior_image_path: pub.publicUrl,
+      front_image_path: frontPub.publicUrl,
+      // Straight into the interior, no gate to click through.
+      enter_via_front: false,
       hotspots: [],
       tiles: [],
     })
@@ -541,7 +584,7 @@ export async function createStallFixture(
     .single();
   if (error || !data) throw new Error(`[fixtures] could not create stall ${name}: ${error?.message}`);
   console.log(`[SETUP] stall fixture "${name}" -> ${data.id}`);
-  return { stallId: data.id as string, interiorObjectPath };
+  return { stallId: data.id as string, objectPaths: [interiorObjectPath, frontObjectPath] };
 }
 
 /** A book seed -- lands on a `books` shelf via products.type in ('book','ebook'). */
