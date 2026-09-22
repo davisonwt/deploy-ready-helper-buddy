@@ -153,6 +153,10 @@ export default async function handler(req: any, res: any) {
       'service-provider-images', 'book-images', 'live-session-art',
       'stream-thumbnails', 'biz-ads', 'onboarding', 'orchard-videos',
       'product-videos',
+      // The bucket Wandering media now lives in (migrated 2026-09-22 out of
+      // the private `premium-room`). This is what lets a door preview carry
+      // the member's own photo.
+      'wandering',
     ]);
     const photo = row.photo_url || null;
     const bucket = photo ? (photo.split('/object/public/')[1] || '').split('/')[0] : '';

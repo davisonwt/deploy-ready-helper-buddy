@@ -75,16 +75,20 @@ const emptyTestimonial = (): Testimonial => ({ name: '', town: '', quote: '' });
 
 async function uploadGalleryPhoto(file: File, userId: string): Promise<CoverResult> {
   const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
-  const path = `covers/${userId}/gallery-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
-  const { error } = await supabase.storage.from('premium-room').upload(path, file, {
+  // `wandering` (public) rather than `premium-room` (private): a shared
+  // door has to carry a photo a link-preview crawler can actually fetch.
+  // Path is <uid>/<file> so the bucket's owner-scoped write policy -- the
+  // same shape `stalls` uses, auth.uid() = foldername(name)[1] -- applies.
+  const path = `${userId}/gallery-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+  const { error } = await supabase.storage.from('wandering').upload(path, file, {
     cacheControl: '3600',
     upsert: false,
     contentType: file.type || 'image/jpeg',
   });
   if (error) throw error;
-  const { verdict, reason } = await moderateStorageUpload('premium-room', path, 'image');
+  const { verdict, reason } = await moderateStorageUpload('wandering', path, 'image');
   if (verdict !== 'allow') throw new Error(moderationRejectionMessage(reason));
-  const { data } = supabase.storage.from('premium-room').getPublicUrl(path);
+  const { data } = supabase.storage.from('wandering').getPublicUrl(path);
   return { fileUrl: data.publicUrl, storagePath: path };
 }
 
@@ -459,7 +463,7 @@ export default function RegisterWanderingPage() {
       <div className="grid md:grid-cols-[1fr_320px] gap-8">
         <div className="space-y-5">
           <div className="flex items-start gap-4">
-            <CoverDropZone bucket="premium-room" pathPrefix={`covers/${user.id}`} onChange={setPhoto} required />
+            <CoverDropZone bucket="wandering" pathPrefix={user.id} onChange={setPhoto} required />
             <div className="flex-1 space-y-1.5">
               <Label>{PHOTO_PROMPT[role]}</Label>
               <p className="text-xs text-muted-foreground">This is your photo on your Directory card and door.</p>

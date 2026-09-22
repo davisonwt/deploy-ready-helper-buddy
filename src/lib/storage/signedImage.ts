@@ -23,6 +23,11 @@ const PUBLIC_BUCKETS = new Set([
   // view, and the URL came back as /object/sign/ for an image anyone can read.
   'stalls',
   'stay-photos',
+  // Wandering member photos and galleries. Public so a shared door can
+  // carry an og:image a crawler can fetch -- see api/wandering.ts. Without
+  // this entry every one of those URLs would take a needless signing round
+  // trip and come back as /object/sign/, which expires.
+  'wandering',
   'stream-thumbnails',
 ]);
 
