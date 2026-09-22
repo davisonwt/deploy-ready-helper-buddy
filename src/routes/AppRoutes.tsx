@@ -248,8 +248,13 @@ function LegacyWanderingRedirect() {
   // the directory filtered to that role -- which is what the door was
   // always meant to be. Sending these to /register instead would have
   // bounced a signed-in member off their own share link.
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const role = location.pathname.split('/')[2]?.toLowerCase();
+  // Auth restores asynchronously: on the first render `user` is null even
+  // for a signed-in member, and <Navigate> fires immediately. Measured
+  // live -- a signed-in gosat following his own door link still landed on
+  // /register. Hold the redirect until auth has actually settled.
+  if (loading) return <LoadingFallback />;
   // The directory and /tribal-hearts are both behind auth, so a
   // logged-OUT visitor sent there is bounced to /login -- measured live,
   // and for an invite link that is worse than the 404 it replaced: the
