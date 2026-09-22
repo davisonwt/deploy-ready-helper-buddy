@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, sweepProducts, reportSweep } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -103,6 +104,17 @@ async function measure(page: Page) {
 
 test.describe.serial('The sow forms name every step up front', () => {
   test.skip(!OWNER_EMAIL || !OWNER_PASS, 'The owner account is required.');
+
+  /**
+   * The hand-registration test at the bottom creates a real listing and
+   * had no teardown, so every run left a QAHAND row behind (QAHAND 451790
+   * and QAHAND 867817 were both swept by hand on 2026-09-22).
+   */
+  test.afterAll(async () => {
+    if (!OWNER_EMAIL || !OWNER_PASS) return;
+    const { client, userId } = await asUser(OWNER_EMAIL, OWNER_PASS, 'the owner account');
+    reportSweep('sow-step-indicator', await sweepProducts(client, userId, [QA_TITLE]));
+  });
 
   for (const vp of VIEWPORTS) {
     for (const form of FORMS) {

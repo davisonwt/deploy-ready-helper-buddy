@@ -257,6 +257,23 @@ export async function createWheelListing(
   title: string,
   opts?: { town?: string; lat?: number; lng?: number; ratePerKm?: number },
 ): Promise<string> {
+  // The edit form gates "Save changes" on coverReady = !!cover, so the
+  // fixture needs a cover of its OWN. Never borrow a real listing's image
+  // URL: sweepProducts deletes whatever cover_image_url points at, which
+  // would delete that member's file -- the exact class of damage this
+  // whole fixture module exists to prevent.
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  );
+  const coverPath = `covers/${userId}/qa-${Date.now()}.png`;
+  const { error: upErr } = await client.storage
+    .from('premium-room')
+    .upload(coverPath, png, { contentType: 'image/png', upsert: false });
+  if (upErr) throw new Error(`[fixtures] could not upload a cover for ${title}: ${upErr.message}`);
+  const { data: pub } = client.storage.from('premium-room').getPublicUrl(coverPath);
+  const coverUrl = pub.publicUrl;
+
   const { data: sower } = await client.from('sowers').select('id').eq('user_id', userId).maybeSingle();
   const { data: company } = await client
     .from('companies').select('id').eq('owner_user_id', userId).limit(1).maybeSingle();
@@ -277,6 +294,8 @@ export async function createWheelListing(
       status: 'active',
       kind: 'wheel',
       delivery_type: 'digital',
+      cover_image_url: coverUrl,
+      image_urls: [coverUrl],
     })
     .select('id')
     .single();
