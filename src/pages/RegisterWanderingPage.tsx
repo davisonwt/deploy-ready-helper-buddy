@@ -590,7 +590,7 @@ export default function RegisterWanderingPage() {
 
           <div className="pt-2 space-y-3">
             <div
-              onClick={() => setSelfOperated((v) => !v)}
+              onClick={(e) => { if (e.target === e.currentTarget) setSelfOperated((v) => !v); }}
               className="flex items-start gap-2.5 rounded-xl border-2 p-4 cursor-pointer transition-colors"
               style={selfOperated ? { borderColor: accent, backgroundColor: `${accent}0d` } : undefined}
             >
@@ -606,7 +606,7 @@ export default function RegisterWanderingPage() {
             </div>
 
             <div
-              onClick={() => setAcceptedTerms((v) => !v)}
+              onClick={(e) => { if (e.target === e.currentTarget) setAcceptedTerms((v) => !v); }}
               className="flex items-start gap-2.5 rounded-xl border-2 p-4 cursor-pointer transition-colors"
               style={acceptedTerms ? { borderColor: accent, backgroundColor: `${accent}0d` } : undefined}
             >
