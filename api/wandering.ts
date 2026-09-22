@@ -137,11 +137,32 @@ export default async function handler(req: any, res: any) {
     const name = (row.display_name || '').trim() || 'A tribe member';
     const where = (row.base_town || '').trim();
 
+    // Only advertise an image a crawler can actually fetch. Every
+    // wandering_roles.photo_url points into `premium-room`, which is a
+    // PRIVATE bucket, so its /object/public/ URL 400s for anyone
+    // unauthenticated -- measured live. In the app this is invisible
+    // because SignedImg re-signs those URLs client-side; a crawler has no
+    // session and cannot. Advertising it anyway gave Telegram and WhatsApp
+    // an og:image that 400s, which is worse than no image at all.
+    //
+    // Structural fix, flagged not built: Wandering photos belong in a
+    // public bucket, the way stall fronts already live in `stalls`. Until
+    // then a door preview is title + description only.
+    const PUBLIC_BUCKETS = new Set([
+      'stalls', 'memry-media', 'stay-photos', 'provider-assets',
+      'service-provider-images', 'book-images', 'live-session-art',
+      'stream-thumbnails', 'biz-ads', 'onboarding', 'orchard-videos',
+      'product-videos',
+    ]);
+    const photo = row.photo_url || null;
+    const bucket = photo ? (photo.split('/object/public/')[1] || '').split('/')[0] : '';
+    const publicPhoto = photo && PUBLIC_BUCKETS.has(bucket) ? photo : null;
+
     res.setHeader('content-type', 'text/html; charset=utf-8');
     res.status(200).send(renderHtml({
       title: `${name} — ${roleTitle}`,
       description: (row.tagline || '').trim() || (where ? `${roleTitle} in ${where}` : `A ${roleTitle} on Sow2Grow`),
-      image: row.photo_url || null,
+      image: publicPhoto,
       canonicalPath,
     }));
   } catch {
