@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 const TrustPage = lazy(() => import('@/pages/TrustPage'));
 import { Card, CardContent } from '@/components/ui/card';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -247,8 +248,15 @@ function LegacyWanderingRedirect() {
   // the directory filtered to that role -- which is what the door was
   // always meant to be. Sending these to /register instead would have
   // bounced a signed-in member off their own share link.
+  const { user } = useAuth();
   const role = location.pathname.split('/')[2]?.toLowerCase();
-  const base = role && WANDERING_ROLES.has(role)
+  // The directory and /tribal-hearts are both behind auth, so a
+  // logged-OUT visitor sent there is bounced to /login -- measured live,
+  // and for an invite link that is worse than the 404 it replaced: the
+  // person following it is exactly the person who does not have an
+  // account yet. Signed in, the door opens; signed out, it is an
+  // invitation, so it goes to /register with the code still attached.
+  const base = user && role && WANDERING_ROLES.has(role)
     ? (role === 'heart' ? '/tribal-hearts' : `/wandering-directory?role=${encodeURIComponent(role)}`)
     : '/register';
   if (!ref) return <Navigate to={base} replace />;
