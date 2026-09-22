@@ -1061,156 +1061,169 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           className="hidden lg:flex lg:flex-col lg:w-[220px] lg:shrink-0 lg:border-r lg:border-amber-500/15"
         />
 
-        <div ref={containerRef} className="relative flex-1 min-h-0">
-          <SignedImg
-            ref={imgRef}
-            src={interiorImageUrl}
-            alt={stallName}
-            className={`absolute inset-0 w-full h-full object-contain transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
-          />
-
-          {rect && visibleHotspots.map((h, i) => (
-            <HotspotButton
-              key={hotspotKey(h, i)}
-              h={h}
-              hKey={hotspotKey(h, i)}
-              style={withTapFloor(
-                rect.offsetX + (h.x / 100) * rect.width,
-                rect.offsetY + (h.y / 100) * rect.height,
-                (h.w / 100) * rect.width,
-                (h.h / 100) * rect.height,
-              )}
+        <div className="relative flex-1 min-h-0 flex flex-col">
+          <div ref={containerRef} className="relative flex-1 min-h-0">
+            <SignedImg
+              ref={imgRef}
+              src={interiorImageUrl}
+              alt={stallName}
+              className={`absolute inset-0 w-full h-full object-contain transition-[filter] duration-200 ${activeHotspot ? 'brightness-[0.55]' : 'brightness-100'}`}
             />
-          ))}
 
-          {showRoomHint && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-14 flex justify-center">
-              <span className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm">
-                👆 tap the things in the room
-              </span>
-            </div>
-          )}
-
-          <div className="absolute top-4 right-4 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsTodayDrawerOpen(true)}
-              aria-label="Open Today, Omer & Growth"
-              className="lg:hidden flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
-            >
-              <CalendarDays className="h-4 w-4" />
-            </button>
-            {username && !effectiveIsOwner && (
-              <button
-                type="button"
-                onClick={handleOpenChat}
-                aria-label="Message the sower"
-                title="Message the sower"
-                className="flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
-              >
-                <MessageCircle className="h-4 w-4" />
-              </button>
-            )}
-            {username && (
-              <button
-                type="button"
-                onClick={() => shareStallLink(username, stallName, user?.id, { live: ownerIsLive })}
-                aria-label="Share this stall"
-                title="Share this stall"
-                className="flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
-              >
-                <Share2 className="h-4 w-4" />
-              </button>
-            )}
-            {!openKind && !hideClose && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                className="text-white hover:bg-white/20 rounded-full"
-                aria-label="Leave stall"
-              >
-                <X className="h-6 w-6" />
-              </Button>
-            )}
-          </div>
-
-          <div className="absolute top-4 left-4 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsNavDrawerOpen(true)}
-              aria-label="Open menu"
-              className="lg:hidden flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
-            >
-              <Menu className="h-4 w-4" />
-            </button>
-            {viewingAsVisitor ? (
-              <button
-                type="button"
-                onClick={() => setViewingAsVisitor(false)}
-                className="flex items-center gap-1.5 rounded-full bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-400 transition-colors"
-              >
-                <LogOut className="h-3.5 w-3.5" /> Viewing as visitor — exit
-              </button>
-            ) : isOwner && (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setOwnerMenuOpen((v) => !v)}
-                  className="flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/70 transition-colors"
-                  aria-label="Owner menu"
-                  aria-expanded={ownerMenuOpen}
-                >
-                  <Pencil className="h-3.5 w-3.5" /> Edit stall
-                </button>
-                {ownerMenuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-[9998]" onClick={() => setOwnerMenuOpen(false)} />
-                    <div className="absolute left-0 top-full mt-2 min-w-[190px] rounded-lg border border-amber-500/20 bg-[#140c06] py-1.5 shadow-2xl z-[9999]">
-                      <OwnerMenuItems
-                        onNavigate={() => setOwnerMenuOpen(false)}
-                        itemClassName="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
-                      />
-                      {username && (
-                        <button
-                          type="button"
-                          onClick={() => { shareStallLink(username, stallName, user?.id, { live: ownerIsLive }); setOwnerMenuOpen(false); }}
-                          className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
-                        >
-                          <Share2 className="h-4 w-4 shrink-0" /> Share my stall
-                        </button>
-                      )}
-                      <div className="my-1 border-t border-amber-500/15" />
-                      <button
-                        type="button"
-                        onClick={() => { setViewingAsVisitor(true); setOwnerMenuOpen(false); }}
-                        className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
-                      >
-                        <Eye className="h-4 w-4 shrink-0" /> View as visitor
-                      </button>
-                    </div>
-                  </>
+            {rect && visibleHotspots.map((h, i) => (
+              <HotspotButton
+                key={hotspotKey(h, i)}
+                h={h}
+                hKey={hotspotKey(h, i)}
+                style={withTapFloor(
+                  rect.offsetX + (h.x / 100) * rect.width,
+                  rect.offsetY + (h.y / 100) * rect.height,
+                  (h.w / 100) * rect.width,
+                  (h.h / 100) * rect.height,
                 )}
+              />
+            ))}
+
+            {showRoomHint && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-14 flex justify-center">
+                <span className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm">
+                  👆 tap the things in the room
+                </span>
               </div>
             )}
-          </div>
 
-          {/* right-4 + truncate on the name (neither existed before) --
-              added alongside the replay pill: an inline pill has nowhere
-              to go if a long stall name is free to run under it forever,
-              since this row was previously left+unbounded with no right
-              edge at all. */}
-          {/* bottom-3 alone (the original value) never accounted for a
-              bottomBar prop's real height -- harmless while this row was
-              plain text, but the pill inside it is a real click target now.
-              DashboardPage.tsx's own bottom bar (Plant Seed/Live/Chat/Radio)
-              sits fixed at the viewport's bottom edge; --bottom-chrome-h
-              (published by useBottomChromeElement, already how the mobile
-              branch above accounts for the same bar) lifts this row clear
-              of it exactly when a bottomBar exists, 0px otherwise -- same
-              position as before on /stall/:username, which has no bottomBar. */}
-          <div className="absolute left-4 right-4 flex items-center gap-2" style={{ bottom: 'calc(0.75rem + var(--bottom-chrome-h, 0px))' }}>
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsTodayDrawerOpen(true)}
+                aria-label="Open Today, Omer & Growth"
+                className="lg:hidden flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
+              >
+                <CalendarDays className="h-4 w-4" />
+              </button>
+              {username && !effectiveIsOwner && (
+                <button
+                  type="button"
+                  onClick={handleOpenChat}
+                  aria-label="Message the sower"
+                  title="Message the sower"
+                  className="flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </button>
+              )}
+              {username && (
+                <button
+                  type="button"
+                  onClick={() => shareStallLink(username, stallName, user?.id, { live: ownerIsLive })}
+                  aria-label="Share this stall"
+                  title="Share this stall"
+                  className="flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+              )}
+              {!openKind && !hideClose && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className="text-white hover:bg-white/20 rounded-full"
+                  aria-label="Leave stall"
+                >
+                  <X className="h-6 w-6" />
+                </Button>
+              )}
+            </div>
+
+            <div className="absolute top-4 left-4 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsNavDrawerOpen(true)}
+                aria-label="Open menu"
+                className="lg:hidden flex items-center justify-center rounded-full bg-black/50 p-2 text-amber-300 hover:bg-black/70 transition-colors"
+              >
+                <Menu className="h-4 w-4" />
+              </button>
+              {viewingAsVisitor ? (
+                <button
+                  type="button"
+                  onClick={() => setViewingAsVisitor(false)}
+                  className="flex items-center gap-1.5 rounded-full bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-400 transition-colors"
+                >
+                  <LogOut className="h-3.5 w-3.5" /> Viewing as visitor — exit
+                </button>
+              ) : isOwner && (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOwnerMenuOpen((v) => !v)}
+                    className="flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/70 transition-colors"
+                    aria-label="Owner menu"
+                    aria-expanded={ownerMenuOpen}
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> Edit stall
+                  </button>
+                  {ownerMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-[9998]" onClick={() => setOwnerMenuOpen(false)} />
+                      <div className="absolute left-0 top-full mt-2 min-w-[190px] rounded-lg border border-amber-500/20 bg-[#140c06] py-1.5 shadow-2xl z-[9999]">
+                        <OwnerMenuItems
+                          onNavigate={() => setOwnerMenuOpen(false)}
+                          itemClassName="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
+                        />
+                        {username && (
+                          <button
+                            type="button"
+                            onClick={() => { shareStallLink(username, stallName, user?.id, { live: ownerIsLive }); setOwnerMenuOpen(false); }}
+                            className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
+                          >
+                            <Share2 className="h-4 w-4 shrink-0" /> Share my stall
+                          </button>
+                        )}
+                        <div className="my-1 border-t border-amber-500/15" />
+                        <button
+                          type="button"
+                          onClick={() => { setViewingAsVisitor(true); setOwnerMenuOpen(false); }}
+                          className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-amber-50 hover:bg-amber-500/10 transition-colors"
+                        >
+                          <Eye className="h-4 w-4 shrink-0" /> View as visitor
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+          </div>
+          {/* The stall name is a RESERVED STRIP under the room, not an
+              overlay on it.
+
+              It used to be absolutely positioned at the container's bottom
+              (`bottom: calc(0.75rem + var(--bottom-chrome-h))`). The image is
+              object-contain, so as the container's aspect ratio approaches the
+              image's the bottom letterbox shrinks to nothing and the name
+              landed ON the art -- and --bottom-chrome-h, which exists to lift
+              it clear of the Cockpit's bottom bar, lifted it FURTHER in.
+              Measured on davison.taljaard before this change: 4px into the
+              image at 1920x1080 and 28px at 2560x1440 on /stall/:username,
+              and 53 / 75 / 99px in the Cockpit at 1600x900 / 1920x1080 /
+              2560x1440, where the bar's 71px is always added.
+
+              As a flex sibling it takes its own space instead, so the room
+              gets what is left. useContainImageRect measures the container's
+              client box, so the image and every hotspot over it follow
+              automatically -- which is exactly why the strip has to shrink the
+              CONTAINER rather than pad it or inset the image.
+
+              The greeting pill stays in this same row (c24f9c84 lineage): it
+              is a real click target and must never sit over the art either. */}
+          <div
+            className="shrink-0 flex items-center gap-2 px-4 pt-1.5"
+            style={{ paddingBottom: 'calc(0.75rem + var(--bottom-chrome-h, 0px))' }}
+          >
             <p className="min-w-0 flex-1 truncate flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/80 drop-shadow">
               {ownerIsLive && (
                 <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-lg">
