@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { openHotspot } from './support/interior';
+import { signInThroughUi } from './support/fixtures';
 
 /**
  * A shelf shows the name its SOWER gave it -- to the owner and to a visitor
@@ -31,16 +32,7 @@ const SOWER_NAMED = ['Coffee Mugs', 'My Books', 'My Music'];
 const RAW_KINDS = ['mugs', 'custom', 'orchard', 'companion_info'];
 
 async function login(page: Page, email: string, pass: string) {
-  for (let i = 0; i < 2; i++) {
-    await page.goto('/login', { waitUntil: 'domcontentloaded' });
-    await page.fill('input[type="email"]', email);
-    await page.fill('input[type="password"]', pass);
-    await page.click('button[type="submit"]');
-    const ok = await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 30000 })
-      .then(() => true).catch(() => false);
-    if (ok) return;
-  }
-  throw new Error(`login failed for ${email}`);
+  await signInThroughUi(page, email, pass, email);
 }
 
 async function shelfNamesOnStall(page: Page): Promise<string[]> {

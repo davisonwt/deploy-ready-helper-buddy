@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   asUser, createStallFixture, createShelfSeedFixture, setStallHotspots,
-  deleteStallFixture, sweepProducts, sweepStorage, reportSweep,
+  deleteStallFixture, sweepProducts, sweepStorage, reportSweep, signInThroughUi,
 } from './support/fixtures';
 
 /**
@@ -144,16 +144,7 @@ test.describe.serial('per-hotspot seed subsets', () => {
 });
 
 async function login(page: Page) {
-  for (let i = 0; i < 2; i++) {
-    await page.goto('/login', { waitUntil: 'domcontentloaded' });
-    await page.fill('input[type="email"]', EMAIL);
-    await page.fill('input[type="password"]', PASS);
-    await page.click('button[type="submit"]');
-    const ok = await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 30000 })
-      .then(() => true).catch(() => false);
-    if (ok) return;
-  }
-  throw new Error('[stall-hotspot-subsets] login failed');
+  await signInThroughUi(page, EMAIL, PASS, 'davisontest1');
 }
 
 async function openInterior(page: Page) {

@@ -453,6 +453,42 @@ export async function sweepTrackedUploads(
   return removed;
 }
 
+/**
+ * Sign in through the real login form, and fail FAST when it will not come.
+ *
+ * On a parallel run the login route intermittently never rendered its email
+ * field. `page.fill` auto-waits, so the spec sat on it for the entire
+ * 5-minute test timeout and then reported a locator error -- five minutes
+ * spent to learn nothing. Waiting for the field with its own bounded timeout
+ * and retrying the navigation turns that into either a recovery or a quick,
+ * named failure.
+ */
+export async function signInThroughUi(
+  page: Page, email: string, pass: string, label: string,
+): Promise<void> {
+  if (!email || !pass) {
+    throw new Error(
+      `[fixtures] ${label} credentials are missing. Set them in .env.test; ` +
+      'this is a setup failure, not a reason to skip.',
+    );
+  }
+  let why = '';
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
+    const ready = await page.waitForSelector('input[type="email"]', { timeout: 30000 })
+      .then(() => true).catch(() => false);
+    if (!ready) { why = 'the login form never rendered'; continue; }
+    await page.fill('input[type="email"]', email);
+    await page.fill('input[type="password"]', pass);
+    await page.click('button[type="submit"]');
+    const ok = await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 30000 })
+      .then(() => true).catch(() => false);
+    if (ok) return;
+    why = 'the sign-in never left /login';
+  }
+  throw new Error(`[fixtures] could not sign ${label} in through the UI after 3 attempts: ${why}`);
+}
+
 /* ------------------------------------------------------------------ *
  * A stall of the run's own, for per-hotspot seed subsets.
  *

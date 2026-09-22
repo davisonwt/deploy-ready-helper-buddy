@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
-  asUser, createStallFixture, setStallHotspots, deleteStallFixture, sweepStorage,
+  asUser, createStallFixture, setStallHotspots, deleteStallFixture, sweepStorage, signInThroughUi,
 } from './support/fixtures';
 import { openHotspot } from './support/interior';
 
@@ -26,10 +26,16 @@ import { openHotspot } from './support/interior';
  * Run: npx playwright test --config=playwright.live.config.ts shelf-add-button
  */
 
-const OWNER_E = process.env.TEST_USER_EMAIL || process.env.TEST_A_EMAIL || '';
-const OWNER_P = process.env.TEST_USER_PASSWORD || process.env.TEST_A_PASSWORD || '';
-const VISITOR_E = process.env.TEST_USER2_EMAIL || process.env.TEST_GOSAT_EMAIL || '';
-const VISITOR_P = process.env.TEST_USER2_PASSWORD || process.env.TEST_GOSAT_PASSWORD || '';
+// Owner is davisontest2, NOT davisontest1. stalls.user_id is UNIQUE and one
+// stall per account is all you get, so two fixture specs pointed at the same
+// account cannot both hold one -- and stall-hotspot-subsets already owns
+// davisontest1 for the length of its run. They run in parallel workers, so
+// sharing the account would collide on whichever started second.
+// The visitor is davisontest1: a real second member, and never the founder.
+const OWNER_E = process.env.TEST_B_EMAIL || process.env.TEST_USER3_EMAIL || '';
+const OWNER_P = process.env.TEST_B_PASSWORD || process.env.TEST_USER3_PASSWORD || '';
+const VISITOR_E = process.env.TEST_A_EMAIL || process.env.TEST_USER_EMAIL || '';
+const VISITOR_P = process.env.TEST_A_PASSWORD || process.env.TEST_USER_PASSWORD || '';
 
 /** 'story' lists nothing, so it correctly has no "+" -- every other shelf must. */
 const LISTING_SHELVES = ['Books', 'Music', 'Lyrics', 'Family Albums'];
@@ -39,7 +45,7 @@ let client: Awaited<ReturnType<typeof asUser>>['client'];
 let userId: string;
 let stallId: string;
 let objectPaths: string[] = [];
-let username = 'davisontest1';
+let username = 'davisontest2';
 
 test.describe.serial('Shelf add button', () => {
   test.setTimeout(8 * 60_000);
@@ -83,7 +89,7 @@ test.describe.serial('Shelf add button', () => {
 
   test('1. the owner sees "+" on EVERY listing shelf, custom categories included', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await login(page, OWNER_E, OWNER_P);
+    await signInThroughUi(page, OWNER_E, OWNER_P, 'the stall owner');
     await gotoStall(page);
 
     const missing: string[] = [];
@@ -101,11 +107,10 @@ test.describe.serial('Shelf add button', () => {
   });
 
   test('2. a VISITOR never sees it, on any shelf', async ({ page }) => {
-    if (!VISITOR_E || !VISITOR_P) {
-      throw new Error('[shelf-add-button] a second, non-owning account is required in .env.test (TEST_USER2_*). Setup failure, not a reason to skip.');
-    }
+    // signInThroughUi throws naming the variable if these are unset; the
+    // account must simply not be the one that owns the fixture stall.
     await page.setViewportSize({ width: 390, height: 844 });
-    await login(page, VISITOR_E, VISITOR_P);
+    await signInThroughUi(page, VISITOR_E, VISITOR_P, 'the visitor');
     await gotoStall(page);
 
     const leaked: string[] = [];
@@ -122,14 +127,6 @@ test.describe.serial('Shelf add button', () => {
     expect(leaked, 'a visitor was offered an owner-only Add control').toEqual([]);
   });
 });
-
-async function login(page: Page, email: string, pass: string) {
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', pass);
-  await page.click('button[type="submit"]');
-  await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 30000 }).catch(() => {});
-}
 
 async function gotoStall(page: Page) {
   await page.goto(`/stall/${username}`, { waitUntil: 'domcontentloaded' });
