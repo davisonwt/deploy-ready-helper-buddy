@@ -109,7 +109,7 @@ test.describe.serial('Fail-open on every upload surface', () => {
     // Must scan a REAL object. The first version of this probe pointed at a
     // path that did not exist, so moderate-media answered 'download_failed'
     // and the probe proved nothing about the scanner.
-    const out = await page.evaluate(async () => {
+    const out = await page.evaluate(async (stamp) => {
       const ANON = 'sb_publishable_Z8-I1gu2Q1yid1Q4jKRf7Q_jSGcsVpa';
       const BASE = 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
       const keys = Object.keys(localStorage).filter((k) => k.includes('auth-token'));
@@ -124,7 +124,7 @@ test.describe.serial('Fail-open on every upload surface', () => {
         + 'HBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAA'
         + 'AAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==';
       const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-      const path = `covers/${uid}/QAPROBE-scanner-${STAMP}.jpg`;
+      const path = `covers/${uid}/QAPROBE-scanner-${stamp}.jpg`;
       const up = await fetch(`${BASE}/storage/v1/object/premium-room/${path}`, {
         method: 'POST',
         headers: { apikey: ANON, Authorization: `Bearer ${token}`, 'Content-Type': 'image/jpeg' },
@@ -138,7 +138,7 @@ test.describe.serial('Fail-open on every upload surface', () => {
         body: JSON.stringify({ bucket: 'premium-room', path, kind: 'image', subjectType: 'storage_object' }),
       });
       return { status: r.status, body: await r.text(), path };
-    });
+    }, STAMP);
 
     console.log(`[EVIDENCE] moderate-media on a real object: ${JSON.stringify(out)}`);
     scannerDown = JSON.stringify(out).includes('scanner_unavailable');
