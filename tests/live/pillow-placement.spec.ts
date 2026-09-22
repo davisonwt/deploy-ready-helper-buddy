@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, sweepProducts, reportSweep } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -46,6 +47,18 @@ async function setPlace(page: Page, place: string) {
 
 test.describe.serial('A pillow listing is placed where it actually is', () => {
   test.skip(!EMAIL || !PASS, 'A test account is required.');
+
+  /**
+   * QAPLACE is created by test 4 as the OWNER account, so it is swept as
+   * that account too. Teardown, not a cleanup test: this block is serial,
+   * and a failure would leave any final cleanup test unreached.
+   */
+  test.afterAll(async () => {
+    if (!OWNER_EMAIL || !OWNER_PASS) return;
+    const { client, userId } = await asUser(OWNER_EMAIL, OWNER_PASS, 'the owner account');
+    const r = await sweepProducts(client, userId, [QA_TITLE]);
+    reportSweep('pillow-placement', r);
+  });
 
   test('1. the Pillows tab finds it from Mossel Bay, at any radius', async ({ page }) => {
     await login(page, EMAIL, PASS);

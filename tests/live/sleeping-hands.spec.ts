@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, sweepProducts, reportSweep, ensureWanderingRole, removeWanderingRole } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -29,6 +30,9 @@ const PRO_TITLE = `QAH Plumber ${STAMP}`;
 const HOUSE_TITLE = `QAH Cleaner ${STAMP}`;
 const FAR_TITLE = `QAH Far ${STAMP}`;
 
+/** Every title this spec mints, for teardown. Exact, never a prefix. */
+const FIXTURE_TITLES = [PRO_TITLE, HOUSE_TITLE, FAR_TITLE];
+
 async function login(page: Page, email = EMAIL, pass = PASS) {
   for (let i = 0; i < 2; i++) {
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
@@ -40,35 +44,6 @@ async function login(page: Page, email = EMAIL, pass = PASS) {
     if (ok) return;
   }
   throw new Error('login failed');
-}
-
-/** /sow/hand needs an active hand wandering role. Unlock it once. */
-async function ensureHandRole(page: Page) {
-  await page.goto('/sow/hand', { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(4000);
-  if (page.url().includes('/sow/hand')) return;
-
-  // Landed on the unlock page.
-  await page.locator('input[type="file"]').first().setInputFiles(PHOTO);
-  await page.waitForTimeout(3000);
-  await page.fill('#wandering-name', 'QA hand tester');
-  await page.fill('#wandering-town', 'Bethlehem');
-  await page.fill('#wandering-tagline', 'QA hand listing tester');
-  const galleryInput = page.locator('input[type="file"]').nth(1);
-  for (let i = 0; i < 3; i++) { await galleryInput.setInputFiles(PHOTO); await page.waitForTimeout(2500); }
-  await page.fill('input[placeholder="Name"]', 'QA Customer');
-  await page.fill('input[placeholder="Town"]', 'Bethlehem');
-  await page.fill('textarea[placeholder="A short quote about working with you"]', 'Great work.');
-  for (const rowText of ['I own this and I operate it myself', "I accept Sow2Grow's"]) {
-    const row = page.locator('div', { has: page.getByText(rowText, { exact: false }) })
-      .filter({ has: page.locator('button[role="checkbox"]') }).last();
-    const box = await row.boundingBox();
-    if (box) await page.mouse.click(box.x + box.width - 8, box.y + 8);
-  }
-  const btn = page.getByRole('button', { name: /^Unlock/ });
-  await expect(btn).toBeEnabled({ timeout: 20000 });
-  await btn.click();
-  await page.waitForTimeout(6000);
 }
 
 async function hubAt(page: Page, town: string, title?: string) {
@@ -134,11 +109,42 @@ async function fillHandForm(page: Page, o: FormOpts) {
 }
 
 test.describe.serial('Sleeping Hands', () => {
+  /**
+   * Teardown, not a cleanup test. This block is describe.serial: the
+   * first failure marks every later test "did not run", so cleanup
+   * written as a final test never runs on exactly the runs that need it.
+   * afterAll still fires, including when tests failed or were skipped.
+   */
+  /**
+   * The hand role is a precondition, provisioned directly rather than
+   * through /register-wandering. The UI route uploaded a photo and three
+   * gallery images every run -- four storage objects with no owner row to
+   * sweep them by -- and left the role behind: one was found active on
+   * 2026-09-22, created at 08:21 by a run that then bailed.
+   */
+  let createdRoleId: string | null = null;
+
+  test.beforeAll(async () => {
+    const { client, userId } = await asUser(EMAIL, PASS, 'the owner account');
+    const { id, created } = await ensureWanderingRole(client, userId, 'hand', {
+      town: 'Bethlehem, Free State', lat: -28.2308, lng: 28.3089,
+      displayName: 'QA hand tester',
+    });
+    createdRoleId = created ? id : null;
+    console.log(`[SETUP] hand role ${created ? 'created' : 'already present'}: ${id}`);
+  });
+
+  test.afterAll(async () => {
+    const { client, userId } = await asUser(EMAIL, PASS, 'the owner account');
+    const r = await sweepProducts(client, userId, FIXTURE_TITLES);
+    reportSweep('sleeping-hands', r);
+    if (createdRoleId) await removeWanderingRole(client, createdRoleId);
+  });
+
   test.skip(!EMAIL || !PASS, 'A test account is required in .env.test.');
 
-  test('0. unlock the hand role', async ({ page }) => {
+  test('0. the hand role reaches /sow/hand', async ({ page }) => {
     await login(page);
-    await ensureHandRole(page);
     await page.goto('/sow/hand', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /Offer your hand/i })).toBeVisible({ timeout: 25000 });
     console.log('[EVIDENCE] /sow/hand reachable');

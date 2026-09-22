@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, sweepProducts, reportSweep, ensureWanderingRole, removeWanderingRole } from './support/fixtures';
 import { paceGeocode } from './support/geocodePacing';
 import { waitForCoverAccepted } from './support/coverUpload';
 import path from 'node:path';
@@ -35,6 +36,12 @@ const TYPES = [
   { label: 'Bush camp',        value: 'bush_camp',        rate: 'rate_nightly', amount: '20.00', amenity: 'Parking', sleeps: 4, unitType: 'Tent' },
   { label: 'Something else',   value: 'other',            rate: 'rate_weekly',  amount: '300.00', amenity: 'Wifi', sleeps: 3, unitType: 'Something else' },
 ] as const;
+
+/** Every title this spec mints, for teardown. Exact, never a prefix. */
+const FIXTURE_TITLES = [
+  ...TYPES.map((t) => `QAP ${t.label} ${STAMP}`),
+  `QAP Far ${STAMP}`,
+];
 
 async function login(page: Page, email = EMAIL, pass = PASS) {
   for (let i = 0; i < 2; i++) {
@@ -128,6 +135,37 @@ async function fillPillowForm(
 }
 
 test.describe.serial('Sleeping Pillows', () => {
+  /**
+   * Teardown, not a cleanup test. This block is describe.serial: the
+   * first failure marks every later test "did not run", so cleanup
+   * written as a final test never runs on exactly the runs that need it.
+   * afterAll still fires, including when tests failed or were skipped.
+   */
+  /**
+   * The pillow role is a PRECONDITION of this spec, not something it tests:
+   * /sow/pillow redirects to /register-wandering without it, so every test
+   * here fails on setup. It used to rely on QA rows that happened to sit
+   * on the test account until they were swept on 2026-09-22. It now
+   * provisions its own, and removes it again only if it created it.
+   */
+  let createdRoleId: string | null = null;
+
+  test.beforeAll(async () => {
+    const { client, userId } = await asUser(EMAIL, PASS, 'the owner account');
+    const { id, created } = await ensureWanderingRole(client, userId, 'pillow', {
+      town: 'Bethlehem, Free State', lat: -28.2308, lng: 28.3089,
+    });
+    createdRoleId = created ? id : null;
+    console.log(`[SETUP] pillow role ${created ? 'created' : 'already present'}: ${id}`);
+  });
+
+  test.afterAll(async () => {
+    const { client, userId } = await asUser(EMAIL, PASS, 'the owner account');
+    const r = await sweepProducts(client, userId, FIXTURE_TITLES);
+    reportSweep('sleeping-pillows', r);
+    if (createdRoleId) await removeWanderingRole(client, createdRoleId);
+  });
+
   test.skip(!EMAIL || !PASS, 'A test account is required in .env.test.');
 
   // --- 5. legal checkbox blocks submission ---------------------------------

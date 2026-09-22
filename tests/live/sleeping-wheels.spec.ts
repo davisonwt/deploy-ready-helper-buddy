@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, sweepProducts, reportSweep, ensureWanderingRole, removeWanderingRole } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -36,6 +37,12 @@ const BASE_TOWN = 'Bethlehem, South Africa';
 /** Roughly 230 km from BASE_TOWN, so distance sorting has something to sort. */
 const FAR_TOWN = 'Bloemfontein, South Africa';
 const CURRENCY = 'EUR'; // deliberately not USD, so "native currency" is provable
+
+/** Every title this spec mints, for teardown. Exact, never a prefix. */
+const FIXTURE_TITLES = [
+  ...TYPES.map((t) => `QA ${t.label} ${STAMP}`),
+  `QA Far ${STAMP}`,
+];
 
 async function login(page: Page, email: string, pass: string) {
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
@@ -91,6 +98,37 @@ async function registerVehicle(
 }
 
 test.describe.serial('Phase 1 - Sleeping Seeds + Sleeping Wheels', () => {
+  /**
+   * Teardown, not a cleanup test. This block is describe.serial: the
+   * first failure marks every later test "did not run", so cleanup
+   * written as a final test never runs on exactly the runs that need it.
+   * afterAll still fires, including when tests failed or were skipped.
+   */
+  /**
+   * The wheel role is a PRECONDITION of this spec, not something it tests:
+   * /sow/wheel redirects to /register-wandering without it, so every test
+   * here fails on setup. It used to rely on QA rows that happened to sit
+   * on the test account until they were swept on 2026-09-22. It now
+   * provisions its own, and removes it again only if it created it.
+   */
+  let createdRoleId: string | null = null;
+
+  test.beforeAll(async () => {
+    const { client, userId } = await asUser(EMAIL, PASS, 'the owner account');
+    const { id, created } = await ensureWanderingRole(client, userId, 'wheel', {
+      town: 'Bethlehem, Free State', lat: -28.2308, lng: 28.3089,
+    });
+    createdRoleId = created ? id : null;
+    console.log(`[SETUP] wheel role ${created ? 'created' : 'already present'}: ${id}`);
+  });
+
+  test.afterAll(async () => {
+    const { client, userId } = await asUser(EMAIL, PASS, 'the owner account');
+    const r = await sweepProducts(client, userId, FIXTURE_TITLES);
+    reportSweep('sleeping-wheels', r);
+    if (createdRoleId) await removeWanderingRole(client, createdRoleId);
+  });
+
   test.skip(!EMAIL || !PASS, 'No test account in .env.test (TEST_USER_EMAIL/TEST_A_EMAIL).');
 
   // --- 5. licensing checkbox blocks submission -----------------------------
