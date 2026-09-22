@@ -19,6 +19,8 @@ import PlantButton from '@/components/sowing/PlantButton';
 import WanderingMemberCard from '@/components/wandering/WanderingMemberCard';
 import ShareSeedDialog from '@/components/share/ShareSeedDialog';
 import { getPreset } from '@/lib/store/presets';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useBottomChromeElement } from '@/lib/layout/bottomChrome';
 
 type Role = 'hand' | 'wheel' | 'pillow';
 
@@ -125,6 +127,16 @@ export default function RegisterWanderingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+
+  // The mobile action bar is fixed to the bottom edge, so anything at the
+  // end of the form sits under it. pb-28 was a guess at its height and was
+  // wrong: the bar stacks a preview trigger above a full-width button, and
+  // the radio pill can float over it too. Measure it instead -- the same
+  // --bottom-chrome-h mechanism the stall interior and Cockpit use.
+  // Gated on isMobile because the bar is md:hidden, and a display:none
+  // element measures as a full-viewport intrusion.
+  const isMobile = useIsMobile();
+  const bottomBarRef = useBottomChromeElement<HTMLDivElement>('register-wandering-bar', isMobile);
 
   const roleParam = searchParams.get('role');
   // Set by the /sow/<role> pages when they bounce someone who has no role
@@ -453,7 +465,7 @@ export default function RegisterWanderingPage() {
   );
 
   return (
-    <div className="container max-w-5xl mx-auto px-4 py-6 md:py-8 pb-28 md:pb-8">
+    <div className="container max-w-5xl mx-auto px-4 py-6 md:py-8 pb-[calc(var(--bottom-chrome-h,7rem)+1rem)] md:pb-8">
       <Button variant="ghost" size="sm" onClick={() => navigate('/sow')} className="mb-4 -ml-2">
         <ArrowLeft className="w-4 h-4 mr-2" /> Sow
       </Button>
@@ -685,7 +697,7 @@ export default function RegisterWanderingPage() {
         </div>
       </div>
 
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-background border-t px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-2">
+      <div ref={bottomBarRef} className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-background border-t px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-2">
         <Sheet>
           <SheetTrigger asChild>
             <button type="button" className="w-full flex items-center gap-2 text-xs text-muted-foreground">
