@@ -124,8 +124,24 @@ export function useUserLocation() {
     loadLocation();
   }, [user?.id]);
 
+  /**
+   * Persists a location to the profile -- but only a REAL one.
+   *
+   * This used to save whatever locationFromText() returned for a member
+   * whose profile merely said "South Africa", stamping the Johannesburg
+   * centroid (-26.2, 28.0) into profiles.latitude/longitude as though it
+   * were their position. 13 of 98 profiles carry that exact pair.
+   * RegisterWanderingPage then copies those columns onto the member's
+   * wandering_roles row, which is how a Wandering Pillow based in Stilbay
+   * and a Wandering Wheel based in Mossel Bay both ended up plotted in
+   * Johannesburg, ~1,000 km and ~400 km from their own stated towns.
+   *
+   * A guess is fine to display; it is not fine to store as fact. Only a
+   * browser fix or a manual entry is written now, and unknown stays null.
+   */
   const saveLocationToProfile = async (loc: UserLocation) => {
     if (!user?.id) return;
+    if (loc.source !== 'browser' && loc.source !== 'manual') return;
 
     try {
       const { error } = await (supabase.from('profiles') as any)
@@ -135,7 +151,11 @@ export function useUserLocation() {
           longitude: loc.lon,
           location_verified: loc.verified,
           location_updated_at: new Date().toISOString(),
-          location: loc.source === 'default' ? 'South Africa' : user.location || user.user_metadata?.location || null,
+          // Only a browser or manual fix reaches here now, so the old
+          // `source === 'default' ? 'South Africa'` branch is unreachable --
+          // and writing that string back was half of how a country name
+          // became a set of coordinates in the first place.
+          location: user.location || user.user_metadata?.location || null,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
 
