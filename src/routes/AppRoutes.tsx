@@ -93,6 +93,7 @@ import {
   SleepingSeedsPage,
   MyListingsPage,
   RegisterWanderingPage,
+  WanderingMemberPage,
   StorePage,
   PrivacyPage,
   TermsPage,
@@ -530,6 +531,16 @@ const AppRoutes = () => (
         equivalent resolution here and lands on the plain list -- a known,
         narrow gap, not silently pretended away. */}
     <Route path="/communications-hub" element={<ProtectedRoute allowIncompleteSetup><LegacyChatRedirect /></ProtectedRoute>} />
+    {/* One Wandering member's public page -- the individual half of the
+        pattern (public item, gated aggregate), matching /stall/:username.
+        PUBLIC on purpose: no ProtectedRoute, so a member can share their
+        door with someone who has no account yet. Declared before the
+        splat below; react-router ranks the more specific path first
+        regardless of order, but keeping them adjacent makes that legible. */}
+    <Route path="/wandering/:role/:id" element={
+      <Suspense fallback={<LoadingFallback />}><WanderingMemberPage /></Suspense>
+    } />
+
     {/* Legacy/hand-written invite links: /wandering/<anything>?ref=CODE.
         See LegacyWanderingRedirect above for why these land on /register. */}
     <Route path="/wandering/*" element={<LegacyWanderingRedirect />} />

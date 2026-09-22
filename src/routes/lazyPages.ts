@@ -164,6 +164,7 @@ export const MyListingsPage = lazy(() => import('@/pages/MyListingsPage'));
 export const SowPillowPage = lazy(() => import('@/pages/sow/SowPillowPage'));
 export const PillowSeedDetailPage = lazy(() => import('@/pages/PillowSeedDetailPage'));
 export const RegisterWanderingPage = lazy(() => import('@/pages/RegisterWanderingPage'));
+export const WanderingMemberPage = lazy(() => import('@/pages/WanderingMemberPage'));
 export const StorePage = lazy(() => import('@/pages/StorePage'));
 export const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'));
 export const TermsPage = lazy(() => import('@/pages/TermsPage'));

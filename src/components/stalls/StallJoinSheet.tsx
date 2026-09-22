@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 
 interface Props {
   stallName: string;
+  /** Overrides the sentence under the heading. Defaults to the stall wording. */
+  blurb?: string;
   onClose: () => void;
 }
 
@@ -25,7 +27,7 @@ interface Props {
  * chain via the existing storePendingReturn/readPendingReturn system
  * (src/lib/returnTo.ts, already used by shared-video-link signups).
  */
-export default function StallJoinSheet({ stallName, onClose }: Props) {
+export default function StallJoinSheet({ stallName, blurb, onClose }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const returnTo = encodeURIComponent(location.pathname + location.search + location.hash);
@@ -48,7 +50,7 @@ export default function StallJoinSheet({ stallName, onClose }: Props) {
         </div>
         <h2 className="text-center font-serif text-lg font-semibold text-amber-50">Join Sow2Grow to step in</h2>
         <p className="mt-1.5 text-center text-sm text-amber-100/70">
-          Sign up to browse {stallName}'s full stall, message the sower, and bestow.
+          {blurb ?? `Sign up to browse ${stallName}'s full stall, message the sower, and bestow.`}
         </p>
 
         <div className="mt-5 flex flex-col gap-2">
