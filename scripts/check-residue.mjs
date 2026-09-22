@@ -47,6 +47,7 @@ select json_build_object(
       union all select 'wandering_roles',     count(*) from wandering_roles
       union all select 'storage_wandering',   count(*) from storage.objects where bucket_id='wandering'
       union all select 'storage_premium_room',count(*) from storage.objects where bucket_id='premium-room'
+      union all select 'storage_orchard_images',count(*) from storage.objects where bucket_id='orchard-images'
   ) c),
   'listings', (select json_object_agg(id, state) from (
       select p.id::text as id,
