@@ -45,14 +45,23 @@ export function unitForViewer(locales?: readonly string[]): DistanceUnit {
   return region && IMPERIAL_REGIONS.has(region) ? 'mi' : 'km';
 }
 
+/**
+ * Half the earth's circumference, so every point on the planet is within
+ * this of every other. Passed as _radius_m it makes the proximity RPCs
+ * return everything while still ordering by distance -- a sort, not a
+ * cutoff. This is the default: a 50 km cutoff hid every listing from
+ * nearly every member, because the listings are country-wide.
+ */
+export const EVERYWHERE_M = 20_037_500;
+
 /** The default radius, as metres, in whichever unit the viewer reads. */
-export const DEFAULT_RADIUS_M = 50_000; // 50 km, which is ~30 mi
+export const DEFAULT_RADIUS_M = EVERYWHERE_M;
 
 /**
  * Radius choices offered in the selector. Stored as metres so the same
  * value means the same distance for every viewer; only the label changes.
  */
-export const RADIUS_CHOICES_M = [10_000, 25_000, 50_000, 100_000, 250_000] as const;
+export const RADIUS_CHOICES_M = [10_000, 25_000, 50_000, 100_000, 250_000, EVERYWHERE_M] as const;
 
 /**
  * Great-circle distance in metres. The same formula the database uses in
@@ -75,6 +84,7 @@ export function metresToUnit(metres: number, unit: DistanceUnit): number {
 
 /** A radius label, rounded to something a person would actually say. */
 export function formatRadius(metres: number, unit: DistanceUnit): string {
+  if (metres >= EVERYWHERE_M) return 'Everywhere';
   const value = metresToUnit(metres, unit);
   return `${Math.round(value)} ${unit}`;
 }

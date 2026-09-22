@@ -62,7 +62,8 @@ export default function LocationBar({
       {(status === 'needs-place' || status === 'unknown' || status === 'error') && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Tell us where you are, so we can show what is near you.
+            Showing everything, newest first. Add your location to sort by
+            what is nearest and see how far away each one is.
           </p>
 
           <Button
@@ -97,8 +98,10 @@ export default function LocationBar({
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      {status === 'ready' && (
-        <div className="flex items-center gap-3 pt-1">
+      {/* An optional narrowing, not the thing that decides what exists.
+          Shown with or without a position: picking a radius without one is
+          what prompts for a position in the first place. */}
+      <div className="flex items-center gap-3 pt-1">
           <label htmlFor="radius" className="text-sm text-muted-foreground shrink-0">
             Within
           </label>
@@ -112,8 +115,7 @@ export default function LocationBar({
               ))}
             </SelectContent>
           </Select>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -36,9 +36,9 @@ const TAB_TO_KIND: Record<TabKey, 'wheel' | 'pillow' | 'hand'> = {
 };
 
 const EMPTY_COPY: Record<TabKey, { message: string; cta: string; to: string }> = {
-  wheels:  { message: 'No vehicles near you yet — be the first', cta: 'Register a vehicle', to: '/sow/wheel' },
-  pillows: { message: 'No places to stay near you yet — be the first', cta: 'List a place', to: '/sow/pillow' },
-  hands:   { message: 'No helping hands near you yet — be the first', cta: 'Offer a hand', to: '/sow/hand' },
+  wheels:  { message: 'No vehicles listed yet — be the first', cta: 'Register a vehicle', to: '/sow/wheel' },
+  pillows: { message: 'No places to stay listed yet — be the first', cta: 'List a place', to: '/sow/pillow' },
+  hands:   { message: 'No helping hands listed yet — be the first', cta: 'Offer a hand', to: '/sow/hand' },
 };
 
 interface WheelRow {
@@ -194,25 +194,36 @@ export default function SleepingSeedsPage() {
   };
 
   const load = useCallback(async () => {
-    if (!location) return;
     setLoading(true);
     setLoadError(null);
+    // With no viewer position we still ask for everything; the origin is
+    // arbitrary and every distance it returns is discarded below.
+    const originLat = location?.lat ?? 0;
+    const originLng = location?.lng ?? 0;
+    // The RPCs order by distance from the origin. That ordering is
+    // meaningless without a real viewer position, so fall back to newest
+    // first -- never to distance from an arbitrary point.
+    const ordered = <T extends { created_at: string }>(rows: T[]): T[] => (
+      location
+        ? rows
+        : [...rows].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
+    );
     try {
       if (tab === 'wheels') {
         const { data, error } = await supabase.rpc('sleeping_wheels_near', {
-          _lat: location.lat,
-          _lng: location.lng,
+          _lat: originLat,
+          _lng: originLng,
           _radius_m: radiusM,
           _vehicle_types: vehicleTypes.length ? vehicleTypes : null,
           _use_tags: useTags.length ? useTags : null,
           _rate_periods: ratePeriods.length ? ratePeriods : null,
         });
         if (error) throw error;
-        setWheels((data ?? []) as WheelRow[]);
+        setWheels(ordered((data ?? []) as WheelRow[]));
       } else if (tab === 'pillows') {
         const { data, error } = await supabase.rpc('sleeping_pillows_near', {
-          _lat: location.lat,
-          _lng: location.lng,
+          _lat: originLat,
+          _lng: originLng,
           _radius_m: radiusM,
           _stay_types: stayTypes.length ? stayTypes : null,
           _amenities: amenityFilter.length ? amenityFilter : null,
@@ -220,11 +231,11 @@ export default function SleepingSeedsPage() {
           _rate_periods: pillowRates.length ? pillowRates : null,
         });
         if (error) throw error;
-        setPillows((data ?? []) as PillowRow[]);
+        setPillows(ordered((data ?? []) as PillowRow[]));
       } else if (tab === 'hands') {
         const { data, error } = await supabase.rpc('sleeping_hands_near', {
-          _lat: location.lat,
-          _lng: location.lng,
+          _lat: originLat,
+          _lng: originLng,
           _radius_m: radiusM,
           _professional: professional,
           _categories: categories.length ? categories : null,
@@ -233,16 +244,16 @@ export default function SleepingSeedsPage() {
           _rate_periods: handRates.length ? handRates : null,
         });
         if (error) throw error;
-        setHands((data ?? []) as HandRow[]);
+        setHands(ordered((data ?? []) as HandRow[]));
       } else {
         const { data, error } = await supabase.rpc('sleeping_services_near', {
           _kind: TAB_TO_KIND[tab],
-          _lat: location.lat,
-          _lng: location.lng,
+          _lat: originLat,
+          _lng: originLng,
           _radius_m: radiusM,
         });
         if (error) throw error;
-        setOthers((data ?? []) as ServiceRow[]);
+        setOthers(ordered((data ?? []) as ServiceRow[]));
       }
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : 'Could not load listings.');
@@ -258,6 +269,9 @@ export default function SleepingSeedsPage() {
 
   useEffect(() => { void load(); }, [load]);
 
+  // A known position adds distances and a nearest-first order. It is never
+  // a filter: the list is every active listing either way.
+  const hasLocation = !!location;
   const empty = EMPTY_COPY[tab];
   const activeFilterCount = vehicleTypes.length + useTags.length + ratePeriods.length;
   const pillowFilterCount = stayTypes.length + amenityFilter.length + pillowRates.length
@@ -276,7 +290,7 @@ export default function SleepingSeedsPage() {
       <header className="mb-5">
         <h1 className="text-2xl font-bold">Sleeping Seeds</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Vehicles, places to stay and helping hands near you.
+          Vehicles, places to stay and helping hands from across the tribe.
         </p>
         {navCounts !== null && (
           <p className="text-xs text-muted-foreground mt-1">
@@ -307,7 +321,7 @@ export default function SleepingSeedsPage() {
           <TabsTrigger value="hands">Hands</TabsTrigger>
         </TabsList>
 
-        {tab === 'wheels' && status === 'ready' && (
+        {tab === 'wheels' && (
           <div className="mb-4">
             <Button
               variant="outline"
@@ -356,7 +370,7 @@ export default function SleepingSeedsPage() {
           </div>
         )}
 
-        {tab === 'pillows' && status === 'ready' && (
+        {tab === 'pillows' && (
           <div className="mb-4">
             <Button
               variant="outline"
@@ -432,7 +446,7 @@ export default function SleepingSeedsPage() {
           </div>
         )}
 
-        {tab === 'hands' && status === 'ready' && (
+        {tab === 'hands' && (
           <div className="mb-4">
             <Button
               variant="outline"
@@ -535,33 +549,27 @@ export default function SleepingSeedsPage() {
         )}
 
         <TabsContent value={tab} forceMount>
-          {status !== 'ready' && (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              Set your location above to see what is near you.
-            </p>
-          )}
-
-          {status === 'ready' && loading && (
+          {loading && (
             <div className="grid gap-4 sm:grid-cols-2">
               {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-44 rounded-xl" />)}
             </div>
           )}
 
-          {status === 'ready' && !loading && loadError && (
+          {!loading && loadError && (
             <div className="rounded-xl border border-destructive/40 p-4 space-y-3">
               <p className="text-sm text-destructive">{loadError}</p>
               <Button size="sm" variant="outline" onClick={() => void load()}>Try again</Button>
             </div>
           )}
 
-          {status === 'ready' && !loading && !loadError && (
+          {!loading && !loadError && (
             <>
               {tab === 'wheels' ? (
                 wheels.length === 0 ? (
                   <EmptyState {...empty} />
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {wheels.map((w) => <WheelCard key={w.product_id} row={w} unit={unit} />)}
+                    {wheels.map((w) => <WheelCard key={w.product_id} row={w} unit={unit} showDistance={hasLocation} />)}
                   </div>
                 )
               ) : tab === 'hands' ? (
@@ -569,7 +577,7 @@ export default function SleepingSeedsPage() {
                   <EmptyState {...empty} />
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {hands.map((h) => <HandCard key={h.product_id} row={h} unit={unit} />)}
+                    {hands.map((h) => <HandCard key={h.product_id} row={h} unit={unit} showDistance={hasLocation} />)}
                   </div>
                 )
               ) : tab === 'pillows' ? (
@@ -577,7 +585,7 @@ export default function SleepingSeedsPage() {
                   <EmptyState {...empty} />
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {pillows.map((p) => <PillowCard key={p.product_id} row={p} unit={unit} />)}
+                    {pillows.map((p) => <PillowCard key={p.product_id} row={p} unit={unit} showDistance={hasLocation} />)}
                   </div>
                 )
               ) : (
@@ -586,7 +594,7 @@ export default function SleepingSeedsPage() {
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
                     {others.map((o) => (
-                      <ServiceCard key={o.product_id} row={o} unit={unit} kind={TAB_TO_KIND[tab]} />
+                      <ServiceCard key={o.product_id} row={o} unit={unit} kind={TAB_TO_KIND[tab]} showDistance={hasLocation} />
                     ))}
                   </div>
                 )
@@ -645,7 +653,22 @@ function EmptyState({ message, cta, to }: { message: string; cta: string; to: st
   );
 }
 
-function WheelCard({ row, unit }: { row: WheelRow; unit: ReturnType<typeof unitForViewer> }) {
+/**
+ * "12 km away · Bethlehem" with a position, plain "Bethlehem" without one.
+ * Never an empty distance followed by a dangling separator.
+ */
+function placeLine(
+  row: { distance_m: number; base_location: string | null },
+  unit: ReturnType<typeof unitForViewer>,
+  showDistance: boolean,
+): string {
+  return [
+    showDistance ? formatDistance(row.distance_m, unit) : null,
+    row.base_location || null,
+  ].filter(Boolean).join(' · ');
+}
+
+function WheelCard({ row, unit, showDistance }: { row: WheelRow; unit: ReturnType<typeof unitForViewer>; showDistance: boolean }) {
   const rates = ratesOn(row as unknown as Record<string, unknown>);
   const tags = row.use_tags ?? [];
 
@@ -664,8 +687,7 @@ function WheelCard({ row, unit }: { row: WheelRow; unit: ReturnType<typeof unitF
         </div>
 
         <p className="text-sm text-primary font-medium">
-          {formatDistance(row.distance_m, unit)}
-          {row.base_location ? ` · ${row.base_location}` : ''}
+          {placeLine(row, unit, showDistance)}
         </p>
 
         {tags.length > 0 && (
@@ -694,7 +716,7 @@ function WheelCard({ row, unit }: { row: WheelRow; unit: ReturnType<typeof unitF
   );
 }
 
-function PillowCard({ row, unit }: { row: PillowRow; unit: ReturnType<typeof unitForViewer> }) {
+function PillowCard({ row, unit, showDistance }: { row: PillowRow; unit: ReturnType<typeof unitForViewer>; showDistance: boolean }) {
   const rates = pillowRatesOn(row as unknown as Record<string, unknown>);
   const list = row.amenities ?? [];
   const cover = row.front_image_url || row.cover_image_url;
@@ -724,8 +746,7 @@ function PillowCard({ row, unit }: { row: PillowRow; unit: ReturnType<typeof uni
         </div>
 
         <p className="text-sm text-primary font-medium">
-          {formatDistance(row.distance_m, unit)}
-          {row.base_location ? ` · ${row.base_location}` : ''}
+          {placeLine(row, unit, showDistance)}
         </p>
 
         {sleepsShown != null && (
@@ -765,7 +786,7 @@ function PillowCard({ row, unit }: { row: PillowRow; unit: ReturnType<typeof uni
   );
 }
 
-function HandCard({ row, unit }: { row: HandRow; unit: ReturnType<typeof unitForViewer> }) {
+function HandCard({ row, unit, showDistance }: { row: HandRow; unit: ReturnType<typeof unitForViewer>; showDistance: boolean }) {
   const rates = handRatesOn(row as unknown as Record<string, unknown>);
   const langs = row.languages ?? [];
   const cover = row.front_image_url || row.cover_image_url;
@@ -785,8 +806,7 @@ function HandCard({ row, unit }: { row: HandRow; unit: ReturnType<typeof unitFor
         </div>
 
         <p className="text-sm text-primary font-medium">
-          {formatDistance(row.distance_m, unit)}
-          {row.base_location ? ` · ${row.base_location}` : ''}
+          {placeLine(row, unit, showDistance)}
         </p>
 
         <p className="text-xs text-muted-foreground">
@@ -821,11 +841,12 @@ function HandCard({ row, unit }: { row: HandRow; unit: ReturnType<typeof unitFor
 }
 
 function ServiceCard({
-  row, unit, kind,
+  row, unit, kind, showDistance,
 }: {
   row: ServiceRow;
   unit: ReturnType<typeof unitForViewer>;
   kind: 'pillow' | 'hand';
+  showDistance: boolean;
 }) {
   return (
     <Link
@@ -838,8 +859,7 @@ function ServiceCard({
       <div className="p-4 space-y-2">
         <h3 className="font-semibold leading-tight">{row.title}</h3>
         <p className="text-sm text-primary font-medium">
-          {formatDistance(row.distance_m, unit)}
-          {row.base_location ? ` · ${row.base_location}` : ''}
+          {placeLine(row, unit, showDistance)}
         </p>
         <p className="text-xs text-muted-foreground">
           {row.sower_name ?? 'A sower'} · listed {localDate(row.created_at)}
