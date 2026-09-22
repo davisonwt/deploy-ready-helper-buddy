@@ -269,9 +269,17 @@ test.describe.serial('Sleeping Hands', () => {
     expect(dist.length).toBeGreaterThan(1);
     expect(new Set(dist).size).toBeGreaterThan(1);
     expect(dist).toEqual([...dist].sort((a, b) => a - b));
+    // Relative to this run's own fixtures, not the whole list: with no
+    // radius cutoff the page also carries real listings that may sit
+    // farther out than Bloemfontein, so "last overall" is not this test's
+    // claim to make. The claim is that the far one sorts after the near ones.
     const titles = await page.locator('h3').allTextContents();
-    expect(titles[titles.length - 1]).toContain(FAR_TITLE);
-    console.log('[EVIDENCE] the far listing sorts last');
+    const far = titles.findIndex((t) => t.includes(FAR_TITLE));
+    const near = titles.findIndex((t) => t.includes(PRO_TITLE));
+    expect(far, 'the far listing must be on the page').toBeGreaterThan(-1);
+    expect(near, 'the near listing must be on the page').toBeGreaterThan(-1);
+    expect(far).toBeGreaterThan(near);
+    console.log('[EVIDENCE] the far listing sorts after the near one');
   });
 
   test('8. each filter returns correct results', async ({ page }) => {

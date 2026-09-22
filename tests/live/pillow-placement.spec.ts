@@ -83,16 +83,30 @@ test.describe.serial('A pillow listing is placed where it actually is', () => {
     await page.screenshot({ path: 'test-results/pillow-mossel-bay.png', fullPage: true });
   });
 
-  test('2. it is absent from a place it is not near', async ({ page }) => {
+  test('2. from a distant place it is shown, but far away, and drops out when narrowed', async ({ page }) => {
     await login(page, EMAIL, PASS);
     await setPlace(page, 'Johannesburg, South Africa');
     await page.getByRole('tab', { name: 'Pillows' }).click();
     await page.waitForTimeout(6000);
+
+    // The default is Everywhere, so a Mossel Bay listing IS offered to a
+    // viewer in Johannesburg -- with the real distance on it, which is the
+    // honest way to say "not near you". This used to assert an empty tab,
+    // the behaviour that hid every listing from nearly every member.
+    const card = page.getByText(TITLE, { exact: false }).first();
+    await expect(card, 'shown from anywhere by default').toBeVisible({ timeout: 30000 });
+    const far = await page.locator('p', { hasText: /\d\s*(km|mi)\s*away/ }).first().innerText();
+    console.log('[EVIDENCE] shown from Johannesburg, distance reads:', far.replace(/\s+/g, ' '));
+    expect(Number(/([\d.]+)/.exec(far)?.[1])).toBeGreaterThan(100);
+
+    // Narrowing to the old 50 km default is what excludes it, on request.
+    await page.locator('#radius').click();
+    await page.getByRole('option', { name: /31 mi|50 km/ }).click();
     await expect(
       page.getByText(TITLE, { exact: false }),
-      'a Mossel Bay listing must not show in Johannesburg',
-    ).toHaveCount(0);
-    console.log('[EVIDENCE] absent from Johannesburg at the default radius');
+      'a Mossel Bay listing must not show within 50 km of Johannesburg',
+    ).toHaveCount(0, { timeout: 30000 });
+    console.log('[EVIDENCE] absent from Johannesburg once narrowed to 50 km');
   });
 
   test('3. the owner card states where it shows, not just that it shows', async ({ page }) => {
