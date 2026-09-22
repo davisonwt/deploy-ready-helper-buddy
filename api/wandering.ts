@@ -1,16 +1,100 @@
 // Wandering member link previews.
 //
 // /wandering/:role/:id is a public page (WanderingMemberPage), and the
-// "share your door" flow in RegisterWanderingPage emits exactly that URL
-// with the sharer's ?ref= on it. Without this, a door pasted into WhatsApp
-// or Telegram showed the generic index.html title and no image.
+// "share your door" flow emits exactly that URL with the sharer's ?ref=.
+// Without this, a door pasted into WhatsApp or Telegram showed the generic
+// index.html title and no image.
 //
 // vercel.json rewrites the path here ONLY for a matching crawler
 // User-Agent; a real browser never reaches this file and gets the SPA.
-// Same jpeg treatment as stall previews -- see api/_og.ts, which owns the
-// shared rendering and the Supabase image transformation that keeps
-// Telegram working.
-import { SUPABASE_URL, ANON_KEY, renderHtml } from './_og';
+//
+// The helpers below are duplicated from api/stall.ts ON PURPOSE. They were
+// briefly extracted to api/_og.ts and BOTH functions started returning
+// FUNCTION_INVOCATION_FAILED in production: Vercel's builder ignores
+// underscore-prefixed files under /api, so the import did not exist at
+// runtime. If these are ever shared, the shared module must live somewhere
+// the builder actually deploys, and the stall preview must be re-tested
+// with a crawler UA before it is called done.
+
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
+const ANON_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_Z8-I1gu2Q1yid1Q4jKRf7Q_jSGcsVpa';
+const SITE_URL = 'https://sow2growapp.com';
+
+// Telegram will not render a webp og:image. WhatsApp and Facebook do, which
+// is why previews "worked" and only Telegram came up empty -- measured
+// 2026-09-21: /stall/davison.taljaard advertised
+// .../object/public/stalls/<id>/front.webp, served 200 image/webp, 339KB.
+//
+// Supabase's image transformation endpoint is enabled on this project and
+// negotiates on Accept: it returns webp only to a client that asks for
+// webp, and jpeg to everything else. Verified against the live bucket --
+// Accept: */* and a bare TelegramBot UA both come back image/jpeg. So the
+// same URL stays correct for every crawler without converting anything
+// ourselves, and without a new dependency.
+//
+// A fixed 1200x630 cover crop, rather than width alone, is what lets the
+// og:image:width/height tags below be true: width=1200 on its own returns
+// 1200x853 for this stall and something else for the next one, and a
+// dimension tag that has to be guessed is worse than none. 1.91:1 is the
+// box Telegram and WhatsApp render a large preview in anyway.
+const OG_IMAGE_WIDTH = 1200;
+const OG_IMAGE_HEIGHT = 630;
+
+/** Routes a Supabase public-object URL through the transformation endpoint. Anything else passes through untouched. */
+function crawlerImageUrl(url: string): string {
+  const marker = '/storage/v1/object/public/';
+  if (!url.includes(marker)) return url;
+  const base = url.replace(marker, '/storage/v1/render/image/public/');
+  const sep = base.includes('?') ? '&' : '?';
+  return `${base}${sep}width=${OG_IMAGE_WIDTH}&height=${OG_IMAGE_HEIGHT}&resize=cover&quality=80`;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderHtml(opts: { title: string; description: string; image: string | null; canonicalPath: string }): string {
+  const { title, description, image, canonicalPath } = opts;
+  const canonicalUrl = `${SITE_URL}${canonicalPath}`;
+  const t = escapeHtml(title);
+  const pageTitle = title === 'Sow2Grow' ? 'Sow2Grow' : `${t} — Sow2Grow`;
+  const d = escapeHtml(description);
+  const imageUrl = image ? crawlerImageUrl(image) : null;
+  const imageTags = imageUrl
+    ? `
+    <meta property="og:image" content="${escapeHtml(imageUrl)}">
+    <meta property="og:image:width" content="${OG_IMAGE_WIDTH}">
+    <meta property="og:image:height" content="${OG_IMAGE_HEIGHT}">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta name="twitter:image" content="${escapeHtml(imageUrl)}">`
+    : '';
+
+  return `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>${pageTitle}</title>
+<meta name="description" content="${d}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${t}">
+<meta property="og:description" content="${d}">
+<meta property="og:url" content="${canonicalUrl}">
+<meta property="og:site_name" content="Sow2Grow">${imageTags}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${t}">
+<meta name="twitter:description" content="${d}">
+<meta http-equiv="refresh" content="0; url=${canonicalPath}">
+</head>
+<body>
+<p>Redirecting to <a href="${canonicalPath}">${t} on Sow2Grow</a>&hellip;</p>
+</body>
+</html>`;
+}
 
 export default async function handler(req: any, res: any) {
   const one = (v: unknown) => (Array.isArray(v) ? v[0] : v) as string | undefined;
