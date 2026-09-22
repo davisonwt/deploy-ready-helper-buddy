@@ -19,7 +19,21 @@ const VIEWPORTS = [
   { w: 1280, h: 720, name: 'desktop-1280' },
 ];
 
-const FORMS = [
+interface SowForm {
+  route: string;
+  firstStep: RegExp;
+  steps: number;
+  pick: RegExp;
+  /**
+   * Whatever else step 1 needs before it counts as done. Wheel and Hand
+   * complete step 1 on the choice alone. Pillow's step 1 is "Your units",
+   * and a unit is not valid until it also has a name and a price -- so
+   * picking a kind legitimately leaves step 1 unfinished there.
+   */
+  finishStep1?: (page: Page) => Promise<void>;
+}
+
+const FORMS: SowForm[] = [
   // The choice buttons put the label and its hint in one accessible name
   // ("CarA normal car. People and small loads."), so these anchor at the
   // start only. An exact match finds nothing and waits out the timeout.
@@ -28,7 +42,17 @@ const FORMS = [
   // people book?" and has 6 steps, not the 7-step "What kind of place is
   // it?" flow this line was written against. The old expectation could
   // never match, so this case had been failing on setup, not on layout.
-  { route: '/sow/pillow', firstStep: /^1\. What can people book\?$/, steps: 6, pick: /^Cottage/ },
+  {
+    route: '/sow/pillow',
+    firstStep: /^1\. What can people book\?$/,
+    steps: 6,
+    pick: /^Cottage/,
+    finishStep1: async (page) => {
+      await page.locator('input[placeholder="Family chalet"]').fill('QA unit');
+      await page.locator('input[placeholder="—"]').first().fill('250');
+      await page.waitForTimeout(800);
+    },
+  },
   { route: '/sow/hand', firstStep: /^1\. What do you do\?$/, steps: 7, pick: /^Electrician/ },
 ];
 
@@ -110,6 +134,7 @@ test.describe.serial('The sow forms name every step up front', () => {
 
         // --- now pick the first choice and re-measure ---------------------
         await page.getByRole('button', { name: form.pick }).first().click();
+        if (form.finishStep1) await form.finishStep1(page);
         await page.waitForTimeout(2500);
         const after = await measure(page);
         console.log(`[${form.route} @ ${vp.name}] AFTER PICKING\n` + JSON.stringify(after));

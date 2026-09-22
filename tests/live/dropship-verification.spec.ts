@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, sweepProducts, reportSweep } from './support/fixtures';
 
 // Live verification for factory-sower dropship support: bulk-import a
 // dropship-flagged product as the real sower account, confirm the "ships
@@ -43,6 +44,17 @@ async function dismissOverlays(page: Page) {
 }
 
 test.describe.serial('Dropship support (factory-sower products)', () => {
+  /**
+   * Teardown in a hook, never a final test: this block is serial, so a
+   * failure marks every later test "did not run" and a cleanup test
+   * would be skipped on exactly the runs that leak.
+   */
+  test.afterAll(async () => {
+    if (!HOST_EMAIL || !HOST_PASS) return;
+    const { client, userId } = await asUser(HOST_EMAIL, HOST_PASS, 'dropship-verification');
+    reportSweep('dropship-verification', await sweepProducts(client, userId, [PRODUCT_TITLE]));
+  });
+
   test('1. bulk-import a dropship-flagged product as the sower', async ({ page }) => {
     let parseStatus = 0;
     let parseSawDropshipTrue = false;

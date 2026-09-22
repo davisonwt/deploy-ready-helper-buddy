@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, sweepProducts, reportSweep } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -30,6 +31,13 @@ async function login(page: Page) {
   }
   throw new Error('login failed');
 }
+
+/** No describe block here, so this is a file-level teardown hook. */
+test.afterAll(async () => {
+  if (!E || !P) return;
+  const { client, userId } = await asUser(E, P, 'hand-household-registration');
+  reportSweep('hand-household-registration', await sweepProducts(client, userId, [TITLE]));
+});
 
 test('a household service registers end to end at 390x844', async ({ page }) => {
   test.skip(!E || !P, 'The owner account is required.');

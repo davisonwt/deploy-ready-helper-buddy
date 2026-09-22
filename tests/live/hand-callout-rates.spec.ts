@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, sweepProducts, reportSweep } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -30,6 +31,17 @@ const VIEWPORTS = [
 ];
 
 test.describe.serial('Call-out charging for Sleeping Hands', () => {
+  /**
+   * Teardown in a hook, never a final test: this block is serial, so a
+   * failure marks every later test "did not run" and a cleanup test
+   * would be skipped on exactly the runs that leak.
+   */
+  test.afterAll(async () => {
+    if (!E || !P) return;
+    const { client, userId } = await asUser(E, P, 'hand-callout-rates');
+    reportSweep('hand-callout-rates', await sweepProducts(client, userId, VIEWPORTS.map((vp) => `QACALLOUT ${vp.n} ${STAMP}`)));
+  });
+
   test.skip(!E || !P, 'The owner account is required.');
 
   for (const vp of VIEWPORTS) {

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, sweepProducts, reportSweep } from './support/fixtures';
 import { waitForCoverAccepted } from './support/coverUpload';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -47,6 +48,17 @@ async function setPlace(page: Page, place: string) {
 }
 
 test.describe.serial('A pillow listing is made of units', () => {
+  /**
+   * Teardown in a hook, never a final test: this block is serial, so a
+   * failure marks every later test "did not run" and a cleanup test
+   * would be skipped on exactly the runs that leak.
+   */
+  test.afterAll(async () => {
+    if (!E || !P) return;
+    const { client, userId } = await asUser(E, P, 'pillow-units');
+    reportSweep('pillow-units', await sweepProducts(client, userId, [TITLE]));
+  });
+
   test.skip(!E || !P, 'The owner account is required.');
   let listingId = '';
 

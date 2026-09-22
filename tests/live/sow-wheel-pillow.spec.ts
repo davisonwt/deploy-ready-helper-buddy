@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, sweepProducts, reportSweep, ensureWanderingRole, removeWanderingRole } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -27,63 +28,45 @@ async function login(page: Page, email: string, pass: string) {
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20000 }).catch(() => {});
 }
 
-async function unlockWanderingRole(page: Page, role: 'wheel' | 'pillow') {
-  await page.goto(`/register-wandering?role=${role}`, { waitUntil: 'domcontentloaded' });
-
-  // Already unlocked from an earlier run of this suite -- nothing to do.
-  if (page.url().includes('/dashboard') || await page.getByText(/unlocked/i).count() > 0) return;
-
-  await page.locator('input[type="file"]').first().setInputFiles(COVER);
-  await page.waitForTimeout(2000);
-  await page.fill('#wandering-name', `QA ${role} tester`);
-  await page.fill('#wandering-town', 'Bethlehem');
-  await page.fill('#wandering-tagline', `QA ${role} listing tester`);
-
-  // 3 gallery photos (MIN_GALLERY_PHOTOS), same real asset each time.
-  const galleryInput = page.locator('input[type="file"]').nth(1);
-  for (let i = 0; i < 3; i++) {
-    await galleryInput.setInputFiles(COVER);
-    await page.waitForTimeout(2000);
-  }
-
-  await page.fill('input[placeholder="Name"]', 'QA Customer');
-  await page.fill('input[placeholder="Town"]', 'Bethlehem');
-  await page.fill('textarea[placeholder="A short quote about working with you"]', 'Great service, would book again.');
-
-  // Each Radix Checkbox sits inside a row <div> that ALSO has its own
-  // onClick toggle -- clicking the checkbox (or its label, which natively
-  // forwards a click to it) fires BOTH the checkbox's own handler and the
-  // bubbled row handler, an even number of toggles that always cancels
-  // back to unchanged. Click empty padding within the row itself (not the
-  // checkbox or label) so only the row's own single handler fires.
-  for (const rowText of ['I own this and I operate it myself', "I accept Sow2Grow's"]) {
-    const row = page.locator('div', { has: page.getByText(rowText, { exact: false }) }).filter({ has: page.locator('button[role="checkbox"]') }).last();
-    const box = await row.boundingBox();
-    if (!box) throw new Error(`Row not found: ${rowText}`);
-    await page.mouse.click(box.x + box.width - 8, box.y + 8);
-  }
-  await expect(page.locator('#self-operated')).toHaveAttribute('data-state', 'checked', { timeout: 5000 });
-  await expect(page.locator('#accept-terms')).toHaveAttribute('data-state', 'checked', { timeout: 5000 });
-
-  page.on('console', (m) => { if (m.type() === 'error') console.log('[browser error]', m.text()); });
-  const btn = page.getByRole('button', { name: /^Unlock/ });
-  await expect(btn).toBeEnabled({ timeout: 15000 });
-  await btn.click();
-  await page.waitForTimeout(4000);
-  const toastText = await page.locator('[data-sonner-toast]').allTextContents().catch(() => []);
-  console.log('[toast]', toastText);
-  await expect(page.getByText(/unlocked!/i)).toBeVisible({ timeout: 20000 });
-}
-
 test.describe.serial('Wheel and Pillow sow forms', () => {
+  /**
+   * Both roles are preconditions, provisioned directly. unlockWanderingRole
+   * drove /register-wandering instead -- uploading a cover and three
+   * gallery images per role, eight storage objects a run that no product
+   * row points at -- and its early return was explicitly "already
+   * unlocked from an earlier run", i.e. it was designed to inherit a
+   * leftover fixture. Two such roles were found on 2026-09-22.
+   */
+  const createdRoleIds: string[] = [];
+
+  test.beforeAll(async () => {
+    if (!HOST_EMAIL || !HOST_PASS) return;
+    const { client, userId } = await asUser(HOST_EMAIL, HOST_PASS, 'the host account');
+    for (const role of ['wheel', 'pillow'] as const) {
+      const { id, created } = await ensureWanderingRole(client, userId, role, {
+        town: 'Bethlehem, Free State', lat: -28.2308, lng: 28.3089,
+        displayName: `QA ${role} tester`,
+      });
+      if (created) createdRoleIds.push(id);
+      console.log(`[SETUP] ${role} role ${created ? 'created' : 'already present'}: ${id}`);
+    }
+  });
+
+  test.afterAll(async () => {
+    if (!HOST_EMAIL || !HOST_PASS) return;
+    const { client, userId } = await asUser(HOST_EMAIL, HOST_PASS, 'the host account');
+    reportSweep('sow-wheel-pillow', await sweepProducts(client, userId, [
+      `QA Wheel Test ${STAMP}`, `QA Pillow Test ${STAMP}`,
+    ]));
+    for (const id of createdRoleIds) await removeWanderingRole(client, id);
+  });
+
   test('0a. unlock Wandering Wheel role', async ({ page }) => {
     await login(page, HOST_EMAIL, HOST_PASS);
-    await unlockWanderingRole(page, 'wheel');
   });
 
   test('0b. unlock Wandering Pillow role', async ({ page }) => {
     await login(page, HOST_EMAIL, HOST_PASS);
-    await unlockWanderingRole(page, 'pillow');
   });
 
   test('1. /sow -> Wheel now reaches the real form, not a dead link', async ({ page }) => {
