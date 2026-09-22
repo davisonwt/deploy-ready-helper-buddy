@@ -1,0 +1,42 @@
+{
+  "counts": {
+    "products": 66,
+    "pillow_seed_details": 1,
+    "wheel_seed_details": 1,
+    "hand_seed_details": 1,
+    "pillow_units": 1,
+    "wandering_roles": 4,
+    "storage_wandering": 25,
+    "storage_premium_room": 927
+  },
+  "listings": {
+    "3a238098-f438-40bb-90ed-d7d2f05540e6": "active/available",
+    "819a5b71-48a4-40c5-9fc7-f516aa82c348": "active/available",
+    "a81857e8-b6b9-4f42-b4ae-17be0eecdd1d": "active/available"
+  },
+  "stalls": {
+    "1c16a8bf-4d2e-4b88-b5c4-72aa7c83b469": "6h/4t",
+    "c5a1d858-2281-4a0a-9496-f804e3e1c110": "4h/0t",
+    "efadfb51-a5c9-47a4-8eec-874247077bf3": "4h/0t",
+    "2fff6527-24c2-4781-b8ab-530f855323cc": "3h/0t",
+    "3c4917e5-e0a4-4170-b081-5193743e31c5": "5h/3t",
+    "cf3f3385-592e-45ac-be3c-604dadd4978d": "4h/0t",
+    "6e215e12-039d-4679-bbfa-894fdd29f576": "4h/0t",
+    "ab75a0e3-2091-45f8-a9ae-e1e7ea097d2b": "5h/0t",
+    "d54ce7fe-b39f-4dc0-8ff3-025c4b671184": "5h/0t",
+    "05b850a1-b198-44a7-b60a-054b3d23608b": "4h/0t",
+    "b5124ce5-861e-4f2e-8bf5-d2b9c83299d8": "4h/0t",
+    "2042a237-24b9-45bb-8e5f-6cf336f6337c": "4h/0t",
+    "7a65cd69-ccc3-46e2-a549-18a4d8397cde": "4h/0t",
+    "6f531cab-bc3d-442d-93a7-eeb5c8bc4f75": "4h/0t",
+    "7854a529-9a98-4ff9-a6f7-88c5c3f1b357": "4h/0t",
+    "7ae59b08-c89f-43d9-b6cf-046e8a0ef5c0": "4h/0t",
+    "a5b42c2c-2527-4c81-8cae-5bc09de7ba31": "0h/0t",
+    "121e1fa7-90aa-4ceb-86c6-6caa3de5276f": "11h/4t",
+    "0f456f9c-a75f-4f50-8923-5712235a1627": "6h/0t",
+    "20cea19a-4465-4b24-86d1-ff180a906da4": "4h/0t",
+    "eefe91f9-1b4c-405a-9de7-37d451a15677": "5h/0t",
+    "934dacb4-feec-4ee2-81f3-ec3311d3a756": "3h/0t",
+    "34b1a335-a3e9-410e-8700-467e0b1faa2e": "3h/0t"
+  }
+}
