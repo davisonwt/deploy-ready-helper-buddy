@@ -4,7 +4,15 @@
 
     C:\Users\Ezra\S2G-backups\storage-archive\2026-09-22-qa-wandering
 
-8 files plus `MANIFEST.json`, each with its sha256. The bytes were pulled
+8 files plus `MANIFEST.json`, each with its sha256.
+
+> **Digest note (corrected 2026-09-22):** an earlier revision of this file
+> printed each digest truncated to its first 32 hex characters. Those are
+> real SHA-256 values -- `MANIFEST.json` always held the full 64 -- but a
+> 32-character hex string is md5's length, so a future restore could have
+> verified with the wrong algorithm and read a good archive as corruption.
+> The table below now carries the full 64-hex digests, recomputed from the
+> archived bytes on disk and confirmed to match `MANIFEST.json`. The bytes were pulled
 down and checksummed BEFORE the delete, per the Storage rule in CLAUDE.md:
 database backups hold no Storage objects, so a deleted object is gone
 forever unless its bytes were archived first.
@@ -20,16 +28,16 @@ those rows gone nothing referenced the files. Verified per object against
 The bucket is private, so the archive was fetched with the owning
 account's own JWT rather than a public URL.
 
-| file | bytes | sha256 |
+| file | bytes | sha256 (full, 64 hex) |
 |---|---|---|
-| `1789514512752.jpg` | 47314 | `1d58f32f6ee85a0c668433a862002111` |
-| `gallery-1789514514828-5xjoz.jpg` | 39923 | `d4b17e012dc499a168028a84a96d9315` |
-| `gallery-1789514516855-qkrha.jpg` | 39923 | `d4b17e012dc499a168028a84a96d9315` |
-| `gallery-1789514518879-a9j50.jpg` | 39923 | `d4b17e012dc499a168028a84a96d9315` |
-| `1789661182978.jpg` | 47314 | `1d58f32f6ee85a0c668433a862002111` |
-| `gallery-1789661186038-m6p4p.jpg` | 39923 | `d4b17e012dc499a168028a84a96d9315` |
-| `gallery-1789661188582-rgyf4.jpg` | 39923 | `d4b17e012dc499a168028a84a96d9315` |
-| `gallery-1789661191122-g8rxv.jpg` | 39923 | `d4b17e012dc499a168028a84a96d9315` |
+| `1789514512752.jpg` | 47314 | `1d58f32f6ee85a0c668433a8620021110ab2d894f677e8cc4db533f74b054ea4` |
+| `gallery-1789514514828-5xjoz.jpg` | 39923 | `d4b17e012dc499a168028a84a96d9315d720bd6df4674a193b7b156ef42f91f7` |
+| `gallery-1789514516855-qkrha.jpg` | 39923 | `d4b17e012dc499a168028a84a96d9315d720bd6df4674a193b7b156ef42f91f7` |
+| `gallery-1789514518879-a9j50.jpg` | 39923 | `d4b17e012dc499a168028a84a96d9315d720bd6df4674a193b7b156ef42f91f7` |
+| `1789661182978.jpg` | 47314 | `1d58f32f6ee85a0c668433a8620021110ab2d894f677e8cc4db533f74b054ea4` |
+| `gallery-1789661186038-m6p4p.jpg` | 39923 | `d4b17e012dc499a168028a84a96d9315d720bd6df4674a193b7b156ef42f91f7` |
+| `gallery-1789661188582-rgyf4.jpg` | 39923 | `d4b17e012dc499a168028a84a96d9315d720bd6df4674a193b7b156ef42f91f7` |
+| `gallery-1789661191122-g8rxv.jpg` | 39923 | `d4b17e012dc499a168028a84a96d9315d720bd6df4674a193b7b156ef42f91f7` |
 
 All 8 sat under `premium-room/covers/de22c876-d477-4a5e-81a2-cd22091ce125/`.
 Note the checksums: the two photos are byte-identical to each other and the
