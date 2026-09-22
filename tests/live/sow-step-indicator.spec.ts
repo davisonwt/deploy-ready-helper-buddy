@@ -24,7 +24,11 @@ const FORMS = [
   // ("CarA normal car. People and small loads."), so these anchor at the
   // start only. An exact match finds nothing and waits out the timeout.
   { route: '/sow/wheel', firstStep: /^1\. What is it\?$/, steps: 6, pick: /^Car/ },
-  { route: '/sow/pillow', firstStep: /^1\. What kind of place is it\?$/, steps: 7, pick: /^Room in my home/ },
+  // Pillow was restructured into units: the form now opens with "What can
+  // people book?" and has 6 steps, not the 7-step "What kind of place is
+  // it?" flow this line was written against. The old expectation could
+  // never match, so this case had been failing on setup, not on layout.
+  { route: '/sow/pillow', firstStep: /^1\. What can people book\?$/, steps: 6, pick: /^Cottage/ },
   { route: '/sow/hand', firstStep: /^1\. What do you do\?$/, steps: 7, pick: /^Electrician/ },
 ];
 
