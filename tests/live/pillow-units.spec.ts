@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { asUser, sweepProducts, reportSweep } from './support/fixtures';
+import { asUser, sweepProducts, reportSweep, trackUploads, sweepTrackedUploads, type TrackedUpload } from './support/fixtures';
 import { waitForCoverAccepted } from './support/coverUpload';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -48,6 +48,10 @@ async function setPlace(page: Page, place: string) {
 }
 
 test.describe.serial('A pillow listing is made of units', () => {
+
+  /** Objects this spec's own pages upload, swept in afterAll. */
+  const trackedUploads: TrackedUpload[] = [];
+  test.beforeEach(({ page }) => trackUploads(page, trackedUploads));
   /**
    * Teardown in a hook, never a final test: this block is serial, so a
    * failure marks every later test "did not run" and a cleanup test
@@ -57,6 +61,7 @@ test.describe.serial('A pillow listing is made of units', () => {
     if (!E || !P) return;
     const { client, userId } = await asUser(E, P, 'pillow-units');
     reportSweep('pillow-units', await sweepProducts(client, userId, [TITLE]));
+    await sweepTrackedUploads(client, trackedUploads, 'pillow-units');
   });
 
   test.skip(!E || !P, 'The owner account is required.');

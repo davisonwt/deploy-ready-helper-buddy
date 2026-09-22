@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 export const SUPA = 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
@@ -370,4 +371,84 @@ export async function restoreHotspots(
     );
   }
   console.log(`[TEARDOWN] hotspots restored to ${snapshot.length} entries`);
+}
+
+/* ------------------------------------------------------------------ *
+ * Orphaned uploads
+ *
+ * sweepProducts works backwards from product rows, so an upload made by
+ * a test that then failed BEFORE saving is invisible to it. Those
+ * orphans were swept by hand after three separate runs on 2026-09-22.
+ *
+ * The obvious fix -- "delete objects under this account's prefix created
+ * since the run started" -- is NOT safe here. The live suite runs 3
+ * workers in parallel and every spec signs in as one of two accounts, so
+ * a time-window sweep in one spec's afterAll would delete another
+ * spec's in-flight uploads mid-test. Same hazard that ruled out
+ * prefix-matching product titles.
+ *
+ * So each spec records the objects ITS OWN pages upload, by watching the
+ * storage responses, and sweeps exactly those. Precise under
+ * parallelism, and it needs no knowledge of the path layout -- which is
+ * the point, since the app chooses the path and those layouts have
+ * already drifted once (orchard-images products/<sower_id>/...).
+ * ------------------------------------------------------------------ */
+
+export interface TrackedUpload { bucket: string; path: string }
+
+/**
+ * Watch a page and record every storage object it uploads.
+ *
+ * Call before the page does anything. `public`/`sign` URLs are reads,
+ * not writes, and are ignored.
+ */
+export function trackUploads(page: Page, into: TrackedUpload[]): void {
+  page.on('response', (r) => {
+    if (r.request().method() !== 'POST' || !r.ok()) return;
+    const m = /\/storage\/v1\/object\/(?!public|sign)([^/]+)\/(.+)$/.exec(r.url());
+    if (!m) return;
+    const path = decodeURIComponent(m[2].split('?')[0]);
+    const bucket = decodeURIComponent(m[1]);
+    if (!into.some((u) => u.bucket === bucket && u.path === path)) into.push({ bucket, path });
+  });
+}
+
+/**
+ * Remove tracked uploads that no product row points at.
+ *
+ * Anything still referenced is left alone: sweepProducts owns those and
+ * will take them with the row. Reports the shortfall rather than
+ * claiming a success it did not get.
+ */
+export async function sweepTrackedUploads(
+  client: SupabaseClient,
+  tracked: TrackedUpload[],
+  label: string,
+): Promise<number> {
+  if (!tracked.length) return 0;
+  let removed = 0;
+  const byBucket = new Map<string, string[]>();
+  for (const u of tracked) {
+    if (!byBucket.has(u.bucket)) byBucket.set(u.bucket, []);
+    byBucket.get(u.bucket)!.push(u.path);
+  }
+  for (const [bucket, paths] of byBucket) {
+    // Skip anything a surviving product still points at.
+    const orphans: string[] = [];
+    for (const p of paths) {
+      const { count } = await client
+        .from('products')
+        .select('id', { count: 'exact', head: true })
+        .like('cover_image_url', `%${p}`);
+      if (!count) orphans.push(p);
+    }
+    if (!orphans.length) continue;
+    const n = await sweepStorage(client, bucket, orphans);
+    removed += n;
+    console.log(
+      `[TEARDOWN] ${label}: ${bucket} ${n}/${orphans.length} orphaned upload(s) removed`
+      + (n < orphans.length ? ' -- some were not deletable by this account' : ''),
+    );
+  }
+  return removed;
 }

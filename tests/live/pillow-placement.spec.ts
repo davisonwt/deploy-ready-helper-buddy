@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { asUser, sweepProducts, reportSweep } from './support/fixtures';
+import { asUser, sweepProducts, reportSweep, trackUploads, sweepTrackedUploads, type TrackedUpload } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -46,6 +46,10 @@ async function setPlace(page: Page, place: string) {
 }
 
 test.describe.serial('A pillow listing is placed where it actually is', () => {
+
+  /** Objects this spec's own pages upload, swept in afterAll. */
+  const trackedUploads: TrackedUpload[] = [];
+  test.beforeEach(({ page }) => trackUploads(page, trackedUploads));
   test.skip(!EMAIL || !PASS, 'A test account is required.');
 
   /**
@@ -58,6 +62,7 @@ test.describe.serial('A pillow listing is placed where it actually is', () => {
     const { client, userId } = await asUser(OWNER_EMAIL, OWNER_PASS, 'the owner account');
     const r = await sweepProducts(client, userId, [QA_TITLE]);
     reportSweep('pillow-placement', r);
+    await sweepTrackedUploads(client, trackedUploads, 'pillow-placement');
   });
 
   test('1. the Pillows tab finds it from Mossel Bay, at any radius', async ({ page }) => {

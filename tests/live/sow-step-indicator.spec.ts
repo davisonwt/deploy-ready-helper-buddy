@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { asUser, sweepProducts, reportSweep } from './support/fixtures';
+import { asUser, sweepProducts, reportSweep, trackUploads, sweepTrackedUploads, type TrackedUpload } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -103,6 +103,10 @@ async function measure(page: Page) {
 }
 
 test.describe.serial('The sow forms name every step up front', () => {
+
+  /** Objects this spec's own pages upload, swept in afterAll. */
+  const trackedUploads: TrackedUpload[] = [];
+  test.beforeEach(({ page }) => trackUploads(page, trackedUploads));
   test.skip(!OWNER_EMAIL || !OWNER_PASS, 'The owner account is required.');
 
   /**
@@ -114,6 +118,7 @@ test.describe.serial('The sow forms name every step up front', () => {
     if (!OWNER_EMAIL || !OWNER_PASS) return;
     const { client, userId } = await asUser(OWNER_EMAIL, OWNER_PASS, 'the owner account');
     reportSweep('sow-step-indicator', await sweepProducts(client, userId, [QA_TITLE]));
+    await sweepTrackedUploads(client, trackedUploads, 'sow-step-indicator');
   });
 
   for (const vp of VIEWPORTS) {

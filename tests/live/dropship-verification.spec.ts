@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { asUser, sweepProducts, reportSweep } from './support/fixtures';
+import { asUser, sweepProducts, reportSweep, trackUploads, sweepTrackedUploads, type TrackedUpload } from './support/fixtures';
 
 // Live verification for factory-sower dropship support: bulk-import a
 // dropship-flagged product as the real sower account, confirm the "ships
@@ -44,6 +44,10 @@ async function dismissOverlays(page: Page) {
 }
 
 test.describe.serial('Dropship support (factory-sower products)', () => {
+
+  /** Objects this spec's own pages upload, swept in afterAll. */
+  const trackedUploads: TrackedUpload[] = [];
+  test.beforeEach(({ page }) => trackUploads(page, trackedUploads));
   /**
    * Teardown in a hook, never a final test: this block is serial, so a
    * failure marks every later test "did not run" and a cleanup test
@@ -53,6 +57,7 @@ test.describe.serial('Dropship support (factory-sower products)', () => {
     if (!HOST_EMAIL || !HOST_PASS) return;
     const { client, userId } = await asUser(HOST_EMAIL, HOST_PASS, 'dropship-verification');
     reportSweep('dropship-verification', await sweepProducts(client, userId, [PRODUCT_TITLE]));
+    await sweepTrackedUploads(client, trackedUploads, 'dropship-verification');
   });
 
   test('1. bulk-import a dropship-flagged product as the sower', async ({ page }) => {

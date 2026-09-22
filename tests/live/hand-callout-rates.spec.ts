@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { asUser, sweepProducts, reportSweep } from './support/fixtures';
+import { asUser, sweepProducts, reportSweep, trackUploads, sweepTrackedUploads, type TrackedUpload } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -31,6 +31,10 @@ const VIEWPORTS = [
 ];
 
 test.describe.serial('Call-out charging for Sleeping Hands', () => {
+
+  /** Objects this spec's own pages upload, swept in afterAll. */
+  const trackedUploads: TrackedUpload[] = [];
+  test.beforeEach(({ page }) => trackUploads(page, trackedUploads));
   /**
    * Teardown in a hook, never a final test: this block is serial, so a
    * failure marks every later test "did not run" and a cleanup test
@@ -40,6 +44,7 @@ test.describe.serial('Call-out charging for Sleeping Hands', () => {
     if (!E || !P) return;
     const { client, userId } = await asUser(E, P, 'hand-callout-rates');
     reportSweep('hand-callout-rates', await sweepProducts(client, userId, VIEWPORTS.map((vp) => `QACALLOUT ${vp.n} ${STAMP}`)));
+    await sweepTrackedUploads(client, trackedUploads, 'hand-callout-rates');
   });
 
   test.skip(!E || !P, 'The owner account is required.');

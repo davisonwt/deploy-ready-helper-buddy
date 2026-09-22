@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { asUser, sweepProducts, reportSweep } from './support/fixtures';
+import { asUser, sweepProducts, reportSweep, trackUploads, sweepTrackedUploads, type TrackedUpload } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -33,10 +33,15 @@ async function login(page: Page) {
 }
 
 /** No describe block here, so this is a file-level teardown hook. */
+/** Objects this spec's own pages upload, swept in afterAll. */
+const trackedUploads: TrackedUpload[] = [];
+test.beforeEach(({ page }) => trackUploads(page, trackedUploads));
+
 test.afterAll(async () => {
   if (!E || !P) return;
   const { client, userId } = await asUser(E, P, 'hand-household-registration');
   reportSweep('hand-household-registration', await sweepProducts(client, userId, [TITLE]));
+  await sweepTrackedUploads(client, trackedUploads, 'hand-household-registration');
 });
 
 test('a household service registers end to end at 390x844', async ({ page }) => {

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { asUser, sweepProducts, reportSweep, ensureWanderingRole, removeWanderingRole } from './support/fixtures';
+import { asUser, sweepProducts, reportSweep, ensureWanderingRole, removeWanderingRole, trackUploads, sweepTrackedUploads, type TrackedUpload } from './support/fixtures';
 import { paceGeocode } from './support/geocodePacing';
 import { waitForCoverAccepted } from './support/coverUpload';
 import path from 'node:path';
@@ -135,6 +135,10 @@ async function fillPillowForm(
 }
 
 test.describe.serial('Sleeping Pillows', () => {
+
+  /** Objects this spec's own pages upload, swept in afterAll. */
+  const trackedUploads: TrackedUpload[] = [];
+  test.beforeEach(({ page }) => trackUploads(page, trackedUploads));
   /**
    * Teardown, not a cleanup test. This block is describe.serial: the
    * first failure marks every later test "did not run", so cleanup
@@ -163,6 +167,7 @@ test.describe.serial('Sleeping Pillows', () => {
     const { client, userId } = await asUser(EMAIL, PASS, 'the owner account');
     const r = await sweepProducts(client, userId, FIXTURE_TITLES);
     reportSweep('sleeping-pillows', r);
+    await sweepTrackedUploads(client, trackedUploads, 'sleeping-pillows');
     if (createdRoleId) await removeWanderingRole(client, createdRoleId);
   });
 

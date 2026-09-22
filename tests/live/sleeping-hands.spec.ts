@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { asUser, sweepProducts, reportSweep, ensureWanderingRole, removeWanderingRole } from './support/fixtures';
+import { asUser, sweepProducts, reportSweep, ensureWanderingRole, removeWanderingRole, trackUploads, sweepTrackedUploads, type TrackedUpload } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -109,6 +109,10 @@ async function fillHandForm(page: Page, o: FormOpts) {
 }
 
 test.describe.serial('Sleeping Hands', () => {
+
+  /** Objects this spec's own pages upload, swept in afterAll. */
+  const trackedUploads: TrackedUpload[] = [];
+  test.beforeEach(({ page }) => trackUploads(page, trackedUploads));
   /**
    * Teardown, not a cleanup test. This block is describe.serial: the
    * first failure marks every later test "did not run", so cleanup
@@ -138,6 +142,7 @@ test.describe.serial('Sleeping Hands', () => {
     const { client, userId } = await asUser(EMAIL, PASS, 'the owner account');
     const r = await sweepProducts(client, userId, FIXTURE_TITLES);
     reportSweep('sleeping-hands', r);
+    await sweepTrackedUploads(client, trackedUploads, 'sleeping-hands');
     if (createdRoleId) await removeWanderingRole(client, createdRoleId);
   });
 

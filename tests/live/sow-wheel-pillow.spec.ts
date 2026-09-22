@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { asUser, sweepProducts, reportSweep, ensureWanderingRole, removeWanderingRole } from './support/fixtures';
+import { asUser, sweepProducts, reportSweep, ensureWanderingRole, removeWanderingRole, trackUploads, sweepTrackedUploads, type TrackedUpload } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -29,6 +29,10 @@ async function login(page: Page, email: string, pass: string) {
 }
 
 test.describe.serial('Wheel and Pillow sow forms', () => {
+
+  /** Objects this spec's own pages upload, swept in afterAll. */
+  const trackedUploads: TrackedUpload[] = [];
+  test.beforeEach(({ page }) => trackUploads(page, trackedUploads));
   /**
    * Both roles are preconditions, provisioned directly. unlockWanderingRole
    * drove /register-wandering instead -- uploading a cover and three
@@ -58,6 +62,7 @@ test.describe.serial('Wheel and Pillow sow forms', () => {
     reportSweep('sow-wheel-pillow', await sweepProducts(client, userId, [
       `QA Wheel Test ${STAMP}`, `QA Pillow Test ${STAMP}`,
     ]));
+    await sweepTrackedUploads(client, trackedUploads, 'sow-wheel-pillow');
     for (const id of createdRoleIds) await removeWanderingRole(client, id);
   });
 

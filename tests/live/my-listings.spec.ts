@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { asUser, createWheelListing, sweepProducts, reportSweep } from './support/fixtures';
+import { asUser, createWheelListing, sweepProducts, reportSweep, trackUploads, sweepTrackedUploads, type TrackedUpload } from './support/fixtures';
 
 /**
  * Live verification of /my-listings and the Wheel edit mode.
@@ -85,6 +85,10 @@ function qaCardOf(page: Page) {
 }
 
 test.describe.serial('My Listings', () => {
+
+  /** Objects this spec's own pages upload, swept in afterAll. */
+  const trackedUploads: TrackedUpload[] = [];
+  test.beforeEach(({ page }) => trackUploads(page, trackedUploads));
   // Test 4 toggles a REAL listing's availability against production. If it
   // fails between the two clicks, the car is left hidden from the Wheels hub
   // and the next run fails on its very first assertion -- which is exactly
@@ -105,6 +109,7 @@ test.describe.serial('My Listings', () => {
     if (!EMAIL || !PASS) return;
     const { client, userId } = await asUser(EMAIL, PASS, 'the owner account');
     reportSweep('my-listings', await sweepProducts(client, userId, [QA_CAR]));
+    await sweepTrackedUploads(client, trackedUploads, 'my-listings');
   });
 
   test.skip(!EMAIL || !PASS, 'The owner account is required in .env.test.');
