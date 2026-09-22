@@ -1,7 +1,7 @@
 import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { ArrowLeft, Eye, ImagePlus, X, Loader2, Plus, PartyPopper, Share2, Info } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Eye, ImagePlus, X, Loader2, Plus, PartyPopper, Share2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,6 +50,19 @@ const GALLERY_PROMPT: Record<Role, string> = {
   hand: "jobs you've done",
   wheel: "your vehicles and loads you've moved",
   pillow: 'your rooms, the view, the kitchen',
+};
+
+/**
+ * The next step after the role is unlocked. Only hand, wheel and pillow
+ * appear here, which is also exactly the set of roles with a sow flow --
+ * the other four presets (field, hearth, forge, shop) are not offered by
+ * the Sow chooser and are rejected by this page's own role parsing, so
+ * this CTA can never point at a /sow route that does not exist.
+ */
+const SOW_CTA: Record<Role, string> = {
+  hand: 'Now offer your first job',
+  wheel: 'Now register your vehicle',
+  pillow: 'Now list your place',
 };
 
 /** What happens after this form, for someone bounced here from /sow/<role>. */
@@ -391,15 +404,22 @@ export default function RegisterWanderingPage() {
         </div>
 
         <div className="space-y-2.5">
-          <p className="text-sm text-muted-foreground">
-            Your door: <Link to={doorLink} className="underline" style={{ color: accent }}>{doorLink}</Link>
-          </p>
+          {/* The role on its own earns nobody anything -- it is the
+              listing that shows up on /sleeping. Listing leads; the door
+              share stays, one step down. */}
+          <Button
+            onClick={() => navigate(`/sow/${role}`)}
+            className="w-full h-12 text-base"
+            style={{ backgroundColor: accent }}
+          >
+            {SOW_CTA[role]} <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
           <Button onClick={() => setShareOpen(true)} variant="outline" className="w-full">
             <Share2 className="w-4 h-4 mr-2" /> Share your door
           </Button>
-          <Button onClick={() => navigate(`/sow/${role}`)} className="w-full" style={{ backgroundColor: accent }}>
-            Sow your first {meta.label} seed
-          </Button>
+          <p className="text-sm text-muted-foreground">
+            Your door: <Link to={doorLink} className="underline" style={{ color: accent }}>{doorLink}</Link>
+          </p>
         </div>
 
         <ShareSeedDialog
