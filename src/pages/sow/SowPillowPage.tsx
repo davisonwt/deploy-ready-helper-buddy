@@ -733,9 +733,9 @@ export default function SowPillowPage() {
         </Button>
       </section>
 
-          {/* 3. Amenities ------------------------------------------------ */}
+          {/* 2. Amenities ------------------------------------------------ */}
           <section className="mb-7">
-            <h2 className="text-lg font-semibold mb-3">3. What do guests get?</h2>
+            <h2 className="text-lg font-semibold mb-3">2. What do guests get?</h2>
             <div className="flex flex-wrap gap-2">
               {visibleAmenities.map((a) => {
                 const on = amenities.includes(a.value);
@@ -762,9 +762,9 @@ export default function SowPillowPage() {
             )}
           </section>
 
-          {/* 4. Photos --------------------------------------------------- */}
+          {/* 3. Photos --------------------------------------------------- */}
           <section className="mb-7">
-            <h2 className="text-lg font-semibold mb-3">4. Show it</h2>
+            <h2 className="text-lg font-semibold mb-3">3. Show it</h2>
 
             <Label className="text-sm">The outside</Label>
             <div className="mt-1 mb-4">
@@ -830,9 +830,9 @@ export default function SowPillowPage() {
             </div>
           </section>
 
-          {/* 5. Where ---------------------------------------------------- */}
+          {/* 4. Where ---------------------------------------------------- */}
           <section className="mb-7">
-            <h2 className="text-lg font-semibold mb-3">5. Where is it?</h2>
+            <h2 className="text-lg font-semibold mb-3">4. Where is it?</h2>
             <Input
               value={baseLocation}
               onChange={(e) => setBaseLocation(e.target.value)}
@@ -844,9 +844,9 @@ export default function SowPillowPage() {
             </p>
           </section>
 
-          {/* 6. Price ---------------------------------------------------- */}
+          {/* 5. Price ---------------------------------------------------- */}
           <section className="mb-7">
-            <h2 className="text-lg font-semibold mb-3">6. What currency?</h2>
+            <h2 className="text-lg font-semibold mb-3">5. What currency?</h2>
             <p className="text-sm text-muted-foreground mb-3">
               Each unit's price is set above. This is the currency they are all in.
             </p>
@@ -869,9 +869,9 @@ export default function SowPillowPage() {
             </div>
           </section>
 
-          {/* 7. Availability and the legal confirmation ------------------- */}
+          {/* 6. Availability and the legal confirmation ------------------- */}
           <section className="mb-7">
-            <h2 className="text-lg font-semibold mb-3">7. Last thing</h2>
+            <h2 className="text-lg font-semibold mb-3">6. Last thing</h2>
 
             <div className="flex items-center gap-3 mb-5">
               <Checkbox
