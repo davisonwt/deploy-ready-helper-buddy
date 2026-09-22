@@ -1,4 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
+import {
+  asUser, createStallFixture, setStallHotspots, deleteStallFixture, sweepStorage,
+} from './support/fixtures';
+import { openHotspot } from './support/interior';
 
 /**
  * The "+" is a property of OWNING a shelf, not of the shelf's kind.
@@ -12,63 +16,70 @@ import { test, expect, type Page } from '@playwright/test';
  * The second half is the half that matters: an owner-only control a visitor
  * can see would be worse than the missing control it replaced.
  *
- * Fixture: davisontest1's stall carries a temporary 'custom' shelf named
- * "Family Albums". Snapshot/restore:
- *   scripts/studio/restore_davisontest1_hotspots_20260918.sql
+ * FIXTURE: this run builds its own stall, with its own four shelves including
+ * the custom "Family Albums", and deletes it in afterAll. It used to point at
+ * whatever davisontest1's standing stall happened to hold, which is exactly
+ * the persistent-fixture pattern the repo has been removing: that stall was
+ * torn down, and from then on this spec reported all four shelves missing on
+ * every run -- a real-looking failure with no bug behind it.
  *
  * Run: npx playwright test --config=playwright.live.config.ts shelf-add-button
  */
 
-const OWNER_E = process.env.TEST_USER_EMAIL ?? process.env.TEST_A_EMAIL ?? '';
-const OWNER_P = process.env.TEST_USER_PASSWORD ?? process.env.TEST_A_PASSWORD ?? '';
-const VISITOR_E = process.env.TEST_USER2_EMAIL ?? process.env.TEST_GOSAT_EMAIL ?? '';
-const VISITOR_P = process.env.TEST_USER2_PASSWORD ?? process.env.TEST_GOSAT_PASSWORD ?? '';
-const STALL = process.env.PROBE_STALL ?? 'davisontest1';
+const OWNER_E = process.env.TEST_USER_EMAIL || process.env.TEST_A_EMAIL || '';
+const OWNER_P = process.env.TEST_USER_PASSWORD || process.env.TEST_A_PASSWORD || '';
+const VISITOR_E = process.env.TEST_USER2_EMAIL || process.env.TEST_GOSAT_EMAIL || '';
+const VISITOR_P = process.env.TEST_USER2_PASSWORD || process.env.TEST_GOSAT_PASSWORD || '';
 
 /** 'story' lists nothing, so it correctly has no "+" -- every other shelf must. */
 const LISTING_SHELVES = ['Books', 'Music', 'Lyrics', 'Family Albums'];
 
-async function login(page: Page, email: string, pass: string) {
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', pass);
-  await page.click('button[type="submit"]');
-  await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 30000 }).catch(() => {});
-}
-
-async function gotoStall(page: Page) {
-  await page.goto(`/stall/${STALL}`, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(8000);
-}
-
-/** Open one shelf by its own label, and report whether the "+" is there. */
-async function openShelf(page: Page, label: string): Promise<{ opened: boolean; addControls: number }> {
-  const btn = page.locator(`button[aria-label="${label}"]`);
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const c = await btn.count();
-    for (let i = 0; i < c; i++) {
-      if (await btn.nth(i).isVisible()) {
-        await btn.nth(i).click({ force: true });
-        await page.waitForTimeout(3500);
-        const opened = await page.getByRole('button', { name: 'Close shelf' }).count() > 0;
-        const addControls = await page.getByRole('button', { name: /^Add to /i }).count();
-        return { opened, addControls };
-      }
-    }
-    await page.waitForTimeout(1500);
-  }
-  return { opened: false, addControls: -1 };
-}
-
-async function closeShelf(page: Page) {
-  const close = page.getByRole('button', { name: 'Close shelf' }).first();
-  if (await close.count()) await close.click({ force: true }).catch(() => {});
-  await page.waitForTimeout(1200);
-}
+const STAMP = Date.now();
+let client: Awaited<ReturnType<typeof asUser>>['client'];
+let userId: string;
+let stallId: string;
+let objectPaths: string[] = [];
+let username = 'davisontest1';
 
 test.describe.serial('Shelf add button', () => {
-  test.skip(!OWNER_E || !OWNER_P, 'the stall owner account is required in .env.test');
   test.setTimeout(8 * 60_000);
+
+  test.beforeAll(async () => {
+    // Missing credentials FAIL here, naming the variable -- never a skip.
+    const signedIn = await asUser(OWNER_E, OWNER_P, 'the stall owner');
+    client = signedIn.client;
+    userId = signedIn.userId;
+
+    const { data: profile } = await client.from('profiles').select('username').eq('user_id', userId).maybeSingle();
+    const uname = (profile as { username?: string } | null)?.username;
+    if (uname) username = uname;
+
+    const created = await createStallFixture(client, userId, `QA Add-Button Stall ${STAMP}`);
+    stallId = created.stallId;
+    objectPaths = created.objectPaths;
+
+    // One box per listing kind, including a member-named custom one -- the
+    // case the "+" used to miss.
+    await setStallHotspots(client, stallId, [
+      { id: 'qa-add-books', kind: 'books', label: 'Books', x: 4, y: 55, w: 20, h: 30 },
+      { id: 'qa-add-music', kind: 'music', label: 'Music', x: 28, y: 55, w: 20, h: 30 },
+      { id: 'qa-add-lyrics', kind: 'lyrics', label: 'Lyrics', x: 52, y: 55, w: 20, h: 30 },
+      { id: 'qa-add-custom', kind: 'custom', label: 'Family Albums', x: 76, y: 55, w: 20, h: 30 },
+    ]);
+    console.log(`[SETUP] add-button stall ${stallId} with ${LISTING_SHELVES.length} shelves`);
+  });
+
+  test.afterAll(async () => {
+    if (!client) return;
+    if (stallId) await deleteStallFixture(client, stallId);
+    if (objectPaths.length) {
+      const n = await sweepStorage(client, 'stalls', objectPaths);
+      console.log(`[TEARDOWN] stall images removed (${n} of ${objectPaths.length} objects)`);
+    }
+    const { data: left } = await client.from('stalls').select('id').eq('user_id', userId);
+    console.log(`[RESIDUE] stalls left for the owner: ${left?.length ?? 0} (expected 0)`);
+    expect(left?.length ?? 0, 'fixture stall left behind').toBe(0);
+  });
 
   test('1. the owner sees "+" on EVERY listing shelf, custom categories included', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
@@ -77,8 +88,8 @@ test.describe.serial('Shelf add button', () => {
 
     const missing: string[] = [];
     for (const label of LISTING_SHELVES) {
-      const { opened, addControls } = await openShelf(page, label);
-      console.log(`[OWNER] ${label}: opened=${opened} addControls=${addControls}`);
+      const { opened, addControls, why } = await openShelf(page, label);
+      console.log(`[OWNER] ${label}: opened=${opened} addControls=${addControls}${why ? ` (${why})` : ''}`);
       if (!opened || addControls < 1) missing.push(`${label} (opened=${opened}, add=${addControls})`);
       await closeShelf(page);
     }
@@ -90,15 +101,17 @@ test.describe.serial('Shelf add button', () => {
   });
 
   test('2. a VISITOR never sees it, on any shelf', async ({ page }) => {
-    test.skip(!VISITOR_E || !VISITOR_P, 'a second, non-owning account is required');
+    if (!VISITOR_E || !VISITOR_P) {
+      throw new Error('[shelf-add-button] a second, non-owning account is required in .env.test (TEST_USER2_*). Setup failure, not a reason to skip.');
+    }
     await page.setViewportSize({ width: 390, height: 844 });
     await login(page, VISITOR_E, VISITOR_P);
     await gotoStall(page);
 
     const leaked: string[] = [];
     for (const label of LISTING_SHELVES) {
-      const { opened, addControls } = await openShelf(page, label);
-      console.log(`[VISITOR] ${label}: opened=${opened} addControls=${addControls}`);
+      const { opened, addControls, why } = await openShelf(page, label);
+      console.log(`[VISITOR] ${label}: opened=${opened} addControls=${addControls}${why ? ` (${why})` : ''}`);
       // The shelf must still OPEN for a visitor -- absence of the "+" must
       // never mean absence of the shelf.
       expect(opened, `the shelf "${label}" did not open for a visitor at all`).toBe(true);
@@ -109,3 +122,42 @@ test.describe.serial('Shelf add button', () => {
     expect(leaked, 'a visitor was offered an owner-only Add control').toEqual([]);
   });
 });
+
+async function login(page: Page, email: string, pass: string) {
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  await page.fill('input[type="email"]', email);
+  await page.fill('input[type="password"]', pass);
+  await page.click('button[type="submit"]');
+  await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 30000 }).catch(() => {});
+}
+
+async function gotoStall(page: Page) {
+  await page.goto(`/stall/${username}`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('button[aria-label="Books"]', { timeout: 30000 });
+}
+
+/**
+ * Open one shelf by its own label, and report whether the "+" is there.
+ *
+ * Pans the box into the window (the interior is a strip wider than a phone
+ * window) and records WHY it could not be opened instead of throwing, so one
+ * unreachable shelf does not hide the state of the other three -- walking
+ * every shelf is the point of this spec.
+ */
+async function openShelf(page: Page, label: string): Promise<{ opened: boolean; addControls: number; why?: string }> {
+  try {
+    await openHotspot(page, label);
+  } catch (e) {
+    return { opened: false, addControls: -1, why: (e as Error).message.split('\n')[0].slice(0, 120) };
+  }
+  const opened = await page.waitForSelector('button[aria-label="Close shelf"]', { timeout: 15000 })
+    .then(() => true).catch(() => false);
+  const addControls = await page.getByRole('button', { name: /^Add to /i }).count();
+  return { opened, addControls };
+}
+
+async function closeShelf(page: Page) {
+  const close = page.getByRole('button', { name: 'Close shelf' }).first();
+  if (await close.count()) await close.click().catch(() => {});
+  await page.waitForSelector('button[aria-label="Close shelf"]', { state: 'detached', timeout: 15000 }).catch(() => {});
+}

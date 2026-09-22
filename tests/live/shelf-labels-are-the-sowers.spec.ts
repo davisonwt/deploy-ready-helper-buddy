@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { openHotspot } from './support/interior';
 
 /**
  * A shelf shows the name its SOWER gave it -- to the owner and to a visitor
@@ -51,28 +52,31 @@ async function shelfNamesOnStall(page: Page): Promise<string[]> {
       .filter(Boolean));
 }
 
-/** Open one shelf and read the title the sheet renders. */
+/**
+ * Open one shelf and read the title the sheet renders.
+ *
+ * Pans the box into the window first. This spec predates the pannable
+ * interior and used to hunt for the first box whose isVisible() was true,
+ * then click it with `force`. On davison.taljaard at 390px the strip is
+ * 1141px wide and "Coffee Mugs" sits at x -334 -- off the left edge, but
+ * with a real box, so isVisible() said yes and the forced click failed
+ * with "Element is not visible". It was the FIRST shelf this spec tries,
+ * so the owner run died before opening anything.
+ *
+ * No retry loop and no longer waits: waiting cannot move a box that is
+ * off-screen because the strip is scrolled somewhere else.
+ */
 async function shelfTitle(page: Page, label: string): Promise<string | null> {
-  const btn = page.locator(`button[aria-label="${label}"]`);
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const c = await btn.count();
-    for (let i = 0; i < c; i++) {
-      if (await btn.nth(i).isVisible()) {
-        await btn.nth(i).click({ force: true });
-        await page.waitForTimeout(3500);
-        const title = await page.evaluate(() => {
-          const h = document.querySelector('h2.font-serif');
-          return h?.textContent?.trim() ?? null;
-        });
-        const close = page.getByRole('button', { name: 'Close shelf' }).first();
-        if (await close.count()) await close.click({ force: true }).catch(() => {});
-        await page.waitForTimeout(1200);
-        return title;
-      }
-    }
-    await page.waitForTimeout(1500);
-  }
-  return null;
+  await openHotspot(page, label);
+  await page.waitForSelector('button[aria-label="Close shelf"]', { timeout: 15000 });
+  const title = await page.evaluate(() => {
+    const h = document.querySelector('h2.font-serif');
+    return h?.textContent?.trim() ?? null;
+  });
+  const close = page.getByRole('button', { name: 'Close shelf' }).first();
+  if (await close.count()) await close.click().catch(() => {});
+  await page.waitForSelector('button[aria-label="Close shelf"]', { state: 'detached', timeout: 15000 }).catch(() => {});
+  return title;
 }
 
 for (const who of ['owner', 'visitor'] as const) {
