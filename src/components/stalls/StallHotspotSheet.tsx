@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Loader2, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,7 +7,8 @@ import StoryEditSheet from './StoryEditSheet';
 import SeedCard, { type SeedCardKind } from '@/components/seeds/SeedCard';
 import { deleteRow } from '@/components/garden/seedCardBuilders';
 import { toast } from 'sonner';
-import { TILE_KINDS, type TileKind } from '@/lib/stalls/stallTypes';
+import { TILE_KINDS, type StallHotspot, type TileKind } from '@/lib/stalls/stallTypes';
+import { loadShelfSeeds, resolveShelfSubset, STATIC_TEXT_KINDS, type ShelfSeed, type ItemSource } from '@/lib/stalls/shelfSeeds';
 import ShareSeedDialog from '@/components/share/ShareSeedDialog';
 import { BOTTOM_CHROME_PADDING_STYLE } from '@/lib/layout/bottomChrome';
 
@@ -35,27 +36,23 @@ interface Props {
    * no item is marked new.
    */
   viewerCutoff?: string | null;
+  /**
+   * Every hotspot on this stall, and WHICH box was tapped -- together they
+   * decide the seed subset this sheet opens (resolveShelfSubset). The whole
+   * array is needed, not just the tapped box: the "assigned nowhere" rule
+   * can only be judged against the other boxes of the same kind.
+   *
+   * Omitted, or an id that matches nothing, means unassigned -- every seed
+   * of the kind, exactly as before subsets existed.
+   */
+  hotspots?: StallHotspot[];
+  hotspotId?: string | null;
 }
 
-/** Which table an Item came from -- drives SeedCard's isProductRow (Heart/Whisperer are FK'd to products/orchards only) and whether a book has a real PDF to preview. */
-type ItemSource = 'products' | 'sower_books' | 'dj_music_tracks';
-
-interface Item {
-  id: string;
-  title: string;
-  blurb: string;
-  /** Full, untruncated description -- for SeedCard's inline detail overlay (tapBehavior='inline'). `blurb` above stays truncated for the card body. */
-  description: string;
-  cover: string | null;
-  /** Multi-image gallery (products.image_urls) -- products-sourced items only. */
-  imageUrls: string[] | null;
-  price: number;
-  source: ItemSource;
-  fileUrl: string | null;
-  previewUrl: string | null;
-  /** Drives both the newest-first sort and each SeedCard's "New" badge (viewerCutoff comparison happens at render time, not here). */
-  createdAt: string;
-}
+/** The shelf-seed shape and its three source tables now live in
+ * lib/stalls/shelfSeeds, shared with the owner's per-hotspot picker so
+ * both resolve the identical id set. */
+type Item = ShelfSeed;
 
 const SHEET_KIND_TO_SEED_KIND: Partial<Record<TileKind, SeedCardKind>> = {
   books: 'book',
@@ -205,10 +202,8 @@ function bulkUploadAppliesTo(kind: TileKind): boolean {
  *     painted with either kind before this fell through to the generic
  *     else branch below and silently showed books/ebooks instead.
  */
-/** Companions Village phase 1: kinds whose sheet shows `text` verbatim instead of a product query. */
-const STATIC_TEXT_KINDS = new Set<TileKind>(['companion_info', 'passes', 'activate', 'reviews', 'raise_hand', 'queue', 'gift']);
 
-export default function StallHotspotSheet({ ownerId, ownerName, kind, label, text, isOwner, onClose, scrollToItemId, viewerCutoff }: Props) {
+export default function StallHotspotSheet({ ownerId, ownerName, kind, label, text, isOwner, onClose, scrollToItemId, viewerCutoff, hotspots, hotspotId }: Props) {
   // The sower's own name wins. Falling through to the raw `kind` would show a
   // visitor a database value -- "custom", "orchard" -- on any shelf whose owner
   // never named it, so the last resort is a human word instead.
@@ -226,6 +221,14 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
   /** The seed whose Share dialog is open, if any. Owner and visitor alike. */
   const [shareItem, setShareItem] = useState<Item | null>(null);
   const [items, setItems] = useState<Item[] | null>(null);
+  // `hotspots` arrives as a plain prop and its identity is not guaranteed
+  // to be stable across the parent's renders, so the load effect keys off
+  // this string instead. Only the parts that can change WHICH seeds show
+  // are in it -- a box being dragged a pixel must not refetch the shelf.
+  const subsetKey = useMemo(
+    () => JSON.stringify((hotspots ?? []).map((h) => [h.id ?? '', h.kind, h.seed_ids ?? []])),
+    [hotspots],
+  );
   // undefined = still loading; null = loaded, nothing there; string = loaded, has content.
   const [bio, setBio] = useState<string | null | undefined>(undefined);
   const [storyPdfUrl, setStoryPdfUrl] = useState<string | null | undefined>(undefined);
@@ -284,134 +287,17 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
         return;
       }
 
-      const [{ data: sowerRow }, { data: companyRow }] = await Promise.all([
-        supabase.from('sowers').select('id').eq('user_id', ownerId).maybeSingle(),
-        supabase.from('companies').select('id').eq('owner_user_id', ownerId).maybeSingle(),
-      ]);
-      const sowerId = (sowerRow as { id?: string } | null)?.id;
-      const companyId = (companyRow as { id?: string } | null)?.id;
-
-      // Deduped by normalized title (lowercased, whitespace collapsed) --
-      // a products row always wins a tie, so it's inserted into the map
-      // first and every later source just skips a title already present.
-      // See scripts/studio/music-duplicates.sql for the read-only audit
-      // this dedupe rule was verified against.
-      const byNormTitle = new Map<string, Item>();
-      const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
-
-      if (sowerId || companyId) {
-        const typeFilter =
-          kind === 'music' ? ['music'] :
-          kind === 'mugs' || kind === 'products' ? ['product'] :
-          kind === 'services' ? ['service'] :
-          ['book', 'ebook'];
-        let q = supabase.from('products').select('id, title, description, cover_image_url, image_urls, price, category, file_url, preview_url, created_at').in('type', typeFilter);
-        const orParts: string[] = [];
-        if (sowerId) orParts.push(`sower_id.eq.${sowerId}`);
-        if (companyId) orParts.push(`company_id.eq.${companyId}`);
-        q = q.or(orParts.join(','));
-        const { data } = await q.order('created_at', { ascending: false }).limit(100);
-        for (const p of (data ?? []) as { id: string; title: string; description: string | null; cover_image_url: string | null; image_urls: string[] | null; price: number | null; category: string | null; file_url: string | null; preview_url: string | null; created_at: string }[]) {
-          const isLyrics = (p.category ?? '').toLowerCase() === 'lyrics';
-          const isMugs = (p.category ?? '').toLowerCase() === 'mugs';
-          if (kind === 'lyrics' && !isLyrics) continue;
-          if (kind === 'books' && isLyrics) continue;
-          if (kind === 'mugs' && !isMugs) continue;
-          byNormTitle.set(normalize(p.title), {
-            id: p.id,
-            title: p.title,
-            blurb: (p.description ?? '').slice(0, 90),
-            description: p.description ?? '',
-            cover: p.cover_image_url,
-            imageUrls: p.image_urls,
-            price: Number(p.price || 0),
-            source: 'products',
-            fileUrl: p.file_url,
-            previewUrl: p.preview_url,
-            createdAt: p.created_at,
-          });
-        }
-      }
-
-      // sower_books -- a separate, older books table (keyed directly by
-      // user_id, no sower_id indirection) that src/api/sowerContent.ts
-      // already unions into "books" elsewhere in the app. No PDF/file
-      // column exists here (confirmed live) -- "Read a page" never applies
-      // to a sower_books-sourced item.
-      if (kind === 'books') {
-        const { data } = await supabase
-          .from('sower_books')
-          .select('id, title, description, cover_image_url, bestowal_value, created_at')
-          .eq('user_id', ownerId)
-          .order('created_at', { ascending: false })
-          .limit(100);
-        for (const b of (data ?? []) as { id: string; title: string; description: string | null; cover_image_url: string | null; bestowal_value: number | null; created_at: string }[]) {
-          const key = normalize(b.title);
-          if (byNormTitle.has(key)) continue; // a products row already claimed this title
-          byNormTitle.set(key, {
-            id: b.id,
-            title: b.title,
-            blurb: (b.description ?? '').slice(0, 90),
-            description: b.description ?? '',
-            cover: b.cover_image_url,
-            imageUrls: null,
-            price: Number(b.bestowal_value || 0),
-            source: 'sower_books',
-            fileUrl: null,
-            previewUrl: null,
-            createdAt: b.created_at,
-          });
-        }
-      }
-
-      // dj_music_tracks -- radio uploads, not itself a `products` row.
-      // Real overlap exists here for at least one owner (4 of 32 products
-      // vs 25 dj tracks shared a title as of this check) -- a products row
-      // always wins the same title; only a dj-only track gets added.
-      if (kind === 'music') {
-        const { data: djRow } = await supabase.from('radio_djs').select('id').eq('user_id', ownerId).maybeSingle();
-        const djId = (djRow as { id?: string } | null)?.id;
-        if (djId) {
-          const { data } = await supabase
-            .from('dj_music_tracks')
-            .select('id, track_title, cover_image_url, preview_url, created_at')
-            .eq('dj_id', djId)
-            .order('created_at', { ascending: false })
-            .limit(200);
-          for (const t of (data ?? []) as { id: string; track_title: string; cover_image_url: string | null; preview_url: string | null; created_at: string }[]) {
-            const key = normalize(t.track_title);
-            if (byNormTitle.has(key)) continue; // a products row already claimed this title
-            byNormTitle.set(key, {
-              id: t.id,
-              title: t.track_title,
-              blurb: '',
-              description: '',
-              cover: t.cover_image_url,
-              imageUrls: null,
-              price: 0,
-              source: 'dj_music_tracks',
-              fileUrl: null,
-              // No client-side cap available on this path (that's
-              // MusicLibraryTable's own bespoke toggleDjPreview) -- only
-              // ever offer a sample when the row has a real short preview
-              // clip of its own, never the full file_url uncapped.
-              previewUrl: t.preview_url,
-              createdAt: t.created_at,
-            });
-          }
-        }
-      }
-
-      // Newest first across ALL sources combined -- each source above is
-      // already ordered within itself, but the Map is populated source-by-
-      // source (products, then sower_books, then dj_music_tracks), so the
-      // merged insertion order is only piecewise-sorted until this final
-      // global sort.
-      const merged = [...byNormTitle.values()].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      if (alive) setItems(merged);
+      // One loader, shared with the owner's picker (HotspotEditor), so the
+      // ids offered there are the ids filtered here. Then the tapped box's
+      // own subset: unassigned boxes return everything, which is what every
+      // box did before this existed.
+      const all = await loadShelfSeeds(ownerId, kind);
+      const shown = resolveShelfSubset(all, hotspots ?? [], kind, hotspotId);
+      if (alive) setItems(shown);
     })();
     return () => { alive = false; };
-  }, [kind, ownerId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- subsetKey stands in for `hotspots` on purpose (see above); it changes whenever the assignments do, so the closure is never stale.
+  }, [kind, ownerId, hotspotId, subsetKey]);
 
   // A tap on a sheet card never navigates anymore (tapBehavior="inline"
   // below) -- this is only ever used as the Share target, so it just

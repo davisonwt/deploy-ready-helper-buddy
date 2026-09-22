@@ -1,6 +1,6 @@
 import SignedImg from '@/components/media/SignedImg';
-import { useRef, useState } from 'react';
-import { Trash2, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Check, Trash2, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
 import { TILE_KINDS, type StallHotspot, type TileKind } from '@/lib/stalls/stallTypes';
+import { loadShelfSeeds, describeUnplacedSeeds, STATIC_TEXT_KINDS, type ShelfSeed } from '@/lib/stalls/shelfSeeds';
 
 const MIN_BOX_PCT = 2;
 const DEFAULT_BOX_PCT = 12;
@@ -58,6 +59,11 @@ interface Props {
   imageUrl: string;
   value: StallHotspot[];
   onChange: (next: StallHotspot[]) => void;
+  /** The stall owner, so each box can offer their own seeds of its kind to
+   * choose from. Omitted (a preview with no signed-in owner) simply hides
+   * the picker -- every box then stays unassigned, which is the old
+   * behaviour of showing everything. */
+  ownerId?: string;
 }
 
 type DragMode =
@@ -74,7 +80,7 @@ type DragMode =
  * offsetX/Y + width/height), so a box marked here lands on the identical
  * object once published.
  */
-export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
+export default function HotspotEditor({ imageUrl, value, onChange, ownerId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const rect = useContainImageRect(containerRef, imgRef);
@@ -201,7 +207,22 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
    * a deliberate choice, not a guess, even if they keep editing the label. */
   const chooseKind = (id: string, kind: TileKind) => {
     if (autoKindId === id) setAutoKindId(null);
-    updateHotspot(id, { kind });
+    // Seeds were chosen from the OLD kind's shelf, so they mean nothing on
+    // the new one -- drop them and let the box go back to showing
+    // everything, rather than leaving a curated-but-empty shelf behind.
+    const had = value.find((h) => h.id === id)?.seed_ids?.length;
+    updateHotspot(id, had && kind !== value.find((h) => h.id === id)?.kind ? { kind, seed_ids: undefined } : { kind });
+  };
+
+  /** Put a seed on this box, or take it off. Emptying the list clears the
+   * field entirely, so the box returns to unassigned -- showing every seed
+   * of its kind -- rather than becoming a shelf curated to nothing. */
+  const toggleSeed = (id: string, seedId: string) => {
+    const h = value.find((x) => x.id === id);
+    if (!h) return;
+    const current = h.seed_ids ?? [];
+    const next = current.includes(seedId) ? current.filter((s) => s !== seedId) : [...current, seedId];
+    updateHotspot(id, { seed_ids: next.length > 0 ? next : undefined });
   };
 
   const removeHotspot = (id: string) => {
@@ -230,6 +251,28 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
           && (h.label ?? '').trim().toLowerCase() === editingHotspot.label.trim().toLowerCase(),
       )
     : false;
+
+  // The owner's own seeds of the kind being edited, for the picker below.
+  // Same loader the visitor's sheet uses, so an id chosen here is an id
+  // that shelf can actually show.
+  const editingKind = editingHotspot?.kind ?? null;
+  const pickerApplies = !!ownerId && !!editingKind && !STATIC_TEXT_KINDS.has(editingKind) && editingKind !== 'story' && editingKind !== 'nav';
+  const [pickerSeeds, setPickerSeeds] = useState<ShelfSeed[] | null>(null);
+  useEffect(() => {
+    if (!ownerId || !editingKind || !pickerApplies) { setPickerSeeds(null); return; }
+    let alive = true;
+    setPickerSeeds(null);
+    void loadShelfSeeds(ownerId, editingKind).then((rows) => { if (alive) setPickerSeeds(rows); });
+    return () => { alive = false; };
+  }, [ownerId, editingKind, pickerApplies]);
+
+  const chosenSeedIds = new Set(editingHotspot?.seed_ids ?? []);
+  // Where a seed on no shelf at all will surface -- computed by the same
+  // helper the visitor's sheet obeys, never restated here.
+  const unplaced = pickerSeeds && editingKind
+    ? describeUnplacedSeeds(pickerSeeds, value, editingKind)
+    : { unplaced: [], host: null };
+
   const confirmDeleteHotspot = value.find((h) => h.id === confirmDeleteId) ?? null;
 
   return (
@@ -330,7 +373,7 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
                       You already have {duplicateNameCount === 1 ? 'another shelf' : `${duplicateNameCount} other shelves`}
                       {' '}called “{editingHotspot.label.trim()}”. That's allowed —
                       {duplicateSameKind
-                        ? ' but both hold the same thing, so they will show the same seeds.'
+                        ? ' but both hold the same thing. Give each one its own seeds below and they will open different finds.'
                         : ' visitors will just see the name twice.'}
                     </p>
                   )}
@@ -375,6 +418,80 @@ export default function HotspotEditor({ imageUrl, value, onChange }: Props) {
                   maxLength={80}
                   className="h-11 bg-black/30 border-amber-500/25 text-amber-50 placeholder:text-amber-100/30"
                 />
+                {/* Per-hotspot seed subset. Optional by design: an untouched
+                    box shows everything of its kind, which is what every box
+                    did before this existed, so no existing stall changes
+                    until its owner chooses to curate one. */}
+                {pickerApplies && (
+                  <div className="space-y-1.5 border-t border-amber-500/15 pt-3">
+                    <label className="text-xs font-medium uppercase tracking-wider text-amber-200/70">
+                      What's on this one?
+                    </label>
+                    {pickerSeeds === null ? (
+                      <p className="text-[11px] text-amber-100/45">Finding your seeds…</p>
+                    ) : pickerSeeds.length === 0 ? (
+                      <p className="text-[11px] leading-snug text-amber-100/45">
+                        Nothing on this shelf yet. Sow something of this kind and it will show up here to place.
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-[11px] leading-snug text-amber-100/45">
+                          {chosenSeedIds.size === 0
+                            ? 'Leave this empty and the box opens everything on this shelf. Pick a few and it holds just those — so another box of the same kind can hold different ones.'
+                            : `This box opens ${chosenSeedIds.size} of your ${pickerSeeds.length}. The rest stay on your other boxes of this kind.`}
+                        </p>
+                        <div className="max-h-56 space-y-1 overflow-y-auto rounded-md border border-amber-500/15 bg-black/20 p-1">
+                          {pickerSeeds.map((seed) => {
+                            const chosen = chosenSeedIds.has(seed.id);
+                            return (
+                              <button
+                                key={seed.id}
+                                type="button"
+                                aria-pressed={chosen}
+                                onClick={() => toggleSeed(editingHotspot.id!, seed.id)}
+                                className={`flex min-h-[44px] w-full items-center gap-2 rounded px-2 py-1.5 text-left transition-colors ${
+                                  chosen ? 'bg-amber-500/20 text-amber-50' : 'text-amber-100/70 hover:bg-amber-500/10'
+                                }`}
+                              >
+                                <span
+                                  aria-hidden
+                                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
+                                    chosen ? 'border-amber-400 bg-amber-500 text-amber-950' : 'border-amber-500/40'
+                                  }`}
+                                >
+                                  {chosen && <Check className="h-3.5 w-3.5" />}
+                                </span>
+                                <span className="min-w-0 flex-1 truncate text-sm">{seed.title}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {chosenSeedIds.size > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => updateHotspot(editingHotspot.id!, { seed_ids: undefined })}
+                            className="min-h-[44px] px-0 text-[11px] text-amber-200/70 hover:text-amber-100"
+                          >
+                            Show everything on this box again
+                          </Button>
+                        )}
+                        {/* Only ever appears once EVERY box of this kind is
+                            curated -- until then an uncurated box is already
+                            showing these, and there is nothing to warn about. */}
+                        {unplaced.host && unplaced.unplaced.length > 0 && (
+                          <p className="text-[11px] leading-snug text-amber-300/80">
+                            {unplaced.unplaced.length === 1 ? 'One seed is' : `${unplaced.unplaced.length} seeds are`} not on any box of this kind.
+                            {' '}
+                            {unplaced.host.id === editingHotspot.id
+                              ? 'They show here until you place them.'
+                              : `They show on “${unplaced.host.label || 'your first box of this kind'}” until you place them.`}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-center justify-between gap-2 pt-1">
                   <Button
                     type="button"

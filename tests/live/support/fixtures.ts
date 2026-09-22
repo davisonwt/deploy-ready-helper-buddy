@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { deflateSync as zlibDeflate } from 'node:zlib';
 
 export const SUPA = 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
 export const PUBKEY = 'sb_publishable_Z8-I1gu2Q1yid1Q4jKRf7Q_jSGcsVpa';
@@ -451,4 +452,138 @@ export async function sweepTrackedUploads(
     );
   }
   return removed;
+}
+
+/* ------------------------------------------------------------------ *
+ * A stall of the run's own, for per-hotspot seed subsets.
+ *
+ * Never reuses "the test stall": stalls.user_id is UNIQUE, so a leftover
+ * one would make every later run's insert fail, and reuse is exactly how
+ * "Sabbath Test Stall" became a persistent fixture with 14 unrelated
+ * product rows hanging off it. Created here, deleted in afterAll, every
+ * run, and the residue check proves it.
+ *
+ * Published on purpose -- anon may only read `published = true` stalls
+ * (stalls_read_published_anon), and the logged-out leg is the point of
+ * the spec. That is the "unless the test specifically needs published"
+ * case, not a shortcut.
+ * ------------------------------------------------------------------ */
+
+/**
+ * A real 640x360 PNG, built here rather than embedded as 5KB of base64.
+ *
+ * It has to be a genuine image with genuine dimensions: the interior's
+ * hotspots are percentages of the RENDERED image box (useContainImageRect),
+ * so a 1x1 placeholder gives the boxes nothing to be a percentage of and
+ * nothing paints.
+ */
+function interiorPng(): Buffer {
+  const W = 640, H = 360;
+  const raw = Buffer.alloc((W * 3 + 1) * H);
+  let o = 0;
+  for (let y = 0; y < H; y++) {
+    raw[o++] = 0; // filter: none
+    for (let x = 0; x < W; x++) { raw[o++] = 40 + ((x * 40 / W) | 0); raw[o++] = 26; raw[o++] = 12; }
+  }
+  const table: number[] = [];
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; table[n] = c >>> 0; }
+  const crc = (b: Buffer) => { let c = 0xFFFFFFFF; for (const x of b) c = table[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  const chunk = (type: string, data: Buffer) => {
+    const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
+    const td = Buffer.concat([Buffer.from(type), data]);
+    const cr = Buffer.alloc(4); cr.writeUInt32BE(crc(td));
+    return Buffer.concat([len, td, cr]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(W, 0); ihdr.writeUInt32BE(H, 4); ihdr[8] = 8; ihdr[9] = 2; // 8-bit truecolour
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', zlibDeflate(raw)),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+
+/** Create a stall owned by `userId`. Fails loudly if one already exists, rather than adopting a member's real row. */
+export async function createStallFixture(
+  client: SupabaseClient, userId: string, name: string,
+): Promise<{ stallId: string; interiorObjectPath: string }> {
+  const { data: existing } = await client.from('stalls').select('id, name').eq('user_id', userId).maybeSingle();
+  if (existing) {
+    throw new Error(
+      `[fixtures] ${userId} already owns a stall ("${(existing as { name: string }).name}"). ` +
+      'This fixture refuses to touch a row it did not create -- remove the leftover first.',
+    );
+  }
+  // stalls_images_own_folder_only requires the URL to sit under this
+  // member's own folder in the stalls bucket -- not a borrowed image.
+  const interiorObjectPath = `${userId}/qa-interior-${Date.now()}.png`;
+  const { error: upErr } = await client.storage
+    .from('stalls')
+    .upload(interiorObjectPath, interiorPng(), { contentType: 'image/png', upsert: false });
+  if (upErr) throw new Error(`[fixtures] could not upload a fixture interior: ${upErr.message}`);
+  const { data: pub } = client.storage.from('stalls').getPublicUrl(interiorObjectPath);
+
+  const { data, error } = await client
+    .from('stalls')
+    .insert({
+      user_id: userId,
+      name,
+      category: 'books_writing',
+      categories: ['books_writing'],
+      tier: 'farm_stall',
+      published: true,
+      interior_image_path: pub.publicUrl,
+      hotspots: [],
+      tiles: [],
+    })
+    .select('id')
+    .single();
+  if (error || !data) throw new Error(`[fixtures] could not create stall ${name}: ${error?.message}`);
+  console.log(`[SETUP] stall fixture "${name}" -> ${data.id}`);
+  return { stallId: data.id as string, interiorObjectPath };
+}
+
+/** A book seed -- lands on a `books` shelf via products.type in ('book','ebook'). */
+export async function createShelfSeedFixture(
+  client: SupabaseClient, userId: string, title: string,
+): Promise<string> {
+  const { data: sower } = await client.from('sowers').select('id').eq('user_id', userId).maybeSingle();
+  const { data: company } = await client
+    .from('companies').select('id').eq('owner_user_id', userId).limit(1).maybeSingle();
+  if (!sower || !company) throw new Error(`[fixtures] ${userId} needs a sower and a company row to own a seed`);
+
+  const { data, error } = await client
+    .from('products')
+    .insert({
+      sower_id: (sower as { id: string }).id,
+      company_id: (company as { id: string }).id,
+      title,
+      description: 'QA fixture. Created and deleted by the live suite.',
+      type: 'book',
+      price: 1,
+      status: 'active',
+      delivery_type: 'digital',
+    })
+    .select('id')
+    .single();
+  if (error || !data) throw new Error(`[fixtures] could not create seed ${title}: ${error?.message}`);
+  return data.id as string;
+}
+
+/** Overwrite a FIXTURE stall's hotspots outright. Only ever for a stall this run created. */
+export async function setStallHotspots(
+  client: SupabaseClient, stallId: string, hotspots: Hotspot[],
+): Promise<void> {
+  const { error } = await client.from('stalls').update({ hotspots }).eq('id', stallId);
+  if (error) throw new Error(`[fixtures] could not set hotspots: ${error.message}`);
+}
+
+/** Remove the fixture stall and PROVE it is gone. */
+export async function deleteStallFixture(client: SupabaseClient, stallId: string): Promise<void> {
+  const { error } = await client.from('stalls').delete().eq('id', stallId);
+  if (error) throw new Error(`[fixtures] could not delete stall ${stallId}: ${error.message}`);
+  const { data } = await client.from('stalls').select('id').eq('id', stallId).maybeSingle();
+  if (data) throw new Error(`[fixtures] stall ${stallId} SURVIVED teardown`);
+  console.log(`[TEARDOWN] stall fixture ${stallId} deleted (verified gone)`);
 }

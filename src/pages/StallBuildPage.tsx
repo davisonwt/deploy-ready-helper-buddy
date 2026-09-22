@@ -486,7 +486,7 @@ export default function StallBuildPage() {
               <span>Your painted buttons will stay where they were; check they still line up with your new picture.</span>
             </div>
           )}
-          <HotspotEditor imageUrl={interior.url} value={hotspots} onChange={setHotspots} />
+          <HotspotEditor imageUrl={interior.url} value={hotspots} onChange={setHotspots} ownerId={user?.id} />
           {hotspots.length > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>

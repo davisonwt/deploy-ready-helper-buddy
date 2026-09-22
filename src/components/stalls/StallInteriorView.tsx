@@ -183,6 +183,20 @@ function readKindFromHash(): string | null {
   return m ? m[1] : null;
 }
 
+/**
+ * Which BOX the sheet belongs to, when the URL names one (`&box=<id>`).
+ *
+ * Per-hotspot seed subsets made this necessary: `stall-kind=` alone says
+ * which shelf KIND is open, and many boxes can share a kind, so a reload or
+ * a shared link could otherwise reopen a different box's finds than the one
+ * that was tapped. Absent -- every link made before this existed -- falls
+ * back to the first box of the kind, which is exactly what it did before.
+ */
+function readBoxFromHash(): string | null {
+  const m = /[#&]box=([a-zA-Z0-9-]+)/.exec(window.location.hash);
+  return m ? m[1] : null;
+}
+
 /** A SeedCard's Message action tags `&seed=<id>` onto the hash (SeedCard.tsx's captureStallReturn) so the reopened sheet can scroll that exact card into view -- one-time use, stripped back out by the hash-sync effect right after. */
 function readSeedIdFromHash(): string | null {
   const m = /[#&]seed=([a-zA-Z0-9-]+)/.exec(window.location.hash);
@@ -367,6 +381,10 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   // the first hotspot of openKind's own label below when restored from a
   // URL hash (a fresh mount has no tapped box to remember).
   const [openLabel, setOpenLabel] = useState<string | null>(null);
+  // WHICH box was tapped, not just its kind -- the two same-kind boxes on a
+  // shelf can now hold different finds, so the sheet has to be told which
+  // one it is. Restored from the URL on mount for a reload or a shared link.
+  const [openHotspotId, setOpenHotspotId] = useState<string | null>(() => readBoxFromHash());
   // One-time: which card (if any) to scroll into view when the sheet
   // above opens on mount, arriving from a SeedCard Message action.
   const [initialScrollSeedId] = useState<string | null>(() => readSeedIdFromHash());
@@ -614,6 +632,7 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   function openHotspot(h: StallHotspot) {
     setOpenKind(h.kind);
     setOpenLabel(h.label);
+    setOpenHotspotId(h.id ?? null);
   }
 
   // One tap opens, on every pointer type and every hotspot kind.
@@ -747,9 +766,9 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   // hooks would each push their own entry and both answer the same Back.
   // A single key means a single entry and a single answer.
   const overlayKey = openKind ? `kind:${openKind}` : showChatSheet ? 'chat' : null;
-  const overlayHash = openKind ? `#stall-kind=${openKind}` : '';
+  const overlayHash = openKind ? `#stall-kind=${openKind}${openHotspotId ? `&box=${openHotspotId}` : ''}` : '';
   const closeOpenOverlay = useCallback(() => {
-    if (openKind) { setOpenKind(null); setOpenLabel(null); return; }
+    if (openKind) { setOpenKind(null); setOpenLabel(null); setOpenHotspotId(null); return; }
     if (showChatSheet) { setShowChatSheet(false); setChatRoomId(null); }
   }, [openKind, showChatSheet]);
   const { requestClose: closeOverlay } = useOverlayHistory({
@@ -764,7 +783,15 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
   // handleHotspotTap) stays the same regardless.
   const visibleHotspots = isAdminOrGosat ? hotspots : hotspots.filter((h) => h.kind !== 'go_live');
 
-  const activeHotspot = openKind ? hotspots.find((h) => h.kind === openKind) ?? null : null;
+  // By id when a box was actually tapped (or named in the URL); otherwise
+  // the first of the kind, which is what this did before boxes had their
+  // own finds -- and what a stale/unknown id falls back to, rather than
+  // erroring or opening nothing.
+  const activeHotspot = openKind
+    ? (openHotspotId ? hotspots.find((h) => h.id === openHotspotId) : undefined)
+      ?? hotspots.find((h) => h.kind === openKind)
+      ?? null
+    : null;
   // openLabel is only set by an actual tap (openHotspot above) -- a fresh
   // mount restoring openKind from the URL hash has no tapped box to recall
   // it from, so fall back to the first hotspot of that kind's own label.
@@ -1215,6 +1242,8 @@ export default function StallInteriorView({ ownerId, username, interiorImageUrl,
           ownerName={stallName}
           kind={activeHotspot.kind}
           label={activeLabel}
+          hotspots={hotspots}
+          hotspotId={activeHotspot.id ?? null}
           text={activeHotspot.text ?? null}
           isOwner={effectiveIsOwner}
           onClose={closeOverlay}

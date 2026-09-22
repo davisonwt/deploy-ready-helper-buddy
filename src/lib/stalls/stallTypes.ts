@@ -145,6 +145,26 @@ export interface StallHotspot {
   href?: string;
   /** kind:'companion_info'|'passes'|'activate'|'reviews' only -- static body text StallHotspotSheet shows verbatim instead of a product query. */
   text?: string;
+  /**
+   * Per-hotspot seed subset: which of this kind's seeds THIS box opens.
+   *
+   * Absent or empty means unassigned -- the box opens every seed of its
+   * kind, exactly as every box did before subsets existed. So no stall
+   * changes until its owner curates one. Ids are the seed ids
+   * StallHotspotSheet itself resolves (products / sower_books /
+   * dj_music_tracks), which is why the owner's picker and the visitor's
+   * sheet share one loader: see resolveShelfSubset in lib/stalls/shelfSeeds.
+   *
+   * A seed may be assigned to as many boxes as the owner likes -- two boxes
+   * of the same kind holding different finds is the treasure hunt, not
+   * drift, and is never deduped or warned about.
+   *
+   * Lives on the hotspot rather than on the seed row deliberately: shelf
+   * seeds come from three different tables, so a column on `products`
+   * could not express a books shelf's sower_books rows or a music shelf's
+   * dj tracks at all.
+   */
+  seed_ids?: string[];
 }
 
 export interface StallTemplate {
