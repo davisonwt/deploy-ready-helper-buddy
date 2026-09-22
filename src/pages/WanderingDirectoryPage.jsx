@@ -43,8 +43,44 @@ export default function WanderingDirectoryPage() {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [locationFilter, setLocationFilter] = useState('')
+  // Test-account rows leaked into this public directory: davisontest1's
+  // "QA pillow tester" rendered to everyone, signed in or out. Same
+  // exclusion the stalls feed and get_nav_counts() already use -- is_test
+  // ONLY, never is_system, because is_system legitimately covers real
+  // S2G-run accounts (Grove Station, Scripture Study, Wandering Hearts,
+  // Gosat's Boardroom, the Companions) which belong in a directory.
+  const [testUserIds, setTestUserIds] = useState(null)
 
-  useEffect(() => { fetchMembers() }, [activeRole, locationFilter])
+  // A leaked QA row beats an empty public directory. Every failure path
+  // here resolves to [] -- an empty exclusion list, i.e. render
+  // unfiltered -- rather than leaving testUserIds null, which would hold
+  // fetchMembers() back forever and show a permanent spinner to everyone:
+  //   - query returns an error  -> []
+  //   - promise rejects (offline, blocked, CORS) -> []
+  //   - promise never settles at all -> [] after the timeout below
+  useEffect(() => {
+    let alive = true
+    const renderUnfiltered = (why) => {
+      if (!alive) return
+      console.warn('[directory] test-account exclusion unavailable, rendering unfiltered:', why)
+      setTestUserIds((prev) => (prev === null ? [] : prev))
+    }
+    const bail = setTimeout(() => renderUnfiltered('timed out'), 6000)
+    supabase.from('profiles').select('user_id').eq('is_test', true)
+      .then(({ data, error }) => {
+        if (!alive) return
+        if (error) return renderUnfiltered(error.message)
+        setTestUserIds((data || []).map(r => r.user_id))
+      })
+      .catch((err) => renderUnfiltered(err?.message || String(err)))
+      .finally(() => clearTimeout(bail))
+    return () => { alive = false; clearTimeout(bail) }
+  }, [])
+
+  // Waits for the exclusion list rather than rendering once without it --
+  // otherwise a test row flashes up before being filtered away. The guard
+  // above guarantees this is never null for long.
+  useEffect(() => { if (testUserIds !== null) fetchMembers() }, [activeRole, locationFilter, testUserIds])
 
   const fetchMembers = async () => {
     setLoading(true)
@@ -64,6 +100,7 @@ export default function WanderingDirectoryPage() {
       // tables have no registration UI or writer anywhere, deprecated.
       const fetchWanderingRole = async (roleKey, roleLabel, roleEmoji) => {
         let query = supabase.from('wandering_roles').select('*').eq('role', roleKey).eq('status', 'active').limit(20)
+        if (testUserIds && testUserIds.length > 0) query = query.not('user_id', 'in', `(${testUserIds.join(',')})`)
         if (locationFilter) query = query.ilike('base_town', `%${locationFilter}%`)
         const { data } = await query
         if (data) data.forEach(item => results.push({
@@ -78,7 +115,10 @@ export default function WanderingDirectoryPage() {
       if (activeRole === 'all' || activeRole === 'heart') {
         // Directory's Heart tab never fetched anything — fixed here.
         // Stays on tribal_hearts_profiles, its own onboarding (/tribal-hearts).
-        let query = supabase.from('tribal_hearts_profiles').select('*').eq('status', 'active').limit(20)
+        // Same pair get_nav_counts() uses for Wandering Hearts:
+        // NOT is_seed AND NOT is_test. Seeded demo hearts are not members.
+        let query = supabase.from('tribal_hearts_profiles').select('*').eq('status', 'active').eq('is_seed', false).limit(20)
+        if (testUserIds && testUserIds.length > 0) query = query.not('user_id', 'in', `(${testUserIds.join(',')})`)
         if (locationFilter) query = query.ilike('location_region', `%${locationFilter}%`)
         const { data } = await query
         if (data) data.forEach(item => results.push({ ...item, _role: 'heart', _roleLabel: 'Wandering Heart', _roleEmoji: '💚', _color: ROLE_COLORS.heart }))
