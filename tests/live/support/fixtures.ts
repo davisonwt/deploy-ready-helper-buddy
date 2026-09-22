@@ -236,3 +236,119 @@ export async function removeWanderingRole(client: SupabaseClient, roleId: string
   }
   console.log(`[TEARDOWN] wandering role ${roleId} removed`);
 }
+
+/**
+ * Create a wheel listing this run owns, so a spec that needs to edit,
+ * pause or delete a listing never has to do it to a real member's.
+ *
+ * This exists because two specs used to act on the founder's own
+ * production rows: my-listings toggled "Silver Hyundai Venue" offline
+ * (and did, twice -- 2026-09-17 and 2026-09-22), and stall-hotspot-editor
+ * deleted a hotspot from his stall. Both relied on putting it back
+ * afterwards, and both failed open.
+ *
+ * Inserted directly rather than driven through /sow/wheel: the point is a
+ * dependable fixture, not coverage of the sow form, which its own specs
+ * already cover.
+ */
+export async function createWheelListing(
+  client: SupabaseClient,
+  userId: string,
+  title: string,
+  opts?: { town?: string; lat?: number; lng?: number; ratePerKm?: number },
+): Promise<string> {
+  const { data: sower } = await client.from('sowers').select('id').eq('user_id', userId).maybeSingle();
+  const { data: company } = await client
+    .from('companies').select('id').eq('owner_user_id', userId).limit(1).maybeSingle();
+  if (!sower || !company) {
+    throw new Error(`[fixtures] ${userId} needs a sower and a company row to own a listing`);
+  }
+
+  const { data: product, error: pErr } = await client
+    .from('products')
+    .insert({
+      sower_id: sower.id,
+      company_id: company.id,
+      title,
+      description: 'QA fixture. Created and deleted by the live suite.',
+      type: 'service',
+      category: 'sedan',
+      price: opts?.ratePerKm ?? 9.99,
+      status: 'active',
+      kind: 'wheel',
+      delivery_type: 'digital',
+    })
+    .select('id')
+    .single();
+  if (pErr || !product) throw new Error(`[fixtures] could not create ${title}: ${pErr?.message}`);
+
+  const { error: dErr } = await client.from('wheel_seed_details').insert({
+    product_id: product.id,
+    vehicle_type: 'sedan',
+    use_tags: ['parcels'],
+    driver_included: true,
+    rate_per_km: opts?.ratePerKm ?? 9.99,
+    currency: 'ZAR',
+    base_location: opts?.town ?? 'Bethlehem, Free State',
+    base_lat: opts?.lat ?? -28.2308,
+    base_lng: opts?.lng ?? 28.3089,
+    availability: true,
+    operator_confirmed_licensed: true,
+    operator_confirmed_at: new Date().toISOString(),
+  });
+  if (dErr) throw new Error(`[fixtures] could not detail ${title}: ${dErr.message}`);
+
+  console.log(`[SETUP] wheel fixture ${title} -> ${product.id}`);
+  return product.id as string;
+}
+
+export interface Hotspot { [k: string]: unknown; label?: string; kind?: string }
+
+/** Read a stall's hotspots array, for a beforeAll snapshot. */
+export async function readHotspots(client: SupabaseClient, stallId: string): Promise<Hotspot[]> {
+  const { data, error } = await client.from('stalls').select('hotspots').eq('id', stallId).single();
+  if (error) throw new Error(`[fixtures] could not read hotspots: ${error.message}`);
+  return (data?.hotspots ?? []) as Hotspot[];
+}
+
+/**
+ * Append one hotspot this run owns, so a spec that tests deletion has
+ * something of its own to delete.
+ *
+ * stall-hotspot-editor used to delete the OWNER's mugs shelf and publish,
+ * with no restore anywhere in the file -- its header claimed "the caller
+ * restores the row afterwards" and there was no caller. On 2026-09-22 it
+ * took his hotspots from 11 to 10, and the box it removed was one he had
+ * renamed, moved and resized himself.
+ */
+export async function addHotspot(
+  client: SupabaseClient, stallId: string, entry: Hotspot,
+): Promise<Hotspot[]> {
+  const current = await readHotspots(client, stallId);
+  const next = [...current, entry];
+  const { error } = await client.from('stalls').update({ hotspots: next }).eq('id', stallId);
+  if (error) throw new Error(`[fixtures] could not add hotspot: ${error.message}`);
+  console.log(`[SETUP] hotspot "${entry.label}" added (${current.length} -> ${next.length})`);
+  return next;
+}
+
+/**
+ * Put the array back exactly as snapshotted, and PROVE it took.
+ *
+ * Restores unconditionally rather than "if it looks wrong": the previous
+ * safety net in my-listings checked for a condition first, found none,
+ * and silently did nothing while the damage stood.
+ */
+export async function restoreHotspots(
+  client: SupabaseClient, stallId: string, snapshot: Hotspot[],
+): Promise<void> {
+  const { error } = await client.from('stalls').update({ hotspots: snapshot }).eq('id', stallId);
+  if (error) throw new Error(`[fixtures] restoring hotspots errored: ${error.message}`);
+  const after = await readHotspots(client, stallId);
+  if (after.length !== snapshot.length) {
+    throw new Error(
+      `[fixtures] hotspot restore FAILED: expected ${snapshot.length} entries, found ${after.length}`,
+    );
+  }
+  console.log(`[TEARDOWN] hotspots restored to ${snapshot.length} entries`);
+}

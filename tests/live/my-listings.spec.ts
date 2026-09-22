@@ -1,8 +1,18 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, createWheelListing, sweepProducts, reportSweep } from './support/fixtures';
 
 /**
- * Live verification of /my-listings and the Wheel edit mode, driven with
- * Davison's own account against his real car.
+ * Live verification of /my-listings and the Wheel edit mode.
+ *
+ * Every mutating test here runs against a wheel listing this run creates
+ * and deletes. It used to edit and pause the owner's real "Silver Hyundai
+ * Venue" and put it back afterwards; that restore failed open twice --
+ * 2026-09-17, and again on 2026-09-22, when test 4 failed between "Make
+ * unavailable" and "Make available" and the afterAll net found no button,
+ * did nothing and logged nothing. The listing sat missing from
+ * /sleeping?tab=wheels until the owner noticed.
+ *
+ * Read-only assertions may still name the real car; nothing writes to it.
  *
  * Run: npx playwright test --config=playwright.live.config.ts my-listings
  */
@@ -10,9 +20,18 @@ import { test, expect, type Page } from '@playwright/test';
 const EMAIL = process.env.TEST_GOSAT_EMAIL || '';
 const PASS = process.env.TEST_GOSAT_PASSWORD || '';
 
+/**
+ * The owner's real car -- READ ONLY. Never edited, paused or deleted.
+ * CAR_ID is used only to navigate to a URL that must redirect away.
+ */
 const CAR = 'Silver Hyundai Venue';
 const CAR_ID = '819a5b71-48a4-40c5-9fc7-f516aa82c348';
 const CAR_TOWN = 'Mossel Bay, South Africa';
+
+/** This run's own listing, the only row these tests may mutate. */
+const STAMP = process.env.QA_STAMP ?? String(Date.now()).slice(-6);
+const QA_CAR = `QAML Wheel ${STAMP}`;
+let qaCarId = '';
 
 async function login(page: Page) {
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
@@ -22,8 +41,8 @@ async function login(page: Page) {
   await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 30000 }).catch(() => {});
 }
 
-/** Set the hub location and return whether the car is listed. */
-async function carVisibleInHub(page: Page): Promise<boolean> {
+/** Set the hub location and return whether `title` is listed there. */
+async function listingVisibleInHub(page: Page, title: string): Promise<boolean> {
   await page.goto('/sleeping', { waitUntil: 'domcontentloaded' });
 
   // Either the location form renders (nothing stored yet) or the location is
@@ -41,9 +60,10 @@ async function carVisibleInHub(page: Page): Promise<boolean> {
   await page.getByRole('button', { name: /^Go$/ }).click();
   await expect(change).toBeVisible({ timeout: 45000 });
 
-  // Let the proximity query settle before counting.
+  // Let the proximity query settle before counting. The hub no longer cuts
+  // on radius (b43a7eb4), so a fixture in another town still appears.
   await page.waitForTimeout(6000);
-  return (await page.getByText(CAR).count()) > 0;
+  return (await page.getByText(title).count()) > 0;
 }
 
 /**
@@ -59,29 +79,32 @@ function carCardOf(page: Page) {
   return page.locator('li').filter({ hasText: CAR }).first();
 }
 
+/** The card for THIS RUN's listing -- the only one a test may act on. */
+function qaCardOf(page: Page) {
+  return page.locator('li').filter({ hasText: QA_CAR }).first();
+}
+
 test.describe.serial('My Listings', () => {
   // Test 4 toggles a REAL listing's availability against production. If it
   // fails between the two clicks, the car is left hidden from the Wheels hub
   // and the next run fails on its very first assertion -- which is exactly
   // what happened on 2026-09-17. Put it back whatever the outcome.
-  test.afterAll(async ({ browser }) => {
-    const ctx = await browser.newContext();
-    const page = await ctx.newPage();
-    try {
-      await login(page);
-      await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
-      await page.getByText(CAR).first().waitFor({ timeout: 20000 });
-      const restore = carCardOf(page).getByRole('button', { name: 'Make available' });
-      if (await restore.count()) {
-        await restore.click();
-        await page.waitForTimeout(2000);
-        console.log('[CLEANUP] the car was left unavailable; put back');
-      }
-    } catch (e) {
-      console.log(`[CLEANUP] could not verify the car's availability: ${(e as Error).message}`);
-    } finally {
-      await ctx.close();
-    }
+  test.beforeAll(async () => {
+    if (!EMAIL || !PASS) return;
+    const { client, userId } = await asUser(EMAIL, PASS, 'the owner account');
+    qaCarId = await createWheelListing(client, userId, QA_CAR, { town: 'Bethlehem, Free State' });
+  });
+
+  /**
+   * Deleting the fixture is the whole safety net now. The old one tried to
+   * put the REAL car back by looking for a "Make available" button, and
+   * when it found none it did nothing and said nothing -- a silent no-op
+   * that read as success while the listing stayed hidden.
+   */
+  test.afterAll(async () => {
+    if (!EMAIL || !PASS) return;
+    const { client, userId } = await asUser(EMAIL, PASS, 'the owner account');
+    reportSweep('my-listings', await sweepProducts(client, userId, [QA_CAR]));
   });
 
   test.skip(!EMAIL || !PASS, 'The owner account is required in .env.test.');
@@ -121,7 +144,8 @@ test.describe.serial('My Listings', () => {
 
   test('3. editing a rate saves and shows on the hub', async ({ page }) => {
     await login(page);
-    await page.goto(`/sow/wheel?edit=${CAR_ID}`, { waitUntil: 'domcontentloaded' });
+    // This run's own listing. It used to be the owner's real car.
+    await page.goto(`/sow/wheel?edit=${qaCarId}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /Edit your vehicle/i })).toBeVisible({ timeout: 30000 });
 
     // Pick whichever rate field already carries a value and bump it.
@@ -146,7 +170,7 @@ test.describe.serial('My Listings', () => {
     await page.waitForURL(/\/my-listings/, { timeout: 40000 });
 
     // Reopen and confirm it persisted.
-    await page.goto(`/sow/wheel?edit=${CAR_ID}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`/sow/wheel?edit=${qaCarId}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /Edit your vehicle/i })).toBeVisible({ timeout: 30000 });
     await expect(page.locator(`#${target}`)).toHaveValue(after, { timeout: 20000 });
     console.log(`[EVIDENCE] ${target} persisted as ${after}`);
@@ -160,28 +184,28 @@ test.describe.serial('My Listings', () => {
   test('4. unavailable hides it from the Wheels tab, available brings it back', async ({ page }) => {
     await login(page);
 
-    expect(await carVisibleInHub(page), 'car should start visible').toBe(true);
-    console.log('[EVIDENCE] before toggle: car IS in the Wheels tab');
+    expect(await listingVisibleInHub(page, QA_CAR), 'fixture should start visible').toBe(true);
+    console.log('[EVIDENCE] before toggle: the fixture IS in the Wheels tab');
 
     await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByText(CAR)).toBeVisible({ timeout: 30000 });
-    // Scope to the CAR's card. Unscoped, .first() hit whichever listing
+    await expect(page.getByText(QA_CAR)).toBeVisible({ timeout: 30000 });
+    // Scope to THIS RUN's card. Unscoped, .first() hit whichever listing
     // rendered first and on 2026-09-17 that took a REAL listing offline
     // (scripts/studio/restore_s2g_electricians_availability_20260917.sql).
-    await carCardOf(page).getByRole('button', { name: 'Make unavailable' }).click();
+    await qaCardOf(page).getByRole('button', { name: 'Make unavailable' }).click();
     await expect(page.getByText(/is now unavailable/i)).toBeVisible({ timeout: 20000 });
     await expect(page.getByText('Hidden from Sleeping Seeds')).toBeVisible({ timeout: 20000 });
     await page.screenshot({ path: 'test-results/ml-4-unavailable.png' });
 
-    expect(await carVisibleInHub(page), 'car should be hidden while unavailable').toBe(false);
-    console.log('[EVIDENCE] after toggle: car is GONE from the Wheels tab');
+    expect(await listingVisibleInHub(page, QA_CAR), 'fixture should be hidden while unavailable').toBe(false);
+    console.log('[EVIDENCE] after toggle: the fixture is GONE from the Wheels tab');
 
     await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
-    await carCardOf(page).getByRole('button', { name: 'Make available' }).click();
+    await qaCardOf(page).getByRole('button', { name: 'Make available' }).click();
     await expect(page.getByText(/is available again/i)).toBeVisible({ timeout: 20000 });
 
-    expect(await carVisibleInHub(page), 'car should be back after re-enabling').toBe(true);
-    console.log('[EVIDENCE] re-enabled: car is BACK in the Wheels tab');
+    expect(await listingVisibleInHub(page, QA_CAR), 'fixture should be back after re-enabling').toBe(true);
+    console.log('[EVIDENCE] re-enabled: the fixture is BACK in the Wheels tab');
   });
 
   test('5. EditForm refuses to open a service listing', async ({ page }) => {
