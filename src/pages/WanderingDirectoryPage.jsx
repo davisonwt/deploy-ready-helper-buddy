@@ -4,11 +4,10 @@ import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from '../hooks/useAuth'
 import WanderingMemberCard from '@/components/wandering/WanderingMemberCard'
 
-// Card links point back into this directory, filtered by role.
-// /wandering/<role>/<id> is NOT a route -- there is no per-member detail
-// page -- and neither is /wandering/<role>. Both used to be emitted and
-// both 404'd; see RegisterWanderingPage.tsx for the share link that
-// carried a valid referral code to a dead path.
+// Cards link to /wandering/<role>/<id>, the member's own public page.
+// That path used to 404 -- it was emitted here and by the door share and
+// had never been a route -- which is why cards briefly linked back to this
+// same directory instead. The page exists now (WanderingMemberPage).
 const ROLES = [
   { key: 'all', label: 'All', emoji: '🌿' },
   { key: 'wheel', label: 'Wandering Wheel', emoji: '🚗', table: 'wandering_roles' },
@@ -262,7 +261,7 @@ export default function WanderingDirectoryPage() {
               tagline={m.tagline || getDesc(m)}
               photoUrl={getAvatar(m)}
               galleryUrls={m.gallery_urls}
-              linkTo={m._role === 'heart' ? '/tribal-hearts' : `/wandering-directory?role=${m._role}`}
+              linkTo={m._role === 'heart' ? '/tribal-hearts' : `/wandering/${m._role}/${m.id}`}
               bookLabel={m._role === 'heart' ? 'Connect' : m._role === 'whisperer' ? 'Invite' : 'Book'}
             />
           ))}

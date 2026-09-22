@@ -123,6 +123,8 @@ export default function RegisterWanderingPage() {
   const [selfOperated, setSelfOperated] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  /** wandering_roles.id once saved -- see doorLink below. */
+  const [savedRoleId, setSavedRoleId] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -225,7 +227,12 @@ export default function RegisterWanderingPage() {
   // chariwellnesspro's /wandering/pillow on 2026-09-21, the exact URL
   // reported. The referral code on them was never the problem; the path
   // was. The directory IS the door, filtered to this role.
-  const doorLink = `/wandering-directory?role=${role}`;
+  // /wandering/<role>/<id> -- the member's own public page. Falls back to
+  // the role-filtered directory only until the row has been saved and its
+  // id is known; the share below is only reachable after that.
+  const doorLink = savedRoleId
+    ? `/wandering/${role}/${savedRoleId}`
+    : `/wandering-directory?role=${role}`;
 
   const handleSubmit = async () => {
     if (!user) { toast.error('Please log in to unlock this role.'); return; }
@@ -238,7 +245,7 @@ export default function RegisterWanderingPage() {
     try {
       const now = new Date().toISOString();
       const filledTestimonials = testimonials.filter(isFilledTestimonial);
-      const { error } = await supabase.from('wandering_roles').upsert(
+      const { data: savedRow, error } = await supabase.from('wandering_roles').upsert(
         {
           user_id: user.id,
           role,
@@ -255,8 +262,12 @@ export default function RegisterWanderingPage() {
           accepted_terms_at: now,
         } as any,
         { onConflict: 'user_id,role' }
-      );
+      ).select('id').single();
       if (error) throw error;
+      // The row id is what makes the door a real address. Without it the
+      // share had nothing per-member to point at, which is how it ended up
+      // emitting /wandering/<role> -- a path that never existed.
+      if (savedRow?.id) setSavedRoleId((savedRow as { id: string }).id);
 
       // spec-storefronts.md §4a: the default business gets the matching
       // shop preset the moment the role unlocks, so a Hand/Wheel/Pillow
