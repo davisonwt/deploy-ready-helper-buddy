@@ -269,7 +269,11 @@ export class AuthProviderClass extends React.Component {
           } else if (!claimResult?.success) {
             console.warn('[referral] claim_referral_code did not succeed:', claimResult)
           } else {
+            // Both keys: the companion timestamp is what
+            // useReferralCapture's guard reads, and a stale one left
+            // behind would outlive the code it belongs to.
             localStorage.removeItem('s2g_pending_ref')
+            localStorage.removeItem('s2g_pending_ref_at')
           }
           // Stall invite links ("come see my shop"): process_referral (run
           // by claim_referral_code) already stamped profiles.referred_by
