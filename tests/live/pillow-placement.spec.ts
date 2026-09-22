@@ -47,17 +47,23 @@ async function setPlace(page: Page, place: string) {
 test.describe.serial('A pillow listing is placed where it actually is', () => {
   test.skip(!EMAIL || !PASS, 'A test account is required.');
 
-  test('1. the Pillows tab finds it from Mossel Bay at 31 mi', async ({ page }) => {
+  test('1. the Pillows tab finds it from Mossel Bay, at any radius', async ({ page }) => {
     await login(page, EMAIL, PASS);
     await setPlace(page, 'Mossel Bay, South Africa');
 
-    // 31 mi / 50 km is the default, which is the radius Davison used.
-    await expect(page.locator('#radius')).toContainText(/31 mi|50 km/, { timeout: 15000 });
+    // The default is Everywhere: distance sorts the list, it never cuts it.
+    await expect(page.locator('#radius')).toContainText(/Everywhere/i, { timeout: 15000 });
 
     await page.getByRole('tab', { name: 'Pillows' }).click();
     const card = page.getByText(TITLE, { exact: false }).first();
     await expect(card, 'the listing must appear in the Pillows tab').toBeVisible({ timeout: 30000 });
-    await expect(page.getByText(/No places to stay near you yet/i)).toHaveCount(0);
+    await expect(page.getByText(/No places to stay listed yet/i)).toHaveCount(0);
+
+    // And still found when deliberately narrowed to the old 50 km default,
+    // which is the radius Davison used -- the listing is in this town.
+    await page.locator('#radius').click();
+    await page.getByRole('option', { name: /31 mi|50 km/ }).click();
+    await expect(card, 'still found within 50 km of its own town').toBeVisible({ timeout: 30000 });
 
     // Its photo must actually decode, not merely carry a src. The cover
     // lives in a private bucket, so SignedImg holds src empty until the

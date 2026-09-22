@@ -216,9 +216,18 @@ test.describe.serial('Phase 1 - Sleeping Seeds + Sleeping Wheels', () => {
     // Nominatim returns a full display name; assert the city came back.
     await expect(page.getByText(/Lyon/i).first()).toBeVisible({ timeout: 30000 });
 
-    // A South African listing must NOT be within 50 km of Lyon.
-    await expect(page.getByText(`QA Truck ${STAMP}`)).toHaveCount(0);
-    await expect(page.getByText(/No vehicles near you yet/i)).toBeVisible({ timeout: 30000 });
+    // Distance is a label and a sort order, never a cutoff: a South African
+    // listing is still shown to a viewer in Lyon, with the real distance on
+    // it. This used to assert the opposite -- an empty tab -- which is the
+    // behaviour that hid every listing from nearly every member.
+    const truck = page.getByText(`QA Truck ${STAMP}`).first();
+    await expect(truck).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText(/No vehicles listed yet/i)).toHaveCount(0);
+
+    // Narrowing to 50 km is what excludes it, and only when asked for.
+    await page.locator('#radius').click();
+    await page.getByRole('option', { name: /31 mi|50 km/ }).click();
+    await expect(page.getByText(`QA Truck ${STAMP}`)).toHaveCount(0, { timeout: 30000 });
   });
 
   // --- 8. booking request end to end ---------------------------------------
