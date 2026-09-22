@@ -516,7 +516,12 @@ export default function TribalAliveFeedPage() {
             sower_handle: handleOf(profileMap[m.user_id]),
             wandering_role: 'story',
             created_at: m.created_at,
-            href: `/memry`,
+            // /memry has never been a route -- every memry card in this
+            // feed 404'd on tap. There is no post-detail page and inventing
+            // one is out of scope, so the card points at the feed it is
+            // already in, anchored on itself: the wrapper below carries
+            // id={item.key}, and item.key for a memry post is `memry-<id>`.
+            href: `/orchard-alive#memry-${m.id}`,
           };
         });
 
@@ -1175,6 +1180,7 @@ export default function TribalAliveFeedPage() {
           filtered.map((item, idx) => (
             <div
               key={item.key}
+              id={item.key}
               ref={(el) => { cardRefs.current[idx] = el; }}
               data-idx={idx}
               className="relative h-full w-full snap-start snap-always"
