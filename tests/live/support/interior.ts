@@ -88,3 +88,44 @@ export async function openHotspot(page: Page, label: string, nth = 0): Promise<v
   await expect(btn).toBeVisible();
   await btn.click();
 }
+
+/**
+ * Wait until an interior is actually ready to be measured.
+ *
+ * Two conditions, both events rather than elapsed time:
+ *
+ * 1. The interior image has LOADED (`complete` and a real naturalWidth).
+ *    Hotspots are positioned from useContainImageRect, which returns null
+ *    until `img.naturalWidth` is non-zero -- so `{rect && hotspots.map(...)}`
+ *    renders nothing at all until the image is in. A spec that measures
+ *    before then sees zero hotspots on a stall that has four.
+ * 2. At least one hotspot button is attached INSIDE that container.
+ *    Hotspots are the absolutely positioned `button[aria-label]`s there;
+ *    the header's own buttons are not absolute, which separates them
+ *    without repeating a list of chrome labels that would drift.
+ *
+ * Both conditions are scoped to `[data-pan-scroll]` and there is NO
+ * fallback to document.body. A first attempt fell back, and before the
+ * interior rendered it happily matched some other loaded image plus a
+ * notification's absolutely-positioned dismiss button -- so it returned
+ * instantly and the callers measured an empty room. A wait that can be
+ * satisfied by the wrong elements is worse than the sleep it replaced.
+ *
+ * Why this exists: stall-interior-mobile-fill waited `waitForTimeout(7000)`
+ * and then measured. Alone that was enough; in a 3-worker suite run against
+ * production it was not, and the spec reported "no in-image hotspots found
+ * to test" for Grove Station -- a stall that is published with four of them.
+ * The failure was the clock, not the app, and a bigger number would only
+ * have moved the threshold rather than removed it.
+ */
+export async function waitForInteriorReady(page: Page, timeout = 45_000): Promise<void> {
+  await page.waitForFunction(() => {
+    const pan = document.querySelector('[data-pan-scroll]');
+    if (!pan) return false;
+    const img = pan.querySelector('img') as HTMLImageElement | null;
+    if (!img || !img.complete || !img.naturalWidth) return false;
+    return Array.from(pan.querySelectorAll('button[aria-label]'))
+      .some((b) => getComputedStyle(b).position === 'absolute'
+        && b.getBoundingClientRect().width > 0);
+  }, undefined, { timeout });
+}

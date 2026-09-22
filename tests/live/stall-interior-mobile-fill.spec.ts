@@ -1,4 +1,5 @@
 import { test, expect, devices, type Page } from '@playwright/test';
+import { panHotspotIntoView, waitForInteriorReady } from './support/interior';
 
 /**
  * On mobile portrait the stall interior fills the screen.
@@ -52,16 +53,26 @@ async function login(page: Page) {
   throw new Error('login failed');
 }
 
-/** Opens a stall interior, stepping through a front gate if there is one. */
+/**
+ * Opens a stall interior, stepping through a front gate if there is one.
+ *
+ * Event-driven throughout: whichever the stall shows first -- its gate or
+ * its interior -- wins the race, so a stall with no gate costs nothing and
+ * a stall with one is not guessed at. The three fixed sleeps this replaced
+ * (7s, 6s, 2s) were enough running alone and not enough under a 3-worker
+ * suite run, which is the shape of a threshold rather than a wait.
+ */
 async function openInterior(page: Page, path: string) {
   await page.goto(path, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(7000);
-  const enter = page.getByRole('button', { name: /^Enter/i }).first();
-  if (await enter.count()) {
-    await enter.tap();
-    await page.waitForTimeout(6000);
-  }
-  await page.waitForTimeout(2000);
+  const gate = page.getByRole('button', { name: /^Enter/i }).first();
+  const sawGate = await Promise.race([
+    gate.waitFor({ state: 'visible', timeout: 45_000 }).then(() => true).catch(() => false),
+    waitForInteriorReady(page).then(() => false).catch(() => false),
+  ]);
+  if (sawGate) await gate.tap();
+  // Already true when the interior won the race above; the real wait when
+  // the gate did. Throws here, named, if the interior never arrives.
+  await waitForInteriorReady(page);
 }
 
 /** Geometry of the interior as actually laid out. */
@@ -176,8 +187,26 @@ for (const [name, path] of [['Grove Station', GROVE], ['J & T Photography', JT]]
     // never open a sheet at all (StallInteriorView.handleHotspotTap).
     for (const label of labels) {
       const btn = page.getByRole('button', { name: label, exact: true }).first();
-      await btn.tap(); // auto-pans the hotspot into view first
-      await page.waitForTimeout(2800);
+      // Pan it into the window OURSELVES before tapping. Relying on tap's
+      // own scroll-into-view is what hung here: the interior is a 924px
+      // strip in a 390px window, so a box can be outside the window with a
+      // perfectly real bounding box, and tap() then waits on an
+      // actionability check that never becomes true. It surfaced on
+      // re-entry after a 'nav' hotspot, where the strip is back at its
+      // start and the later boxes are off to the right.
+      await panHotspotIntoView(page, label);
+      await btn.tap();
+      // Wait for the OUTCOME, either kind: a shelf opened, or the 'nav'
+      // hotspot left the stall. Same threshold problem as openInterior had
+      // -- 2.8s was enough alone and a guess under a parallel suite run.
+      // Swallowed on timeout so the assertion below reports it in its own
+      // words rather than a raw locator error.
+      await page.waitForFunction(() => {
+        const sheet = /stall-kind=/.test(location.hash)
+          || !!document.querySelector('[role="dialog"]')
+          || !!document.querySelector('button[aria-label="Close shelf"]');
+        return sheet || !/^\/stall\//.test(location.pathname);
+      }, undefined, { timeout: 45_000 }).catch(() => {});
       const after = await page.evaluate(() => ({
         sheet: /stall-kind=/.test(location.hash) || !!document.querySelector('[role="dialog"]'),
         path: location.pathname,
@@ -193,7 +222,10 @@ for (const [name, path] of [['Grove Station', GROVE], ['J & T Photography', JT]]
         const close = page.getByRole('button', { name: 'Close shelf', exact: true }).first();
         expect(await close.count(), `"${label}" opened with no way to close it`).toBeGreaterThan(0);
         await close.tap();
-        await page.waitForTimeout(2200);
+        await page.waitForFunction(
+          () => !document.querySelector('button[aria-label="Close shelf"]'),
+          undefined, { timeout: 45_000 },
+        ).catch(() => {});
         const left = await page.evaluate(() => !/\/stall\//.test(location.pathname));
         expect(left, `closing "${label}" left the stall`).toBe(false);
       } else {
