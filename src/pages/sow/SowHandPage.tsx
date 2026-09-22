@@ -117,7 +117,7 @@ export default function SowHandPage() {
         .maybeSingle();
       if (!alive) return;
       if (!data || (data as any).status !== 'active') {
-        navigate('/register-wandering?role=hand', { replace: true });
+        navigate('/register-wandering?role=hand&from=sow', { replace: true });
         return;
       }
       setBaseTown((data as any).base_town || '');

@@ -114,7 +114,7 @@ export default function SowPillowPage() {
         .maybeSingle();
       if (!alive) return;
       if (!data || (data as any).status !== 'active') {
-        navigate('/register-wandering?role=pillow', { replace: true });
+        navigate('/register-wandering?role=pillow&from=sow', { replace: true });
         return;
       }
       setBaseTown((data as any).base_town || '');

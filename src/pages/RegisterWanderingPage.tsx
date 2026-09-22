@@ -1,7 +1,7 @@
 import SignedImg from '@/components/media/SignedImg';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { ArrowLeft, Eye, ImagePlus, X, Loader2, Plus, PartyPopper, Share2 } from 'lucide-react';
+import { ArrowLeft, Eye, ImagePlus, X, Loader2, Plus, PartyPopper, Share2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,6 +50,13 @@ const GALLERY_PROMPT: Record<Role, string> = {
   hand: "jobs you've done",
   wheel: "your vehicles and loads you've moved",
   pillow: 'your rooms, the view, the kitchen',
+};
+
+/** What happens after this form, for someone bounced here from /sow/<role>. */
+const SOW_RETURN_HINT: Record<Role, string> = {
+  hand: 'Then you can offer your first job.',
+  wheel: 'Then you can register your first vehicle.',
+  pillow: 'Then you can list your first place.',
 };
 
 const SELF_OPERATION_DECLARATION =
@@ -107,6 +114,10 @@ export default function RegisterWanderingPage() {
   const { user } = useAuth();
 
   const roleParam = searchParams.get('role');
+  // Set by the /sow/<role> pages when they bounce someone who has no role
+  // yet. Without it the redirect is a silent teleport: you tap "list your
+  // place" and land on an unrelated-looking form with no idea why.
+  const sentFromSow = searchParams.get('from') === 'sow';
   const role: Role | null = roleParam === 'hand' || roleParam === 'wheel' || roleParam === 'pillow' ? roleParam : null;
   const preset = role ? getPreset(role) : null;
   const accent = preset?.accent ?? '#16a34a';
@@ -426,6 +437,19 @@ export default function RegisterWanderingPage() {
       <Button variant="ghost" size="sm" onClick={() => navigate('/sow')} className="mb-4 -ml-2">
         <ArrowLeft className="w-4 h-4 mr-2" /> Sow
       </Button>
+
+      {sentFromSow && (
+        <div
+          className="mb-5 rounded-xl border-2 p-4 flex items-start gap-3"
+          style={{ borderColor: `${accent}66`, backgroundColor: `${accent}0d` }}
+        >
+          <Info className="w-5 h-5 shrink-0 mt-0.5" style={{ color: accent }} />
+          <p className="text-sm leading-relaxed">
+            <strong>Unlock the {meta.label} role first — one quick form.</strong>
+            {' '}It tells the tribe who you are. {SOW_RETURN_HINT[role]}
+          </p>
+        </div>
+      )}
 
       {/* Poster is the header — see the success-view banner above for why
           Hand gets a fixed-aspect top-crop instead of the general

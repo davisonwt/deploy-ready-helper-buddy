@@ -111,7 +111,7 @@ export default function SowWheelPage() {
         .maybeSingle();
       if (!alive) return;
       if (!data || data.status !== 'active') {
-        navigate('/register-wandering?role=wheel', { replace: true });
+        navigate('/register-wandering?role=wheel&from=sow', { replace: true });
         return;
       }
       setBaseTown((data as any).base_town || '');
