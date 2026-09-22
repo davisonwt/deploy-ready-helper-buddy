@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, sweepProducts, sweepStorage, reportSweep } from './support/fixtures';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,6 +27,31 @@ const PHOTO = path.resolve(__dirname, '../../src/assets/tier-grove.jpg');
 /** Set by test 1 so the others only run while the scanner is genuinely down. */
 let scannerDown = false;
 
+const STAMP = process.env.QA_STAMP ?? String(Date.now()).slice(-6);
+const QA_TRACK = `QAFAILOPEN track ${STAMP}`;
+
+/**
+ * Every object this run uploads, captured from the storage responses.
+ *
+ * Two of the three surfaces are driven through the real UI, so the app
+ * picks the path and the spec cannot know it in advance -- which is why
+ * this used to leave objects behind on every run (a QAPROBE-scanner jpg
+ * in premium-room and several under orchard-images were swept by hand on
+ * 2026-09-22). Watching the upload calls is the only way to know what to
+ * clean up.
+ */
+const uploaded: Array<{ bucket: string; path: string }> = [];
+
+/** Attach to a page before any upload happens. */
+function captureUploads(page: Page) {
+  page.on('response', (r) => {
+    const m = /\/storage\/v1\/object\/(?!public|sign)([^/]+)\/(.+)$/.exec(r.url());
+    if (m && r.request().method() === 'POST' && r.ok()) {
+      uploaded.push({ bucket: decodeURIComponent(m[1]), path: decodeURIComponent(m[2].split('?')[0]) });
+    }
+  });
+}
+
 async function login(page: Page) {
   for (let i = 0; i < 2; i++) {
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
@@ -47,7 +73,35 @@ const SCANNER_REFUSAL = /couldn't verify this|could not verify this/i;
 test.describe.serial('Fail-open on every upload surface', () => {
   test.skip(!E || !P, 'A test account is required in .env.test.');
 
+  /**
+   * Teardown in a hook, never a final test: this block is serial, so one
+   * failure marks every later test "did not run".
+   *
+   * orchard-images objects are expected to survive: that bucket's delete
+   * policy keys on foldername[1] = auth.uid() while the app writes
+   * products/<id>/..., so foldername[1] is the literal string "products"
+   * and the owner cannot delete their own file. Parked as a separate
+   * policy fix; reported here rather than silently tolerated.
+   */
+  test.afterAll(async () => {
+    if (!E || !P) return;
+    const { client, userId } = await asUser(E, P, 'the owner account');
+    reportSweep('moderation-fail-open-paths', await sweepProducts(client, userId, [QA_TRACK]));
+
+    const byBucket = new Map<string, string[]>();
+    for (const o of uploaded) {
+      if (!byBucket.has(o.bucket)) byBucket.set(o.bucket, []);
+      byBucket.get(o.bucket)!.push(o.path);
+    }
+    for (const [bucket, paths] of byBucket) {
+      const n = await sweepStorage(client, bucket, paths);
+      console.log(`[TEARDOWN] moderation-fail-open-paths: ${bucket} ${n}/${paths.length} objects removed`
+        + (n < paths.length ? ' (undeletable by owner -- see orchard-images note)' : ''));
+    }
+  });
+
   test('0. the scanner really is failing right now', async ({ page }) => {
+    captureUploads(page);
     await login(page);
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(3000);
@@ -70,7 +124,7 @@ test.describe.serial('Fail-open on every upload surface', () => {
         + 'HBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAA'
         + 'AAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==';
       const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-      const path = `covers/${uid}/QAPROBE-scanner-${Date.now()}.jpg`;
+      const path = `covers/${uid}/QAPROBE-scanner-${STAMP}.jpg`;
       const up = await fetch(`${BASE}/storage/v1/object/premium-room/${path}`, {
         method: 'POST',
         headers: { apikey: ANON, Authorization: `Bearer ${token}`, 'Content-Type': 'image/jpeg' },
@@ -94,12 +148,13 @@ test.describe.serial('Fail-open on every upload surface', () => {
   // Surface 1: /products/upload -- the music/track form Davison was on.
   // Uses UploadForm.tsx, NOT CoverDropZone.
   test('1. a track cover is accepted on /products/upload', async ({ page }) => {
+    captureUploads(page);
     test.skip(!scannerDown, 'the scanner recovered; failing open cannot be observed');
     await login(page);
     await page.goto('/products/upload', { waitUntil: 'domcontentloaded' });
     await expect(page.getByLabel(/^Title/).first()).toBeVisible({ timeout: 30000 });
 
-    await page.fill('#title', `QAFAILOPEN track ${Date.now()}`);
+    await page.fill('#title', QA_TRACK);
     const files = page.locator('input[type="file"]');
     await expect(files.first()).toHaveCount(1, { timeout: 10000 });
     await files.first().setInputFiles(PHOTO);
@@ -118,6 +173,7 @@ test.describe.serial('Fail-open on every upload surface', () => {
   // exists inside an edit mode this spec could not reach reliably; that path
   // is covered by reading the code, not by this run.
   test('2. a seed image is accepted on /sow/art', async ({ page }) => {
+    captureUploads(page);
     test.skip(!scannerDown, 'the scanner recovered; failing open cannot be observed');
     await login(page);
     await page.goto('/sow/art', { waitUntil: 'domcontentloaded' });
