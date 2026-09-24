@@ -78,7 +78,7 @@ test.describe('Reload guard', () => {
     await ctx.close();
   });
 
-  test('a dead chunk costs exactly one reload, then the error card', async ({ browser }) => {
+  test('a dead chunk costs exactly one reload, then the updated card', async ({ browser }) => {
     // serviceWorkers blocked so page.route actually sees the chunk request
     // -- a worker-originated fetch bypasses it and the failure cannot be
     // staged at all. The reload paths under test are all page-side.
@@ -99,7 +99,15 @@ test.describe('Reload guard', () => {
     // Initial load + exactly one recovery. Three was the bug.
     expect(seen.loads, `reloaded more than once: ${seen.reasons.join(' | ')}`).toBeLessThanOrEqual(2);
     expect(seen.loads, 'it never tried to recover at all').toBe(2);
-    expect(text, 'it should surface the failure once it cannot recover').toMatch(/Something went wrong/i);
+    // What it says when it cannot recover MATTERS, and this assertion used
+    // to demand the opposite. A chunk that 404s after a deploy is not a
+    // crash: nothing is broken, the tab is just running a build that no
+    // longer exists. It used to land on "Something went wrong" with a stack
+    // trace, an Error ID and a Report button, which is frightening and
+    // wrong. ErrorBoundary now recognises the stale-chunk case and says so.
+    expect(text, 'it should say the app updated, once it cannot recover').toMatch(/S2G has updated/i);
+    expect(text, 'a stale chunk must never be dressed up as a crash').not.toMatch(/Something went wrong/i);
+    expect(text, 'the member needs the one control that fixes it').toMatch(/Tap to reload/i);
     await ctx.close();
   });
 
