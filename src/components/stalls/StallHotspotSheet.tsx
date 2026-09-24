@@ -221,6 +221,14 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
   /** The seed whose Share dialog is open, if any. Owner and visitor alike. */
   const [shareItem, setShareItem] = useState<Item | null>(null);
   const [items, setItems] = useState<Item[] | null>(null);
+  /**
+   * seed id -> completed sales, for the owner only.
+   *
+   * ONE call for the whole shelf, not one per card. The RPC returns rows
+   * only for seeds the caller owns, so a visitor gets an empty object here
+   * and there is nothing to leak even before the UI gates on it.
+   */
+  const [soldCounts, setSoldCounts] = useState<Record<string, number>>({});
   // `hotspots` arrives as a plain prop and its identity is not guaranteed
   // to be stable across the parent's renders, so the load effect keys off
   // this string instead. Only the parts that can change WHICH seeds show
@@ -298,6 +306,22 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- subsetKey stands in for `hotspots` on purpose (see above); it changes whenever the assignments do, so the closure is never stale.
   }, [kind, ownerId, hotspotId, subsetKey]);
+
+  useEffect(() => {
+    if (!isOwner || !items?.length) { setSoldCounts({}); return; }
+    let alive = true;
+    (async () => {
+      const { data, error } = await supabase.rpc('seed_sold_counts' as never, {
+        seed_ids: items.map((i) => i.id),
+      } as never);
+      if (!alive || error || !Array.isArray(data)) return;
+      const next: Record<string, number> = {};
+      for (const row of data as { seed_id: string; sold: number }[]) next[row.seed_id] = row.sold;
+      setSoldCounts(next);
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the ids are what matter, not the array identity.
+  }, [isOwner, items?.map((i) => i.id).join(',')]);
 
   // A tap on a sheet card never navigates anymore (tapBehavior="inline"
   // below) -- this is only ever used as the Share target, so it just
@@ -525,6 +549,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
                       tapBehavior="inline"
                       forceViewerIsOwner={isOwner ? undefined : false}
                       mine={!!isOwner}
+                      soldCount={soldCounts[item.id]}
                       // Share on a shelf opens the real share dialog -- send
                       // it to a tribe member, a room, the feed, or copy the
                       // link. Without this override SeedCard falls back to

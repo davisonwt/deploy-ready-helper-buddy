@@ -121,6 +121,18 @@ export interface SeedCardProps {
    */
   isFollowingOverride?: boolean;
   /**
+   * How many of this seed have sold, for the SOWER's eyes.
+   *
+   * Passed in, never fetched here: a card must not run its own query, or a
+   * shelf of twenty becomes twenty round trips. The caller asks
+   * seed_sold_counts(uuid[]) once for everything it is about to render.
+   *
+   * undefined means "not asked" and renders nothing. 0 is a real answer and
+   * renders "Sold: 0" -- a sower needs to see the zero, and hiding it would
+   * make "no sales yet" indistinguishable from "still loading".
+   */
+  soldCount?: number | null;
+  /**
    * Owner actions in the "..." menu (Edit / Delete).
    *
    * `mine` is passed explicitly rather than reusing SeedCard's own
@@ -228,7 +240,7 @@ export default function SeedCard({
   variant = 'compact', images, videoUrl, resolveVideoUrl, ownerUsername, chip, isActive,
   mine, onEdit, onDelete,
   onMessageOverride, onVoiceOverride, onVideoOverride, onShareOverride, onBestowOverride,
-  onFollowOverride, isFollowingOverride,
+  onFollowOverride, isFollowingOverride, soldCount,
   onGift, onGoLiveExtra, reportTarget, isNew,
 }: SeedCardProps) {
   const { user } = useAuth();
@@ -760,6 +772,18 @@ export default function SeedCard({
 
   const bestowLabel = `Bestow & Get This Seed${price && price > 0 ? ` — $${price.toFixed(2)}` : ''}`;
 
+  // Owner-only, and gated on viewerIsOwner rather than `mine` so a stall
+  // owner in "view as visitor" mode (forceViewerIsOwner=false) sees exactly
+  // what a visitor sees -- no counter, and no gap where one was.
+  const soldLine = viewerIsOwner && typeof soldCount === 'number' ? (
+    <p
+      data-testid="seed-sold-count"
+      className={isFeed ? 'text-xs font-semibold text-white/80' : 'text-[11px] font-semibold text-amber-200/70'}
+    >
+      Sold: {soldCount}
+    </p>
+  ) : null;
+
   const whisperBlock = isProductRow && !viewerIsOwner && user && (
     myAssignmentStatus ? (
       <p className={isFeed ? 'text-xs text-white/70' : 'text-[11px] text-amber-100/50'}>
@@ -839,6 +863,7 @@ export default function SeedCard({
               🎁 {bestowLabel}
             </button>
           )}
+          {soldLine}
         </div>
       </div>
     </div>
@@ -1044,6 +1069,7 @@ export default function SeedCard({
             >
               🎁 {bestowLabel}
             </button>
+            {soldLine}
           </div>
         </div>
 
@@ -1264,6 +1290,7 @@ export default function SeedCard({
             🎁 {bestowLabel}
           </button>
 
+          {soldLine}
           {whisperBlock}
         </div>
       </Card>
