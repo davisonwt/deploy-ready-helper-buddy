@@ -1,21 +1,52 @@
 // Centralized lazy-loaded page imports.
 // Extracted verbatim from src/App.tsx — no behavioural changes.
-import React, { lazy } from 'react';
+import React, { lazy as reactLazy } from 'react';
 import { noteModulePreloadFailure, requestGuardedReload } from '@/lib/staleChunkReload';
 
-// Reloads once for a chunk that no longer exists after a deploy.
-//
-// This used to keep its own `chunk-retry:<key>` flag, one per page, which
-// meant each wrapped route carried a private reload budget that nothing
-// else could see -- four routes, four extra reloads available on top of
-// the shared guard's own. Same single budget as every other recovery path
-// now (lib/staleChunkReload.ts). When the guard refuses, the error is
-// rethrown so the boundary shows its card instead of the tab cycling.
+/**
+ * `lazy` in THIS FILE is not React's -- it is React's with stale-chunk
+ * recovery wrapped around it, and every lazy route below gets it.
+ *
+ * It is shadowed rather than applied call site by call site on purpose.
+ * The recovery already existed as `lazyWithRetry` and was wired to exactly
+ * four routes (SessionPage, ClassroomPage, ClassroomDashboardPage,
+ * SkillDropPage) out of ~180. Every other route -- DashboardPage included,
+ * which is the one members actually hit -- called React.lazy directly and
+ * threw straight to the error boundary. Wrapping 180 call sites by hand is
+ * 180 chances to miss one, and the next route added would miss it too.
+ * Shadowing the import means a plain `lazy(() => import(...))` below is
+ * already correct, including ones not written yet.
+ *
+ * A chunk that 404s after a deploy reloads the tab ONCE (the shared
+ * cooldown in lib/staleChunkReload is the budget; ErrorBoundary and
+ * main.tsx's vite:preloadError listener spend from the same one). If the
+ * guard refuses -- a second failure inside the cooldown -- the error is
+ * rethrown and ErrorBoundary shows its "S2G has updated" card rather than
+ * the tab cycling.
+ */
+function lazy<T extends { default: React.ComponentType<any> }>(
+  factory: () => Promise<T>,
+): React.LazyExoticComponent<T['default']> {
+  return reactLazy(async () => {
+    try {
+      return await factory();
+    } catch (error) {
+      noteModulePreloadFailure();
+      if (requestGuardedReload('lazy-chunk')) {
+        // The tab is navigating away; never resolve, so nothing renders.
+        return await new Promise<T>(() => {});
+      }
+      throw error;
+    }
+  });
+}
+
+/** As `lazy` above, but names the chunk in the reload log line. */
 function lazyWithRetry<T extends { default: React.ComponentType<any> }>(
   factory: () => Promise<T>,
   key: string
 ) {
-  return lazy(async () => {
+  return reactLazy(async () => {
     try {
       return await factory();
     } catch (error) {
@@ -56,39 +87,13 @@ export const ChatApp = lazy(() => import('@/pages/ChatApp'));
 export const ConversationsPage = lazy(() => import('@/pages/ConversationsPage'));
 export const CommunityChatsPage = lazy(() => import('@/pages/CommunityChatsPage'));
 export const GroveFeedPage = lazy(() => import('@/pages/GroveFeedPage'));
-export const CommunicationsHub = lazy(() =>
-  import('@/pages/CommunicationsHub').catch((error) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Failed to load CommunicationsHub:', error);
-    }
-    return {
-      default: () =>
-        React.createElement(
-          'div',
-          { className: 'flex items-center justify-center min-h-screen' },
-          React.createElement(
-            'div',
-            { className: 'text-center' },
-            React.createElement('h1', { className: 'text-2xl font-bold mb-4' }, 'Error Loading Communications Hub'),
-            React.createElement(
-              'p',
-              { className: 'text-muted-foreground mb-4' },
-              'Failed to load the Communications Hub module.'
-            ),
-            React.createElement(
-              'button',
-              {
-                onClick: () => window.location.reload(),
-                className:
-                  'px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90',
-              },
-              'Reload Page'
-            )
-          )
-        ),
-    };
-  })
-);
+// CommunicationsHub and MusicLibraryPage each used to .catch() their own
+// import and render a bespoke "Failed to load..." card with a Reload
+// button. That catch ran BEFORE the wrapper above could see the failure,
+// so the two pages most likely to be open across a deploy were the two
+// that never self-recovered -- they just told the member to reload by
+// hand. Both are plain imports now and recover like everything else.
+export const CommunicationsHub = lazy(() => import('@/pages/CommunicationsHub'));
 export const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 export const StallBuildPage = lazy(() => import('@/pages/StallBuildPage'));
 export const StallVisitPage = lazy(() => import('@/pages/StallVisitPage'));
@@ -210,28 +215,7 @@ export const AdminAttachCoversPage = lazy(() => import('@/pages/AdminAttachCover
 export const AdminAiUsagePage = lazy(() => import('@/pages/AdminAiUsagePage'));
 export const EditForm = lazy(() => import('@/components/products/EditForm'));
 export const ProductBasketPage = lazy(() => import('@/pages/ProductBasketPage'));
-export const MusicLibraryPage = lazy(() =>
-  import('@/pages/MusicLibraryPage').catch((error) => {
-    console.error('Failed to load MusicLibraryPage:', error);
-    return Promise.resolve({
-      default: () =>
-        React.createElement(
-          'div',
-          { className: 'p-8 text-center' },
-          React.createElement('h2', { className: 'text-2xl font-bold mb-4' }, 'Failed to load Music Library'),
-          React.createElement('p', { className: 'mb-4' }, 'Please refresh the page or try again later.'),
-          React.createElement(
-            'button',
-            {
-              onClick: () => window.location.reload(),
-              className: 'px-4 py-2 bg-blue-500 text-white',
-            },
-            'Refresh Page'
-          )
-        ),
-    });
-  })
-);
+export const MusicLibraryPage = lazy(() => import('@/pages/MusicLibraryPage'));
 export const MyS2GLibraryPage = lazy(() => import('@/pages/MyS2GLibraryPage'));
 export const SowerLibraryPage = lazy(() => import('@/pages/SowerLibraryPage'));
 export const MusicTrackDetailPage = lazy(() => import('@/pages/MusicTrackDetailPage'));

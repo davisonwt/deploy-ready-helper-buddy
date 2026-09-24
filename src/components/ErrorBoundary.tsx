@@ -82,6 +82,42 @@ class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      // A stale chunk is not a crash and must never be dressed as one.
+      //
+      // componentDidCatch already tried to reload once. Reaching here means
+      // the shared guard refused -- a second stale-chunk failure inside the
+      // cooldown, i.e. the reload did not cure it. Telling that member
+      // "Something went wrong" with a stack trace and a Report button is
+      // both frightening and wrong: nothing is broken, the tab is simply
+      // running a build that no longer exists. Say so, and give them the
+      // one control that fixes it.
+      //
+      // This branch sits ABOVE the `fallback` prop deliberately: a caller's
+      // custom fallback is for ITS errors, not for the app having shipped.
+      if (isStaleChunkError(this.state.error)) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+            <Card className="max-w-md w-full">
+              <CardHeader className="text-center">
+                <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                  <RefreshCw className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>S2G has updated</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  A new version went live while this page was open. Tap below to pick it up —
+                  nothing you were doing is lost.
+                </p>
+                <Button onClick={() => window.location.reload()} className="w-full">
+                  <RefreshCw className="h-4 w-4 mr-2" /> Tap to reload
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      }
+
       if (this.props.fallback) {
         return this.props.fallback;
       }
