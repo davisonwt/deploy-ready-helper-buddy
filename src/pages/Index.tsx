@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
+import { uiEmptyPlotCover } from '@/assets/hosted';
 import { Link, useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -33,7 +34,7 @@ const DAVISON_SEED = {
   id: "9af96ac8-9029-43db-8a5b-78ba1369915c",
   title: "the true fast",
   subtitle: "lyricist: davison",
-  cover: "/__l5e/assets-v1/79a8b712-6713-4560-bafb-8ed3278973d7/7fe0fb45-316d-46dd-b83c-e135c1162498.png",
+  cover: uiEmptyPlotCover,
   price: 2,
   ownerId: DAVISON.id,
   ownerName: "Davison",

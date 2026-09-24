@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
+import { voRadio } from '@/assets/hosted';
 import { Radio as RadioIcon, Play, Music, ListMusic, MessageCircle, Send, ImageIcon, Video, FileText, Mic, Heart, Download } from 'lucide-react';
-import voAsset from '@/assets/radio-vo.mp3.asset.json';
 import type { ExplainerConfig } from '../types';
 import { sceneAnim } from '../ExplainerPlayer';
 
@@ -240,7 +240,7 @@ function Outro() {
 }
 
 export const radioConfig: ExplainerConfig = {
-  voUrl: voAsset.url,
+  voUrl: voRadio,
   estDuration: 33,
   title: 'Radio',
   subtitle: 'Live broadcasts and listening rooms.',

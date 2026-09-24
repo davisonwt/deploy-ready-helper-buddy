@@ -1,3 +1,4 @@
+import { marketingTribeEconomy, marketingWhatIsSow2grow } from '@/assets/hosted';
 import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,8 +18,6 @@ import VideoSocialShare from '@/components/community/VideoSocialShare'
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel'
 import Autoplay from 'embla-carousel-autoplay'
 import { motion } from 'framer-motion'
-import whatIsSow2GrowAsset from '@/assets/marketing/s2g-what-is-sow2grow.mp4.asset.json'
-import tribeEconomyAsset from '@/assets/marketing/s2g-tribe-economy.mp4.asset.json'
 
 
 export default function MarketingVideosGallery() {
@@ -508,8 +507,8 @@ const S2G_VID = (file) =>
   `https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/${encodeURI(file)}`
 
 const HOUSE_REEL = [
-  { title: 'What is Sow2Grow?',           desc: '75s cinematic intro to the tribe economy',  src: whatIsSow2GrowAsset.url, isNew: true },
-  { title: 'The Tribe Economy',           desc: 'How value flows inside S2G in 60s',         src: tribeEconomyAsset.url, isNew: true },
+  { title: 'What is Sow2Grow?',           desc: '75s cinematic intro to the tribe economy',  src: marketingWhatIsSow2grow, isNew: true },
+  { title: 'The Tribe Economy',           desc: 'How value flows inside S2G in 60s',         src: marketingTribeEconomy, isNew: true },
   { title: 'Become a Sower & Grower',     desc: 'The complete S2G onboarding film',          src: S2G_VID('s2g  become a sower and grower (1).mp4') },
   { title: 'How Bestowing Works',         desc: 'Pockets, bestowals, and the harvest',       src: S2G_VID('bestowers main mp4.mp4') },
   { title: 'Community Orchards',          desc: 'Tribe needs become orchards',               src: S2G_VID('orchards main mp4.mp4') },

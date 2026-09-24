@@ -1,3 +1,4 @@
+import { marketingTribeEconomy, marketingWhatIsSow2grow } from '../assets/hosted';
 // Learn & Share video catalog — extracted from LearnSharePage.jsx so the
 // public single-video route (LearnShareVideoPage) can look up a video by id
 // without duplicating this list. Keep in sync in one place only.
@@ -65,10 +66,8 @@ const theMusicLibraryVideo = `${ONBOARDING_VIDEOS_BASE}/the-music-library.mp4`;
 const s2gWalletSetupVideo = `${ONBOARDING_VIDEOS_BASE}/s2g-wallet-setup.mp4`;
 
 // Marketing hero videos (Remotion-rendered, CDN-hosted)
-import whatIsSow2GrowMarketingAsset from '../assets/marketing/s2g-what-is-sow2grow.mp4.asset.json';
-import tribeEconomyMarketingAsset from '../assets/marketing/s2g-tribe-economy.mp4.asset.json';
-const whatIsSow2GrowMarketingVideo = whatIsSow2GrowMarketingAsset.url;
-const tribeEconomyMarketingVideo = tribeEconomyMarketingAsset.url;
+const whatIsSow2GrowMarketingVideo = marketingWhatIsSow2grow;
+const tribeEconomyMarketingVideo = marketingTribeEconomy;
 
 export interface LearnVideo {
   id: number;

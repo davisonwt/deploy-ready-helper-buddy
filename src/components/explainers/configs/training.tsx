@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
+import { voTraining } from '@/assets/hosted';
 import { Dumbbell, Plus, Flame, FileText, Download, Hand, Mic, ImageIcon, TrendingDown, ClipboardList } from 'lucide-react';
-import voAsset from '@/assets/training-vo.mp3.asset.json';
 import type { ExplainerConfig } from '../types';
 import { sceneAnim } from '../ExplainerPlayer';
 
@@ -175,7 +175,7 @@ function Outro() {
 }
 
 export const trainingConfig: ExplainerConfig = {
-  voUrl: voAsset.url,
+  voUrl: voTraining,
   estDuration: 31,
   title: 'Training',
   subtitle: 'Daily practice rooms.',

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
+import { voClassroom } from '@/assets/hosted';
 import { BookOpen, Plus, FileText, Download, Upload, Check, Star, Hand, Mic, MicOff, MessageSquare } from 'lucide-react';
-import voAsset from '@/assets/classroom-vo.mp3.asset.json';
 import type { ExplainerConfig } from '../types';
 import { sceneAnim } from '../ExplainerPlayer';
 
@@ -232,7 +232,7 @@ function Outro() {
 }
 
 export const classroomConfig: ExplainerConfig = {
-  voUrl: voAsset.url,
+  voUrl: voClassroom,
   estDuration: 38,
   title: 'Classroom',
   subtitle: 'Live teaching, structured.',

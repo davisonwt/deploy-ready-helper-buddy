@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
+import { voSkilldrop } from '@/assets/hosted';
 import { Zap, Plus, MessageSquare, Sparkles, FileText, ImageIcon, Download, Hand, Mic, Video, Users } from 'lucide-react';
-import voAsset from '@/assets/skilldrop-vo.mp3.asset.json';
 import type { ExplainerConfig } from '../types';
 import { sceneAnim } from '../ExplainerPlayer';
 
@@ -199,7 +199,7 @@ function Outro() {
 }
 
 export const skilldropConfig: ExplainerConfig = {
-  voUrl: voAsset.url,
+  voUrl: voSkilldrop,
   estDuration: 32,
   title: 'SkillDrop',
   subtitle: 'Fast skill-sharing.',

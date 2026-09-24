@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
+import { voOneOnOneLive } from '@/assets/hosted';
 import { Plus, Phone, Video, Mic, Send, Check } from 'lucide-react';
-import voAsset from '@/assets/1on1-live-vo.mp3.asset.json';
 import type { ExplainerConfig } from '../types';
 import { sceneAnim } from '../ExplainerPlayer';
 
@@ -178,7 +178,7 @@ function OutroScene() {
 }
 
 export const oneOnOneConfig: ExplainerConfig = {
-  voUrl: voAsset.url,
+  voUrl: voOneOnOneLive,
   estDuration: 34,
   title: '1-on-1 Live',
   subtitle: 'A private room for one real conversation.',

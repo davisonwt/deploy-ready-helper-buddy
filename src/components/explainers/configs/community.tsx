@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
+import { voCommunity } from '@/assets/hosted';
 import { Users, Plus, Mic, Send, Video, Phone } from 'lucide-react';
-import voAsset from '@/assets/community-vo.mp3.asset.json';
 import type { ExplainerConfig } from '../types';
 import { sceneAnim } from '../ExplainerPlayer';
 
@@ -181,7 +181,7 @@ function Outro() {
 }
 
 export const communityConfig: ExplainerConfig = {
-  voUrl: voAsset.url,
+  voUrl: voCommunity,
   estDuration: 35,
   title: 'Community Chats',
   subtitle: 'Open rooms where the tribe gathers.',
