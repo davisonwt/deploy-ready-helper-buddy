@@ -1,16 +1,37 @@
+/*
+ * The twelve month images import the REAL files in src/assets/calendar/,
+ * not the `.asset.json` descriptors beside them in calendar-local/.
+ *
+ * Those descriptors point at `/__l5e/assets-v1/<id>/<file>` -- Lovable's
+ * asset CDN path, written into this repo by gpt-engineer-app[bot] in
+ * 305562da on 2026-07-05. Vercel serves www.sow2growapp.com and has no
+ * such route, so every one of them returns Vercel's own NOT_FOUND page and
+ * the artwork renders as a broken image. Measured 2026-09-24: all 85
+ * calendar descriptors 404 on production.
+ *
+ * The bytes were already here: src/assets/calendar/ holds all twelve, and
+ * each file's size matches its descriptor's `size` exactly (month-07-spring
+ * 207839 both sides). Vite bundles these and Vercel serves them from
+ * /assets/, so they cannot go missing this way again.
+ *
+ * The other two slots per month (calendar-uploaded/, calendar-monthly/)
+ * have NO local copy and are still descriptors, so they still 404. They
+ * only feed PrintCalendarPage's 3-up picker; the artwork this hook returns
+ * is slot 0, which is fixed.
+ */
 import { useEffect, useState } from 'react';
-import month01Autumn from '@/assets/calendar-local/month-01-autumn.jpg.asset.json';
-import month02Autumn from '@/assets/calendar-local/month-02-autumn.jpg.asset.json';
-import month03Autumn from '@/assets/calendar-local/month-03-autumn.jpg.asset.json';
-import month04Winter from '@/assets/calendar-local/month-04-winter.jpg.asset.json';
-import month05Winter from '@/assets/calendar-local/month-05-winter.jpg.asset.json';
-import month06Winter from '@/assets/calendar-local/month-06-winter.jpg.asset.json';
-import month07Spring from '@/assets/calendar-local/month-07-spring.jpg.asset.json';
-import month08Spring from '@/assets/calendar-local/month-08-spring.jpg.asset.json';
-import month09Spring from '@/assets/calendar-local/month-09-spring.jpg.asset.json';
-import month10Summer from '@/assets/calendar-local/month-10-summer.jpg.asset.json';
-import month11Summer from '@/assets/calendar-local/month-11-summer.jpg.asset.json';
-import month12Summer from '@/assets/calendar-local/month-12-summer.jpg.asset.json';
+import month01Autumn from '@/assets/calendar/month-01-autumn.jpg';
+import month02Autumn from '@/assets/calendar/month-02-autumn.jpg';
+import month03Autumn from '@/assets/calendar/month-03-autumn.jpg';
+import month04Winter from '@/assets/calendar/month-04-winter.jpg';
+import month05Winter from '@/assets/calendar/month-05-winter.jpg';
+import month06Winter from '@/assets/calendar/month-06-winter.jpg';
+import month07Spring from '@/assets/calendar/month-07-spring.jpg';
+import month08Spring from '@/assets/calendar/month-08-spring.jpg';
+import month09Spring from '@/assets/calendar/month-09-spring.jpg';
+import month10Summer from '@/assets/calendar/month-10-summer.jpg';
+import month11Summer from '@/assets/calendar/month-11-summer.jpg';
+import month12Summer from '@/assets/calendar/month-12-summer.jpg';
 import calendarUpload63 from '@/assets/calendar-uploaded/calendar-upload-63.png.asset.json';
 import calendarUpload64 from '@/assets/calendar-uploaded/calendar-upload-64.png.asset.json';
 import calendarUpload65 from '@/assets/calendar-uploaded/calendar-upload-65.png.asset.json';
@@ -39,29 +60,29 @@ import calendarMonth33 from '@/assets/calendar-monthly/calendar-month-33.png.ass
 import { getRegion, scripturalMonthToSeason, type RegionInfo, type SeasonLabel } from '@/utils/calendarSeason';
 
 export const MONTH_CHOICE_IMAGES: Record<number, readonly string[]> = {
-  1: [month01Autumn.url, calendarUpload64.url, calendarMonth15.url],
-  2: [month02Autumn.url, calendarUpload65.url, calendarMonth16.url],
-  3: [month03Autumn.url, calendarUpload63.url, calendarMonth17.url],
-  4: [month04Winter.url, calendarUpload66.url, calendarMonth18.url],
-  5: [month05Winter.url, calendarUpload68.url, calendarMonth19.url],
-  6: [month06Winter.url, calendarUpload67.url, calendarMonth23.url],
-  7: [month07Spring.url, calendarUpload69.url, calendarMonth26.url],
-  8: [month08Spring.url, calendarUpload70.url, calendarMonth34.url],
-  9: [month09Spring.url, calendarUpload72.url, calendarMonth36.url],
-  10: [month10Summer.url, calendarUpload73.url, calendarMonth42.url],
-  11: [month11Summer.url, calendarUpload74.url, calendarMonth45.url],
-  12: [month12Summer.url, calendarUpload75.url, calendarMonth33.url],
+  1: [month01Autumn, calendarUpload64.url, calendarMonth15.url],
+  2: [month02Autumn, calendarUpload65.url, calendarMonth16.url],
+  3: [month03Autumn, calendarUpload63.url, calendarMonth17.url],
+  4: [month04Winter, calendarUpload66.url, calendarMonth18.url],
+  5: [month05Winter, calendarUpload68.url, calendarMonth19.url],
+  6: [month06Winter, calendarUpload67.url, calendarMonth23.url],
+  7: [month07Spring, calendarUpload69.url, calendarMonth26.url],
+  8: [month08Spring, calendarUpload70.url, calendarMonth34.url],
+  9: [month09Spring, calendarUpload72.url, calendarMonth36.url],
+  10: [month10Summer, calendarUpload73.url, calendarMonth42.url],
+  11: [month11Summer, calendarUpload74.url, calendarMonth45.url],
+  12: [month12Summer, calendarUpload75.url, calendarMonth33.url],
 };
 
 const LOCAL_SEASON_IMAGES: Record<SeasonLabel, readonly string[]> = {
-  autumn: [month01Autumn.url, month02Autumn.url, month03Autumn.url],
-  winter: [month04Winter.url, month05Winter.url, month06Winter.url],
-  spring: [month07Spring.url, month08Spring.url, month09Spring.url],
-  summer: [month10Summer.url, month11Summer.url, month12Summer.url],
-  wet: [month07Spring.url, month08Spring.url, month10Summer.url],
-  dry: [month01Autumn.url, month04Winter.url, month12Summer.url],
-  'polar-day': [month10Summer.url, month11Summer.url, month12Summer.url],
-  'polar-night': [month04Winter.url, month05Winter.url, month06Winter.url],
+  autumn: [month01Autumn, month02Autumn, month03Autumn],
+  winter: [month04Winter, month05Winter, month06Winter],
+  spring: [month07Spring, month08Spring, month09Spring],
+  summer: [month10Summer, month11Summer, month12Summer],
+  wet: [month07Spring, month08Spring, month10Summer],
+  dry: [month01Autumn, month04Winter, month12Summer],
+  'polar-day': [month10Summer, month11Summer, month12Summer],
+  'polar-night': [month04Winter, month05Winter, month06Winter],
 };
 
 const SOUTHERN_SEASON_IMAGES: Record<SeasonLabel, readonly string[]> = {
@@ -93,7 +114,9 @@ export const BUNDLED_SEASONAL_ART: Record<number, string> = Object.fromEntries(
 
 export function buildSeasonalFallbackArt(scripturalMonth: number, region?: RegionInfo): string {
   if (!scripturalMonth || scripturalMonth < 1 || scripturalMonth > 12) {
-    return calendarUpload64.url;
+    // A real bundled file, not a calendar-uploaded descriptor: the
+    // out-of-range path must not render broken either.
+    return month01Autumn;
   }
 
   const monthChoices = MONTH_CHOICE_IMAGES[scripturalMonth];
