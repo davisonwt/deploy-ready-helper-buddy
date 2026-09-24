@@ -80,7 +80,10 @@ const chooseLatestMusicCover = (candidates: CoverCandidate[], ownerUserId?: stri
 
 const chooseProductMusicCover = (product: any, matchingTrackCover: string | null) => {
   if (matchingTrackCover) return matchingTrackCover;
-  if (product.cover_image_url?.startsWith('/__l5e/')) return product.cover_image_url;
+  // There used to be a '/__l5e/' special case here that preferred
+  // cover_image_url whenever it pointed at Lovable's asset route. Those
+  // rows now point at premium-room like every other product, so the case
+  // is gone and these seeds follow the same precedence as the rest.
   const latestProductImage = Array.isArray(product.image_urls)
     ? product.image_urls.find((url: string | null) => Boolean(url))
     : null;

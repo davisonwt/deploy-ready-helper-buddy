@@ -61,7 +61,7 @@ function SignedCover({ src, alt }: { src: string; alt: string }) {
     let alive = true;
     setFailed(false);
     if (!src) { setResolved(null); return; }
-    if (src.startsWith('/__l5e/') || src.startsWith('/assets/') || src.startsWith('data:') || src.startsWith('blob:')) {
+    if (src.startsWith('/assets/') || src.startsWith('data:') || src.startsWith('blob:')) {
       setResolved(src);
       return () => { alive = false; };
     }
