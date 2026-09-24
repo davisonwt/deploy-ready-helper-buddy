@@ -1,4 +1,13 @@
 import React, { createContext, useContext } from 'react'
+/**
+ * How long a `?ref=` captured into localStorage may still attribute a
+ * signup that carries no code of its own. The capture exists to survive
+ * the email-confirm / OAuth bounce, which is minutes; a day is generous.
+ * Beyond it the code is dropped, and the signup gets no referrer at all
+ * rather than inheriting whoever the person last clicked.
+ */
+const PENDING_REF_MAX_AGE_MS = 24 * 60 * 60 * 1000
+
 import { supabase } from "@/integrations/supabase/client"
 import { logError, logInfo, logWarn } from "@/lib/logging"
 import { friendlyAuthError, isStaleBuildError, requestServiceWorkerUpdate } from '@/lib/staleBuild'
@@ -214,11 +223,39 @@ export class AuthProviderClass extends React.Component {
 
     try {
       const currentDomain = window.location.origin
-      // Pull pending referral code (URL ?ref= or saved by useReferralCapture)
+      // Pull pending referral code (URL ?ref= or saved by useReferralCapture).
+      //
+      // The URL is authoritative. localStorage is only a bounce-survival
+      // mechanism -- it exists so a code survives the email-confirm / OAuth
+      // round trip, which takes minutes. It is therefore AGE-LIMITED here.
+      //
+      // Without the limit, a code captured in some earlier browsing session
+      // attributes a signup that carried no code of its own, days later and
+      // from a completely different invitation. That is how members who
+      // submitted nothing still ended up with a referrer: the founder's code
+      // was sitting in their localStorage from a previous visit. A signup
+      // with no valid code of its own must get NO referrer.
+      //
+      // A capture with no timestamp predates useReferralCapture's AT_KEY and
+      // is ignored outright rather than trusted indefinitely.
       if (!referral_code) {
         try {
           const u = new URL(window.location.href)
-          referral_code = u.searchParams.get('ref') || localStorage.getItem('s2g_pending_ref') || null
+          const fromUrl = u.searchParams.get('ref')
+          let fromStore = null
+          if (!fromUrl) {
+            const pending = localStorage.getItem('s2g_pending_ref')
+            const capturedAt = Number(localStorage.getItem('s2g_pending_ref_at'))
+            const fresh = Number.isFinite(capturedAt) && capturedAt > 0
+              && (Date.now() - capturedAt) <= PENDING_REF_MAX_AGE_MS
+            if (pending && fresh) fromStore = pending
+            else if (pending) {
+              // Stale or untimestamped: drop it so no later session picks it up.
+              localStorage.removeItem('s2g_pending_ref')
+              localStorage.removeItem('s2g_pending_ref_at')
+            }
+          }
+          referral_code = fromUrl || fromStore || null
           if (referral_code) referral_code = referral_code.trim().toUpperCase()
         } catch {}
       }
