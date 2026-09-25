@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { isAlbum } from '@/lib/products/isAlbum';
 import { useNavigate } from 'react-router-dom';
 import { X, Loader2, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -544,6 +545,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
                       isProductRow={item.source === 'products'}
                       previewUrl={kind === 'music' || kind === 'books' || kind === 'lyrics' ? item.previewUrl : undefined}
                       productId={kind === 'music' && item.source === 'products' ? item.id : undefined}
+                      isAlbum={kind === 'music' && item.source === 'products' && isAlbum({ file_url: item.fileUrl })}
                       pdfUrl={item.source === 'products' && item.fileUrl && PDF_RE.test(item.fileUrl) ? item.fileUrl : undefined}
                       hideSowerLine
                       tapBehavior="inline"

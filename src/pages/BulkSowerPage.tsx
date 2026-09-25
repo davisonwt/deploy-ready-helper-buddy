@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isAlbum } from '@/lib/products/isAlbum';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -214,6 +215,7 @@ export default function BulkSowerPage() {
                     previewUrl={p.type === 'music' || p.type === 'book' || p.type === 'ebook' ? p.preview_url ?? null : undefined}
                     productId={p.type === 'music' ? p.id : undefined}
                     pdfUrl={(p.type === 'book' || p.type === 'ebook') && /\.pdf(\?|$)/i.test(p.file_url ?? '') ? p.file_url : undefined}
+                    isAlbum={p.type === 'music' && isAlbum(p)}
                     hideSowerLine
                   />
                 ))}

@@ -325,6 +325,9 @@ verify_jwt = false
 [functions.radio-slot-tick]
 verify_jwt = false
 
+[functions.album-tracks]
+verify_jwt = false
+
 [functions.get-wallet-credentials]
 verify_jwt = false
 

@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { isAlbum } from '@/lib/products/isAlbum';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchProductsBySowerPaginated } from '@/api/products';
@@ -175,6 +176,7 @@ function FeedCard({ product, sower, onAdd }: {
           previewUrl={product.type === 'music' || product.type === 'book' || product.type === 'ebook' ? product.preview_url ?? null : undefined}
           productId={product.type === 'music' ? product.id : undefined}
           pdfUrl={(product.type === 'book' || product.type === 'ebook') && /\.pdf(\?|$)/i.test(product.file_url ?? '') ? product.file_url : undefined}
+          isAlbum={product.type === 'music' && isAlbum(product)}
           hideSowerLine
         />
         <Button className="w-full" onClick={() => onAdd(product)}>

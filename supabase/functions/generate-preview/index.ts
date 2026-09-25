@@ -22,6 +22,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { trimAudio } from "../_shared/audioTrim.ts";
+import { inheritPreviewVerdict } from "../_shared/previewVerdict.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = (JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}")["default"] || Deno.env.get("SUPABASE_ANON_KEY")) ?? "";
@@ -107,8 +108,12 @@ Deno.serve(async (req) => {
       return json({ error: "preview_upload_failed", detail: uploadErr.message }, 500);
     }
 
+    // seed-previews is private and moderation-gated: without a verdict of
+    // its own the clip is silent for every visitor. It takes its source's.
+    const playable = await inheritPreviewVerdict(admin, { bucket, path }, previewPath, userId);
+
     const { data: publicUrl } = admin.storage.from("seed-previews").getPublicUrl(previewPath);
-    return json({ previewUrl: publicUrl.publicUrl });
+    return json({ previewUrl: publicUrl.publicUrl, playableByVisitors: playable });
   } catch (err) {
     console.error("generate-preview error", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);

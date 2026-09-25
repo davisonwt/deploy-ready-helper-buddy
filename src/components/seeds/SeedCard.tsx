@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Heart, MessageCircle, Phone, Video as VideoIcon, Share2, BookOpen, X, UserPlus, UserCheck, Radio, ChevronLeft, ChevronRight, Volume2, VolumeX, Gift, Play, Pause, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Phone, Video as VideoIcon, Share2, BookOpen, X, UserPlus, UserCheck, Radio, ChevronLeft, ChevronRight, Volume2, VolumeX, Gift, Play, Pause, Loader2, MoreHorizontal, Pencil, Trash2, ListMusic } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Popover, PopoverTrigger, PopoverClose, PopoverContent } from '@/components/ui/popover';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -12,6 +12,7 @@ import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
+import AlbumTracksPanel, { useAlbumTrackCount, type AlbumTrack } from '@/components/seeds/AlbumTracksPanel';
 import { useSignedImages } from '@/lib/storage/signedImage';
 import { resolvePlayableUrl } from '@/lib/media/resolvePlayableUrl';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
@@ -51,6 +52,13 @@ export interface SeedCardProps {
   previewUrl?: string | null;
   /** Music only, when `isProductRow` -- get-seed-file upgrade target so the owner/buyer hears the full track. */
   productId?: string | null;
+  /**
+   * Music only: this product is an album (isAlbum(): a manifest.json
+   * file_url). Its play button opens the album's track list
+   * (AlbumTracksPanel) instead of playing -- an album has no single file a
+   * browser can play, which is why it used to play nothing.
+   */
+  isAlbum?: boolean;
   /** Book only -- a `.pdf` file_url. Enables "Read a page" (a 2-page StoryPdfViewer preview). Omit/null for an .epub or no file. */
   pdfUrl?: string | null;
   /** Hide the avatar/name row -- for a context where every card already shares one obvious owner (e.g. inside that owner's own StallHotspotSheet). Follow still applies if shown. */
@@ -235,7 +243,7 @@ const HEART_AMOUNTS = [0.1, 0.5, 1, 5, 10];
  */
 export default function SeedCard({
   id, kind, title, subtitle, cover, ownerId, ownerName, ownerAvatar,
-  price, openPath, isProductRow = true, previewUrl, productId, pdfUrl,
+  price, openPath, isProductRow = true, previewUrl, productId, pdfUrl, isAlbum = false,
   hideSowerLine, className = '', fullDescription, tapBehavior = 'navigate', forceViewerIsOwner,
   variant = 'compact', images, videoUrl, resolveVideoUrl, ownerUsername, chip, isActive,
   mine, onEdit, onDelete,
@@ -310,12 +318,16 @@ export default function SeedCard({
   // Music gets the full 45s-preview-then-full-track flow (productId
   // upgrade); a book's audio sample IS the whole preview_url -- there's no
   // separate "full track" concept for a ≤60s reading, so no productId.
-  const hasSamplePlayer = kind === 'music' || kind === 'book';
+  const albumMode = kind === 'music' && isAlbum && isProductRow;
+  const hasSamplePlayer = (kind === 'music' || kind === 'book') && !albumMode;
   const musicPlayer = usePreviewPlayer({
     id,
     previewUrl: hasSamplePlayer ? (previewUrl ?? null) : null,
-    productId: kind === 'music' && isProductRow ? (productId ?? undefined) : undefined,
+    productId: kind === 'music' && isProductRow && !albumMode ? (productId ?? undefined) : undefined,
   });
+  const [albumOpen, setAlbumOpen] = useState(false);
+  const albumTrackCount = useAlbumTrackCount(productId ?? id, albumMode);
+  const [trackBestow, setTrackBestow] = useState<AlbumTrack | null>(null);
 
   // Signs the URL when it's in a known private bucket (same resolver every
   // other seed card's preview already uses) -- a no-op passthrough for an
@@ -472,6 +484,7 @@ export default function SeedCard({
   const openDetail = (e?: React.MouseEvent) => {
     if (!isInline) { navigate(openPath); return; }
     e?.stopPropagation(); e?.preventDefault();
+    if (albumMode) { setAlbumOpen(true); return; }
     if (kind === 'music') { musicPlayer.toggle(e); return; }
     if (kind === 'book') { if (pdfUrl) setPdfPreviewOpen(true); return; }
     setDetailOverlayOpen(true);
@@ -898,6 +911,66 @@ export default function SeedCard({
     />
   );
 
+  // A row's own Bestow in the album list: the matching single product,
+  // through exactly the flow this card's own Bestow uses.
+  const handleTrackBestowConfirm = async (provider: PayoutProviderId) => {
+    if (!trackBestow?.single) return;
+    const result = await sendGift({
+      recipientId: ownerId,
+      amount: trackBestow.single.price,
+      contextKind: 'chat_tip',
+      contextId: trackBestow.single.productId,
+      provider,
+      message: `Bestowal for "${trackBestow.title}"`,
+    });
+    if (result.success) {
+      toast.success(`${ownerName ?? 'They'} will receive your gift!`);
+      setTrackBestow(null);
+    }
+  };
+  const trackBestowModal = albumMode && (
+    <ConfirmBestowModal
+      isOpen={!!trackBestow}
+      onClose={() => setTrackBestow(null)}
+      title={trackBestow?.title ?? ''}
+      amount={trackBestow?.single?.price ?? 0}
+      onConfirm={handleTrackBestowConfirm}
+      confirming={bestowing}
+      actionLabel="Bestow"
+      enablePaystack
+    />
+  );
+
+  // The album's play strip: same place and shape as the 45s bar, but it
+  // opens the track list rather than playing anything itself.
+  const albumBar = (insetForRail: boolean) => (
+    <div
+      className={`absolute bottom-0 left-0 flex h-11 items-center gap-2 px-2.5 py-2 bg-black/70 backdrop-blur-sm ${insetForRail ? 'right-11' : 'right-0'}`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <AlbumTracksPanel
+        albumId={productId ?? id}
+        albumTitle={title}
+        open={albumOpen}
+        onOpenChange={setAlbumOpen}
+        onBestowTrack={viewerIsOwner ? undefined : (t) => { setAlbumOpen(false); setTrackBestow(t); }}
+      >
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); setAlbumOpen((v) => !v); }}
+          aria-label={albumOpen ? 'Close track list' : 'Show tracks'}
+          aria-expanded={albumOpen}
+          className="shrink-0 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-black flex items-center justify-center transition-colors"
+        >
+          <ListMusic className="w-3.5 h-3.5" />
+        </button>
+      </AlbumTracksPanel>
+      <p className="flex-1 min-w-0 text-[11px] font-medium text-white/85 truncate" data-testid="album-label">
+        {albumTrackCount !== null ? `Album · ${albumTrackCount} track${albumTrackCount === 1 ? '' : 's'}` : 'Album'}
+      </p>
+    </div>
+  );
+
   const heartPicker = heartPickerOpen && (
     <div className="fixed inset-0 z-[10060] bg-black/70 flex items-center justify-center p-4" onClick={() => setHeartPickerOpen(false)}>
       <div className="w-full max-w-xs rounded-xl bg-[#180f08] border border-amber-500/20 p-4" onClick={(e) => e.stopPropagation()}>
@@ -1051,6 +1124,11 @@ export default function SeedCard({
                 <InlinePreviewBar player={musicPlayer} />
               </div>
             )}
+            {albumMode && (
+              <div className="relative mt-2 h-11 max-w-md overflow-hidden rounded-2xl bg-black/40">
+                {albumBar(false)}
+              </div>
+            )}
 
             {kind === 'book' && pdfUrl && (
               <button
@@ -1077,6 +1155,7 @@ export default function SeedCard({
         {detailOverlay}
         {liveOverlay}
         {bestowModal}
+        {trackBestowModal}
         {heartPicker}
       </>
     );
@@ -1101,6 +1180,7 @@ export default function SeedCard({
               <GradientPlaceholder type={KIND_PLACEHOLDER[kind]} title={title} className="w-full h-full" />
             )}
             {hasSamplePlayer && musicPlayer.hasSource && <InlinePreviewBar player={musicPlayer} insetForRail />}
+            {albumMode && albumBar(true)}
             {hasGallery && <GalleryChrome gallery={gallery} imgIdx={imgIdx} setImgIdx={setImgIdx} />}
             {badgePct != null && (
               <span className="absolute top-2 left-2 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-950 shadow">
@@ -1130,7 +1210,7 @@ export default function SeedCard({
                 min(40px, slotHeight). Share/Gift/Report live in the More
                 popover. w-10 here must match InlinePreviewBar's right-11
                 below. */}
-            <div className={`absolute right-1 top-1 z-10 flex w-10 flex-col items-stretch gap-1 ${hasSamplePlayer && musicPlayer.hasSource ? 'bottom-12' : 'bottom-1'}`}>
+            <div className={`absolute right-1 top-1 z-10 flex w-10 flex-col items-stretch gap-1 ${(hasSamplePlayer && musicPlayer.hasSource) || albumMode ? 'bottom-12' : 'bottom-1'}`}>
               <div className="flex min-h-0 flex-1 items-center justify-center">
                 <FeedRailButton fillSlot icon={<MessageCircle className="h-3.5 w-3.5" />} label="Message" onClick={handleMessage} disabled={railDisabled || starting === 'message'} />
               </div>
@@ -1299,6 +1379,7 @@ export default function SeedCard({
       {detailOverlay}
       {liveOverlay}
       {bestowModal}
+        {trackBestowModal}
       {heartPicker}
     </>
   );
