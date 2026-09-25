@@ -543,6 +543,7 @@ export default function StallHotspotSheet({ ownerId, ownerName, kind, label, tex
                       price={item.price}
                       openPath={itemOpenPath}
                       isProductRow={item.source === 'products'}
+                      nonProductSource={item.source === 'dj_music_tracks' ? 'dj_track' : item.source === 'sower_books' ? 'sower_book' : undefined}
                       previewUrl={kind === 'music' || kind === 'books' || kind === 'lyrics' ? item.previewUrl : undefined}
                       productId={kind === 'music' && item.source === 'products' ? item.id : undefined}
                       isAlbum={kind === 'music' && item.source === 'products' && isAlbum({ file_url: item.fileUrl })}

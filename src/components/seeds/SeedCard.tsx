@@ -12,6 +12,11 @@ import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
+import QuickBestowModal from '@/components/bestow/QuickBestowModal';
+import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { presentSolanaPayment, type SolanaPaymentResponse } from '@/lib/payments/solanaPaymentGate';
+import { checkoutErrorMessage } from '@/lib/payments/checkoutErrors';
+import { useContentPurchase } from '@/hooks/useContentPurchase';
 import AlbumTracksPanel, { useAlbumTrackCount, type AlbumTrack } from '@/components/seeds/AlbumTracksPanel';
 import { useSignedImages } from '@/lib/storage/signedImage';
 import { resolvePlayableUrl } from '@/lib/media/resolvePlayableUrl';
@@ -59,6 +64,13 @@ export interface SeedCardProps {
    * browser can play, which is why it used to play nothing.
    */
   isAlbum?: boolean;
+  /**
+   * Only when `isProductRow` is false: what the row really is, so "Bestow &
+   * Get This Seed" can run that thing's real purchase. 'dj_track' buys
+   * through content purchase (music_track); anything else hides the
+   * button rather than taking a gift labelled as a purchase.
+   */
+  nonProductSource?: 'dj_track' | 'sower_book';
   /** Book only -- a `.pdf` file_url. Enables "Read a page" (a 2-page StoryPdfViewer preview). Omit/null for an .epub or no file. */
   pdfUrl?: string | null;
   /** Hide the avatar/name row -- for a context where every card already shares one obvious owner (e.g. inside that owner's own StallHotspotSheet). Follow still applies if shown. */
@@ -243,7 +255,7 @@ const HEART_AMOUNTS = [0.1, 0.5, 1, 5, 10];
  */
 export default function SeedCard({
   id, kind, title, subtitle, cover, ownerId, ownerName, ownerAvatar,
-  price, openPath, isProductRow = true, previewUrl, productId, pdfUrl, isAlbum = false,
+  price, openPath, isProductRow = true, previewUrl, productId, pdfUrl, isAlbum = false, nonProductSource,
   hideSowerLine, className = '', fullDescription, tapBehavior = 'navigate', forceViewerIsOwner,
   variant = 'compact', images, videoUrl, resolveVideoUrl, ownerUsername, chip, isActive,
   mine, onEdit, onDelete,
@@ -262,6 +274,18 @@ export default function SeedCard({
   const isFeed = variant === 'feed';
   const isInline = tapBehavior === 'inline';
   const viewerIsOwner = forceViewerIsOwner !== undefined ? forceViewerIsOwner : (!!user && user.id === ownerId);
+  // What "Bestow & Get This Seed" really buys (2026-09-25). It used to send a
+  // gift (create-gift-bestowal-order, chat_tip) for every card: the sower got
+  // the money as a gift and the buyer got nothing -- no product_bestowals
+  // row, so no full file and no sold count. Each kind now runs its real
+  // purchase; gifts stay on the Heart.
+  const purchaseMode: 'product' | 'orchard' | 'dj_track' | 'none' =
+    kind === 'orchard' ? 'orchard'
+    : isProductRow ? 'product'
+    : nonProductSource === 'dj_track' ? 'dj_track'
+    : 'none';
+  const [orchardBestowOpen, setOrchardBestowOpen] = useState(false);
+  const { purchase: purchaseContent } = useContentPurchase();
   // The owner sees their own rail rendered, not hidden -- just visually
   // disabled, so they know what a visitor gets. "View as visitor"
   // (forceViewerIsOwner=false) is what makes it live for them again.
@@ -671,19 +695,66 @@ export default function SeedCard({
 
   const effectiveBestowAmount = bestowAmount ?? (price && price > 0 ? price : 5);
 
+  /**
+   * The real product purchase: the same single-item basket order the Tribal
+   * feed and MusicTrackDetailPage already use (create-basket-bestowal-order
+   * -> finalize_basket_order): price + 15% on top, the sower's price as their
+   * earnings, a completed product_bestowals row, and the full file.
+   */
+  const buyProduct = async (productIdToBuy: string, provider: PayoutProviderId, label: string): Promise<boolean> => {
+    try {
+      const data = await invokePaymentFunction<{
+        solanaPayment?: SolanaPaymentResponse; approveUrl?: string | null; invoiceUrl?: string | null;
+        balance?: { debited: boolean };
+      }>('create-basket-bestowal-order', {
+        items: [{ productId: productIdToBuy, qty: 1 }],
+        provider,
+        redirectBaseUrl: window.location.origin,
+      });
+      if (data.balance?.debited) {
+        toast.success(`"${label}" is yours. It's in your library now.`);
+        return true;
+      }
+      if (data.solanaPayment) {
+        const resolution = await presentSolanaPayment(data.solanaPayment);
+        if (resolution === 'paid') { toast.success(`"${label}" is yours. It's in your library now.`); return true; }
+        return false;
+      }
+      const redirect = data.approveUrl || data.invoiceUrl;
+      if (redirect) { window.location.href = redirect; return false; }
+      throw new Error('The payment provider did not return a checkout link. Try another payment method.');
+    } catch (err) {
+      toast.error(`Couldn't start the purchase: ${checkoutErrorMessage(err) || (err as Error)?.message || 'please try again.'}`);
+      return false;
+    }
+  };
+
   const handleBestowConfirm = async (provider: PayoutProviderId) => {
-    const result = await sendGift({
-      recipientId: ownerId,
-      amount: effectiveBestowAmount,
-      contextKind: 'chat_tip',
-      contextId: id,
-      provider,
-      message: bestowAmount != null ? `A small gift for "${title}"` : `Bestowal for "${title}"`,
-    });
-    if (result.success) {
-      toast.success(`${ownerName ?? 'They'} will receive your gift!`);
+    // The Heart's small gift keeps the gift path.
+    if (bestowAmount != null) {
+      const result = await sendGift({
+        recipientId: ownerId,
+        amount: effectiveBestowAmount,
+        contextKind: 'chat_tip',
+        contextId: id,
+        provider,
+        message: `A small gift for "${title}"`,
+      });
+      if (result.success) {
+        toast.success(`${ownerName ?? 'They'} will receive your gift!`);
+        setBestowOpen(false);
+        setBestowAmount(null);
+      }
+      return;
+    }
+    if (purchaseMode === 'product') {
+      const done = await buyProduct(id, provider, title);
+      if (done) setBestowOpen(false);
+      return;
+    }
+    if (purchaseMode === 'dj_track') {
+      await purchaseContent({ contentType: 'music_track', contentId: id, provider });
       setBestowOpen(false);
-      setBestowAmount(null);
     }
   };
 
@@ -728,9 +799,12 @@ export default function SeedCard({
       navigate('/products/basket', returnTo ? { state: { returnTo } } : undefined);
       return;
     }
+    if (purchaseMode === 'orchard') { setOrchardBestowOpen(true); return; }
+    if (purchaseMode === 'none') return;
     setBestowAmount(null);
     setBestowOpen(true);
   };
+  const canBestow = !!onBestowOverride || isPhysical || purchaseMode !== 'none';
 
   const handleGoLiveClick = async (e: React.MouseEvent) => {
     e.stopPropagation(); e.preventDefault();
@@ -867,7 +941,7 @@ export default function SeedCard({
             <p className="text-sm text-amber-100/70 whitespace-pre-wrap">{fullDescription ?? subtitle}</p>
           )}
           {price != null && price > 0 && <p className="text-amber-300 font-semibold">${price.toFixed(2)}</p>}
-          {!viewerIsOwner && (
+          {!viewerIsOwner && canBestow && (
             <button
               type="button"
               onClick={handleBestowClick}
@@ -915,18 +989,9 @@ export default function SeedCard({
   // through exactly the flow this card's own Bestow uses.
   const handleTrackBestowConfirm = async (provider: PayoutProviderId) => {
     if (!trackBestow?.single) return;
-    const result = await sendGift({
-      recipientId: ownerId,
-      amount: trackBestow.single.price,
-      contextKind: 'chat_tip',
-      contextId: trackBestow.single.productId,
-      provider,
-      message: `Bestowal for "${trackBestow.title}"`,
-    });
-    if (result.success) {
-      toast.success(`${ownerName ?? 'They'} will receive your gift!`);
-      setTrackBestow(null);
-    }
+    // Buys the matching single product -- a real purchase, like the card's.
+    const done = await buyProduct(trackBestow.single.productId, provider, trackBestow.title);
+    if (done) setTrackBestow(null);
   };
   const trackBestowModal = albumMode && (
     <ConfirmBestowModal
@@ -1140,6 +1205,7 @@ export default function SeedCard({
               </button>
             )}
 
+            {canBestow && (
             <button
               onClick={handleBestowClick}
               disabled={viewerIsOwner}
@@ -1147,6 +1213,7 @@ export default function SeedCard({
             >
               🎁 {bestowLabel}
             </button>
+            )}
             {soldLine}
           </div>
         </div>
@@ -1156,6 +1223,16 @@ export default function SeedCard({
         {liveOverlay}
         {bestowModal}
         {trackBestowModal}
+        {orchardBestowOpen && (
+          <QuickBestowModal
+            open={orchardBestowOpen}
+            onClose={() => setOrchardBestowOpen(false)}
+            orchardId={id}
+            seedTitle={title}
+            sowerUserId={ownerId}
+            defaultAmount={price && price > 0 ? price : undefined}
+          />
+        )}
         {heartPicker}
       </>
     );
@@ -1361,6 +1438,7 @@ export default function SeedCard({
             </button>
           )}
 
+          {canBestow && (
           <button
             type="button"
             onClick={handleBestowClick}
@@ -1369,6 +1447,7 @@ export default function SeedCard({
           >
             🎁 {bestowLabel}
           </button>
+          )}
 
           {soldLine}
           {whisperBlock}
@@ -1380,6 +1459,16 @@ export default function SeedCard({
       {liveOverlay}
       {bestowModal}
         {trackBestowModal}
+        {orchardBestowOpen && (
+          <QuickBestowModal
+            open={orchardBestowOpen}
+            onClose={() => setOrchardBestowOpen(false)}
+            orchardId={id}
+            seedTitle={title}
+            sowerUserId={ownerId}
+            defaultAmount={price && price > 0 ? price : undefined}
+          />
+        )}
       {heartPicker}
     </>
   );

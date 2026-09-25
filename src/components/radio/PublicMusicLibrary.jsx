@@ -237,6 +237,7 @@ export default function PublicMusicLibrary() {
                 openPath="/music-library"
                 previewUrl={track.preview_url ?? null}
                 isProductRow={false}
+                nonProductSource="dj_track"
               />
               {user ? (
                 <Button
