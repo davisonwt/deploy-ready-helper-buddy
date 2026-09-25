@@ -1,4 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
+import { panHotspotIntoView, waitForInteriorReady } from './support/interior';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  asUser, createStallFixture, createShelfSeedFixture, setStallHotspots, deleteStallFixture,
+  sweepProducts, sweepStorage, reportSweep,
+} from './support/fixtures';
 
 /**
  * A plain member must never see Edit or Delete on someone else's seed.
@@ -25,6 +31,24 @@ const GOSAT_P = process.env.TEST_GOSAT_PASSWORD || '';
 /** Owned by davison.taljaard -- someone else's stall, for both viewers below. */
 const OTHERS_STALL = '/stall/davison.taljaard';
 
+// The gosat leg needs a stall the gosat account does NOT own, with a book on
+// its shelf. It used to borrow a standing davisontest1 stall that was torn
+// down on 2026-09-21; now it builds its own and removes it in afterAll.
+const STAMP = Date.now();
+const QA_STALL = `QA menu-leak ${STAMP} stall`;
+const QA_BOOK = `QA menu-leak ${STAMP} book`;
+let fixture: { client: SupabaseClient; userId: string; stallId: string | null; objectPaths: string[] } | null = null;
+
+test.afterAll(async () => {
+  if (!fixture) return;
+  if (fixture.stallId) await deleteStallFixture(fixture.client, fixture.stallId);
+  if (fixture.objectPaths.length) await sweepStorage(fixture.client, 'stalls', fixture.objectPaths);
+  reportSweep('seed-card-owner-menu-leak', await sweepProducts(fixture.client, fixture.userId, [QA_BOOK]));
+  const { data: left } = await fixture.client.from('stalls').select('id').eq('user_id', fixture.userId).eq('name', QA_STALL);
+  console.log(`[RESIDUE] ${QA_STALL}: ${left?.length ?? 0} left (expected 0)`);
+  expect(left ?? []).toHaveLength(0);
+});
+
 async function login(page: Page, email: string, pass: string) {
   for (let i = 0; i < 2; i++) {
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
@@ -41,15 +65,20 @@ async function login(page: Page, email: string, pass: string) {
 /** Open a shelf that holds seeds, then the first card's "..." menu. */
 async function openFirstCardMenu(page: Page, stall: string): Promise<string> {
   await page.goto(stall, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(9000);
+  // The pan strip's hotspots are laid out only once its image has loaded.
+  if ((page.viewportSize()?.width ?? 1440) < 1024) await waitForInteriorReady(page);
+  else await page.waitForTimeout(9000);
 
-  const shelf = page.locator('button[aria-label="My Books"], button[aria-label="Books"]');
+  // On a phone the interior is a horizontal pan strip and the Books box can
+  // sit off-screen -- "visible" to isVisible() but not clickable. Pan it in
+  // first (same fix as share-controls-audit, 2026-09-25).
   let opened = false;
   for (let attempt = 0; attempt < 5 && !opened; attempt++) {
-    const c = await shelf.count();
-    for (let i = 0; i < c; i++) {
-      if (await shelf.nth(i).isVisible()) {
-        await shelf.nth(i).click({ force: true });
+    for (const label of ['My Books', 'Books']) {
+      const pan = await panHotspotIntoView(page, label, 0);
+      if (pan.found && pan.inWindow) {
+        await page.waitForTimeout(500);
+        await page.locator(`button[aria-label="${label}"]`).filter({ visible: true }).first().click();
         await page.waitForTimeout(5000);
         opened = true;
         break;
@@ -91,9 +120,17 @@ test('a plain member sees only Share and Report on someone else\'s seed', async 
 });
 
 test('a gosat/admin on someone else\'s stall: report what they actually get', async ({ page }) => {
-  test.skip(!GOSAT_E || !GOSAT_P, 'the gosat account is required in .env.test');
   test.setTimeout(6 * 60_000);
   await page.setViewportSize({ width: 390, height: 844 });
+
+  const member = await asUser(MEMBER_E, MEMBER_P, 'TEST_A (davisontest1)');
+  fixture = { ...member, stallId: null, objectPaths: [] };
+  const created = await createStallFixture(member.client, member.userId, QA_STALL);
+  fixture.stallId = created.stallId; fixture.objectPaths = created.objectPaths;
+  const bookId = await createShelfSeedFixture(member.client, member.userId, QA_BOOK);
+  await setStallHotspots(member.client, created.stallId, [
+    { id: 'qa-books', kind: 'books', label: 'Books', x: 30, y: 40, w: 40, h: 40, seed_ids: [bookId] },
+  ]);
 
   // This account OWNS the stall above, so it is tested against a different one
   // -- otherwise "owner menu on your own stall" would masquerade as a leak.
