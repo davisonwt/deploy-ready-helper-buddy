@@ -19,7 +19,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { probeAudioDurationSeconds } from "../_shared/audioDuration.ts";
+import { probeStoredAudio } from "../_shared/storedAudio.ts";
+import { postRadioNotice, slotLabel } from "../_shared/radioNotice.ts";
 
 const SLOT_SECONDS = 7200;
 const SEGMENTS_BUCKET = "dj-rundown-segments";
@@ -50,13 +51,16 @@ Deno.serve(async (req) => {
 
     const { data: slot, error: slotError } = await service
       .from("radio_slots")
-      .select("id, dj_user_id, status, starts_at")
+      .select("id, dj_user_id, status, starts_at, title, scheduled_notice_sent_at")
       .eq("id", slotId)
       .maybeSingle();
     if (slotError || !slot) return json({ error: "slot_not_found" }, 404);
     if (slot.dj_user_id !== userData.user.id) return json({ error: "forbidden" }, 403);
     if (slot.status === "cancelled" || slot.status === "aired") {
       return json({ error: "invalid_status", message: `This slot is already ${slot.status} and can't be submitted.` }, 400);
+    }
+    if (new Date(slot.starts_at).getTime() <= Date.now()) {
+      return json({ error: "too_late", message: "This slot has already started, so its rundown can no longer be submitted." }, 422);
     }
 
     const { data: segments, error: segmentsError } = await service
@@ -99,16 +103,14 @@ Deno.serve(async (req) => {
         if (!row.audio_path) {
           return json({ error: "broken_segment", message: `Segment ${row.id} has no audio file.` }, 500);
         }
-        const { data: file, error: downloadError } = await service.storage.from(SEGMENTS_BUCKET).download(row.audio_path);
-        if (downloadError || !file) {
+        const probed = await probeStoredAudio(service, SEGMENTS_BUCKET, row.audio_path);
+        if (!probed.ok && probed.reason === "missing") {
           return json({ error: "broken_segment", message: `A segment's audio file is missing -- remove and re-add it.` }, 422);
         }
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        const rawDuration = probeAudioDurationSeconds(bytes);
-        if (rawDuration === null) {
+        if (!probed.ok) {
           return json({ error: "broken_segment", message: `A segment's audio file could no longer be read (WAV/MP3 only) -- remove and re-add it.` }, 422);
         }
-        recomputed.push({ id: row.id, durationSeconds: Math.max(1, Math.floor(rawDuration)) });
+        recomputed.push({ id: row.id, durationSeconds: Math.max(1, Math.floor(probed.seconds)) });
       }
     }
 
@@ -132,11 +134,30 @@ Deno.serve(async (req) => {
 
     const { error: updateError } = await service
       .from("radio_slots")
-      .update({ status: "scheduled" })
+      .update({ status: "scheduled", scheduled_at: new Date().toISOString() })
       .eq("id", slotId);
     if (updateError) return json({ error: updateError.message }, 500);
 
-    return json({ ok: true, totalSeconds, shortfallSeconds: SLOT_SECONDS - totalSeconds });
+    let notice: "sent" | "already_sent" | "failed" = "already_sent";
+    if (!slot.scheduled_notice_sent_at) {
+      const posted = await postRadioNotice(
+        service, slot.dj_user_id, slot.id, "scheduled",
+        `📻 You're on the Grove Station schedule: ${slotLabel(slot)} is scheduled to air. ` +
+        `Your rundown is locked now. You'll get a reminder an hour before airtime.
+
+` +
+        `https://sow2growapp.com/grove-station?tab=schedule`,
+      );
+      if (posted.ok) {
+        notice = "sent";
+        await service.from("radio_slots").update({ scheduled_notice_sent_at: new Date().toISOString() }).eq("id", slot.id);
+      } else {
+        notice = "failed";
+        console.error("submit-radio-slot: scheduled notice failed", slot.id, posted.error);
+      }
+    }
+
+    return json({ ok: true, totalSeconds, shortfallSeconds: SLOT_SECONDS - totalSeconds, notice });
   } catch (err) {
     console.error("submit-radio-slot error", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);

@@ -52,6 +52,7 @@ export const COCKPIT_NAV: CockpitNavItem[] = [
   // be the real path into /grove-station's own tabs, same as any other
   // stall's hotspots lead into that content, not this top-level nav item.
   { label: 'Grove Station', sub: 'Community radio', emoji: '📻', path: '/stall/grovestation', color: '#a78bfa' },
+  { label: 'Book a radio slot', sub: 'Your own 2-hour pre-recorded show', emoji: '🎙️', path: '/grove-station?tab=schedule', color: '#a78bfa' },
   { label: 'Community Videos', sub: 'Upload & watch', emoji: '🎬', path: '/community-videos', color: '#f97316' },
   { label: 'Learn & Share Marketing Videos', sub: 'Share to grow your tribe', emoji: '🎥', path: '/learn-share', color: '#f97316' },
   { label: '364yhvh', sub: 'Scripture & spiritual hub', emoji: '📅', path: '/364yhvh-days', color: '#7c3aed' },

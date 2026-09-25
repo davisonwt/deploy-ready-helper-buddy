@@ -6,10 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ArrowUp, ArrowDown, Trash2, Loader2, Music, Mic, FileText, Image as ImageIcon, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import {
   type RadioSlot, type RundownSegment, type SegmentKind, type SongOption,
   SLOT_SECONDS, fetchSlotWithSegments, addSongSegment, addAudioSegment,
-  updateSegmentAttachments, deleteSegment, reorderSegments, uploadSegmentAudio,
+  updateSegmentAttachments, removeSegment, reorderSegments, uploadSegmentAudio,
   uploadSegmentFile, searchSongPool, submitSlot, formatDuration,
 } from '@/lib/radio/radioSlotsApi';
 
@@ -19,9 +20,10 @@ interface Props {
   onBack: () => void;
 }
 
-const NON_SONG_KINDS: Exclude<SegmentKind, 'song'>[] = ['opening', 'talk', 'advert', 'jingle', 'handover'];
+const NON_SONG_KINDS: Exclude<SegmentKind, 'song'>[] = ['show', 'opening', 'talk', 'advert', 'jingle', 'handover'];
 const KIND_LABEL: Record<SegmentKind, string> = {
   opening: 'Opening', talk: 'Talk', song: 'Song', advert: 'Advert', jingle: 'Jingle', handover: 'Handover',
+  show: 'Whole show',
 };
 
 export default function RundownBuilder({ slotId, djUserId, onBack }: Props) {
@@ -35,6 +37,7 @@ export default function RundownBuilder({ slotId, djUserId, onBack }: Props) {
   const [songResults, setSongResults] = useState<SongOption[]>([]);
   const [searching, setSearching] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [pendingNotes, setPendingNotes] = useState('');
   const audioInputRef = useRef<HTMLInputElement>(null);
 
@@ -98,8 +101,18 @@ export default function RundownBuilder({ slotId, djUserId, onBack }: Props) {
 
   const handleAudioFileChosen = async (file: File) => {
     setUploadingAudio(true);
+    setUploadProgress(0);
     try {
-      const { path, durationSeconds } = await uploadSegmentAudio(djUserId, slotId, file);
+      const { path, durationSeconds } = await uploadSegmentAudio(djUserId, slotId, file, setUploadProgress);
+      if (totalSeconds + durationSeconds > SLOT_SECONDS) {
+        toast({
+          title: 'That file makes the show longer than 2 hours',
+          description: `It runs ${formatDuration(durationSeconds)}, and the rundown already has ${formatDuration(totalSeconds)}. Trim it, or remove other segments first, then upload again.`,
+          variant: 'destructive',
+        });
+        await supabase.storage.from('dj-rundown-segments').remove([path]);
+        return;
+      }
       const seg = await addAudioSegment(slotId, nextPosition, addKind as Exclude<SegmentKind, 'song'>, path, durationSeconds, pendingNotes.trim() || null);
       setSegments((prev) => [...prev, seg]);
       setPendingNotes('');
@@ -125,12 +138,12 @@ export default function RundownBuilder({ slotId, djUserId, onBack }: Props) {
 
   const handleRemove = async (segment: RundownSegment) => {
     try {
-      await deleteSegment(segment.id);
       const remaining = segments.filter((s) => s.id !== segment.id);
-      await reorderSegments(remaining.map((s) => s.id));
+      await removeSegment(slotId, segment.id, remaining.map((s) => s.id));
       setSegments(remaining.map((s, i) => ({ ...s, position: i })));
     } catch (err: any) {
       toast({ title: "Couldn't remove that segment", description: err.message, variant: 'destructive' });
+      await load();
     }
   };
 
@@ -140,7 +153,12 @@ export default function RundownBuilder({ slotId, djUserId, onBack }: Props) {
     const next = [...segments];
     [next[index], next[target]] = [next[target], next[index]];
     setSegments(next);
-    await reorderSegments(next.map((s) => s.id));
+    try {
+      await reorderSegments(slotId, next.map((s) => s.id));
+    } catch (err: any) {
+      toast({ title: "Couldn't save the new order", description: err.message, variant: 'destructive' });
+      await load();
+    }
   };
 
   const handleSubmit = async () => {
@@ -273,9 +291,16 @@ export default function RundownBuilder({ slotId, djUserId, onBack }: Props) {
             ) : (
               <div className="space-y-2">
                 <Textarea placeholder="Notes (optional)" value={pendingNotes} onChange={(e) => setPendingNotes(e.target.value)} rows={2} />
+                {addKind === 'show' && (
+                  <p className="text-xs text-muted-foreground">
+                    Your whole show as one WAV or MP3, up to 2 hours and 150 MB. A 2-hour MP3 at 128 kbps is about 115 MB. If the connection drops, the upload carries on from where it stopped.
+                  </p>
+                )}
                 <label className="inline-flex items-center gap-2 text-sm text-primary cursor-pointer">
                   {uploadingAudio ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic className="h-4 w-4" />}
-                  {uploadingAudio ? 'Uploading & probing duration…' : 'Choose WAV or MP3'}
+                  {uploadingAudio
+                    ? (uploadProgress < 1 ? `Uploading… ${Math.round(uploadProgress * 100)}%` : 'Measuring the file…')
+                    : (addKind === 'show' ? 'Choose your show file (WAV or MP3)' : 'Choose WAV or MP3')}
                   <input ref={audioInputRef} type="file" accept=".wav,.mp3" className="hidden" disabled={uploadingAudio}
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAudioFileChosen(f); }} />
                 </label>

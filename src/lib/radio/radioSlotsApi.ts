@@ -1,11 +1,35 @@
 import { supabase } from '@/integrations/supabase/client';
-import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { ensureFreshSession } from '@/lib/payments/invokeFunction';
+import * as tus from 'tus-js-client';
 
 export type SlotMode = 'live' | 'prerecorded';
 export type SlotStatus = 'draft' | 'submitted' | 'scheduled' | 'aired' | 'cancelled';
-export type SegmentKind = 'opening' | 'talk' | 'song' | 'advert' | 'jingle' | 'handover';
+export type SegmentKind = 'opening' | 'talk' | 'song' | 'advert' | 'jingle' | 'handover' | 'show';
 
 export const SLOT_SECONDS = 7200;
+
+/**
+ * Calls a Grove Station edge function. Radio functions return
+ * { error: <code>, message: <plain sentence> }; the sentence is what the
+ * member sees, never the code.
+ */
+export async function invokeRadioFunction<T>(name: string, body: unknown): Promise<T> {
+  const session = await ensureFreshSession();
+  if (!session?.access_token) throw new Error('Your session has expired. Sign in again and retry.');
+  const { data, error } = await supabase.functions.invoke(name, { body: body as Record<string, unknown> });
+  if (error) {
+    let message = error.message;
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === 'function') {
+      try {
+        const parsed = await ctx.json();
+        message = parsed?.message || parsed?.error || message;
+      } catch { /* keep the generic message */ }
+    }
+    throw new Error(message);
+  }
+  return data as T;
+}
 
 export interface RadioSlot {
   id: string;
@@ -16,6 +40,9 @@ export interface RadioSlot {
   status: SlotStatus;
   ad_price: number | null;
   created_at: string;
+  cancel_reason?: string | null;
+  cancelled_at?: string | null;
+  scheduled_at?: string | null;
 }
 
 export interface RundownSegment {
@@ -75,10 +102,11 @@ export async function fetchMySlots(userId: string): Promise<RadioSlot[]> {
   return (data ?? []) as RadioSlot[];
 }
 
-export async function bookSlot(djUserId: string, startsAt: Date, mode: SlotMode, title: string | null): Promise<RadioSlot> {
+/** Live hosting is not built yet; every booking is pre-recorded (the insert policy enforces it too). */
+export async function bookSlot(djUserId: string, startsAt: Date, title: string | null): Promise<RadioSlot> {
   const { data, error } = await supabase
     .from('radio_slots')
-    .insert({ dj_user_id: djUserId, starts_at: startsAt.toISOString(), mode, title, status: 'draft' })
+    .insert({ dj_user_id: djUserId, starts_at: startsAt.toISOString(), mode: 'prerecorded', title, status: 'draft' })
     .select('*')
     .single();
   if (error) {
@@ -142,29 +170,87 @@ export async function updateSegmentAttachments(segmentId: string, fields: { doc_
 }
 
 export async function deleteSegment(segmentId: string): Promise<void> {
-  const { error } = await supabase.from('radio_rundown_segments').delete().eq('id', segmentId);
+  const { data, error } = await supabase.from('radio_rundown_segments').delete().eq('id', segmentId).select('id');
   if (error) throw error;
+  if (!data || data.length === 0) throw new Error('That segment could not be removed. The rundown may already be submitted; reload to check.');
 }
 
-/** Renumbers `position` for every segment in a slot to match the given order. */
-export async function reorderSegments(orderedIds: string[]): Promise<void> {
-  await Promise.all(orderedIds.map((id, i) => supabase.from('radio_rundown_segments').update({ position: i }).eq('id', id)));
+/**
+ * Renumbers `position` for every segment in a slot to match the given
+ * order, in one database statement (reorder_radio_rundown), so a swap
+ * never collides with the (slot_id, position) unique constraint and a
+ * failure is reported instead of leaving the screen out of step.
+ */
+export async function reorderSegments(slotId: string, orderedIds: string[]): Promise<void> {
+  const { error } = await supabase.rpc('reorder_radio_rundown', { p_slot_id: slotId, p_ordered_ids: orderedIds });
+  if (error) throw new Error(error.message || "Couldn't save the new order.");
+}
+
+/** Removes a segment and closes the gap in positions. */
+export async function removeSegment(slotId: string, segmentId: string, remainingIds: string[]): Promise<void> {
+  await deleteSegment(segmentId);
+  await reorderSegments(slotId, remainingIds);
 }
 
 function extOf(file: File): string {
   return file.name.includes('.') ? file.name.split('.').pop()!.toLowerCase() : '';
 }
 
-export async function uploadSegmentAudio(userId: string, slotId: string, file: File): Promise<{ path: string; durationSeconds: number }> {
+/** The bucket's own per-file cap (150 MB) -- a 2-hour 128 kbps MP3 is about 115 MB. */
+export const MAX_AUDIO_BYTES = 150 * 1024 * 1024;
+
+const SUPABASE_PROJECT_REF = 'zuwkgasbkpjlxzsjzumu';
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_Z8-I1gu2Q1yid1Q4jKRf7Q_jSGcsVpa';
+// Supabase requires exactly 6 MB chunks for resumable uploads.
+const TUS_CHUNK_BYTES = 6 * 1024 * 1024;
+
+/**
+ * Resumable (TUS) upload into dj-rundown-segments, so a long show survives
+ * a dropped mobile connection: tus-js-client retries each 6 MB chunk and
+ * resumes from the last acknowledged offset instead of starting over.
+ */
+function tusUpload(path: string, file: File, accessToken: string, onProgress?: (fraction: number) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const upload = new tus.Upload(file, {
+      endpoint: `https://${SUPABASE_PROJECT_REF}.storage.supabase.co/storage/v1/upload/resumable`,
+      retryDelays: [0, 1000, 3000, 5000, 10000, 20000, 30000],
+      headers: { authorization: `Bearer ${accessToken}`, apikey: SUPABASE_PUBLISHABLE_KEY, 'x-upsert': 'false' },
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      chunkSize: TUS_CHUNK_BYTES,
+      metadata: {
+        bucketName: 'dj-rundown-segments',
+        objectName: path,
+        contentType: file.type || (path.endsWith('.wav') ? 'audio/wav' : 'audio/mpeg'),
+        cacheControl: '3600',
+      },
+      onError: (err) => reject(new Error(`Upload failed: ${err.message}`)),
+      onProgress: (sent, total) => onProgress?.(total > 0 ? sent / total : 0),
+      onSuccess: () => resolve(),
+    });
+    upload.findPreviousUploads().then((previous) => {
+      if (previous.length > 0) upload.resumeFromPreviousUpload(previous[0]);
+      upload.start();
+    }).catch(reject);
+  });
+}
+
+export async function uploadSegmentAudio(
+  userId: string, slotId: string, file: File, onProgress?: (fraction: number) => void,
+): Promise<{ path: string; durationSeconds: number }> {
   const ext = extOf(file);
   if (ext !== 'wav' && ext !== 'mp3') {
     throw new Error("That file type isn't supported — use WAV or MP3.");
   }
+  if (file.size > MAX_AUDIO_BYTES) {
+    throw new Error(`That file is ${(file.size / 1024 / 1024).toFixed(0)} MB; the limit is 150 MB. A 2-hour MP3 at 128 kbps is about 115 MB, so export at 128 kbps or lower.`);
+  }
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error('Your session has expired. Sign in again, then retry the upload.');
   const path = `${userId}/${slotId}/${Date.now()}.${ext}`;
-  const { error: uploadError } = await supabase.storage.from('dj-rundown-segments').upload(path, file, { upsert: false });
-  if (uploadError) throw uploadError;
+  await tusUpload(path, file, session.access_token, onProgress);
 
-  const { durationSeconds } = await invokePaymentFunction<{ durationSeconds: number }>('probe-audio-duration', { path, bucket: 'dj-rundown-segments' });
+  const { durationSeconds } = await invokeRadioFunction<{ durationSeconds: number }>('probe-audio-duration', { path, bucket: 'dj-rundown-segments' });
   return { path, durationSeconds };
 }
 
@@ -215,7 +301,7 @@ export async function searchSongPool(query: string): Promise<SongOption[]> {
 }
 
 export async function submitSlot(slotId: string): Promise<{ ok: true; totalSeconds: number; shortfallSeconds: number }> {
-  return invokePaymentFunction('submit-radio-slot', { slotId });
+  return invokeRadioFunction('submit-radio-slot', { slotId });
 }
 
 export function formatDuration(totalSeconds: number): string {
@@ -223,4 +309,8 @@ export function formatDuration(totalSeconds: number): string {
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = Math.floor(totalSeconds % 60);
   return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':');
+}
+
+export async function staffCancelSlot(slotId: string, reason: string): Promise<{ ok: true; notified: boolean }> {
+  return invokeRadioFunction('cancel-radio-slot', { slotId, reason });
 }

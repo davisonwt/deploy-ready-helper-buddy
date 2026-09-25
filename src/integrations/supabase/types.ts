@@ -11563,30 +11563,51 @@ export type Database = {
       radio_slots: {
         Row: {
           ad_price: number | null
+          aired_at: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
           dj_user_id: string
           id: string
           mode: string
+          reminder_sent_at: string | null
+          scheduled_at: string | null
+          scheduled_notice_sent_at: string | null
           starts_at: string
           status: string
           title: string | null
         }
         Insert: {
           ad_price?: number | null
+          aired_at?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           dj_user_id: string
           id?: string
           mode: string
+          reminder_sent_at?: string | null
+          scheduled_at?: string | null
+          scheduled_notice_sent_at?: string | null
           starts_at: string
           status?: string
           title?: string | null
         }
         Update: {
           ad_price?: number | null
+          aired_at?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           dj_user_id?: string
           id?: string
           mode?: string
+          reminder_sent_at?: string | null
+          scheduled_at?: string | null
+          scheduled_notice_sent_at?: string | null
           starts_at?: string
           status?: string
           title?: string | null
@@ -18890,6 +18911,10 @@ export type Database = {
       remove_sensitive_profile_data: {
         Args: { target_user_id: string }
         Returns: boolean
+      }
+      reorder_radio_rundown: {
+        Args: { p_ordered_ids: string[]; p_slot_id: string }
+        Returns: undefined
       }
       reorder_hand_raise_queue: {
         Args: { call_session_id_param: string }

@@ -141,3 +141,116 @@ function probeWavDuration(b: Uint8Array): number | null {
   if (byteRate <= 0 || dataSize < 0) return null;
   return dataSize / byteRate;
 }
+
+// Streaming variant for large files (a whole 2-hour show is up to 150 MB):
+// walks the same frames/chunks as the buffer probes above, holding only a
+// small carry-over window in memory instead of the whole file. The edge
+// runtime's memory ceiling is below 2x a whole-show file, so the buffer
+// path would not survive one. Results match the buffer probes above; the
+// equivalence is checked by audioDuration.stream.test.ts.
+
+export async function probeAudioDurationFromStream(stream: ReadableStream<Uint8Array>): Promise<number | null> {
+  const reader = stream.getReader();
+  let pending = new Uint8Array(0);
+  let consumed = 0; // absolute offset of pending[0]
+  let done = false;
+
+  const pull = async (): Promise<boolean> => {
+    if (done) return false;
+    const { value, done: d } = await reader.read();
+    if (d || !value) { done = true; return false; }
+    const next = new Uint8Array(pending.length + value.length);
+    next.set(pending, 0);
+    next.set(value, pending.length);
+    pending = next;
+    return true;
+  };
+  const dropBefore = (abs: number) => {
+    const local = abs - consumed;
+    if (local <= 0) return;
+    if (local >= pending.length) {
+      consumed += pending.length;
+      pending = new Uint8Array(0);
+    } else {
+      pending = pending.slice(local);
+      consumed = abs;
+    }
+  };
+  // Makes absolute bytes [abs, abs+n) available; false if the file ends first.
+  const ensure = async (abs: number, n: number): Promise<boolean> => {
+    while (true) {
+      if (abs < consumed) return false;
+      if (abs - consumed + n <= pending.length) return true;
+      if (abs - consumed > pending.length) dropBefore(Math.min(abs, consumed + pending.length));
+      if (!(await pull())) return false;
+    }
+  };
+
+  try {
+    while (pending.length < 16 && (await pull())) { /* sniff window */ }
+    const head = pending;
+    if (isWav(head)) {
+      let offset = 12;
+      let byteRate = 0;
+      while (await ensure(offset, 8)) {
+        const b = pending;
+        const o = offset - consumed;
+        const id = String.fromCharCode(b[o], b[o + 1], b[o + 2], b[o + 3]);
+        const size = readU32LE(b, o + 4) >>> 0;
+        const bodyStart = offset + 8;
+        if (id === 'fmt ') {
+          if (!(await ensure(bodyStart, 12))) return null;
+          byteRate = readU32LE(pending, bodyStart - consumed + 8);
+        } else if (id === 'data') {
+          return byteRate > 0 ? size / byteRate : null;
+        }
+        offset = bodyStart + size + (size % 2);
+        dropBefore(Math.min(offset, consumed + pending.length));
+      }
+      return null;
+    }
+
+    if (!(await ensure(0, 10))) return null;
+    const start = mp3DataStart(pending);
+    if (start === null) return null;
+
+    let offset = start;
+    let elapsed = 0;
+    let frameCount = 0;
+    let first = true;
+    while (true) {
+      dropBefore(offset);
+      // Find a sync at or after `offset`, pulling more bytes as needed.
+      let sync: number | null = null;
+      while (sync === null) {
+        if (!(await ensure(offset, 2))) break;
+        const local = offset - consumed;
+        const found = findFrameSync(pending, local);
+        if (found !== null) {
+          sync = consumed + found;
+        } else {
+          offset = consumed + pending.length - 1; // a sync may straddle the chunk edge
+          dropBefore(offset);
+          if (!(await pull())) break;
+        }
+      }
+      if (sync === null) break;
+      if (first) {
+        if (sync !== start) return null; // not an MP3 (same rule as isMp3)
+        first = false;
+      }
+      const haveHeader = await ensure(sync, 4);
+      const frame = haveHeader ? parseFrame(pending, sync - consumed) : null;
+      if (!frame) {
+        if (frameCount === 0) return null;
+        break;
+      }
+      offset = sync + frame.length;
+      elapsed += frame.durationSeconds;
+      frameCount++;
+    }
+    return frameCount > 0 ? elapsed : null;
+  } finally {
+    try { await reader.cancel(); } catch { /* already closed */ }
+  }
+}

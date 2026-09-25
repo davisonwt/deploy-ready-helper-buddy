@@ -137,6 +137,7 @@ import {
   MusicLibraryPage,
   MusicTrackDetailPage,
   MyRadioOptInPage,
+  AdminRadioSlotsPage,
   SowerLibraryPage,
   S2GCommunityLibraryPage,
   S2GCommunityMusicPage,
@@ -767,7 +768,11 @@ const AppRoutes = () => (
     <Route path="/admin/moderation" element={<Navigate to="/admin/dashboard?tab=moderation" replace />} />
     {/* Flow v2 step 1: duplicate route, same component as /admin/dashboard */}
     <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-    <Route path="/admin/radio" element={<Navigate to="/grove-station?tab=admin" replace />} />
+    <Route path="/admin/radio" element={
+      <ProtectedRoute allowedRoles={['admin', 'gosat', 'radio_admin']}>
+        <Layout><Suspense fallback={<LoadingFallback />}><AdminRadioSlotsPage /></Suspense></Layout>
+      </ProtectedRoute>
+    } />
     <Route path="/admin/seeds" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}>
         <Layout><Suspense fallback={<LoadingFallback />}><AdminSeedsPage /></Suspense></Layout>

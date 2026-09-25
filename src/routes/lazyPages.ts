@@ -232,6 +232,7 @@ export const EternalForestPage = lazy(() => import('@/pages/EternalForestPage'))
 export const AdminAnalyticsPage = lazy(() => import('@/pages/AdminAnalyticsPage'));
 export const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboardPage'));
 export const AdminRadioPage = lazy(() => import('@/pages/AdminRadioPage'));
+export const AdminRadioSlotsPage = lazy(() => import('@/pages/AdminRadioSlotsPage'));
 export const AdminSeedsPage = lazy(() => import('@/pages/AdminSeedsPage'));
 export const AdminSettlementConsentsPage = lazy(() => import('@/pages/AdminSettlementConsentsPage'));
 

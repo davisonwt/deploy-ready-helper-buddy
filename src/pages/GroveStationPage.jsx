@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useGroveStation } from '@/hooks/useGroveStation'
 import { useRoles } from '@/hooks/useRoles'
@@ -40,6 +40,15 @@ import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSe
 import SlotBookingCalendar from '@/components/radio/SlotBookingCalendar'
 import RundownBuilder from '@/components/radio/RundownBuilder'
 import UpcomingShowsList from '@/components/radio/UpcomingShowsList'
+import OnAirCard from '@/components/radio/OnAirCard'
+import RadioSlotsAdminPanel from '@/components/radio/RadioSlotsAdminPanel'
+import { startRadio, stopRadio, getRadioState, subscribeRadio } from '@/lib/media/radioPlayback'
+
+const EXPLAINER_SEEN_KEY = 'grove.radioSlotExplainerSeen'
+
+function readExplainerSeen() {
+  try { return window.localStorage.getItem(EXPLAINER_SEEN_KEY) === '1' } catch { return false }
+}
 
 export default function GroveStationPage() {
   const {
@@ -67,21 +76,43 @@ export default function GroveStationPage() {
   // permanently stale under the new open-booking radio_slots model) -- a
   // stray `?tab=apply` or `?tab=stats` link now falls back to 'listen'
   // via the GROVE_TABS.includes() check below, not a crash.
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const GROVE_TABS = ['listen', 'schedule', 'djs', 'broadcast', 'sessions', 'generator', 'management', 'admin']
   const [activeTab, setActiveTab] = useState(() => {
     const requested = searchParams.get('tab')
     return GROVE_TABS.includes(requested) ? requested : 'listen'
   })
   const [openRundownSlotId, setOpenRundownSlotId] = useState(null)
+  const [explainerSeen, setExplainerSeen] = useState(readExplainerSeen)
 
-  const [isPlaying, setIsPlaying] = useState(false)
+  // A nav entry (Cockpit, Owner Menu, stall hotspot) can land here while
+  // the page is already open -- follow ?tab= whenever it changes.
+  useEffect(() => {
+    const requested = searchParams.get('tab')
+    if (GROVE_TABS.includes(requested)) setActiveTab(requested)
+  }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleTabChange = (value) => {
+    setActiveTab(value)
+    setSearchParams((prev) => { const next = new URLSearchParams(prev); next.set('tab', value); return next }, { replace: true })
+  }
+  const goToSchedule = () => handleTabChange('schedule')
+
+  const dismissExplainer = () => {
+    setExplainerSeen(true)
+    try { window.localStorage.setItem(EXPLAINER_SEEN_KEY, '1') } catch { /* private mode: shows again next visit */ }
+  }
+
+  // The real Grove Station stream (radioPlayback.ts, the same player as the
+  // Cockpit radio button), not a local flag.
+  const [isPlaying, setIsPlaying] = useState(() => getRadioState().isPlaying)
+  useEffect(() => subscribeRadio(() => setIsPlaying(getRadioState().isPlaying)), [])
   const [showCreateDJ, setShowCreateDJ] = useState(false)
   const [showLiveInterface, setShowLiveInterface] = useState(false)
 
   const handlePlayPause = () => {
-    setIsPlaying(!isPlaying)
-    // TODO: Implement actual audio streaming
+    if (isPlaying) stopRadio()
+    else startRadio()
   }
 
   const handleGoLive = async () => {
@@ -137,6 +168,16 @@ export default function GroveStationPage() {
                 </div>
               </div>
               
+              <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                size="lg"
+                onClick={goToSchedule}
+                className="gap-2 rounded-xl"
+                data-testid="grove-book-slot"
+              >
+                <Calendar className="h-5 w-5" />
+                Book a radio slot
+              </Button>
               {/* Quick Play Button */}
               <Button
                 variant={isPlaying ? "default" : "outline"}
@@ -156,13 +197,14 @@ export default function GroveStationPage() {
                   </>
                 )}
               </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Prominent Tab Navigation */}
         <Card className="border-2 shadow-xl">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <div className="p-6">
               <TabsList className="w-full h-auto bg-transparent flex flex-wrap gap-3">
                 <TabsTrigger
@@ -217,7 +259,7 @@ export default function GroveStationPage() {
                     <span>DJ Management</span>
                   </TabsTrigger>
                 )}
-                {isAdminOrGosat && (
+                {canManageRadio && (
                   <TabsTrigger
                     value="admin"
                     className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-amber-900 data-[state=active]:text-white data-[state=active]:shadow-lg bg-amber-100 hover:bg-amber-200"
@@ -231,6 +273,7 @@ export default function GroveStationPage() {
 
           {/* Listen Tab */}
           <TabsContent value="listen" className="space-y-6 p-6 bg-card">
+            <OnAirCard />
             {/* Stall interior's "Shows" hotspot destination -- see
                 UpcomingShowsList's own comment. */}
             <UpcomingShowsList />
@@ -354,7 +397,20 @@ export default function GroveStationPage() {
             <div>
               <h2 className="text-2xl font-bold">24/7 Schedule</h2>
               <p className="text-muted-foreground">Book a 2-hour slot, or see what's playing when.</p>
+              <Badge variant="outline" className="mt-2">Pre-recorded shows — live hosting coming soon</Badge>
             </div>
+            {!explainerSeen && (
+              <Card className="border-primary/40 bg-primary/5" data-testid="radio-slot-explainer">
+                <CardContent className="p-4 space-y-2">
+                  <ol className="list-decimal pl-5 space-y-1 text-sm">
+                    <li>Pick a free 2-hour slot below.</li>
+                    <li>Upload your whole show as one file, or build it from songs, talk and adverts.</li>
+                    <li>Submit it before the slot starts. It airs on Grove Station automatically.</li>
+                  </ol>
+                  <Button size="sm" variant="outline" onClick={dismissExplainer}>Got it</Button>
+                </CardContent>
+              </Card>
+            )}
             {user?.id && (
               openRundownSlotId ? (
                 <RundownBuilder slotId={openRundownSlotId} djUserId={user.id} onBack={() => setOpenRundownSlotId(null)} />
@@ -501,7 +557,7 @@ export default function GroveStationPage() {
                           </CardHeader>
                           <CardContent className="space-y-3">
                             <Button 
-                              onClick={() => setShowScheduleForm(true)}
+                              onClick={goToSchedule}
                               className="w-full justify-start bg-blue-50 hover:bg-blue-100 border-blue-300 text-blue-900 rounded-xl"
                               variant="outline"
                             >
@@ -578,9 +634,10 @@ export default function GroveStationPage() {
               {activeTab === 'management' && <RadioManagementPage />}
             </TabsContent>
           )}
-          {isAdminOrGosat && (
-            <TabsContent value="admin" className="relative [contain:layout] p-6 bg-card">
-              {activeTab === 'admin' && <AdminRadioPage />}
+          {canManageRadio && (
+            <TabsContent value="admin" className="relative [contain:layout] p-6 bg-card space-y-8">
+              {activeTab === 'admin' && <RadioSlotsAdminPanel />}
+              {activeTab === 'admin' && isAdminOrGosat && <AdminRadioPage />}
             </TabsContent>
           )}
         </Tabs>

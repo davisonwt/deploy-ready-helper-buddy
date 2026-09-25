@@ -83,7 +83,7 @@ export default function NowPlayingSheet({ onClose }: Props) {
               )}
               <div>
                 <div className="font-serif text-xl text-amber-100">{slot?.title || 'Grove Station'}</div>
-                <div className="text-sm text-amber-100/70 capitalize mt-1">{segment.kind} — {slot?.djName ?? 'a DJ'}</div>
+                <div className="text-sm text-amber-100/70 capitalize mt-1">{segment.kind === 'show' ? 'Pre-recorded show' : segment.kind} — {slot?.djName ?? 'a DJ'}</div>
                 {segment.notes && <p className="text-sm text-amber-100/60 mt-3 whitespace-pre-wrap">{segment.notes}</p>}
               </div>
             </div>

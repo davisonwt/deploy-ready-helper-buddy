@@ -3,11 +3,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Calendar, Mic, Radio, X } from 'lucide-react';
+import { Loader2, Calendar, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  type RadioSlot, type SlotMode, upcomingBoundaries, fetchUpcomingSlots, bookSlot, cancelSlot,
+  type RadioSlot, upcomingBoundaries, fetchUpcomingSlots, bookSlot, cancelSlot,
 } from '@/lib/radio/radioSlotsApi';
 
 interface Props {
@@ -25,7 +25,6 @@ export default function SlotBookingCalendar({ djUserId, onOpenRundown, isGosatOr
   const [slots, setSlots] = useState<RadioSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState<string | null>(null); // starts_at ISO currently being booked
-  const [mode, setMode] = useState<SlotMode>('prerecorded');
   const [title, setTitle] = useState('');
   const [djNames, setDjNames] = useState<Record<string, string>>({});
 
@@ -64,7 +63,7 @@ export default function SlotBookingCalendar({ djUserId, onOpenRundown, isGosatOr
 
   const handleBook = async (startsAt: Date) => {
     try {
-      const created = await bookSlot(djUserId, startsAt, mode, title.trim() || null);
+      const created = await bookSlot(djUserId, startsAt, title.trim() || null);
       toast({ title: 'Slot booked', description: 'Now build your rundown.' });
       setBooking(null);
       setTitle('');
@@ -144,21 +143,14 @@ export default function SlotBookingCalendar({ djUserId, onOpenRundown, isGosatOr
                 ) : booking === iso ? (
                   <div className="space-y-2">
                     <Input placeholder="Show title (optional)" value={title} onChange={(e) => setTitle(e.target.value)} className="h-8 text-sm" />
-                    <div className="flex gap-1.5">
-                      <Button size="sm" variant={mode === 'prerecorded' ? 'default' : 'outline'} onClick={() => setMode('prerecorded')} className="flex-1">
-                        <Radio className="h-3.5 w-3.5 mr-1" /> Pre-recorded
-                      </Button>
-                      <Button size="sm" variant={mode === 'live' ? 'default' : 'outline'} onClick={() => setMode('live')} className="flex-1">
-                        <Mic className="h-3.5 w-3.5 mr-1" /> Live
-                      </Button>
-                    </div>
+                    <p className="text-xs text-muted-foreground">Pre-recorded show, 2 hours. Live hosting is coming soon.</p>
                     <div className="flex gap-1.5">
                       <Button size="sm" className="flex-1" onClick={() => handleBook(b)}>Confirm booking</Button>
                       <Button size="sm" variant="ghost" onClick={() => setBooking(null)}>Cancel</Button>
                     </div>
                   </div>
                 ) : (
-                  <Button size="sm" variant="outline" onClick={() => { setBooking(iso); setMode('prerecorded'); setTitle(''); }}>Book this slot</Button>
+                  <Button size="sm" variant="outline" onClick={() => { setBooking(iso); setTitle(''); }}>Book this slot</Button>
                 )}
               </CardContent>
             </Card>

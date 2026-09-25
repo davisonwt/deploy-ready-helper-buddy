@@ -13,7 +13,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { probeAudioDurationSeconds } from "../_shared/audioDuration.ts";
+import { probeStoredAudio } from "../_shared/storedAudio.ts";
 
 // Both buckets use the SAME owner-folder convention (uid as the first
 // path segment) -- allowlisted explicitly rather than accepting any
@@ -48,14 +48,12 @@ Deno.serve(async (req) => {
     if (!path.startsWith(`${userData.user.id}/`)) return json({ error: "forbidden" }, 403);
 
     const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-    const { data: file, error: downloadError } = await service.storage.from(bucket).download(path);
-    if (downloadError || !file) return json({ error: "file_not_found" }, 404);
-
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const rawDuration = probeAudioDurationSeconds(bytes);
-    if (rawDuration === null) {
+    const probed = await probeStoredAudio(service, bucket, path);
+    if (!probed.ok && probed.reason === "missing") return json({ error: "file_not_found" }, 404);
+    if (!probed.ok) {
       return json({ error: "unsupported_format", message: "We can only read duration from WAV or MP3 — please upload one of those formats." }, 422);
     }
+    const rawDuration = probed.seconds;
     // duration_seconds is an integer column; floor (never round up, per
     // the 2026-09-20 radio duration sweep's own rule) so a segment's
     // stored length never overstates its real file and seeks past the

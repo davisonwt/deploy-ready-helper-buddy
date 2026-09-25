@@ -109,7 +109,7 @@ export interface RadioTrackInfo {
 // instead. `track` and `segment` are never both set at once.
 export interface RadioSegmentInfo {
   id: string;
-  kind: 'opening' | 'talk' | 'advert' | 'jingle' | 'handover';
+  kind: 'opening' | 'talk' | 'advert' | 'jingle' | 'handover' | 'show';
   durationSeconds: number;
   imageUrl: string | null;
   notes: string | null;

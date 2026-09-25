@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Pencil, Sprout, Package, TreePine } from 'lucide-react';
+import { Pencil, Sprout, Package, TreePine, Radio } from 'lucide-react';
 
 export interface OwnerMenuItem {
   label: string;
@@ -27,6 +27,7 @@ export const OWNER_MENU_ITEMS: OwnerMenuItem[] = [
   { label: 'Sow a seed', path: '/sow', icon: Sprout },
   { label: 'Bulk upload seeds', path: '/dashboard/sower/upload', icon: Package },
   { label: 'My orchards', path: '/my-orchards', icon: TreePine },
+  { label: 'Book a radio slot', path: '/grove-station?tab=schedule', icon: Radio },
 ];
 
 interface Props {

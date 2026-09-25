@@ -14,7 +14,7 @@
 // scheduled show -> exact current autopilot" both fall out for free,
 // without a special case for either.
 
-export type SegmentKind = 'opening' | 'talk' | 'song' | 'advert' | 'jingle' | 'handover';
+export type SegmentKind = 'opening' | 'talk' | 'song' | 'advert' | 'jingle' | 'handover' | 'show';
 
 export interface SlotSegmentOverride {
   id: string;
