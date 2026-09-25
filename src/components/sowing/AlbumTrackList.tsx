@@ -3,6 +3,7 @@ import { AlertCircle, GripVertical, Loader2, Music, UploadCloud, X } from 'lucid
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { formatSizeMessage, mapStorageUploadError } from '@/lib/uploadErrors';
+import { moderateStorageUpload, moderationRejectionMessage } from '@/lib/moderation/moderateUpload';
 
 export interface AlbumTrack {
   localId: string;
@@ -82,6 +83,14 @@ export default function AlbumTrackList({ bucket, pathPrefix, allowedLabel, onCha
     if (error) {
       const message = mapStorageUploadError(error, track.file, MAX_TRACK_SIZE_BYTES, MIME_REJECTION_MESSAGE);
       emit((prev) => prev.map((t) => (t.localId === track.localId ? { ...t, status: 'error', errorMessage: message } : t)));
+      return;
+    }
+    // Same moderation call a single's upload makes (SeedDropZone): audio is
+    // allowed by moderate-media's audio policy, but the verdict is recorded
+    // now, at upload, instead of first appearing when someone plays it.
+    const { verdict, reason } = await moderateStorageUpload(bucket, path, 'image');
+    if (verdict !== 'allow') {
+      emit((prev) => prev.map((t) => (t.localId === track.localId ? { ...t, status: 'error', errorMessage: moderationRejectionMessage(reason) } : t)));
       return;
     }
     const { data: pub } = supabase.storage.from(bucket).getPublicUrl(path);

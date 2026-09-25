@@ -45,6 +45,17 @@ const BUCKET = 'dj-rundown-segments';
 const SLOT_MS = 2 * 3600 * 1000;
 const MIN_LEAD_MS = 12 * 24 * 3600 * 1000;
 const RUN = `QA radio-slots ${Date.now()}`;
+const MGMT_TOKEN = process.env.SUPABASE_ACCESS_TOKEN || '';
+
+async function mgmtSql(query: string): Promise<unknown[]> {
+  const res = await fetch('https://api.supabase.com/v1/projects/zuwkgasbkpjlxzsjzumu/database/query', {
+    method: 'POST', headers: { Authorization: `Bearer ${MGMT_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  const body = await res.json();
+  if (!res.ok || !Array.isArray(body)) throw new Error(`management query failed: ${JSON.stringify(body).slice(0, 200)}`);
+  return body;
+}
 const SHOTS = process.env.RADIO_SLOTS_SHOTS_DIR || 'test-results/radio-slots';
 
 let dj: { client: SupabaseClient; userId: string };
@@ -209,14 +220,21 @@ test.describe.serial('Grove Station radio slots (member path)', () => {
     // The notices open a Grove Station <-> DJ direct room. Direct rooms can
     // only be deleted by the service role (chat_rooms_delete excludes
     // 'direct' for members, and RLS hides the room from gosat), so a room
-    // this run created cannot be torn down from here. Fail loudly with the
-    // exact removal rather than leave it silently.
+    // this run created is removed through the Management API
+    // (SUPABASE_ACCESS_TOKEN, .env.test, local only) -- and only while it
+    // holds no messages, so nothing a person wrote is ever deleted. If it
+    // cannot be removed, the run fails and says exactly why.
     if (!roomExistedBefore) {
       for (const roomId of await groveStationRoomIds()) {
-        problems.push(
-          `direct room ${roomId} (Grove Station <-> davisontest1) was created by this run and members cannot delete it. ` +
-          `Remove it with the service role: delete from chat_participants where room_id='${roomId}'; delete from chat_rooms where id='${roomId}';`,
-        );
+        if (!MGMT_TOKEN) { problems.push(`direct room ${roomId}: SUPABASE_ACCESS_TOKEN is missing from .env.test, so it could not be removed`); continue; }
+        try {
+          const r = await mgmtSql(`begin;
+            delete from chat_participants where room_id='${roomId}' and not exists (select 1 from chat_messages where room_id='${roomId}');
+            delete from chat_rooms where id='${roomId}' and room_type='direct' and not exists (select 1 from chat_messages where room_id='${roomId}') returning id;
+            commit;`);
+          console.log(`[TEARDOWN] direct room ${roomId}: ${r.length ? 'deleted' : 'NOT deleted'}`);
+        } catch (e) { problems.push(`direct room ${roomId}: ${String(e)}`); }
+        if ((await groveStationRoomIds()).includes(roomId)) problems.push(`direct room ${roomId} survived teardown (it may hold messages)`);
       }
     }
 

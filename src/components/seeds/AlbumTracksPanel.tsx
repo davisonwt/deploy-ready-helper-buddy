@@ -19,8 +19,17 @@ export interface AlbumTrack {
 
 const PREVIEW_SECONDS = 45;
 
-async function callAlbumTracks<T>(body: Record<string, unknown>): Promise<T> {
-  const { data, error } = await supabase.functions.invoke('album-tracks', { body });
+const LIST_TIMEOUT_MS = 10_000;
+
+async function callAlbumTracks<T>(body: Record<string, unknown>, timeoutMs?: number): Promise<T> {
+  const call = supabase.functions.invoke('album-tracks', { body });
+  const { data, error } = timeoutMs
+    ? await Promise.race([
+        call,
+        new Promise<never>((_, reject) => setTimeout(
+          () => reject(new Error("The track list didn't load in time. Check your connection and tap Retry.")), timeoutMs)),
+      ])
+    : await call;
   if (error) {
     let message = error.message;
     const ctx = (error as { context?: Response }).context;
@@ -74,6 +83,7 @@ export default function AlbumTracksPanel({ albumId, albumTitle, open, onOpenChan
   const isMobile = useIsMobile();
   const [tracks, setTracks] = useState<AlbumTrack[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [playing, setPlaying] = useState<number | null>(null);
   const [loadingIdx, setLoadingIdx] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
@@ -86,11 +96,13 @@ export default function AlbumTracksPanel({ albumId, albumTitle, open, onOpenChan
     if (!open || tracks) return;
     let alive = true;
     setError(null);
-    callAlbumTracks<{ tracks: AlbumTrack[] }>({ albumId, action: 'list' })
+    // Gives up after 10s with a Retry rather than spinning forever
+    // (seen once on 2026-09-25: the list request never completed).
+    callAlbumTracks<{ tracks: AlbumTrack[] }>({ albumId, action: 'list' }, LIST_TIMEOUT_MS)
       .then((r) => { if (alive) setTracks(r.tracks); })
       .catch((e) => { if (alive) setError(e.message || 'Could not load the tracks.'); });
     return () => { alive = false; };
-  }, [open, albumId, tracks]);
+  }, [open, albumId, tracks, attempt]);
 
   // Another player (another card, another album) took over, or playback
   // stopped. Switching between THIS album's own tracks is handled by
@@ -153,7 +165,18 @@ export default function AlbumTracksPanel({ albumId, albumTitle, open, onOpenChan
           <X className="h-4 w-4" />
         </button>
       </div>
-      {error && <p className="px-3 py-4 text-rose-300">{error}</p>}
+      {error && (
+        <div className="px-3 py-4 space-y-2">
+          <p className="text-rose-300">{error}</p>
+          <button
+            type="button"
+            onClick={() => { setError(null); setAttempt((n) => n + 1); }}
+            className="rounded-full border border-amber-400/50 px-3 py-1 text-xs text-amber-100 hover:bg-amber-500/10"
+          >
+            Retry
+          </button>
+        </div>
+      )}
       {!error && !tracks && (
         <div className="flex items-center gap-2 px-3 py-4 text-amber-100/70"><Loader2 className="h-4 w-4 animate-spin" /> Loading tracks…</div>
       )}

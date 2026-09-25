@@ -45,6 +45,25 @@ async function login(page: Page) {
 }
 
 const QA_TITLE = `QA share ${Date.now()}`;
+const MGMT_TOKEN = process.env.SUPABASE_ACCESS_TOKEN || '';
+const TRIBE_MEMBER_ID = process.env.TEST_B_USER_ID || '';
+// A tribe member of its own for test 3: davisontest2 (a test account) is
+// put in davisontest1's tribe for this run and taken out in afterAll. Only
+// the service role may write referral_circle, so it goes through the
+// Management API (SUPABASE_ACCESS_TOKEN, .env.test, local only). The
+// member-welcome trigger is suspended for that one insert so no welcome
+// room or message is created.
+let tribeRowId: string | null = null;
+
+async function mgmtSql<T = any>(query: string): Promise<T[]> {
+  const res = await fetch('https://api.supabase.com/v1/projects/zuwkgasbkpjlxzsjzumu/database/query', {
+    method: 'POST', headers: { Authorization: `Bearer ${MGMT_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  const body = await res.json();
+  if (!res.ok || !Array.isArray(body)) throw new Error(`management query failed: ${JSON.stringify(body).slice(0, 200)}`);
+  return body as T[];
+}
 let owner: { client: SupabaseClient; userId: string };
 
 /** THIS run's listing card -- the only one this spec may act on. */
@@ -67,9 +86,27 @@ test.describe.serial('Share from My Listings', () => {
   test.beforeAll(async () => {
     owner = await asUser(A_EMAIL, A_PASS, 'TEST_A (davisontest1)');
     await createWheelListing(owner.client, owner.userId, QA_TITLE, { town: 'Bethlehem, Free State' });
+    if (!MGMT_TOKEN || !TRIBE_MEMBER_ID) {
+      throw new Error('SUPABASE_ACCESS_TOKEN and TEST_B_USER_ID must be set in .env.test to give this run its own tribe member.');
+    }
+    const existing = await mgmtSql(`select id from referral_circle where referred_user_id='${TRIBE_MEMBER_ID}'`);
+    if (existing.length) throw new Error('davisontest2 already belongs to a tribe; this spec will not move them. Remove that row first.');
+    const [row] = await mgmtSql<{ id: string }>(`begin;
+      alter table referral_circle disable trigger member_welcome_on_referral;
+      insert into referral_circle (referrer_id, referred_user_id, status) values ('${owner.userId}', '${TRIBE_MEMBER_ID}', 'active') returning id;
+      alter table referral_circle enable trigger member_welcome_on_referral;
+      commit;`);
+    tribeRowId = row?.id ?? null;
+    console.log(`[SETUP] tribe member davisontest2 -> davisontest1 (${tribeRowId})`);
   });
 
   test.afterAll(async () => {
+    if (tribeRowId) {
+      await mgmtSql(`delete from referral_circle where id='${tribeRowId}'`);
+      const left = await mgmtSql(`select id from referral_circle where id='${tribeRowId}'`);
+      console.log(`[RESIDUE] tribe row ${tribeRowId}: ${left.length} left (expected 0)`);
+      expect(left, 'the QA tribe row survived teardown').toHaveLength(0);
+    }
     const swept = await sweepProducts(owner.client, owner.userId, [QA_TITLE]);
     reportSweep('my-listings-share', swept);
     const { data: sowers } = await owner.client.from('sowers').select('id').eq('user_id', owner.userId);
@@ -137,7 +174,7 @@ test.describe.serial('Share from My Listings', () => {
 
     const count = await checkboxes.count();
     console.log(`[EVIDENCE] recipients listed for this account: ${count}`);
-    test.skip(count === 0, 'This account has no tribe members, so no send is possible.');
+    expect(count, 'this run put davisontest2 in the tribe, so a recipient must be listed').toBeGreaterThan(0);
 
     const sendBtn = page.getByRole('button', { name: /^Invite/ });
     await expect(sendBtn).toBeDisabled();
