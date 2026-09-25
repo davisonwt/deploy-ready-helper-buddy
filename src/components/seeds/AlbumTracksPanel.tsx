@@ -92,10 +92,15 @@ export default function AlbumTracksPanel({ albumId, albumTitle, open, onOpenChan
     return () => { alive = false; };
   }, [open, albumId, tracks]);
 
-  // Another player (another card, another album) took over.
+  // Another player (another card, another album) took over, or playback
+  // stopped. Switching between THIS album's own tracks is handled by
+  // toggle() itself: the store announces the new id synchronously inside
+  // startPreviewPlayback, and reacting to it here would clear the row that
+  // was just set playing.
   useEffect(() => subscribeToPreviewPlayback((id) => {
-    if (playing !== null && id !== idFor(playing)) { setPlaying(null); setProgress(0); setElapsed(0); }
-  }), [playing]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (id && id.startsWith(`album:${albumId}:`)) return;
+    setPlaying(null); setProgress(0); setElapsed(0);
+  }), [albumId]);
 
   const stopOurs = () => {
     const current = getCurrentlyPlayingId();
