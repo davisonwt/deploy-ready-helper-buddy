@@ -61,6 +61,33 @@ Anything a first-message test creates in davisontest3's rooms must be deleted
 in `afterAll`, **including the room**, or the account stops being history-free
 for the next run.
 
+## The devnet purchase spec (opt-in, spends test money)
+
+`tests/payments/devnet-purchase-routing.spec.ts` buys a QA seed through a
+SeedCard's "Bestow & Get This Seed" and a QA album track through its row,
+paying real **devnet** USDC from the test wallet in `.env.test`
+(`TEST_DEVNET_WALLET_*`), and proves the purchase row, the sower's amount,
+the full-file unlock, the single sale and the absence of a gift row. It is
+left out of `npm run test:payments` by default; that run prints a one-line
+reminder saying so.
+
+**Run it after any change to checkout, SeedCard purchase routing or
+finalize** (`create-basket-bestowal-order`, `finalize_basket_order`,
+`_shared/paypal/capture.ts`'s `finalizeCompletedOrder`, `SeedCard.tsx`'s
+`buyProduct`, `solanaPaymentGate` / `SolanaPaymentHost`):
+
+```
+# Git Bash
+RUN_DEVNET_PURCHASE=1 npx playwright test devnet-purchase-routing
+# PowerShell
+$env:RUN_DEVNET_PURCHASE='1'; npx playwright test devnet-purchase-routing
+```
+
+It uses the build in `dist/`, so run `npx vite build` first. A run spends
+4.62 devnet USDC and refuses to start below 5; top the wallet up at
+faucet.circle.com (Solana Devnet). It refuses to pay any intent that is not
+on devnet or not addressed to the S2G hot wallet.
+
 ## Housekeeping
 
 - These specs write to production. Anything they create must be deleted by

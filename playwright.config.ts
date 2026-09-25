@@ -23,8 +23,15 @@ if (existsSync(envTest)) {
 // Phantom crash that unit tests (which never load an actual browser bundle)
 // could not. Run via `npm run test:payments` before every push that touches
 // src/lib/payments -- see tests/payments/README.md.
+// devnet-purchase-routing pays with real devnet USDC from the test wallet
+// (~4.62 a run), so it runs only when asked: RUN_DEVNET_PURCHASE=1.
+// global-setup.ts prints a one-line reminder whenever it was left out.
+const RUN_DEVNET_PURCHASE = process.env.RUN_DEVNET_PURCHASE === '1';
+
 export default defineConfig({
   testDir: './tests/payments',
+  testIgnore: RUN_DEVNET_PURCHASE ? [] : ['**/devnet-purchase-routing.spec.ts'],
+  globalSetup: './tests/payments/global-setup.ts',
   timeout: 60_000,
   retries: 0,
   reporter: 'list',
