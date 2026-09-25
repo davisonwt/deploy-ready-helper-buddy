@@ -10,14 +10,20 @@ import { createClient } from '@supabase/supabase-js';
 //        release card yet;
 //     3. as member A: the orchard page reads "Sow2Grow pays the parties
 //        directly" and offers the bestow button.
-//   Part 2 (only with PHASE_D_RELEASE=1, after the owner's devnet pocket has
-//   funded the orchard; REAL devnet USDC leaves the hot wallet):
-//     4. as the gosat: release it to two parties from the console;
-//     5. both rows read Paid with a signature; as A the orchard page lists
-//        both parties under "Where the gifts went".
-//   Party destinations: PHASE_D_PARTY1_ADDRESS / PHASE_D_PARTY2_ADDRESS, each
-//   defaulting to the owner's devnet Phantom (the only devnet wallet the test
-//   accounts have). Skips itself without the credentials. Never commit .env.test.
+//   Part 2 (NOT RUN -- see its test.skip): release to two parties.
+//     orchard-release-uplift signs only with the production secret
+//     SOLANA_HOT_WALLET_SECRET_KEY (_shared/solanaPayout.ts), i.e. S2G's live
+//     payout wallet, and there is no way to point it at a test treasury short
+//     of letting a request pick the signing key (never) or a separate test
+//     deployment (none exists). Decided 2026-09-25: never run it against the
+//     live wallet, so the old PHASE_D_RELEASE=1 opt-in is gone.
+//
+// Part 1 creates its own Uplift orchard under the gosat's account each run
+// ("QA uplift <stamp>") and deletes it in afterAll, with the rows its insert
+// triggers write; a residue scan proves nothing references it afterwards.
+// It only READS the gosat's settlement consent -- a spec never writes a real
+// member's rows. Fails, saying why, without credentials or
+// SUPABASE_ACCESS_TOKEN. Never commit .env.test.
 
 const SUPABASE_URL = 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
 const SUPABASE_PROJECT_REF = 'zuwkgasbkpjlxzsjzumu';
@@ -29,7 +35,19 @@ const GOSAT_EMAIL = process.env.TEST_GOSAT_EMAIL;
 const GOSAT_PASSWORD = process.env.TEST_GOSAT_PASSWORD;
 const A_EMAIL = process.env.TEST_A_EMAIL;
 const A_PASSWORD = process.env.TEST_A_PASSWORD;
-const RELEASE = process.env.PHASE_D_RELEASE === '1';
+const TOKEN = process.env.SUPABASE_ACCESS_TOKEN || '';
+const QA_TITLE = `QA uplift ${Date.now()}`;
+const createdOrchards: string[] = [];
+
+async function sql<T = any>(query: string): Promise<T[]> {
+  const res = await fetch(`https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_REF}/database/query`, {
+    method: 'POST', headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  const body = await res.json();
+  if (!res.ok || !Array.isArray(body)) throw new Error(`sql failed: ${JSON.stringify(body).slice(0, 300)}`);
+  return body as T[];
+}
 const PARTY1 = process.env.PHASE_D_PARTY1_ADDRESS || DEFAULT_PARTY;
 const PARTY2 = process.env.PHASE_D_PARTY2_ADDRESS || DEFAULT_PARTY;
 
@@ -63,35 +81,57 @@ async function findUpliftTestOrchard(client: ReturnType<typeof createClient>) {
 }
 
 test.describe('orchard Uplift (Phase D)', () => {
-  test.skip(!GOSAT_EMAIL || !GOSAT_PASSWORD || !A_EMAIL || !A_PASSWORD, 'Set TEST_GOSAT_EMAIL/PASSWORD and TEST_A_EMAIL/PASSWORD to run this spec.');
+  test.beforeAll(() => {
+    if (!GOSAT_EMAIL || !GOSAT_PASSWORD || !A_EMAIL || !A_PASSWORD) throw new Error('TEST_GOSAT_EMAIL/PASSWORD and TEST_A_EMAIL/PASSWORD must be set in .env.test.');
+    if (!TOKEN) throw new Error('SUPABASE_ACCESS_TOKEN must be set in .env.test (teardown and the consent read).');
+  });
+
+  test.afterAll(async () => {
+    if (!createdOrchards.length) return;
+    const ids = createdOrchards.map((i) => `'${i}'`).join(',');
+    await sql(`begin;
+      delete from linux_family_suggestions where seed_id in (${ids});
+      delete from linux_family_activity_log where seed_id in (${ids});
+      delete from orchards where id in (${ids});
+      commit;`);
+    const [scan] = await sql(`
+      select coalesce(sum(n), 0)::int left_rows, coalesce(string_agg(tbl || '.' || col || ':' || n, ', '), '') where_left from (
+        select c.table_name tbl, c.column_name col, (xpath('/row/n/text()', query_to_xml(format('select count(*) n from public.%I where %I::text in (${ids.replace(/'/g, "''")})', c.table_name, c.column_name), false, true, '')))[1]::text::int n
+          from information_schema.columns c join information_schema.tables t on t.table_name = c.table_name and t.table_schema = c.table_schema
+         where c.table_schema = 'public' and t.table_type = 'BASE TABLE' and c.data_type = 'uuid'
+      ) x where n > 0`);
+    console.log(`[RESIDUE] orchard-uplift: ${createdOrchards.length} orchard(s) created, rows referencing them now: ${scan.left_rows} ${scan.where_left}`);
+    expect(scan.left_rows, `left: ${scan.where_left}`).toBe(0);
+  });
 
   test('a non-gosat cannot open an Uplift; the gosat can, and the console shows it', async ({ page }) => {
     // 1. A is refused by trg_orchards_uplift_gate (42501 -> 403 with the reason).
     const a = await signIn(A_EMAIL!, A_PASSWORD!);
-    const { error: aErr } = await a.client.from('orchards').insert([{
-      title: 'Phase D non-gosat uplift attempt', description: 'must be refused by the DB gate', category: 'General', orchard_type: 'standard',
+    const { data: aRow, error: aErr } = await a.client.from('orchards').insert([{
+      title: `${QA_TITLE} non-gosat attempt`, description: 'must be refused by the DB gate', category: 'General', orchard_type: 'standard',
       seed_value: 8.69, original_seed_value: 8.69, pocket_price: 10, product_type: 'digital', status: 'active', currency: 'USDC',
       user_id: a.session.user.id, orchard_kind: 'uplift',
-    }] as any);
+    }] as any).select('id');
+    for (const r of (aRow ?? []) as any[]) createdOrchards.push(r.id); // only if the gate failed open
     expect(aErr, 'A inserting kind = uplift must fail').not.toBeNull();
     expect(aErr!.message).toMatch(/uplift_orchards_are_gosat_only/);
 
-    // 2. The gosat opens one if none is open (real row; harmless: 1 pocket x 10 USDC, digital).
+    // 2. The gosat opens a fresh one for this run (1 pocket x 10 USDC, digital),
+    //    deleted in afterAll. The gosat is a real member: his settlement consent
+    //    is READ here, never created by a spec.
     const g = await signIn(GOSAT_EMAIL!, GOSAT_PASSWORD!);
-    let orchard = await findUpliftTestOrchard(g.client);
-    if (!orchard) {
-      await fetch(`${SUPABASE_URL}/functions/v1/accept-settlement-consent`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ANON_KEY, Authorization: `Bearer ${g.session.access_token}` }, body: '{}',
-      });
-      const { data: created, error: createErr } = await g.client.from('orchards').insert([{
-        title: TITLE, description: 'Phase D proof: one 10 USDC pocket funds it; a gosat then releases it to two parties paid in USDC. Safe to cancel while open.',
-        category: 'General', orchard_type: 'standard', seed_value: 8.69, original_seed_value: 8.69, pocket_price: 10, product_type: 'digital',
-        status: 'active', currency: 'USDC', user_id: g.session.user.id, orchard_kind: 'uplift',
-      }] as any).select('id, title, funding_state, orchard_kind, opened_by_gosat, user_id').single();
-      expect(createErr, 'the gosat creating the Uplift test orchard must succeed').toBeNull();
-      orchard = created;
-      console.log('created Uplift test orchard:', JSON.stringify(orchard));
-    }
+    const [consent] = await sql(`select count(*)::int n from settlement_consents
+      where user_id='${g.session.user.id}' and version = public.get_settlement_consent_version()`);
+    if (!consent.n) throw new Error('The gosat has not accepted the current settlement consent; accept it in the app, then re-run. A spec never accepts it for him.');
+    const { data: created, error: createErr } = await g.client.from('orchards').insert([{
+      title: QA_TITLE, description: 'QA fixture: created and deleted by orchard-uplift.spec.ts in the same run.',
+      category: 'General', orchard_type: 'standard', seed_value: 8.69, original_seed_value: 8.69, pocket_price: 10, product_type: 'digital',
+      status: 'active', currency: 'USDC', user_id: g.session.user.id, orchard_kind: 'uplift',
+    }] as any).select('id, title, funding_state, orchard_kind, opened_by_gosat, user_id').single();
+    expect(createErr, 'the gosat creating the Uplift test orchard must succeed').toBeNull();
+    createdOrchards.push((created as any).id);
+    const orchard = created as any;
+    console.log('created Uplift test orchard:', JSON.stringify(orchard));
     expect(orchard.orchard_kind).toBe('uplift');
     expect(orchard.opened_by_gosat, 'opened_by_gosat is stamped by the gate').toBe(g.session.user.id);
     console.log('PHASE_D_ORCHARD_ID=' + orchard.id + ' state=' + orchard.funding_state);
@@ -122,7 +162,8 @@ test.describe('orchard Uplift (Phase D)', () => {
   });
 
   test('devnet proof: the gosat releases the funded Uplift to two parties; A sees where the gifts went', async ({ page }) => {
-    test.skip(!RELEASE, 'Set PHASE_D_RELEASE=1 (after the devnet pocket has funded the orchard) to run the release step. Real devnet USDC leaves the hot wallet.');
+    test.skip(true, 'Not run, by decision (2026-09-25): orchard-release-uplift can only sign with S2G\'s live payout wallet '
+      + '(SOLANA_HOT_WALLET_SECRET_KEY), and it must never be run against it. Needs a test treasury the release can be pointed at.');
     test.setTimeout(6 * 60_000);
     const g = await signIn(GOSAT_EMAIL!, GOSAT_PASSWORD!);
     const orchardId = process.env.PHASE_D_ORCHARD_ID || (await findUpliftTestOrchard(g.client))?.id;

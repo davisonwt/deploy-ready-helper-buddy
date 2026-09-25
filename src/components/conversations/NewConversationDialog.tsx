@@ -54,6 +54,9 @@ export function NewConversationDialog({ open, onClose, currentUserId, onCreated 
         .from('profiles_public')
         .select('user_id, display_name, first_name, last_name, avatar_url')
         .neq('user_id', currentUserId)
+        // S2G place/persona accounts (Gosat's Boardroom, Grove Station, the
+        // companions...) are not people to DM; see profiles_public.is_place_account.
+        .eq('is_place_account', false)
         .limit(100);
       if (!alive) return;
       if (error) {

@@ -316,7 +316,12 @@ export default function HotspotEditor({ imageUrl, value, onChange, ownerId }: Pr
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(h.id ?? null); }}
                   aria-label={`Delete ${h.label || 'this hotspot'}`}
-                  className="absolute -top-3.5 -right-3.5 flex h-11 w-11 items-center justify-center"
+                  // The 44px target grows UP from the dot and the resize
+                  // handle's grows DOWN from its own, so on a small box (a new
+                  // one is ~21px tall on a phone) the resize target no longer
+                  // sits on the x and swallows the tap. z-10: on a box under
+                  // 16px tall they still meet, and the x wins there.
+                  className="absolute -top-9 -right-3.5 z-10 flex h-11 w-11 items-end justify-center"
                 >
                   <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-black bg-rose-500 text-white">
                     <X className="h-3 w-3" />
@@ -327,7 +332,7 @@ export default function HotspotEditor({ imageUrl, value, onChange, ownerId }: Pr
                   dot -- the handle itself only needs to look small. */}
               <div
                 onPointerDown={(e) => startResize(e, h)}
-                className="absolute -bottom-3.5 -right-3.5 flex h-11 w-11 cursor-nwse-resize items-center justify-center"
+                className="absolute -bottom-9 -right-3.5 flex h-11 w-11 cursor-nwse-resize items-start justify-center"
               >
                 <div className="h-4 w-4 rounded-full border-2 border-black bg-amber-300" />
               </div>

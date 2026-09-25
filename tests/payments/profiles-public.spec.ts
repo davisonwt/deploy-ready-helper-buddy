@@ -129,6 +129,15 @@ test.describe('profiles_public: locked table, public view', () => {
     const others = (sowerRows as any[]).filter((r) => r?.user_id && r.user_id !== session.user.id);
     expect(others.length, 'New Chat dialog must receive other members\' public rows').toBeGreaterThan(0);
     expect(others.every((r) => r.display_name || r.username || r.first_name), 'every listed member has a visible name').toBe(true);
+
+    // S2G place/persona accounts (Gosat's Boardroom, Grove Station, the
+    // companions...) are not people to DM: New Chat never lists them.
+    const { data: places, error: placesErr } = await client.from('profiles_public').select('user_id, username').eq('is_place_account', true);
+    expect(placesErr).toBeNull();
+    expect((places ?? []).length, 'the place accounts exist, so this check means something').toBeGreaterThan(0);
+    const placeIds = new Set((places ?? []).map((p: any) => p.user_id));
+    const leaked = (sowerRows as any[]).filter((r) => placeIds.has(r.user_id));
+    expect(leaked.map((r) => r.user_id), 'no place account in New Chat').toEqual([]);
     void bDisplayName; void publicRowsSeen;
   });
 });

@@ -42,6 +42,25 @@ that nobody re-ran:
   listing. Only an in-transaction rehearsal was run, and a transaction is the
   one condition that does not hold in production.
 
+## Test identities (`.env.test`, gitignored)
+
+| Env names | Account | Roles | Use it for |
+|---|---|---|---|
+| `TEST_A_*` (also `TEST_USER_*`) | davisontest1 | none | A plain member; the one test account with a sower row, so stall and seed fixtures go on it. |
+| `TEST_B_*` (also `TEST_USER3_*`) | davisontest2 | none | A second member: buyer, sender, customer. Already has a DM with davisontest1. |
+| `TEST_C_*` | davisontest3 | none | A member with **no chat history**, for anything that only happens on a room's first message (the seed-quote card). Created 2026-09-25. |
+| `TEST_GOSAT_*` (also `TEST_USER2_*`) | davison.taljaard | gosat, admin, radio_admin | **A real member.** Read his rows; never write to them. |
+
+All three davisontest accounts are `profiles.is_test` and `is_system`: they stay
+out of member counts and public stall feeds, but they do appear in New Chat
+(only `is_place_account` rows are hidden there). A new test account must be
+created with `user_metadata.is_test = true`, or its signup posts a "just joined"
+welcome to every member in the Global room.
+
+Anything a first-message test creates in davisontest3's rooms must be deleted
+in `afterAll`, **including the room**, or the account stops being history-free
+for the next run.
+
 ## Housekeeping
 
 - These specs write to production. Anything they create must be deleted by

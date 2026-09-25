@@ -113,28 +113,34 @@ test.describe('Karoo Honey stall hotspots (1440x900)', () => {
       const box = await btn.boundingBox();
       expect(box, `"${h.label}" has no bounding box`).not.toBeNull();
       const hit = await page.evaluate(({ x, y }) => {
+        // The button's own glow span (inset-0, inside it) is what sits on top;
+        // the tap still lands on the button, so resolve to the nearest labelled button.
         const top = document.elementFromPoint(x, y);
-        return { isSelf: false, ariaLabel: top?.getAttribute?.('aria-label') ?? null, tag: top?.tagName ?? null };
+        const owner = top?.closest?.('button[aria-label]') ?? null;
+        return { isSelf: false, ariaLabel: owner?.getAttribute('aria-label') ?? null, tag: top?.tagName ?? null };
       }, { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 });
       expect(hit.ariaLabel, `elementFromPoint at "${h.label}"'s centre hit "${hit.ariaLabel}" (${hit.tag}) instead`).toBe(h.label);
     }
   });
 
-  test('"Our Products" opens a sheet titled "Products" -- not the pre-fix books fallback', async ({ page }) => {
+  test('"Our Products" opens a sheet titled "Our Products" -- not the pre-fix books fallback', async ({ page }) => {
     await stubAuthSession(page);
     await stubKarooBackend(page);
     await page.goto('/stall/wesselsangelique3', { waitUntil: 'networkidle' });
 
     await page.getByRole('button', { name: 'Our Products', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Products', exact: true, level: 2 })).toBeVisible({ timeout: 5_000 });
+    // The sheet is titled by the hotspot's own label since 4250ad48 (2026-09-12).
+    await expect(page.getByRole('heading', { name: 'Our Products', exact: true, level: 2 })).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole('heading', { name: /Books/, level: 2 })).toHaveCount(0);
   });
 
-  test('"Our Services" opens a sheet titled "Services" -- not the pre-fix books fallback', async ({ page }) => {
+  test('"Our Services" opens a sheet titled "Our Services" -- not the pre-fix books fallback', async ({ page }) => {
     await stubAuthSession(page);
     await stubKarooBackend(page);
     await page.goto('/stall/wesselsangelique3', { waitUntil: 'networkidle' });
 
     await page.getByRole('button', { name: 'Our Services', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Services', exact: true, level: 2 })).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole('heading', { name: 'Our Services', exact: true, level: 2 })).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole('heading', { name: /Books/, level: 2 })).toHaveCount(0);
   });
 });

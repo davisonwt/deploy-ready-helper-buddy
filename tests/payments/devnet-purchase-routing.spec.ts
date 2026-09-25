@@ -156,7 +156,9 @@ test.describe.serial('devnet purchase routing', () => {
     const bal = await conn.getParsedTokenAccountsByOwner(wallet.publicKey, { mint: new PublicKey(DEVNET_USDC) });
     const usdc = Number(bal.value[0]?.account.data.parsed.info.tokenAmount.uiAmount ?? 0);
     console.log(`[WALLET] ${wallet.publicKey.toBase58()} devnet USDC ${usdc}`);
-    if (usdc < 3) throw new Error(`devnet test wallet has ${usdc} USDC; two purchases need about 2.4. Top it up from faucet.circle.com (Solana Devnet).`);
+    // Two purchases at music's $2 floor: 2 x (2.00 + 15% + 0.01) = 4.62. Refuse before spending any of it.
+    if (usdc < 5) throw new Error(`devnet test wallet ${wallet.publicKey.toBase58()} has ${usdc} USDC; one run spends 4.62. `
+      + 'Top it up from faucet.circle.com (Solana Devnet, 20 USDC per request), then re-run.');
 
     const { data: existing } = await seller.client.from('stalls').select('name').eq('user_id', seller.userId).maybeSingle();
     if (existing) throw new Error(`davisontest1's one stall is held by "${existing.name}"; run this spec alone.`);

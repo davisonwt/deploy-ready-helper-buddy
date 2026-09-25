@@ -86,7 +86,8 @@ test.describe('/cockpit is the owner\'s own stall (Flow v2 step 13)', () => {
     // Bottom bar (Plant Seed / Go Live / Chat) survives alongside the interior.
     await expect(page.getByText('🌱 Plant Seed')).toBeVisible();
     await expect(page.getByText('🔴 Go Live')).toBeVisible();
-    await expect(page.getByText('💬 Chat')).toBeVisible();
+    // Renamed "Global Chat" and repointed at the Global room (2b4f7aa5, 2026-09-19).
+    await expect(page.getByText('💬 Global Chat')).toBeVisible();
 
     // No dashboard chrome left: stats/tiers/week-beads sections and the old header are gone.
     await expect(page.getByText("Day's Beads", { exact: false })).toHaveCount(0);
@@ -99,11 +100,13 @@ test.describe('/cockpit is the owner\'s own stall (Flow v2 step 13)', () => {
     await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible();
   });
 
-  test('shows a "Build your stall" CTA when the owner has no stall yet', async ({ page }) => {
+  test('shows the "your plot is ready" first-run page, with a way to start building, when the owner has no stall yet', async ({ page }) => {
     await stubAuthSession(page);
     await stubBackend(page, { hasStall: false });
     await page.goto('/cockpit', { waitUntil: 'networkidle' });
 
-    await expect(page.getByText('Build your stall', { exact: false })).toBeVisible({ timeout: 15_000 });
+    // EmptyPlotView replaced the plain "Build your stall" card (08d5251f, 2026-09-13).
+    await expect(page.getByRole('heading', { name: 'your plot is ready' })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: 'start building' }).first()).toHaveAttribute('href', '/stall/build');
   });
 });

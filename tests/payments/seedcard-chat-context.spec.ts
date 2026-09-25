@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import {
   asUser, createStallFixture, createShelfSeedFixture, setStallHotspots, deleteStallFixture,
   sweepProducts, sweepStorage, reportSweep,
@@ -10,11 +10,10 @@ import {
 //      "Unknown User") -- ChatRoom.tsx's optimistic append carries the
 //      sender's own profile and its realtime INSERT handler dedupes by id.
 //   2. The seed-context quote card (SeedCard.tsx's
-//      attachSeedReferenceIfFirstMessage) goes on a room's FIRST message
-//      only, never re-injected into an existing conversation. The two test
-//      accounts already share a DM, so this run proves the "never
-//      re-injected" half; the first-message half needs a sender with no DM
-//      with the owner, which no .env.test identity is today.
+//      attachSeedReferenceIfFirstMessage) goes on a room's FIRST message,
+//      and is never re-injected into an existing conversation. davisontest2
+//      already shares a DM with the owner (the "never re-injected" half);
+//      davisontest3 has no chat history (the first-message half).
 //   3. Back out of that DM lands on the SAME stall sheet
 //      (/stall/<username>#stall-kind=<kind>). Since /chatapp became a redirect
 //      to /conversations (fb95ae9d, 2026-09-19) the redirect forwards
@@ -24,17 +23,14 @@ import {
 //
 // Fixtures, created and deleted by this run: a stall on davisontest1 (TEST_A,
 // the one test account with a sower row) with one book on a "QA SHELF"
-// hotspot. davisontest2 (TEST_B) sends. afterAll removes the stall, the book,
-// its files, this run's chat messages and the notifications they raised, and
-// restores davisontest2's XP and stall-visit row; the residue check proves it.
+// hotspot. afterAll removes the stall, the book, its files, every message
+// the senders wrote this run and the notifications they raised, any room
+// this run CREATED (davisontest3's DM, so it stays history-free), and puts
+// back each sender's XP and stall-visit row; the residue check proves it.
 // Needs SUPABASE_ACCESS_TOKEN in .env.test for that SQL.
 
 const REF = 'zuwkgasbkpjlxzsjzumu';
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN || '';
-const OWNER_E = process.env.TEST_A_EMAIL || '';
-const OWNER_P = process.env.TEST_A_PASSWORD || '';
-const SENDER_E = process.env.TEST_B_EMAIL || '';
-const SENDER_P = process.env.TEST_B_PASSWORD || '';
 const STAMP = Date.now();
 const QA_STALL = `QA chat ${STAMP} stall`;
 const QA_BOOK = `QA chat ${STAMP} book`;
@@ -50,23 +46,39 @@ async function sql<T = any>(query: string): Promise<T[]> {
   return body as T[];
 }
 
+type Sender = {
+  key: 'B' | 'C'; label: string; user?: Awaited<ReturnType<typeof asUser>>;
+  pointsBefore: any[]; visitBefore: any[];
+};
+const SENDERS: Record<'B' | 'C', Sender> = {
+  B: { key: 'B', label: 'TEST_B (davisontest2, has a DM with the owner)', pointsBefore: [], visitBefore: [] },
+  C: { key: 'C', label: 'TEST_C (davisontest3, no chat history)', pointsBefore: [], visitBefore: [] },
+};
+
 let owner: Awaited<ReturnType<typeof asUser>>;
-let sender: Awaited<ReturnType<typeof asUser>>;
 let stallId: string | null = null;
 let objectPaths: string[] = [];
 let since = '';
-let pointsBefore: any[] = [];
-let visitBefore: any[] = [];
 const roomsTouched = new Set<string>();
 
-test.describe('SeedCard Message action: one bubble, back to the stall, no loop', () => {
+const list = (xs: string[]) => xs.map((x) => `'${x}'`).join(',') || `'00000000-0000-0000-0000-000000000000'`;
+
+test.describe.serial('SeedCard Message action: quote on first message, one bubble, back to the stall', () => {
   test.beforeAll(async () => {
     if (!TOKEN) throw new Error('SUPABASE_ACCESS_TOKEN must be set in .env.test (teardown of chat rows and XP).');
-    owner = await asUser(OWNER_E, OWNER_P, 'TEST_A (davisontest1, stall owner)');
-    sender = await asUser(SENDER_E, SENDER_P, 'TEST_B (davisontest2, sender)');
+    owner = await asUser(process.env.TEST_A_EMAIL || '', process.env.TEST_A_PASSWORD || '', 'TEST_A (davisontest1, stall owner)');
+    SENDERS.B.user = await asUser(process.env.TEST_B_EMAIL || '', process.env.TEST_B_PASSWORD || '', SENDERS.B.label);
+    SENDERS.C.user = await asUser(process.env.TEST_C_EMAIL || '', process.env.TEST_C_PASSWORD || '', SENDERS.C.label);
     [{ now: since }] = await sql(`select now()::text as now`);
-    pointsBefore = await sql(`select total_points, level, points_to_next_level from user_points where user_id='${sender.userId}'`);
-    visitBefore = await sql(`select last_seen_at::text from stall_visits where viewer_id='${sender.userId}' and stall_user_id='${owner.userId}'`);
+    for (const s of Object.values(SENDERS)) {
+      s.pointsBefore = await sql(`select total_points, level, points_to_next_level from user_points where user_id='${s.user!.userId}'`);
+      s.visitBefore = await sql(`select last_seen_at::text from stall_visits where viewer_id='${s.user!.userId}' and stall_user_id='${owner.userId}'`);
+    }
+    // davisontest3 is only useful while it has no DM with the owner.
+    const [c] = await sql(`select count(*)::int n from chat_participants a join chat_participants b on a.room_id = b.room_id
+      join chat_rooms r on r.id = a.room_id and r.room_type = 'direct'
+      where a.user_id='${SENDERS.C.user!.userId}' and b.user_id='${owner.userId}'`);
+    if (c.n > 0) throw new Error('davisontest3 already has a DM with davisontest1 -- a previous run leaked it. Delete that room, then re-run.');
 
     const created = await createStallFixture(owner.client, owner.userId, QA_STALL);
     stallId = created.stallId; objectPaths = created.objectPaths;
@@ -78,25 +90,36 @@ test.describe('SeedCard Message action: one bubble, back to the stall, no loop',
 
   test.afterAll(async () => {
     const problems: string[] = [];
-    const rooms = [...roomsTouched].map((r) => `'${r}'`).join(',') || `'00000000-0000-0000-0000-000000000000'`;
+    const senderIds = Object.values(SENDERS).filter((s) => s.user).map((s) => s.user!.userId);
+    const touched = list([...roomsTouched]);
+    let createdRooms: string[] = [];
     try {
+      createdRooms = (await sql(`select id from chat_rooms where id in (${touched}) and created_at >= '${since}'`)).map((r: any) => r.id);
       await sql(`begin;
         delete from user_notifications where user_id='${owner.userId}' and created_at >= '${since}'
-          and action_url in (select '/conversations?c=' || x from unnest(array[${rooms}]::text[]) x);
-        delete from chat_messages where room_id in (${rooms}) and sender_id='${sender.userId}' and created_at >= '${since}';
+          and action_url in (select '/conversations?c=' || x from unnest(array[${touched}]::text[]) x);
+        delete from chat_messages where room_id in (${touched}) and sender_id in (${list(senderIds)}) and created_at >= '${since}';
+        delete from chat_messages where room_id in (${list(createdRooms)});
+        delete from chat_participants where room_id in (${list(createdRooms)});
+        delete from chat_rooms where id in (${list(createdRooms)});
         commit;`);
     } catch (e) { problems.push(`chat: ${String(e)}`); }
-    try {
-      if (pointsBefore.length) {
-        const p = pointsBefore[0];
-        await sql(`update user_points set total_points=${p.total_points}, level=${p.level}, points_to_next_level=${p.points_to_next_level} where user_id='${sender.userId}'`);
-      }
-      if (visitBefore.length) {
-        await sql(`update stall_visits set last_seen_at='${visitBefore[0].last_seen_at}' where viewer_id='${sender.userId}' and stall_user_id='${owner.userId}'`);
-      } else {
-        await sql(`delete from stall_visits where viewer_id='${sender.userId}' and stall_user_id='${owner.userId}'`);
-      }
-    } catch (e) { problems.push(`xp/visit: ${String(e)}`); }
+    for (const s of Object.values(SENDERS)) {
+      if (!s.user) continue;
+      try {
+        if (s.pointsBefore.length) {
+          const p = s.pointsBefore[0];
+          await sql(`update user_points set total_points=${p.total_points}, level=${p.level}, points_to_next_level=${p.points_to_next_level} where user_id='${s.user.userId}'`);
+        } else {
+          await sql(`delete from user_points where user_id='${s.user.userId}'`);
+        }
+        if (s.visitBefore.length) {
+          await sql(`update stall_visits set last_seen_at='${s.visitBefore[0].last_seen_at}' where viewer_id='${s.user.userId}' and stall_user_id='${owner.userId}'`);
+        } else {
+          await sql(`delete from stall_visits where viewer_id='${s.user.userId}' and stall_user_id='${owner.userId}'`);
+        }
+      } catch (e) { problems.push(`xp/visit ${s.key}: ${String(e)}`); }
+    }
     try {
       if (stallId) await deleteStallFixture(owner.client, stallId);
       if (objectPaths.length) await sweepStorage(owner.client, 'stalls', objectPaths);
@@ -106,43 +129,43 @@ test.describe('SeedCard Message action: one bubble, back to the stall, no loop',
     const [left] = await sql(`select
       (select count(*) from stalls where user_id='${owner.userId}' and name='${QA_STALL}')::int stalls,
       (select count(*) from products where title='${QA_BOOK}')::int products,
-      (select count(*) from chat_messages where room_id in (${rooms}) and sender_id='${sender.userId}' and created_at >= '${since}')::int messages,
-      (select count(*) from user_notifications where user_id='${owner.userId}' and created_at >= '${since}' and type='chat_message')::int notifications,
-      (select total_points from user_points where user_id='${sender.userId}')::int points,
-      (select last_seen_at::text from stall_visits where viewer_id='${sender.userId}' and stall_user_id='${owner.userId}') visit`);
-    console.log(`[RESIDUE] ${JSON.stringify(left)} (points before ${pointsBefore[0]?.total_points ?? 'none'}, visit before ${visitBefore[0]?.last_seen_at ?? 'none'})`);
+      (select count(*) from chat_messages where room_id in (${touched}) and sender_id in (${list(senderIds)}) and created_at >= '${since}')::int messages,
+      (select count(*) from chat_rooms where id in (${list(createdRooms)}))::int created_rooms,
+      (select count(*) from user_notifications where user_id='${owner.userId}' and created_at >= '${since}' and type='chat_message')::int notifications`);
+    console.log(`[RESIDUE] ${JSON.stringify(left)}; rooms created this run: ${createdRooms.length}`);
+    for (const s of Object.values(SENDERS)) {
+      if (!s.user) continue;
+      const [now] = await sql(`select (select total_points from user_points where user_id='${s.user.userId}')::int points,
+        (select last_seen_at::text from stall_visits where viewer_id='${s.user.userId}' and stall_user_id='${owner.userId}') visit`);
+      console.log(`[RESIDUE] sender ${s.key}: points ${now.points} (before ${s.pointsBefore[0]?.total_points ?? 'none'}), visit ${now.visit} (before ${s.visitBefore[0]?.last_seen_at ?? 'none'})`);
+      expect(now.points ?? null).toBe(s.pointsBefore.length ? Number(s.pointsBefore[0].total_points) : null);
+      expect(now.visit ?? null).toBe(s.visitBefore[0]?.last_seen_at ?? null);
+    }
     expect(problems).toEqual([]);
-    expect([left.stalls, left.products, left.messages, left.notifications]).toEqual([0, 0, 0, 0]);
-    if (pointsBefore.length) expect(left.points).toBe(Number(pointsBefore[0].total_points));
-    expect(left.visit ?? null).toBe(visitBefore[0]?.last_seen_at ?? null);
+    expect([left.stalls, left.products, left.messages, left.created_rooms, left.notifications]).toEqual([0, 0, 0, 0, 0]);
   });
 
-  test('B messages A from a SeedCard on A\'s stall: one bubble, real name, no re-injected quote, back to the stall', async ({ page }) => {
-    test.setTimeout(4 * 60_000);
+  /** Signs in as the sender, reaches the stall (from the feed when it shows there), opens the shelf and taps Message. */
+  async function messageFromSeedCard(page: Page, s: Sender): Promise<{ roomId: string; earlier: number; cameFromFeed: boolean }> {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.addInitScript(({ key, session }) => {
       window.localStorage.setItem(key, JSON.stringify(session));
       window.sessionStorage.setItem('audioUnlocked', '1');
-    }, { key: `sb-${REF}-auth-token`, session: (await sender.client.auth.getSession()).data.session });
-
+    }, { key: `sb-${REF}-auth-token`, session: (await s.user!.client.auth.getSession()).data.session });
     const [{ username: ownerUsername }] = await sql(`select username from profiles where user_id='${owner.userId}'`);
-    const [senderProfile] = await sql(`select display_name from profiles_public where user_id='${sender.userId}'`);
-    const senderName = senderProfile?.display_name as string | undefined;
-
-    const pageErrors: string[] = [];
-    page.on('pageerror', (e) => pageErrors.push(e.message));
 
     // Start from the feed so StallVisitPage carries a real { from }; fall back
     // to a direct link if the new fixture isn't on the feed's first screen.
     await page.goto('/stalls-feed', { waitUntil: 'load' });
     const feedCard = page.getByText(QA_STALL, { exact: false }).first();
     let cameFromFeed = false;
-    if (await feedCard.isVisible({ timeout: 15_000 }).catch(() => false)) {
+    // waitFor, not isVisible({ timeout }): isVisible does not wait.
+    if (await feedCard.waitFor({ state: 'visible', timeout: 15_000 }).then(() => true).catch(() => false)) {
       await feedCard.click();
       cameFromFeed = await page.waitForURL(/\/stall\//, { timeout: 15_000 }).then(() => true).catch(() => false);
     }
     if (!cameFromFeed) await page.goto(`/stall/${ownerUsername}`, { waitUntil: 'load' });
-    console.log(`[ROUTE] reached the stall ${cameFromFeed ? 'from the feed' : 'by direct link'}`);
+    console.log(`[ROUTE ${s.key}] reached the stall ${cameFromFeed ? 'from the feed' : 'by direct link'}`);
 
     const shelf = page.locator(`button[aria-label="${SHELF}"]`).filter({ visible: true }).first();
     await expect(shelf).toBeVisible({ timeout: 45_000 });
@@ -150,7 +173,7 @@ test.describe('SeedCard Message action: one bubble, back to the stall, no loop',
     await expect(page.getByText(QA_BOOK).filter({ visible: true }).first()).toBeVisible({ timeout: 30_000 });
 
     // exact: the stall header's "Message the sower" sits under the sheet's backdrop.
-  const messageButton = page.getByRole('button', { name: 'Message', exact: true }).filter({ visible: true }).first();
+    const messageButton = page.getByRole('button', { name: 'Message', exact: true }).filter({ visible: true }).first();
     await expect(messageButton).toBeVisible({ timeout: 15_000 });
     await messageButton.click();
 
@@ -158,20 +181,48 @@ test.describe('SeedCard Message action: one bubble, back to the stall, no loop',
     const roomId = new URL(page.url()).searchParams.get('c')!;
     roomsTouched.add(roomId);
     const [room] = await sql(`select (select count(*) from chat_messages where room_id='${roomId}' and created_at < '${since}')::int earlier`);
-    console.log(`[ROOM] ${roomId}: ${room.earlier} messages before this run`);
+    console.log(`[ROOM ${s.key}] ${roomId}: ${room.earlier} messages before this run`);
+    return { roomId, earlier: room.earlier, cameFromFeed };
+  }
 
-    // Send a real text: exactly one bubble, the sender's real name.
-    const probe = `verify-${STAMP}`;
+  async function sendOneBubble(page: Page, s: Sender) {
+    const [p] = await sql(`select display_name from profiles_public where user_id='${s.user!.userId}'`);
+    const probe = `verify-${s.key}-${STAMP}`;
     await page.getByPlaceholder(/message/i).first().fill(probe);
     await page.keyboard.press('Enter');
     await expect(page.getByText(probe, { exact: true })).toHaveCount(1, { timeout: 15_000 });
     await expect(page.getByText('Unknown User')).toHaveCount(0);
-    if (senderName) await expect(page.getByText(senderName).first()).toBeVisible();
+    if (p?.display_name) await expect(page.getByText(p.display_name).first()).toBeVisible();
+  }
 
-    // The quote card belongs on a room's first message only.
-    const [quotes] = await sql(`select count(*)::int n from chat_messages where room_id='${roomId}' and message_type='seed_reference' and created_at >= '${since}'`);
-    if (room.earlier > 0) expect(quotes.n, 'an existing conversation must not get a seed quote injected').toBe(0);
-    else expect(quotes.n, 'a brand-new conversation opens with the seed quote').toBe(1);
+  const quotesSince = async (roomId: string) =>
+    (await sql(`select count(*)::int n from chat_messages where room_id='${roomId}' and message_type='seed_reference' and created_at >= '${since}'`))[0].n;
+
+  test('a first message from a SeedCard opens with the seed quote (davisontest3, no history)', async ({ page }) => {
+    test.setTimeout(4 * 60_000);
+    const pageErrors: string[] = [];
+    page.on('pageerror', (e) => pageErrors.push(e.message));
+    const { roomId, earlier } = await messageFromSeedCard(page, SENDERS.C);
+    expect(earlier, 'davisontest3 starts with an empty room').toBe(0);
+
+    await expect(page.getByText('About this seed').first(), 'the quote card shows in the new conversation').toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(QA_BOOK).filter({ visible: true }).first(), 'the quote names the seed').toBeVisible();
+    expect(await quotesSince(roomId), 'exactly one seed quote, on the first message').toBe(1);
+
+    await sendOneBubble(page, SENDERS.C);
+    expect(await quotesSince(roomId), 'sending a text does not add another quote').toBe(1);
+    expect(pageErrors, `no uncaught page errors: ${pageErrors.join('; ')}`).toHaveLength(0);
+  });
+
+  test('B messages A from a SeedCard on A\'s stall: one bubble, real name, no re-injected quote, back to the stall', async ({ page }) => {
+    test.setTimeout(4 * 60_000);
+    const pageErrors: string[] = [];
+    page.on('pageerror', (e) => pageErrors.push(e.message));
+    const { roomId, earlier, cameFromFeed } = await messageFromSeedCard(page, SENDERS.B);
+    expect(earlier, 'davisontest2 already has a conversation with the owner').toBeGreaterThan(0);
+
+    await sendOneBubble(page, SENDERS.B);
+    expect(await quotesSince(roomId), 'an existing conversation must not get a seed quote injected').toBe(0);
 
     // Back -> the same stall sheet, not the conversation list.
     const backButton = page.getByRole('button', { name: /Back to .+'s stall/ }).first();

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { deflateSync } from 'node:zlib';
 
 // Regression test for a 2026-09-12 bug report (Ed, iPhone, sow2growapp.com,
 // /stall/build "Edit stall" step 1): the Category buttons (Music, Books &
@@ -55,10 +56,36 @@ const CATEGORY_LABELS = [
   'Trades & Services', 'Food & Home', 'Whisperer', 'Orchard',
 ];
 
-const PNG_1X1 = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-  'base64',
-);
+/** A solid-colour RGB PNG. The wizard rejects stall images under 800px wide (724c2c86, 2026-09-13). */
+function solidPng(width: number, height: number): Buffer {
+  const crcTable = Array.from({ length: 256 }, (_, n) => {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    return c >>> 0;
+  });
+  const crc32 = (buf: Buffer) => {
+    let c = 0xffffffff;
+    for (const b of buf) c = crcTable[(c ^ b) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  };
+  const chunk = (type: string, data: Buffer) => {
+    const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+    const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(body));
+    return Buffer.concat([len, body, crc]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0); ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8; ihdr[9] = 2; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+  const row = Buffer.alloc(1 + width * 3);
+  for (let x = 0; x < width; x++) { row[1 + x * 3] = 90; row[2 + x * 3] = 60; row[3 + x * 3] = 30; }
+  const raw = Buffer.concat(Array.from({ length: height }, () => row));
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+const STALL_PNG = solidPng(1200, 675);
 
 function fakeJwt(payload: Record<string, unknown>): string {
   const b64url = (obj: unknown) => Buffer.from(JSON.stringify(obj)).toString('base64url');
@@ -108,7 +135,11 @@ async function stubBackend(page: Page) {
     return reply([]);
   });
   await page.route(`${SUPABASE_URL}/rest/v1/rpc/**`, (route) => route.fulfill({ json: null }));
-  await page.route(`${SUPABASE_URL}/storage/v1/object/**`, (route) => route.fulfill({ json: { Key: 'test/fake.png' } }));
+  // Uploads get a Key back; reading an object back (the wizard shows the
+  // uploaded interior to mark shelves on) gets real image bytes.
+  await page.route(`${SUPABASE_URL}/storage/v1/object/**`, (route) => (route.request().method() === 'GET'
+    ? route.fulfill({ contentType: 'image/png', body: STALL_PNG })
+    : route.fulfill({ json: { Key: 'test/fake.png', signedURL: '/object/public/test/fake.png' } })));
   await page.route(`${SUPABASE_URL}/functions/v1/moderate-media`, (route) => route.fulfill({ json: { verdict: 'allow', reason: null } }));
 }
 
@@ -159,31 +190,32 @@ test.describe('/stall/build wizard: category taps and no-obscured-controls', () 
     await stubBackend(page);
   });
 
-  test('tapping a Category button selects it (visible highlight) and no other button steals the tap', async ({ page }) => {
+  test('tapping a Category button toggles it (visible highlight) and no other button steals the tap', async ({ page }) => {
     await page.goto('/stall/build', { waitUntil: 'networkidle' });
 
-    const grid = page.locator('label:text-is("Category") + div');
-    await expect(grid).toBeVisible({ timeout: 15_000 });
+    // Multi-select since f96f2a69 (2026-09-16): "Tick as many as genuinely
+    // apply". Each tap toggles only the button tapped.
+    await expect(page.getByText('Tick as many as genuinely apply', { exact: false })).toBeVisible({ timeout: 15_000 });
 
-    // "Books & Writing" is the default selection (StallBuildPage's initial
-    // useState) -- confirm it starts selected, then tap through every
-    // category and confirm selection actually moves each time.
+    // "Books & Writing" is the default selection (StallBuildPage's initial useState).
     const booksBtn = page.getByRole('button', { name: 'Books & Writing', exact: true });
     await expect(booksBtn).toHaveAttribute('aria-pressed', 'true');
 
-    for (const label of CATEGORY_LABELS) {
+    for (const label of CATEGORY_LABELS.filter((l) => l !== 'Books & Writing')) {
       const btn = page.getByRole('button', { name: label, exact: true });
       await btn.tap();
-      await expect(btn, `${label} must show aria-pressed=true after tap`).toHaveAttribute('aria-pressed', 'true');
-      await expect(btn, `${label} must visibly highlight (bg-primary) once selected`).toHaveClass(/bg-primary/);
-
-      // Every OTHER category button must have lost the highlight -- proves
-      // this is real selection state, not every button rendering "selected".
-      const others = CATEGORY_LABELS.filter((l) => l !== label);
-      for (const other of others.slice(0, 2)) { // sample 2 to keep this fast, not all 7
-        await expect(page.getByRole('button', { name: other, exact: true })).toHaveAttribute('aria-pressed', 'false');
-      }
+      await expect(btn, `${label} must show aria-pressed=true after a tap`).toHaveAttribute('aria-pressed', 'true');
+      await expect(btn, `${label} must visibly highlight once ticked`).toHaveClass(/(^|\s)bg-amber-500(\s|$)/);
+      await expect(booksBtn, 'ticking another category leaves Books & Writing ticked').toHaveAttribute('aria-pressed', 'true');
+      await btn.tap();
+      await expect(btn, `${label} must untick on a second tap`).toHaveAttribute('aria-pressed', 'false');
+      await expect(btn).not.toHaveClass(/(^|\s)bg-amber-500(\s|$)/);
     }
+    // Unticking the last one leaves the plain "Pick at least one" error, and Next stays disabled.
+    await booksBtn.tap();
+    await expect(booksBtn).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.getByText('Pick at least one category.')).toBeVisible();
+    await booksBtn.tap();
 
     const obscured = await findObscuredControls(page);
     expect(obscured, `step 0 (Category): controls obscured by another element:\n${JSON.stringify(obscured, null, 1)}`).toEqual([]);
@@ -204,7 +236,7 @@ test.describe('/stall/build wizard: category taps and no-obscured-controls', () 
     obscured = await findObscuredControls(page);
     expect(obscured, `step 1 (Shop front): ${JSON.stringify(obscured)}`).toEqual([]);
 
-    await page.locator('input[type="file"]').first().setInputFiles({ name: 'front.png', mimeType: 'image/png', buffer: PNG_1X1 });
+    await page.locator('input[type="file"]').first().setInputFiles({ name: 'front.png', mimeType: 'image/png', buffer: STALL_PNG });
     const next1 = page.getByRole('button', { name: 'Next' });
     await expect(next1).toBeEnabled({ timeout: 15_000 });
     await next1.click();
@@ -212,17 +244,55 @@ test.describe('/stall/build wizard: category taps and no-obscured-controls', () 
     obscured = await findObscuredControls(page);
     expect(obscured, `step 2 (Interior): ${JSON.stringify(obscured)}`).toEqual([]);
 
-    await page.locator('input[type="file"]').first().setInputFiles({ name: 'interior.png', mimeType: 'image/png', buffer: PNG_1X1 });
+    await page.locator('input[type="file"]').first().setInputFiles({ name: 'interior.png', mimeType: 'image/png', buffer: STALL_PNG });
     const next2 = page.getByRole('button', { name: 'Next' });
     await expect(next2).toBeEnabled({ timeout: 15_000 });
     await next2.click();
-    await expect(page.getByText('Tile 1')).toBeVisible({ timeout: 15_000 });
+    // "Mark your shelves" replaced the fixed tiles (c64baead, 2026-09-13):
+    // tap the picture to drop a box, name it; Next needs MIN_HOTSPOTS (3).
+    await expect(page.getByText('Tap the image to mark a shelf', { exact: false })).toBeVisible({ timeout: 15_000 });
     obscured = await findObscuredControls(page);
-    expect(obscured, `step 3 (Tiles): ${JSON.stringify(obscured)}`).toEqual([]);
+    expect(obscured, `step 3 (Mark your shelves): ${JSON.stringify(obscured)}`).toEqual([]);
 
-    const tileLabels = page.getByPlaceholder('Label (e.g. My Books)');
-    const tileCount = await tileLabels.count();
-    for (let i = 0; i < tileCount; i++) await tileLabels.nth(i).fill(`Tile ${i + 1}`);
+    const canvas = page.locator('div.aspect-video.touch-none').first();
+    await expect(page.getByAltText('Your stall interior')).toHaveJSProperty('complete', true);
+    await page.screenshot({ path: 'test-results/stall-build-step4.png' });
+    // The step card must settle inside the phone's width (it slides in, so
+    // one early reading can catch it mid-transition), not stay off an edge.
+    const vw = page.viewportSize()!.width;
+    await expect.poll(async () => {
+      const b = await canvas.boundingBox();
+      return !!b && b.x >= 0 && b.x + b.width <= vw;
+    }, { message: 'the shelf canvas settles fully on screen', timeout: 5_000 }).toBe(true);
+    for (const [i, fx] of [0.2, 0.5, 0.8].entries()) {
+      // Re-measure every time: opening and closing the sheet can scroll the page.
+      await canvas.scrollIntoViewIfNeeded();
+      const b = (await canvas.boundingBox())!;
+      await page.touchscreen.tap(b.x + b.width * fx, b.y + b.height * 0.5);
+      const labelInput = page.getByPlaceholder('e.g. Family Albums');
+      await expect(labelInput, `box ${i + 1} opens its label field`).toBeVisible({ timeout: 10_000 });
+      await labelInput.fill(`Shelf ${i + 1}`);
+      // The "What's here?" bottom sheet covers the canvas until Done, as for a member.
+      await page.getByRole('button', { name: 'Done', exact: true }).tap();
+      await expect(labelInput).toHaveCount(0);
+      // Done must actually close the sheet: no dialog left, the page usable again.
+      await expect(page.getByRole('dialog'), `Done closes box ${i + 1}'s sheet`).toHaveCount(0, { timeout: 5_000 });
+      await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).pointerEvents), { timeout: 5_000 }).not.toBe('none');
+    }
+    // The just-marked box is selected and shows its red delete dot. Tapping
+    // that dot must open the delete confirmation -- at default size on a
+    // phone the box is ~21px tall, and its resize handle must not swallow it.
+    const delBtn = canvas.getByRole('button', { name: 'Delete Shelf 3' });
+    await expect(delBtn).toBeVisible();
+    const dot = (await delBtn.locator('span').first().boundingBox())!;
+    await page.touchscreen.tap(dot.x + dot.width / 2, dot.y + dot.height / 2);
+    const confirm = page.getByRole('alertdialog');
+    await expect(confirm, 'tapping the red delete dot opens the delete confirmation').toBeVisible({ timeout: 5_000 });
+    await confirm.getByRole('button', { name: 'Cancel' }).tap();
+    await expect(confirm).toHaveCount(0);
+
+    obscured = await findObscuredControls(page);
+    expect(obscured, `step 3 with 3 shelves marked: ${JSON.stringify(obscured)}`).toEqual([]);
     const next3 = page.getByRole('button', { name: 'Next' });
     await expect(next3).toBeEnabled({ timeout: 15_000 });
     await next3.click();
@@ -243,7 +313,8 @@ test.describe('/stall/build wizard: category taps and no-obscured-controls', () 
     // Sanity check the stub setup actually would have shown the banner
     // elsewhere (a plain, non-wizard page), so a future change that breaks
     // the wizardOpen suppression doesn't pass this spec by coincidence.
-    await page.goto('/stalls-feed', { waitUntil: 'networkidle' });
+    // Not /stalls-feed: nag cards are suppressed there on purpose (e4702110).
+    await page.goto('/disclaimer', { waitUntil: 'networkidle' });
     await expect(page.getByRole('heading', { name: 'Enable Notifications' })).toBeVisible({ timeout: 15_000 });
   });
 });

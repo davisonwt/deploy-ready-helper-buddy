@@ -7015,6 +7015,39 @@ export type Database = {
         }
         Relationships: []
       }
+      member_welcomes: {
+        Row: {
+          global_message_id: string | null
+          global_skipped: string | null
+          private_message_id: string | null
+          private_room_id: string | null
+          referrer_id: string | null
+          tribe_label: string | null
+          user_id: string
+          welcomed_at: string
+        }
+        Insert: {
+          global_message_id?: string | null
+          global_skipped?: string | null
+          private_message_id?: string | null
+          private_room_id?: string | null
+          referrer_id?: string | null
+          tribe_label?: string | null
+          user_id: string
+          welcomed_at?: string
+        }
+        Update: {
+          global_message_id?: string | null
+          global_skipped?: string | null
+          private_message_id?: string | null
+          private_room_id?: string | null
+          referrer_id?: string | null
+          tribe_label?: string | null
+          user_id?: string
+          welcomed_at?: string
+        }
+        Relationships: []
+      }
       memry_bookmarks: {
         Row: {
           created_at: string
@@ -15938,6 +15971,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_role_audit: {
+        Row: {
+          action: string
+          actor: string | null
+          at: string
+          granted_by: string | null
+          id: string
+          new_row: Json | null
+          note: string | null
+          old_row: Json | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          at?: string
+          granted_by?: string | null
+          id?: string
+          new_row?: Json | null
+          note?: string | null
+          old_row?: Json | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          at?: string
+          granted_by?: string | null
+          id?: string
+          new_row?: Json | null
+          note?: string | null
+          old_row?: Json | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -17388,6 +17460,7 @@ export type Database = {
           id: string | null
           instagram_url: string | null
           is_chatapp_verified: boolean | null
+          is_place_account: boolean | null
           last_name: string | null
           linkedin_url: string | null
           location: string | null
@@ -17421,6 +17494,7 @@ export type Database = {
           id?: string | null
           instagram_url?: never
           is_chatapp_verified?: boolean | null
+          is_place_account?: never
           last_name?: string | null
           linkedin_url?: never
           location?: string | null
@@ -17454,6 +17528,7 @@ export type Database = {
           id?: string | null
           instagram_url?: never
           is_chatapp_verified?: boolean | null
+          is_place_account?: never
           last_name?: string | null
           linkedin_url?: never
           location?: string | null
@@ -17841,6 +17916,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      ensure_my_referral_code: { Args: never; Returns: string }
       ensure_whisperer_ref_link: {
         Args: {
           _assignment_id: string
@@ -18901,6 +18977,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      referral_code_for: { Args: { p_user_id: string }; Returns: string }
       reject_estimate: {
         Args: { _estimate_id: string; _reason: string }
         Returns: undefined
@@ -18919,12 +18996,12 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
-      reorder_radio_rundown: {
-        Args: { p_ordered_ids: string[]; p_slot_id: string }
-        Returns: undefined
-      }
       reorder_hand_raise_queue: {
         Args: { call_session_id_param: string }
+        Returns: undefined
+      }
+      reorder_radio_rundown: {
+        Args: { p_ordered_ids: string[]; p_slot_id: string }
         Returns: undefined
       }
       resolve_active_whisperer: {
@@ -18982,6 +19059,13 @@ export type Database = {
       security_answer_check: {
         Args: { p_answer: string; p_hash: string }
         Returns: string
+      }
+      seed_sold_counts: {
+        Args: { seed_ids: string[] }
+        Returns: {
+          seed_id: string
+          sold: number
+        }[]
       }
       send_chat_message: {
         Args: {
@@ -19053,6 +19137,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      send_member_welcome: {
+        Args: { p_referrer_id?: string; p_user_id: string }
+        Returns: undefined
       }
       send_tribal_hearts_spark: {
         Args: { _message?: string; _recipient_id: string; _voice_url?: string }
