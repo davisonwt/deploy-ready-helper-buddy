@@ -82,7 +82,9 @@ test.describe.serial('Shelf add button', () => {
       const n = await sweepStorage(client, 'stalls', objectPaths);
       console.log(`[TEARDOWN] stall images removed (${n} of ${objectPaths.length} objects)`);
     }
-    const { data: left } = await client.from('stalls').select('id').eq('user_id', userId);
+    // Only THIS run's stall: another stall spec may legitimately hold the
+    // account right now, and that is not this run's residue.
+    const { data: left } = await client.from('stalls').select('id').eq('user_id', userId).eq('name', `QA Add-Button Stall ${STAMP}`);
     console.log(`[RESIDUE] stalls left for the owner: ${left?.length ?? 0} (expected 0)`);
     expect(left?.length ?? 0, 'fixture stall left behind').toBe(0);
   });

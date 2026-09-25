@@ -18597,6 +18597,13 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      my_listing_booked_counts: {
+        Args: { listing_ids: string[] }
+        Returns: {
+          booked: number
+          listing_id: string
+        }[]
+      }
       next_estimate_number: { Args: { _business_id: string }; Returns: string }
       next_invoice_number: { Args: { _business_id: string }; Returns: string }
       next_job_invoice_number: {

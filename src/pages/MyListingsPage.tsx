@@ -169,6 +169,31 @@ export default function MyListingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wheelKey, pillowKey, handKey]);
 
+  // "Booked: N" per listing -- bookings whose payment completed (see
+  // my_listing_booked_counts, 20260925160000). One call for every row on
+  // the page; the RPC answers only for listings the caller owns.
+  const [booked, setBooked] = useState<Record<string, number> | null>(null);
+  const allKey = [wheelKey, pillowKey, handKey].join('|');
+  useEffect(() => {
+    const ids = [...wheelIds, ...pillowIds, ...handIds];
+    if (ids.length === 0) return;
+    let alive = true;
+    (async () => {
+      const { data, error } = await supabase.rpc('my_listing_booked_counts', { listing_ids: ids });
+      if (!alive) return;
+      if (error) {
+        console.warn('[MyListings] booked counts failed:', error.message);
+        setBooked({});
+        return;
+      }
+      const map: Record<string, number> = {};
+      for (const r of (data ?? []) as { listing_id: string; booked: number }[]) map[r.listing_id] = r.booked;
+      setBooked(map);
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allKey]);
+
   const toggleAvailability = async (row: Row) => {
     const next = !(availability[row.id] ?? true);
     setBusyId(row.id);
@@ -322,6 +347,10 @@ export default function MyListingsPage() {
                         Tap Edit and give a town or city with its country, like “Mossel Bay, South Africa”.
                       </p>
                     )}
+
+                    <p className="text-xs mt-1 text-muted-foreground" data-testid="booked-count">
+                      Booked: {booked === null ? '…' : booked[row.id] ?? 0}
+                    </p>
 
                     {row.description && (
                       <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{row.description}</p>

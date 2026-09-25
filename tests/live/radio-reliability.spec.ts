@@ -152,9 +152,13 @@ test.describe.serial('Radio reliability -- real listening conditions', () => {
     await deleteStallFixture(stall.client, stall.stallId);
     const { error } = await stall.client.storage.from('stalls').remove(stall.objectPaths);
     if (error) throw new Error(`[TEARDOWN] stall objects not removed: ${error.message}`);
-    const { data: left } = await stall.client.storage.from('stalls').list(stall.objectPaths[0].split('/')[0], { search: 'qa-' });
-    console.log(`[RESIDUE] stall=${stall.stallId} gone; qa stall objects left: ${(left ?? []).length}`);
-    expect(left ?? []).toHaveLength(0);
+    // Only THIS run's two images -- another stall spec may have its own
+    // qa- images in the same folder right now.
+    const own = new Set(stall.objectPaths.map((p) => p.split('/')[1]));
+    const { data: listed } = await stall.client.storage.from('stalls').list(stall.objectPaths[0].split('/')[0], { search: 'qa-' });
+    const left = (listed ?? []).filter((o: { name: string }) => own.has(o.name));
+    console.log(`[RESIDUE] stall=${stall.stallId} gone; this run's stall objects left: ${left.length}`);
+    expect(left).toHaveLength(0);
   });
 
   test.skip(!EMAIL || !PASS, 'TEST_A_EMAIL/PASSWORD required in .env.test.');

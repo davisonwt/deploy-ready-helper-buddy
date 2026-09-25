@@ -79,7 +79,8 @@ test.describe.serial('per-hotspot seed subsets', () => {
     reportSweep('stall-hotspot-subsets', swept);
 
     // Residue check: prove it, do not claim it.
-    const { data: stallsLeft } = await client.from('stalls').select('id').eq('user_id', userId);
+    // Only THIS run's stall -- another stall spec may hold the account now.
+    const { data: stallsLeft } = await client.from('stalls').select('id').eq('user_id', userId).eq('name', `QA Subset Stall ${STAMP}`);
     const { data: sowers } = await client.from('sowers').select('id').eq('user_id', userId);
     const { data: seedsLeft } = await client
       .from('products').select('id')

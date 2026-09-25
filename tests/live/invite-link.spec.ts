@@ -142,8 +142,8 @@ test.describe.serial('invite link for every member', () => {
       (select count(*)::int from profiles where username like 'qa-invite%' or username like 'qainvite%') profiles,
       (select count(*)::int from affiliates x where not exists (select 1 from auth.users u where u.id=x.user_id)) orphan_affiliates,
       (select count(*)::int from chat_rooms r where not exists (select 1 from auth.users u where u.id=r.created_by) and r.name in ('Welcome to S2G','Sow2Grow Verification')) - ${orphanRoomsBefore} new_orphan_rooms,
-      (select count(*)::int from stalls where user_id='${a.userId}') stalls_a,
-      (select count(*)::int from stalls where user_id='${b.userId}') stalls_b`);
+      (select count(*)::int from stalls where user_id='${a.userId}' and name='QA invite ${STAMP} stall') stalls_a,
+      (select count(*)::int from stalls where user_id='${b.userId}' and name like 'QA invite ${STAMP}%') stalls_b`);
     console.log(`[RESIDUE] ${JSON.stringify(r)} signups=${JSON.stringify(signups)}`);
     if (problems.length) console.log(`[TEARDOWN PROBLEMS] ${problems.join(' | ')}`);
     expect(problems).toEqual([]);

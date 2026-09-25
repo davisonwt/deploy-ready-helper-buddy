@@ -1,4 +1,6 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type Locator } from '@playwright/test';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { asUser, createWheelListing, sweepProducts, reportSweep } from './support/fixtures';
 
 /**
  * Live verification of the Share button on /my-listings.
@@ -13,6 +15,11 @@ import { test, expect, type Page } from '@playwright/test';
  * acceptable, so the send and receive scenarios are reported NOT RUN.
  *
  * Everything up to the send is exercised through the real button here.
+ *
+ * It acts ONLY on a listing of its own: createWheelListing makes one in
+ * beforeAll and sweepProducts removes it in afterAll. It used to take
+ * whichever listing was .first() on the page -- a standing listing, which
+ * is how a spec once took a real car offline (see my-listings.spec.ts).
  *
  * Run: npx playwright test --config=playwright.live.config.ts my-listings-share
  */
@@ -37,26 +44,51 @@ async function login(page: Page) {
   throw new Error('could not sign in after two attempts');
 }
 
+const QA_TITLE = `QA share ${Date.now()}`;
+let owner: { client: SupabaseClient; userId: string };
+
+/** THIS run's listing card -- the only one this spec may act on. */
+function qaCard(page: Page): Locator {
+  return page.locator('li').filter({ hasText: QA_TITLE }).first();
+}
+
 async function openShare(page: Page) {
   await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'My Listings' })).toBeVisible({ timeout: 30000 });
-  const share = page.getByRole('button', { name: /^Share$/ }).first();
+  await expect(qaCard(page), "this run's listing is not on the page").toBeVisible({ timeout: 30000 });
+  await expect(qaCard(page)).toContainText(QA_TITLE);
+  const share = qaCard(page).getByRole('button', { name: /^Share$/ });
   await expect(share).toBeVisible({ timeout: 30000 });
   await share.click();
   await expect(page.getByRole('dialog')).toBeVisible({ timeout: 20000 });
 }
 
 test.describe.serial('Share from My Listings', () => {
-  test.skip(!A_EMAIL || !A_PASS, 'A test account is required in .env.test.');
+  test.beforeAll(async () => {
+    owner = await asUser(A_EMAIL, A_PASS, 'TEST_A (davisontest1)');
+    await createWheelListing(owner.client, owner.userId, QA_TITLE, { town: 'Bethlehem, Free State' });
+  });
+
+  test.afterAll(async () => {
+    const swept = await sweepProducts(owner.client, owner.userId, [QA_TITLE]);
+    reportSweep('my-listings-share', swept);
+    const { data: sowers } = await owner.client.from('sowers').select('id').eq('user_id', owner.userId);
+    const { data: left } = await owner.client.from('products').select('id')
+      .in('sower_id', (sowers ?? []).map((x: { id: string }) => x.id)).eq('title', QA_TITLE);
+    console.log(`[RESIDUE] ${QA_TITLE}: ${left?.length ?? 0} product rows left (expected 0)`);
+    expect(left ?? [], 'the QA listing survived teardown').toHaveLength(0);
+  });
 
   test('1. Share sits alongside the other actions and opens the shared dialog', async ({ page }) => {
     await login(page);
     await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'My Listings' })).toBeVisible({ timeout: 30000 });
 
+    const card = qaCard(page);
+    await expect(card).toBeVisible({ timeout: 30000 });
     for (const name of ['Open', 'Edit', 'Share', 'Delete']) {
-      await expect(page.getByRole('button', { name: new RegExp(`^${name}$`) }).or(
-        page.getByRole('link', { name: new RegExp(`^${name}$`) })
+      await expect(card.getByRole('button', { name: new RegExp(`^${name}$`) }).or(
+        card.getByRole('link', { name: new RegExp(`^${name}$`) })
       ).first()).toBeVisible({ timeout: 20000 });
     }
 
@@ -71,10 +103,10 @@ test.describe.serial('Share from My Listings', () => {
   test('2. the Link tab carries the listing\'s own seed URL', async ({ page }) => {
     await login(page);
 
-    // Which listing is first, so the expected URL can be built.
+    // This run's listing, so the expected URL can be built.
     await page.goto('/my-listings', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'My Listings' })).toBeVisible({ timeout: 30000 });
-    const openHref = await page.getByRole('link', { name: /^Open$/ }).first().getAttribute('href');
+    const openHref = await qaCard(page).getByRole('link', { name: /^Open$/ }).getAttribute('href');
     expect(openHref, 'no Open link found').toBeTruthy();
     console.log(`[EVIDENCE] first listing seed path: ${openHref}`);
 

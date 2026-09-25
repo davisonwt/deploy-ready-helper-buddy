@@ -574,13 +574,48 @@ function interiorGif(W = 640, H = 360): Buffer {
 export async function createStallFixture(
   client: SupabaseClient, userId: string, name: string,
 ): Promise<{ stallId: string; objectPaths: string[] }> {
-  const { data: existing } = await client.from('stalls').select('id, name').eq('user_id', userId).maybeSingle();
-  if (existing) {
-    throw new Error(
-      `[fixtures] ${userId} already owns a stall ("${(existing as { name: string }).name}"). ` +
-      'This fixture refuses to touch a row it did not create -- remove the leftover first.',
-    );
+  // A member owns at most ONE stall (stalls_user_id_key), and several specs
+  // borrow the same test account's. Two of them running at once used to
+  // race: both passed the "already owns one?" read, both uploaded images,
+  // one insert lost, and its images were stranded (2026-09-25). So the
+  // stall row is CLAIMED FIRST -- unpublished, no images -- and the unique
+  // key is the lock: the loser is refused before it has created anything,
+  // and fails naming the stall (and so the spec) that holds the account.
+  const holder = async () => {
+    const { data } = await client.from('stalls').select('id, name').eq('user_id', userId).maybeSingle();
+    return data as { id: string; name: string } | null;
+  };
+  const busy = (h: { name: string } | null) => new Error(
+    `[fixtures] this test account's one stall is held by "${h?.name ?? 'an unknown stall'}". ` +
+    'Another stall spec is running on the same account (run stall specs one at a time), ' +
+    'or that stall is a leftover -- remove it first. Nothing was created by this run.',
+  );
+
+  const existing = await holder();
+  if (existing) throw busy(existing);
+
+  const { data: claim, error: claimErr } = await client
+    .from('stalls')
+    .insert({
+      user_id: userId,
+      name,
+      category: 'books_writing',
+      categories: ['books_writing'],
+      tier: 'farm_stall',
+      published: false,
+      // Straight into the interior, no gate to click through.
+      enter_via_front: false,
+      hotspots: [],
+      tiles: [],
+    })
+    .select('id')
+    .single();
+  if (claimErr || !claim) {
+    if (claimErr?.code === '23505') throw busy(await holder());
+    throw new Error(`[fixtures] could not create stall ${name}: ${claimErr?.message}`);
   }
+  const stallId = claim.id as string;
+
   // BOTH images are required: StallVisitPage renders "This stall is still
   // being built" unless front_image_path AND interior_image_path are set
   // (StallVisitPage.tsx:174), which is how the first GIF run failed.
@@ -590,46 +625,38 @@ export async function createStallFixture(
   const stamp = Date.now();
   const interiorObjectPath = `${userId}/qa-interior-${stamp}.gif`;
   const frontObjectPath = `${userId}/qa-front-${stamp}.gif`;
+  const uploaded: string[] = [];
+  const undo = async (why: string): Promise<never> => {
+    const { error: rmErr } = uploaded.length
+      ? await client.storage.from('stalls').remove(uploaded)
+      : { error: null };
+    const { error: delErr } = await client.from('stalls').delete().eq('id', stallId);
+    throw new Error(
+      `[fixtures] could not create stall ${name}: ${why}` +
+      (rmErr ? ` -- and its uploaded images were NOT removed: ${rmErr.message}` : '') +
+      (delErr ? ` -- and the claimed stall ${stallId} was NOT deleted: ${delErr.message}` : ''),
+    );
+  };
+
   const bytes = interiorGif();
   for (const path of [interiorObjectPath, frontObjectPath]) {
     const { error: upErr } = await client.storage
       .from('stalls')
       .upload(path, bytes, { contentType: 'image/gif', upsert: false });
-    if (upErr) throw new Error(`[fixtures] could not upload ${path}: ${upErr.message}`);
+    if (upErr) await undo(`upload of ${path} failed: ${upErr.message}`);
+    uploaded.push(path);
   }
   const { data: pub } = client.storage.from('stalls').getPublicUrl(interiorObjectPath);
   const { data: frontPub } = client.storage.from('stalls').getPublicUrl(frontObjectPath);
 
-  const { data, error } = await client
+  const { error: pubErr } = await client
     .from('stalls')
-    .insert({
-      user_id: userId,
-      name,
-      category: 'books_writing',
-      categories: ['books_writing'],
-      tier: 'farm_stall',
-      published: true,
-      interior_image_path: pub.publicUrl,
-      front_image_path: frontPub.publicUrl,
-      // Straight into the interior, no gate to click through.
-      enter_via_front: false,
-      hotspots: [],
-      tiles: [],
-    })
-    .select('id')
-    .single();
-  if (error || !data) {
-    // Never strand the images just uploaded: a failed insert (e.g. two
-    // specs racing for this member's one stall) otherwise leaves them for
-    // another spec's residue check to trip over.
-    const { error: rmErr } = await client.storage.from('stalls').remove([interiorObjectPath, frontObjectPath]);
-    throw new Error(
-      `[fixtures] could not create stall ${name}: ${error?.message}` +
-      (rmErr ? ` (and its two uploaded images were NOT removed: ${rmErr.message})` : ' (its two uploaded images were removed)'),
-    );
-  }
-  console.log(`[SETUP] stall fixture "${name}" -> ${data.id}`);
-  return { stallId: data.id as string, objectPaths: [interiorObjectPath, frontObjectPath] };
+    .update({ published: true, interior_image_path: pub.publicUrl, front_image_path: frontPub.publicUrl })
+    .eq('id', stallId);
+  if (pubErr) await undo(`publishing it failed: ${pubErr.message}`);
+
+  console.log(`[SETUP] stall fixture "${name}" -> ${stallId}`);
+  return { stallId, objectPaths: [interiorObjectPath, frontObjectPath] };
 }
 
 /** A book seed -- lands on a `books` shelf via products.type in ('book','ebook'). */

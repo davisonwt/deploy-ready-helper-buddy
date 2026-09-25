@@ -244,7 +244,8 @@ test.describe.serial('Grove Station radio slots (member path)', () => {
       .eq('sender_id', GROVE_STATION_USER_ID)
       .in('system_metadata->>slot_id', qaSlotIds.length ? qaSlotIds : ['none']);
     residue.notices = noticeCount ?? -1;
-    const { count: stallCount } = await dj.client.from('stalls').select('id', { count: 'exact', head: true }).eq('user_id', dj.userId);
+    // Only THIS run's stall -- another stall spec may hold the account now.
+    const { count: stallCount } = await dj.client.from('stalls').select('id', { count: 'exact', head: true }).eq('user_id', dj.userId).eq('name', `${RUN} stall`);
     residue.stalls = stallCount ?? -1;
     residue.newRooms = roomExistedBefore ? 0 : (await groveStationRoomIds()).length;
     console.log(`[RESIDUE] ${JSON.stringify(residue)} qaSlots=${JSON.stringify(qaSlotIds)}`);
