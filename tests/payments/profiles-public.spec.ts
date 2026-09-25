@@ -42,7 +42,9 @@ const PRIVATE_KEYS = [
 ];
 
 test.describe('profiles_public: locked table, public view', () => {
-  test.skip(!HAVE_CREDS, 'Set TEST_A_EMAIL, TEST_A_PASSWORD and TEST_B_USER_ID (two non-admin members) to run this spec.');
+  test.beforeAll(() => {
+    if (!HAVE_CREDS) throw new Error('TEST_A_EMAIL, TEST_A_PASSWORD and TEST_B_USER_ID (two non-admin members) must be set in .env.test.');
+  });
 
   test('member A cannot read B\'s profile row but can read B\'s public row', async ({ page }) => {
     const client = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false } });
@@ -93,23 +95,27 @@ test.describe('profiles_public: locked table, public view', () => {
       }
     });
 
-    const landed: Record<string, string> = {};
-    for (const path of ['/products', '/stats', '/tribal-hearts', '/chatapp']) {
-      await page.goto(path, { waitUntil: 'networkidle' });
-      landed[path] = page.url();
+    // Where each page lands today: /products and /chatapp are redirects
+    // (to /stalls-feed and /conversations). Every one must keep A signed in;
+    // a bounce to /login would mean the injected session was rejected.
+    const expected: Record<string, string> = {
+      '/products': '/stalls-feed', '/stats': '/stats', '/tribal-hearts': '/tribal-hearts', '/chatapp': '/conversations',
+    };
+    for (const [path, dest] of Object.entries(expected)) {
+      // Not 'networkidle': /stalls-feed streams media and never goes idle.
+      await page.goto(path, { waitUntil: 'load' });
+      await expect.poll(() => new URL(page.url()).pathname, { message: `${path} lands on ${dest}, signed in`, timeout: 20_000 }).toBe(dest);
+      await page.waitForTimeout(3000); // let the page's profile reads fire
       await expect(page.locator('body')).not.toContainText('permission denied');
     }
-    // Every page must have kept A signed in (a bounce to /login would mean
-    // the injected session was rejected).
-    for (const [path, url] of Object.entries(landed)) expect(url, `${path} stayed put`).toContain(path);
 
     // The cross-member read that failed live on 2026-09-05 ("No users
-    // found"): ChatApp's New Chat dialog lists registered sowers and fetches
-    // their public rows from profiles_public. Open it and capture that
-    // response. (The other pages only read A's own row for a fresh account,
+    // found"): the New Chat dialog (/conversations, where the last page
+    // above landed) lists other members from profiles_public. Open it and
+    // capture that response. (The other pages only read A's own row for a fresh account,
     // so they prove "no failures", not "other members visible".)
     const sowerRowsPromise = page.waitForResponse(
-      (res) => res.url().includes('/rest/v1/profiles_public') && res.request().method() === 'GET' && res.url().includes('user_id=in.'),
+      (res) => res.url().includes('/rest/v1/profiles_public') && res.request().method() === 'GET' && res.url().includes('user_id=neq.'),
       { timeout: 20_000 },
     );
     await page.getByRole('button', { name: /new chat/i }).first().click();

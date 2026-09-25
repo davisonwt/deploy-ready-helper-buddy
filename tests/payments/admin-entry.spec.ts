@@ -1,13 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 
-// The admin entry path a gosat actually uses: /dashboard -> the "Gosat's"
-// tile -> /admin/dashboard, as a client-side navigation inside the running
-// bundle (not a fresh URL load). 2026-09-06: reported as looping back to
+// The admin entry path a gosat actually uses, as client-side navigation
+// inside the running bundle (not a fresh URL load): the cockpit's More
+// menu -> "Gosat's Boardroom" (/stall/gosatsboardroom) -> its "Admin
+// Dashboard & Wallet Settings" hotspot -> /admin/dashboard. That replaced
+// the old direct "Gosat's" tile on 2026-09-15 (see cockpitNav.ts). 2026-09-06: reported as looping back to
 // the dashboard after a publish; the route guard bounced on any failed
 // role query. This pins the happy path and the guard's no-bounce rule.
 //
-// Skips itself without TEST_GOSAT_EMAIL / TEST_GOSAT_PASSWORD.
+// Fails, saying why, without TEST_GOSAT_EMAIL / TEST_GOSAT_PASSWORD.
 
 const SUPABASE_URL = 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
 const SUPABASE_PROJECT_REF = 'zuwkgasbkpjlxzsjzumu';
@@ -16,9 +18,11 @@ const GOSAT_EMAIL = process.env.TEST_GOSAT_EMAIL;
 const GOSAT_PASSWORD = process.env.TEST_GOSAT_PASSWORD;
 
 test.describe('admin entry (gosat)', () => {
-  test.skip(!GOSAT_EMAIL || !GOSAT_PASSWORD, 'Set TEST_GOSAT_EMAIL / TEST_GOSAT_PASSWORD to run this spec.');
+  test.beforeAll(() => {
+    if (!GOSAT_EMAIL || !GOSAT_PASSWORD) throw new Error('TEST_GOSAT_EMAIL / TEST_GOSAT_PASSWORD must be set in .env.test.');
+  });
 
-  test("the Gosat's tile on /dashboard opens /admin/dashboard, no bounce", async ({ page }) => {
+  test("More -> Gosat's Boardroom -> its admin hotspot opens /admin/dashboard, no bounce", async ({ page }) => {
     const client = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false } });
     const { data, error } = await client.auth.signInWithPassword({ email: GOSAT_EMAIL!, password: GOSAT_PASSWORD! });
     expect(error).toBeNull();
@@ -31,10 +35,25 @@ test.describe('admin entry (gosat)', () => {
     const visited: string[] = [];
     page.on('framenavigated', (f) => { if (f === page.mainFrame()) visited.push(new URL(f.url()).pathname); });
 
-    await page.goto('/dashboard', { waitUntil: 'networkidle' });
-    const tile = page.getByText("Gosat's", { exact: false }).first();
-    await expect(tile).toBeVisible({ timeout: 30_000 });
-    await tile.click();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/cockpit', { waitUntil: 'networkidle' });
+    const boardroom = page.getByText("Gosat's Boardroom", { exact: true }).filter({ visible: true });
+    if (!(await boardroom.count())) {
+      await page.getByRole('button', { name: /^More/ }).filter({ visible: true }).first().click();
+    }
+    await expect(boardroom.first()).toBeVisible({ timeout: 30_000 });
+    await boardroom.first().click();
+    await expect(page).toHaveURL(/\/stall\/gosatsboardroom/, { timeout: 30_000 });
+    // A place stall (enter_via_front): step through its front gate if it shows.
+    const enter = page.getByRole('button', { name: /^Enter Gosat's Boardroom/ });
+    // isVisible() does not wait; waitFor does.
+    if (await enter.first().waitFor({ state: 'visible', timeout: 15_000 }).then(() => true).catch(() => false)) {
+      await enter.first().click();
+    }
+
+    const hotspot = page.locator('button[aria-label="Admin Dashboard & Wallet Settings"]').filter({ visible: true }).first();
+    await expect(hotspot).toBeVisible({ timeout: 45_000 });
+    await hotspot.click();
 
     await expect(page).toHaveURL(/\/admin\/dashboard$/, { timeout: 30_000 });
     await expect(page.getByText("Gosat's — Admin Dashboard")).toBeVisible({ timeout: 30_000 });

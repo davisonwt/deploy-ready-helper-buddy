@@ -137,6 +137,7 @@ const storagePaths: string[] = [];
 const stallObjects: string[] = [];
 const since = new Date().toISOString();
 let pointsBefore: any[] = [];
+let visitBefore: any[] = [];
 const results: Array<{ what: string; signature: string; amount: number; basketId: string }> = [];
 
 test.describe.serial('devnet purchase routing', () => {
@@ -148,6 +149,7 @@ test.describe.serial('devnet purchase routing', () => {
     seller = await signIn(A_E, A_P);
     buyer = await signIn(B_E, B_P);
     pointsBefore = await sql(`select * from user_points where user_id='${buyer.userId}'`);
+    visitBefore = await sql(`select last_seen_at::text from stall_visits where viewer_id='${buyer.userId}' and stall_user_id='${seller.userId}'`);
 
     const conn = new Connection('https://api.devnet.solana.com', 'confirmed');
     const wallet = Keypair.fromSecretKey((bs58 as any).decode ? (bs58 as any).decode(WALLET_SECRET) : (bs58 as any).default.decode(WALLET_SECRET));
@@ -239,6 +241,11 @@ test.describe.serial('devnet purchase routing', () => {
         await sql(`delete from user_points where user_id='${buyer.userId}'`);
       }
     } catch (e) { problems.push(`xp: ${String(e)}`); }
+    try {
+      // Visiting the fixture stall moves the buyer's visit row for the seller; put it back.
+      if (visitBefore.length) await sql(`update stall_visits set last_seen_at='${visitBefore[0].last_seen_at}' where viewer_id='${buyer.userId}' and stall_user_id='${seller.userId}'`);
+      else await sql(`delete from stall_visits where viewer_id='${buyer.userId}' and stall_user_id='${seller.userId}'`);
+    } catch (e) { problems.push(`visit: ${String(e)}`); }
 
     try {
       const service = await serviceClient();

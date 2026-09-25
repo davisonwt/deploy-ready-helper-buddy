@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { USDC_MINTS, type SolanaCluster } from '../../src/lib/payments/solanaNetworks';
 
 // Regression test for the "Buffer is not defined" crash on desktop
 // Phantom's "Pay with Phantom" button (src/lib/payments/solanaWallet.ts /
@@ -9,7 +10,7 @@ import { test, expect } from '@playwright/test';
 // loads the real production build in headless Chromium, stubs the Phantom
 // wallet provider (no real wallet exists in CI), clicks the real button,
 // and asserts the built transaction actually reaches the provider carrying
-// the mainnet USDC mint -- with zero console errors along the way, which
+// the USDC mint of the intent's cluster (devnet and mainnet both) -- with zero console errors along the way, which
 // is exactly what "Buffer is not defined" would have produced instead.
 //
 // Everything the page would normally fetch from Supabase is stubbed
@@ -20,7 +21,14 @@ import { test, expect } from '@playwright/test';
 
 const SUPABASE_PROJECT_REF = 'zuwkgasbkpjlxzsjzumu';
 const SUPABASE_URL = `https://${SUPABASE_PROJECT_REF}.supabase.co`;
-const MAINNET_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+// Mints come from the app's own map, never a literal. CHECKOUT_CLUSTER is
+// the cluster production checkout runs on (the SOLANA_CLUSTER secret):
+// devnet as of 2026-09-25. Set TEST_SOLANA_CLUSTER=mainnet-beta when that
+// flips. The balance pre-check tests below pin mainnet on purpose: that
+// check only exists for mainnet intents (useSolanaWalletPay.ts).
+const CHECKOUT_CLUSTER: SolanaCluster = process.env.TEST_SOLANA_CLUSTER === 'mainnet-beta' ? 'mainnet-beta' : 'devnet';
+const MAINNET_USDC_MINT = USDC_MINTS['mainnet-beta'];
+const CHECKOUT_USDC_MINT = USDC_MINTS[CHECKOUT_CLUSTER];
 
 // Real, valid (32-byte-decoding) Solana addresses, reused as stand-ins --
 // buildUsdcTransferTransaction calls `new PublicKey(...)` on each of these,
@@ -205,7 +213,9 @@ async function stubSolanaRpc(page: import('@playwright/test').Page) {
   });
 }
 
-test('desktop Phantom pay button builds a mainnet-USDC transaction with no console errors', async ({ page }) => {
+for (const cluster of ['devnet', 'mainnet-beta'] as const) {
+test(`desktop Phantom pay button builds a ${cluster} USDC transaction with no console errors`, async ({ page }) => {
+  const mint = USDC_MINTS[cluster];
   const consoleErrors: string[] = [];
   page.on('console', (msg) => {
     if (msg.type() === 'error') consoleErrors.push(msg.text());
@@ -222,7 +232,7 @@ test('desktop Phantom pay button builds a mainnet-USDC transaction with no conso
     route.fulfill({ json: { balance: 1000 } }),
   );
 
-  // --- The order-creation call: force a deterministic mainnet-USDC
+  // --- The order-creation call: force a deterministic USDC
   // response instead of hitting the live edge function (which would
   // create a real order and depends on live SOLANA_CLUSTER config). ---
   await page.route(`${SUPABASE_URL}/functions/v1/create-basket-bestowal-order`, (route) =>
@@ -231,10 +241,10 @@ test('desktop Phantom pay button builds a mainnet-USDC transaction with no conso
         solanaPayment: {
           intentId: 'playwright-test-intent',
           referencePubkey: FAKE_REFERENCE,
-          solanaPayUrl: `solana:${FAKE_HOT_WALLET}?amount=${TRACK_PRICE}&spl-token=${MAINNET_USDC_MINT}&reference=${FAKE_REFERENCE}`,
+          solanaPayUrl: `solana:${FAKE_HOT_WALLET}?amount=${TRACK_PRICE}&spl-token=${mint}&reference=${FAKE_REFERENCE}`,
           hotWalletAddress: FAKE_HOT_WALLET,
           amountUsdc: TRACK_PRICE,
-          cluster: 'mainnet-beta',
+          cluster,
           expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
         },
       },
@@ -288,8 +298,8 @@ test('desktop Phantom pay button builds a mainnet-USDC transaction with no conso
     .toBeGreaterThan(0);
 
   const mintCandidates = await page.evaluate(() => (window as any).__capturedTxMintCandidates as string[]);
-  expect(mintCandidates, 'transaction sent to Phantom must reference the mainnet USDC mint').toContain(
-    MAINNET_USDC_MINT,
+  expect(mintCandidates, `transaction sent to Phantom must reference the ${cluster} USDC mint`).toContain(
+    mint,
   );
 
   // The CORS invariant: zero requests to any *.solana.com host from the
@@ -300,6 +310,7 @@ test('desktop Phantom pay button builds a mainnet-USDC transaction with no conso
 
   expect(consoleErrors, `console errors during checkout:\n${consoleErrors.join('\n')}`).toEqual([]);
 });
+}
 
 // The fee is applied at exactly ONE layer, and it's the server's. Written
 // after a "$2.66 instead of $2.31 -- the fee must be applied twice"
@@ -347,10 +358,10 @@ test('a $2.00 seed shows Bestow $2.30, sends no amount in the request, and the p
         solanaPayment: {
           intentId: 'playwright-amount-test-intent',
           referencePubkey: FAKE_REFERENCE,
-          solanaPayUrl: `solana:${FAKE_HOT_WALLET}?amount=${amountUsdc}&spl-token=${MAINNET_USDC_MINT}&reference=${FAKE_REFERENCE}`,
+          solanaPayUrl: `solana:${FAKE_HOT_WALLET}?amount=${amountUsdc}&spl-token=${CHECKOUT_USDC_MINT}&reference=${FAKE_REFERENCE}`,
           hotWalletAddress: FAKE_HOT_WALLET,
           amountUsdc,
-          cluster: 'mainnet-beta',
+          cluster: CHECKOUT_CLUSTER,
           expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
         },
       },
@@ -673,10 +684,10 @@ test('a failed check-solana-payment poll keeps watching and ends paid', async ({
         solanaPayment: {
           intentId: 'poll-resilience-test-intent',
           referencePubkey: FAKE_REFERENCE,
-          solanaPayUrl: `solana:${FAKE_HOT_WALLET}?amount=2.31&spl-token=${MAINNET_USDC_MINT}&reference=${FAKE_REFERENCE}`,
+          solanaPayUrl: `solana:${FAKE_HOT_WALLET}?amount=2.31&spl-token=${CHECKOUT_USDC_MINT}&reference=${FAKE_REFERENCE}`,
           hotWalletAddress: FAKE_HOT_WALLET,
           amountUsdc: 2.31,
-          cluster: 'mainnet-beta',
+          cluster: CHECKOUT_CLUSTER,
           expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
         },
       },

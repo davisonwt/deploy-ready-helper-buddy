@@ -129,7 +129,10 @@ test('a gosat/admin on someone else\'s stall: report what they actually get', as
   fixture.stallId = created.stallId; fixture.objectPaths = created.objectPaths;
   const bookId = await createShelfSeedFixture(member.client, member.userId, QA_BOOK);
   await setStallHotspots(member.client, created.stallId, [
-    { id: 'qa-books', kind: 'books', label: 'Books', x: 30, y: 40, w: 40, h: 40, seed_ids: [bookId] },
+    // Narrow enough to sit wholly inside a 390px phone window: the pan strip
+    // is ~1415px wide there, so a 40%-wide box (566px) could never be fully
+    // in view and panHotspotIntoView never reported it clickable.
+    { id: 'qa-books', kind: 'books', label: 'Books', x: 40, y: 40, w: 20, h: 30, seed_ids: [bookId] },
   ]);
 
   // This account OWNS the stall above, so it is tested against a different one

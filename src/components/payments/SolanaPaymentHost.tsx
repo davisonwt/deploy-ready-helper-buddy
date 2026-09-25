@@ -42,7 +42,9 @@ export default function SolanaPaymentHost() {
         <DialogOverlay />
         <DialogPrimitive.Content
           onInteractOutside={(e) => e.preventDefault()}
-          className="fixed inset-0 z-50 flex flex-col bg-background
+          // z-[10101]: above its own DialogOverlay (z-[10100], ui/dialog.tsx)
+          // and above the payment-method dialog still open underneath.
+          className="fixed inset-0 z-[10101] flex flex-col bg-background
             data-[state=open]:animate-in data-[state=closed]:animate-out
             data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0
             sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-sm

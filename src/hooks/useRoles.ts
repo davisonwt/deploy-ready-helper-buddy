@@ -29,9 +29,15 @@ export function useRoles(): UseRolesResult {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Keyed on the id, not the user object: useAuth hands out a new object on
+  // every auth event, and the empty-result refreshSession() below IS an auth
+  // event -- keyed on the object, a member with no roles refreshed about once
+  // a second for as long as the page was open (measured 2026-09-25).
+  const userId = user?.id
+
   const fetchUserRoles = useCallback(async () => {
     // Never throw from hook; collect errors in state
-    if (!user) {
+    if (!userId) {
       setRoles([])
       setLoading(false)
       return
@@ -44,7 +50,7 @@ export function useRoles(): UseRolesResult {
       let { data, error: fetchError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
 
       if (fetchError) {
         setError(fetchError.message)
@@ -69,7 +75,7 @@ export function useRoles(): UseRolesResult {
         const retry = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
         if (!retry.error && (retry.data ?? []).length > 0) {
           data = retry.data
         }
@@ -83,7 +89,7 @@ export function useRoles(): UseRolesResult {
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [userId])
 
   useEffect(() => {
     // Only run on client

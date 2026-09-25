@@ -15,7 +15,7 @@
  * 2026-09-15 bug GlobalLiveSessionOverlay exists to prevent.
  */
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, MessageSquarePlus, Phone, Users, Video, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -85,9 +85,12 @@ function ConversationRow({ c, onOpen, unreadCount }: { c: Conversation; onOpen: 
 
 export default function ConversationsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const openId = searchParams.get('c');
+  // Set by SeedCard's Message button: the exact stall sheet it was opened from.
+  const returnTo = (location.state as { returnTo?: { pathname: string; label?: string; from?: string } } | null)?.returnTo;
 
   const { conversations, loading, error, reload } = useConversations(user?.id);
   const { unreadByRoom, refetch: refetchUnread } = useUnreadMessageCounts(user?.id);
@@ -111,6 +114,12 @@ export default function ConversationsPage() {
   const backToList = () => {
     setCall(null);
     setShowPeople(false);
+    // Back to the stall sheet it came from, replacing this entry (as ChatApp
+    // did) so closing the stall afterwards cannot land on this chat again.
+    if (returnTo?.pathname) {
+      navigate(returnTo.pathname, { replace: true, state: returnTo.from ? { from: returnTo.from } : undefined });
+      return;
+    }
     setSearchParams({}, { replace: false });
   };
 
@@ -121,7 +130,7 @@ export default function ConversationsPage() {
       <div className="flex h-[100dvh] flex-col bg-background">
         <div className="flex items-center gap-2 border-b border-border px-3 py-2">
           <Button variant="ghost" size="sm" onClick={backToList} className="gap-1.5 shrink-0">
-            <ArrowLeft className="h-4 w-4" /> Conversations
+            <ArrowLeft className="h-4 w-4" /> {returnTo?.label ?? 'Conversations'}
           </Button>
           <span className="min-w-0 flex-1 truncate text-sm font-semibold">
             {active?.title ?? 'Conversation'}
@@ -198,7 +207,7 @@ export default function ConversationsPage() {
         )}
 
         <div className="min-h-0 flex-1">
-          <ChatRoom roomId={openId} onBack={backToList} backLabel="Conversations" recordGesture="hold" showToolbar />
+          <ChatRoom roomId={openId} onBack={backToList} backLabel={returnTo?.label ?? 'Conversations'} recordGesture="hold" showToolbar />
         </div>
       </div>
     );

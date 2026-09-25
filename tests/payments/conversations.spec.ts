@@ -12,7 +12,9 @@ import { createClient, type Session } from '@supabase/supabase-js';
  *   - the participants view names who is actually in the room
  *   - a call starts INSIDE a conversation WITHOUT a route change (the
  *     2026-09-15 unmount bug: a navigate here would take the call with it)
- *   - /chatapp and the historical direct rooms are untouched
+ *   - the historical direct rooms are still readable, and the old /chatapp
+ *     links (retired 2026-09-19, fb95ae9d) land on /conversations with the
+ *     same room open
  *
  * At 390x844 and at desktop width.
  *
@@ -37,6 +39,48 @@ function required(name: string): string {
 }
 
 const MOBILE = { width: 390, height: 844 };
+
+// Every conversation this run starts is deleted in afterAll: its messages,
+// participants, the notification it raised, and the sender's chat XP.
+// Until 2026-09-25 each run left one room behind. Needs SUPABASE_ACCESS_TOKEN.
+const createdRooms: string[] = [];
+let pointsBefore: { user_id: string; total_points: number; level: number; points_to_next_level: number }[] = [];
+
+async function sql<T = any>(query: string): Promise<T[]> {
+  const res = await fetch(`https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_REF}/database/query`, {
+    method: 'POST', headers: { Authorization: `Bearer ${required('SUPABASE_ACCESS_TOKEN')}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  const body = await res.json();
+  if (!res.ok || !Array.isArray(body)) throw new Error(`sql failed: ${JSON.stringify(body).slice(0, 300)}`);
+  return body as T[];
+}
+
+test.beforeAll(async () => {
+  pointsBefore = await sql(`select user_id, total_points, level, points_to_next_level from user_points where user_id='${required('TEST_A_USER_ID')}'`);
+});
+
+test.afterAll(async () => {
+  if (createdRooms.length) {
+    const ids = createdRooms.map((r) => `'${r}'`).join(',');
+    await sql(`begin;
+      delete from user_notifications where action_url in (select '/conversations?c=' || x from unnest(array[${ids}]::text[]) x);
+      delete from chat_messages where room_id in (${ids});
+      delete from chat_participants where room_id in (${ids});
+      delete from chat_rooms where id in (${ids});
+      commit;`);
+  }
+  if (pointsBefore.length) {
+    const p = pointsBefore[0];
+    await sql(`update user_points set total_points=${p.total_points}, level=${p.level}, points_to_next_level=${p.points_to_next_level} where user_id='${p.user_id}'`);
+  }
+  const ids = createdRooms.map((r) => `'${r}'`).join(',') || `'00000000-0000-0000-0000-000000000000'`;
+  const [left] = await sql(`select (select count(*) from chat_rooms where id in (${ids}))::int rooms,
+      (select count(*) from chat_messages where room_id in (${ids}))::int messages,
+      (select count(*) from chat_participants where room_id in (${ids}))::int participants`);
+  console.log(`[RESIDUE] conversations: ${createdRooms.length} room(s) created, left: ${JSON.stringify(left)}`);
+  expect([left.rooms, left.messages, left.participants]).toEqual([0, 0, 0]);
+});
 const DESKTOP = { width: 1280, height: 900 };
 
 async function signIn(email: string, password: string): Promise<{ session: Session; userId: string }> {
@@ -98,6 +142,9 @@ test.describe('Conversations — unified list', () => {
     // change -- the page must not have remounted.
     await expect(page.getByTestId('conversation-people')).toBeVisible({ timeout: 15_000 });
     const conversationUrl = page.url();
+    // Recorded as soon as it exists, so a later failure still tears it down.
+    const startedRoom = new URL(conversationUrl).searchParams.get('c');
+    if (startedRoom) createdRooms.push(startedRoom);
     expect(conversationUrl, 'opening a conversation stays on /conversations').toContain('/conversations');
 
     // --- participants view -----------------------------------------------
@@ -154,8 +201,8 @@ test.describe('Conversations — unified list', () => {
   });
 });
 
-test.describe('the old way still works, untouched', () => {
-  test('/chatapp loads and the historical direct rooms are intact', async ({ page }) => {
+test.describe('the old way still reaches the same rooms', () => {
+  test('/chatapp links land on /conversations and the historical direct rooms are intact', async ({ page }) => {
     const aEmail = required('TEST_A_EMAIL');
     const aPassword = required('TEST_A_PASSWORD');
     const a = await signIn(aEmail, aPassword);
@@ -179,8 +226,16 @@ test.describe('the old way still works, untouched', () => {
     await page.setViewportSize(MOBILE);
     await loginAs(page, a.session);
     await page.goto('/chatapp', { waitUntil: 'networkidle' });
-    expect(page.url(), '/chatapp must still load').toContain('/chatapp');
+    expect(new URL(page.url()).pathname, '/chatapp redirects to /conversations').toBe('/conversations');
     await expect(page.locator('body')).not.toContainText('permission denied');
     await expect(page.locator('body')).not.toContainText('Something went wrong');
+
+    // An old deep link keeps its room: ?room=<id> arrives as ?c=<id>.
+    expect(roomIds.length, 'A needs at least one room for the deep-link check').toBeGreaterThan(0);
+    const room = roomIds[0] as string;
+    await page.goto(`/chatapp?room=${room}`, { waitUntil: 'networkidle' });
+    const landed = new URL(page.url());
+    expect(landed.pathname).toBe('/conversations');
+    expect(landed.searchParams.get('c'), 'the same room is open').toBe(room);
   });
 });

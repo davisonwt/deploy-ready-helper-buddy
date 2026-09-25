@@ -206,8 +206,13 @@ test.describe('SeedCard rail: Report, Bestow, Heart (from a stall visit)', () =>
       return route.fallback();
     });
 
-    const reportButton = page.locator('button[aria-label="Report"]').first();
-    await expect(reportButton).toBeVisible({ timeout: 15_000 });
+    // On the compact stall-sheet card, Report lives in the "..." More popover
+    // (fixed 6-slot rail since 5eacc4cf, 2026-09-12), not on the rail itself.
+    const more = page.locator('button[aria-label="More"]').filter({ visible: true }).first();
+    await expect(more).toBeVisible({ timeout: 15_000 });
+    await more.click();
+    const reportButton = page.locator('[data-radix-popper-content-wrapper]').getByRole('button', { name: 'Report' });
+    await expect(reportButton).toBeVisible({ timeout: 5_000 });
     await reportButton.click();
 
     // The originally-suspected failure mode (dialog opens in state but
@@ -231,12 +236,19 @@ test.describe('SeedCard rail: Report, Bestow, Heart (from a stall visit)', () =>
     await expect(dialog).toHaveCount(0, { timeout: 5_000 }); // closed on success
   });
 
-  test('Bestow opens ConfirmBestowModal above the sheet with a provider picker, and confirming reaches create-gift-bestowal-order', async ({ page }) => {
+  test('Bestow opens ConfirmBestowModal above the sheet with a provider picker, and confirming buys the seed (create-basket-bestowal-order, no gift)', async ({ page }) => {
     await openMusicHotspot(page);
 
+    // "Bestow & Get This Seed" is a purchase since cce1719f (2026-09-25): a
+    // single-item basket order. A gift call here is the bug it fixed.
+    let giftCalled = false;
+    await page.route(`${SUPABASE_URL}/functions/v1/create-gift-bestowal-order`, (route) => {
+      giftCalled = true;
+      return route.fulfill({ status: 500, json: { error: 'a purchase must not go through the gift path' } });
+    });
     let capturedBody: Record<string, unknown> | null = null;
     let capturedAuthHeader: string | null = null;
-    await page.route(`${SUPABASE_URL}/functions/v1/create-gift-bestowal-order`, (route) => {
+    await page.route(`${SUPABASE_URL}/functions/v1/create-basket-bestowal-order`, (route) => {
       capturedAuthHeader = route.request().headers()['authorization'] ?? null;
       capturedBody = route.request().postDataJSON() as Record<string, unknown>;
       route.fulfill({
@@ -268,13 +280,12 @@ test.describe('SeedCard rail: Report, Bestow, Heart (from a stall visit)', () =>
     await expect(confirmButton).toBeVisible();
     await confirmButton.click();
 
-    await expect.poll(() => capturedBody, { timeout: 10_000, message: 'create-gift-bestowal-order was never called' }).not.toBeNull();
+    await expect.poll(() => capturedBody, { timeout: 10_000, message: 'create-basket-bestowal-order was never called' }).not.toBeNull();
     expect(capturedAuthHeader, 'Authorization header must be sent').toMatch(/^Bearer /);
     const body = capturedBody as unknown as Record<string, unknown>;
-    expect(body.recipientId).toBe(AMBER_USER_ID);
-    expect(body.contextKind).toBe('chat_tip');
-    expect(body.contextId).toBe(TRACK_ID);
-    expect(body.amount).toBe(2); // the track's own price -- Heart's own amount is covered below
+    expect(body.items, 'buys exactly this seed, once').toEqual([{ productId: TRACK_ID, qty: 1 }]);
+    expect(body.amount, 'the server prices it; the client sends no amount').toBeUndefined();
+    expect(giftCalled, 'no gift row for a purchase').toBe(false);
   });
 
   test('Heart opens the 10c/50c/$1/$5/$10 picker and a chosen amount reaches create-gift-bestowal-order as that amount', async ({ page }) => {
@@ -317,14 +328,14 @@ test.describe('SeedCard rail: Report, Bestow, Heart (from a stall visit)', () =>
     expect(body.contextKind).toBe('chat_tip');
   });
 
-  test('Bestow still completes from an expired-session start -- reaches create-gift-bestowal-order with a refreshed token', async ({ page }) => {
+  test('Bestow still completes from an expired-session start -- reaches create-basket-bestowal-order with a refreshed token', async ({ page }) => {
     const FRESH_TOKEN = fakeJwt({ sub: CALLER_USER_ID, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 });
     await stubRefreshEndpoint(page, FRESH_TOKEN);
     await openMusicHotspot(page, stubExpiredAuthSession);
 
     let capturedAuthHeader: string | null = null;
     let requestSeen = false;
-    await page.route(`${SUPABASE_URL}/functions/v1/create-gift-bestowal-order`, (route) => {
+    await page.route(`${SUPABASE_URL}/functions/v1/create-basket-bestowal-order`, (route) => {
       requestSeen = true;
       capturedAuthHeader = route.request().headers()['authorization'] ?? null;
       route.fulfill({
@@ -349,7 +360,7 @@ test.describe('SeedCard rail: Report, Bestow, Heart (from a stall visit)', () =>
     await expect(dialog).toBeVisible({ timeout: 5_000 });
     await dialog.getByRole('button', { name: /Bestow \$/ }).click();
 
-    await expect.poll(() => requestSeen, { timeout: 15_000, message: 'create-gift-bestowal-order was never called -- the expired session was never refreshed' }).toBe(true);
+    await expect.poll(() => requestSeen, { timeout: 15_000, message: 'create-basket-bestowal-order was never called -- the expired session was never refreshed' }).toBe(true);
     expect(capturedAuthHeader, 'must send the REFRESHED token, not the expired one').toBe(`Bearer ${FRESH_TOKEN}`);
     await expect(page.getByText('Bestowal failed', { exact: false })).toHaveCount(0);
   });

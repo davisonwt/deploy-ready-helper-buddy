@@ -217,7 +217,8 @@ function SearchRedirect() {
 function LegacyChatRedirect() {
   const location = useLocation();
   const room = new URLSearchParams(location.search).get('room');
-  return <Navigate to={room ? `/conversations?c=${encodeURIComponent(room)}` : '/conversations'} replace />;
+  // state carries SeedCard's returnTo ("Back to X's stall") across the redirect.
+  return <Navigate to={room ? `/conversations?c=${encodeURIComponent(room)}` : '/conversations'} replace state={location.state} />;
 }
 
 function LegacyChatRoomIdRedirect() {
