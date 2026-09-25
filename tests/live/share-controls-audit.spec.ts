@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { panHotspotIntoView } from './support/interior';
 
 /**
  * Every share affordance, clicked -- as owner and as non-owner, at phone and
@@ -79,12 +80,15 @@ async function closeAnyDialog(page: Page) {
 async function openShelfMenu(page: Page): Promise<number> {
   await page.goto(STALL, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(9000);
-  const shelf = page.locator('button[aria-label="My Books"], button[aria-label="Books"]');
+  // On a phone the interior is a horizontal pan strip, and the Books box
+  // can sit off-screen (x -309 at 390px on 2026-09-25) -- "visible" to
+  // isVisible() but not clickable. Pan it into the window first.
   for (let attempt = 0; attempt < 5; attempt++) {
-    const c = await shelf.count();
-    for (let i = 0; i < c; i++) {
-      if (await shelf.nth(i).isVisible()) {
-        await shelf.nth(i).click({ force: true });
+    for (const label of ['My Books', 'Books']) {
+      const pan = await panHotspotIntoView(page, label, 0);
+      if (pan.found && pan.inWindow) {
+        await page.waitForTimeout(500);
+        await page.locator(`button[aria-label="${label}"]`).filter({ visible: true }).first().click();
         await page.waitForTimeout(5000);
         const more = page.locator('button[aria-label="More"]');
         const n = await more.count();

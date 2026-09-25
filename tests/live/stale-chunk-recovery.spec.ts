@@ -129,6 +129,11 @@ test.describe.serial('Stale chunk recovery', () => {
     console.log('[3 broken deploy] blocked=%d loads=%d %s', hand.blocked, loads, JSON.stringify(text));
     // One reload, then it gives up and shows the error rather than cycling.
     expect(loads, 'it reloaded more than once: that is a loop').toBeLessThanOrEqual(2);
-    expect(text, 'it should surface the failure once it cannot recover').toMatch(/Something went wrong/i);
+    // Same card reload-guard asserts (a4a3b4df): a chunk that still 404s
+    // after the one reload is a deploy the tab can't reach, not a crash, and
+    // ErrorBoundary says so rather than showing "Something went wrong".
+    expect(text, 'it should say the app updated, once it cannot recover').toMatch(/S2G has updated/i);
+    expect(text, 'a stale chunk must never be dressed up as a crash').not.toMatch(/Something went wrong/i);
+    expect(text, 'the member needs the one control that fixes it').toMatch(/Tap to reload/i);
   });
 });

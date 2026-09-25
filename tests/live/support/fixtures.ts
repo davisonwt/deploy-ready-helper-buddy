@@ -618,7 +618,16 @@ export async function createStallFixture(
     })
     .select('id')
     .single();
-  if (error || !data) throw new Error(`[fixtures] could not create stall ${name}: ${error?.message}`);
+  if (error || !data) {
+    // Never strand the images just uploaded: a failed insert (e.g. two
+    // specs racing for this member's one stall) otherwise leaves them for
+    // another spec's residue check to trip over.
+    const { error: rmErr } = await client.storage.from('stalls').remove([interiorObjectPath, frontObjectPath]);
+    throw new Error(
+      `[fixtures] could not create stall ${name}: ${error?.message}` +
+      (rmErr ? ` (and its two uploaded images were NOT removed: ${rmErr.message})` : ' (its two uploaded images were removed)'),
+    );
+  }
   console.log(`[SETUP] stall fixture "${name}" -> ${data.id}`);
   return { stallId: data.id as string, objectPaths: [interiorObjectPath, frontObjectPath] };
 }

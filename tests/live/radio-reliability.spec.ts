@@ -50,6 +50,14 @@ async function login(page: Page) {
  *  DOM (doesn't need to be, to play) -- document.querySelector('audio')
  *  finds nothing. window.__radioDebug (radioPlayback.ts) is the only way
  *  to read ground-truth playback state from outside the module. */
+async function readAudioCurrentTime(page: Page): Promise<number | null> {
+  return page.evaluate(() => {
+    const dbg = (window as unknown as { __radioDebug?: { getAudio: () => HTMLAudioElement | null } }).__radioDebug;
+    const el = dbg?.getAudio();
+    return el ? el.currentTime : null;
+  });
+}
+
 async function readAudioPaused(page: Page): Promise<boolean | null> {
   return page.evaluate(() => {
     const dbg = (window as unknown as { __radioDebug?: { getAudio: () => HTMLAudioElement | null } }).__radioDebug;
@@ -293,17 +301,33 @@ test.describe.serial('Radio reliability -- real listening conditions', () => {
       offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1,
     });
 
-    // Give the retry/backoff loop room to notice and recover.
-    await expect
-      .poll(() => {
-        const after = logs.slice(logs.findIndex((l) => l.includes('killing network')));
-        return after.some((l) => l.includes('event: playing') || l.includes('play() resolved successfully'));
-      }, { timeout: 60_000, message: 'no recovery logged within 60s of network restore' })
-      .toBe(true);
-
-    console.log('----- RADIO RELIABILITY EVIDENCE (network kill mid-track) -----');
-    logs.forEach((l) => console.log(l));
-    console.log('----- END EVIDENCE -----');
+    // Recovery is audio that keeps playing, not a particular log line: a
+    // whole-file signed URL is usually buffered well past a 10s outage, so
+    // the element may never stall and never emit a fresh "playing" event
+    // (2026-09-25: exactly that -- no error, no stall, no pause, and this
+    // assertion used to fail on it). Sample currentTime once a second and
+    // require 5s of forward progress within 60s. Counting increases between
+    // samples, not distance from one baseline, keeps a legitimate retune
+    // to a new track's offset from reading as a stall or as progress.
+    let advancedSeconds = 0;
+    let prev: number | null = null;
+    const samples: string[] = [];
+    try {
+      const deadline = Date.now() + 60_000;
+      while (Date.now() < deadline && advancedSeconds < 5) {
+        await page.waitForTimeout(1000);
+        const t = await readAudioCurrentTime(page);
+        samples.push(t === null ? 'null' : t.toFixed(1));
+        if (t !== null && prev !== null && t > prev + 0.5) advancedSeconds++;
+        if (t !== null) prev = t;
+      }
+    } finally {
+      console.log('----- RADIO RELIABILITY EVIDENCE (network kill mid-track) -----');
+      logs.forEach((l) => console.log(l));
+      console.log(`[harness] currentTime samples after restore: ${samples.join(', ')}`);
+      console.log('----- END EVIDENCE -----');
+    }
+    expect(advancedSeconds, 'audio did not keep advancing within 60s of the network returning').toBeGreaterThanOrEqual(5);
 
     const finalPaused = await readAudioPaused(page);
     expect(finalPaused).toBe(false);
