@@ -146,7 +146,7 @@ export default function AlbumTracksPanel({ albumId, albumTitle, open, onOpenChan
   };
 
   const list = (
-    <div data-testid="album-tracks" className="text-sm">
+    <div data-testid="album-tracks" className="flex h-full max-h-[inherit] flex-col text-sm">
       <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-amber-500/15">
         <p className="font-serif text-amber-100 truncate">{albumTitle}</p>
         <button type="button" onClick={() => onOpenChange(false)} aria-label="Close track list" className="p-1 text-amber-100/70 hover:text-amber-100">
@@ -158,7 +158,7 @@ export default function AlbumTracksPanel({ albumId, albumTitle, open, onOpenChan
         <div className="flex items-center gap-2 px-3 py-4 text-amber-100/70"><Loader2 className="h-4 w-4 animate-spin" /> Loading tracks…</div>
       )}
       {tracks && (
-        <ol className="max-h-[55vh] overflow-y-auto py-1">
+        <ol className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1 max-h-[55vh]">
           {tracks.map((t) => {
             const isPlaying = playing === t.index;
             const isLoading = loadingIdx === t.index;
@@ -230,7 +230,11 @@ export default function AlbumTracksPanel({ albumId, albumTitle, open, onOpenChan
       <PopoverContent
         align="start"
         sideOffset={6}
-        className="z-[10080] w-[22rem] p-0 bg-[#180f08] border-amber-500/20"
+        collisionPadding={8}
+        // Never taller than the room Radix measures on the chosen side, so
+        // the last rows can't sit off-screen where nothing can scroll them in.
+        style={{ maxHeight: 'var(--radix-popover-content-available-height)' }}
+        className="z-[10080] flex w-[22rem] flex-col overflow-hidden p-0 bg-[#180f08] border-amber-500/20"
         onClick={(e) => e.stopPropagation()}
       >
         {list}
