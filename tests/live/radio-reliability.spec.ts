@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { asUser, createStallFixture, deleteStallFixture } from './support/fixtures';
 
 /**
  * Verifies the Grove Station radio fix against real-listening conditions,
@@ -126,6 +127,28 @@ function suspiciouslyFastPlayingGaps(lines: string[]): number {
 }
 
 test.describe.serial('Radio reliability -- real listening conditions', () => {
+  // The Cockpit radio button lives in the dashboard's bottom bar, which
+  // only renders for a member with a published stall (DashboardPage's
+  // empty-plot branch has none). davisontest1 has had no stall since the
+  // 2026-09-21 teardown, so this run makes a throwaway one and removes it.
+  let stall: { client: Awaited<ReturnType<typeof asUser>>['client']; stallId: string; objectPaths: string[] } | null = null;
+
+  test.beforeAll(async () => {
+    const { client, userId } = await asUser(EMAIL, PASS, 'TEST_A (davisontest1)');
+    const created = await createStallFixture(client, userId, `QA radio-reliability ${Date.now()}`);
+    stall = { client, ...created };
+  });
+
+  test.afterAll(async () => {
+    if (!stall) return;
+    await deleteStallFixture(stall.client, stall.stallId);
+    const { error } = await stall.client.storage.from('stalls').remove(stall.objectPaths);
+    if (error) throw new Error(`[TEARDOWN] stall objects not removed: ${error.message}`);
+    const { data: left } = await stall.client.storage.from('stalls').list(stall.objectPaths[0].split('/')[0], { search: 'qa-' });
+    console.log(`[RESIDUE] stall=${stall.stallId} gone; qa stall objects left: ${(left ?? []).length}`);
+    expect(left ?? []).toHaveLength(0);
+  });
+
   test.skip(!EMAIL || !PASS, 'TEST_A_EMAIL/PASSWORD required in .env.test.');
 
   test('1. long desktop session: 10+ transitions over 30+ real minutes, backgrounded for part of it', async ({ page, context }) => {

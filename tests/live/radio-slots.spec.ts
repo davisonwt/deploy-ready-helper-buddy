@@ -105,6 +105,18 @@ function utcLabel(d: Date): string {
   return d.toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 }
 
+/** Direct rooms between Grove Station and the DJ, as the DJ sees them. */
+async function groveStationRoomIds(): Promise<string[]> {
+  const { data: mine, error } = await dj.client.from('chat_participants').select('room_id').eq('user_id', dj.userId);
+  if (error) throw new Error(`could not read the DJ's rooms: ${error.message}`);
+  const ids = (mine ?? []).map((r: { room_id: string }) => r.room_id);
+  if (ids.length === 0) return [];
+  const { data: shared, error: e2 } = await dj.client.from('chat_participants').select('room_id, chat_rooms!inner(room_type)')
+    .eq('user_id', GROVE_STATION_USER_ID).eq('chat_rooms.room_type', 'direct').in('room_id', ids);
+  if (e2) throw new Error(`could not read shared rooms: ${e2.message}`);
+  return [...new Set((shared ?? []).map((r: { room_id: string }) => r.room_id))];
+}
+
 async function segmentsInDb(slotId: string): Promise<Array<{ id: string; position: number; kind: string }>> {
   const { data, error } = await dj.client.from('radio_rundown_segments')
     .select('id, position, kind').eq('slot_id', slotId).order('position', { ascending: true });
@@ -151,18 +163,9 @@ test.describe.serial('Grove Station radio slots (member path)', () => {
     dj = await asUser(DJ_E, DJ_P, 'TEST_A (davisontest1)');
     staff = await asUser(STAFF_E, STAFF_P, 'TEST_GOSAT');
 
-    const { data: rooms } = await staff.client.from('chat_participants')
-      .select('room_id, chat_rooms!inner(room_type)')
-      .eq('user_id', dj.userId)
-      .eq('chat_rooms.room_type', 'direct');
-    const roomIds = (rooms ?? []).map((r: { room_id: string }) => r.room_id);
-    if (roomIds.length === 0) {
-      roomExistedBefore = false;
-    } else {
-      const { data: shared } = await staff.client.from('chat_participants').select('room_id')
-        .eq('user_id', GROVE_STATION_USER_ID).in('room_id', roomIds);
-      roomExistedBefore = (shared ?? []).length > 0;
-    }
+    // Read as the DJ: chat RLS only shows a room to its members, so the
+    // gosat account cannot see this room at all.
+    roomExistedBefore = (await groveStationRoomIds()).length > 0;
 
     const stall = await createStallFixture(dj.client, dj.userId, `${RUN} stall`);
     stallId = stall.stallId;
@@ -202,14 +205,18 @@ test.describe.serial('Grove Station radio slots (member path)', () => {
         const { error } = await staff.client.from('chat_messages').delete().in('id', noticeIds);
         if (error) problems.push(`delete notices: ${error.message}`);
       }
-      if (!roomExistedBefore) {
-        const roomIds = [...new Set((notices ?? []).map((n: { room_id: string }) => n.room_id))];
-        for (const roomId of roomIds) {
-          const { count } = await staff.client.from('chat_messages').select('id', { count: 'exact', head: true }).eq('room_id', roomId);
-          if ((count ?? 0) > 0) { problems.push(`room ${roomId} has other messages; left in place`); continue; }
-          const { error } = await staff.client.from('chat_rooms').delete().eq('id', roomId);
-          if (error) problems.push(`delete room ${roomId}: ${error.message}`);
-        }
+    }
+    // The notices open a Grove Station <-> DJ direct room. Direct rooms can
+    // only be deleted by the service role (chat_rooms_delete excludes
+    // 'direct' for members, and RLS hides the room from gosat), so a room
+    // this run created cannot be torn down from here. Fail loudly with the
+    // exact removal rather than leave it silently.
+    if (!roomExistedBefore) {
+      for (const roomId of await groveStationRoomIds()) {
+        problems.push(
+          `direct room ${roomId} (Grove Station <-> davisontest1) was created by this run and members cannot delete it. ` +
+          `Remove it with the service role: delete from chat_participants where room_id='${roomId}'; delete from chat_rooms where id='${roomId}';`,
+        );
       }
     }
 
@@ -239,10 +246,11 @@ test.describe.serial('Grove Station radio slots (member path)', () => {
     residue.notices = noticeCount ?? -1;
     const { count: stallCount } = await dj.client.from('stalls').select('id', { count: 'exact', head: true }).eq('user_id', dj.userId);
     residue.stalls = stallCount ?? -1;
+    residue.newRooms = roomExistedBefore ? 0 : (await groveStationRoomIds()).length;
     console.log(`[RESIDUE] ${JSON.stringify(residue)} qaSlots=${JSON.stringify(qaSlotIds)}`);
     if (problems.length) console.log(`[TEARDOWN PROBLEMS] ${problems.join(' | ')}`);
     expect(problems, 'teardown problems').toEqual([]);
-    expect(residue).toEqual({ slots: 0, segments: 0, bucketObjects: 0, notices: 0, stalls: 0 });
+    expect(residue).toEqual({ slots: 0, segments: 0, bucketObjects: 0, notices: 0, stalls: 0, newRooms: 0 });
   });
 
   // ---------------------------------------------------------------- tests
@@ -310,7 +318,7 @@ test.describe.serial('Grove Station radio slots (member path)', () => {
     await expect(top).toBeVisible({ timeout: 45000 });
     await page.screenshot({ path: `${SHOTS}/mobile-grove-station-top.png` });
     await top.click();
-    await expect(page.getByTestId('radio-slot-explainer').or(page.getByText('Pre-recorded shows — live hosting coming soon'))).toBeVisible({ timeout: 30000 });
+    await expect(page.getByTestId('radio-slot-explainer').or(page.getByText('Pre-recorded shows — live hosting coming soon')).first()).toBeVisible({ timeout: 30000 });
     await page.screenshot({ path: `${SHOTS}/mobile-schedule.png` });
   });
 
