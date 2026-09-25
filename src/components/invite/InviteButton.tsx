@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { UserPlus } from 'lucide-react';
 import { useMyInviteLink } from '@/hooks/useMyInviteLink';
@@ -19,8 +19,22 @@ function prefersNativeShare(): boolean {
  */
 export function useShareInvite() {
   const { url, loading } = useMyInviteLink();
+  // A tap in the first seconds after the page opens lands while the code is
+  // still loading. Wait briefly for it rather than asking them to tap
+  // again: 4s stays inside the ~5s a browser keeps a tap's permission to
+  // share or copy.
+  const urlRef = useRef(url);
+  urlRef.current = url;
+  const loadingRef = useRef(loading);
+  loadingRef.current = loading;
 
   const share = async () => {
+    const started = Date.now();
+    while (!urlRef.current && loadingRef.current && Date.now() - started < 4000) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    const url = urlRef.current;
+    const loading = loadingRef.current;
     if (!url) {
       toast.error(loading ? 'Your invite link is still loading. Try again in a moment.' : "We couldn't load your invite link. Refresh the page and try again.");
       return;
