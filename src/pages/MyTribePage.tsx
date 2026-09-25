@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useContainImageRect } from '@/hooks/useContainImageRect';
 import { TRIBE_FRONT_URL, TRIBE_INTERIOR_URL, TRIBE_BOARD, TRIBE_LOWER_BOARD, TRIBE_HOTSPOTS, type TribeHotspotId } from '@/lib/tribe/tribeLayout';
 import TribeInviteSheetContent from '@/components/tribe/TribeInviteSheetContent';
+import InviteButton from '@/components/invite/InviteButton';
 import TribeFollowingSheetContent from '@/components/tribe/TribeFollowingSheetContent';
 import TribeRosterPanel from '@/components/tribe/TribeRosterPanel';
 
@@ -242,12 +243,19 @@ export default function MyTribePage() {
     </button>
   );
 
+  // Visible on both the gate and the village, not only inside the Invite
+  // hotspot's sheet: sharing your link is the one thing this page is for.
+  const invitePill = (
+    <InviteButton className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg hover:bg-emerald-500 transition-colors whitespace-nowrap" />
+  );
+
   if (!entered) {
     const boardPxWidth = frontRect ? (TRIBE_BOARD.w / 100) * frontRect.width : 0;
     const lowerBoardPxWidth = frontRect ? (TRIBE_LOWER_BOARD.w / 100) * frontRect.width : 0;
     return (
       <div className="fixed inset-0 z-[9999] bg-black">
         {backLink}
+        {invitePill}
         <button
           type="button"
           onClick={() => setEntered(true)}
@@ -334,6 +342,7 @@ export default function MyTribePage() {
       </div>
 
       {backLink}
+      {invitePill}
       <button
         type="button"
         onClick={() => setEntered(false)}

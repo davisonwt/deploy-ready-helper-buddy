@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useReferralCode } from "@/hooks/useReferralCode";
 import { supabase } from "@/integrations/supabase/client";
-import { burnReferralCode } from "@/lib/referral";
+import { useMyInviteLink } from "@/hooks/useMyInviteLink";
 import { formatAppDate } from "@/lib/dates";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,11 @@ import SignedImg from "@/components/media/SignedImg";
 export default function TribeInviteSheetContent() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { code, loading: codeLoading } = useReferralCode();
+  const { code, loading: referralLoading } = useReferralCode();
+  // The same single link every "Invite people" control shares: their stall
+  // when they have one, a join page naming them when they don't.
+  const { url: myInviteUrl, loading: linkLoading } = useMyInviteLink();
+  const codeLoading = referralLoading || linkLoading;
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const [stats, setStats] = useState({ total: 0, completed: 0 });
   const [tribe, setTribe] = useState<any[]>([]);
@@ -35,10 +39,7 @@ export default function TribeInviteSheetContent() {
   // from the member existing.
   const [stallUsernames, setStallUsernames] = useState<Map<string, string>>(new Map());
 
-  const inviteOrigin = (typeof window !== "undefined" && /lovable(project)?\.(app|com)|localhost|127\.0\.0\.1/.test(window.location.hostname))
-    ? "https://sow2growapp.com"
-    : (typeof window !== "undefined" ? window.location.origin : "https://sow2growapp.com");
-  const inviteUrl = code ? burnReferralCode(`${inviteOrigin}/register`, code) : "";
+  const inviteUrl = myInviteUrl ?? "";
   const inviteText = code
     ? `🌱 You're invited to join my tribe on Sow2Grow — a global tribal marketplace where every seed grows together.\n\nUse my invitation code: ${code}\nRegister here: ${inviteUrl}\n\n(When you sign up from this link, you automatically join my tribe forever.)`
     : "";

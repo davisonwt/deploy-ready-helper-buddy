@@ -62,14 +62,29 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
-function renderHtml(opts: { title: string; description: string; image: string | null; canonicalPath: string }): string {
-  const { title, description, image, canonicalPath } = opts;
+// The invite card for a member with no open stall: the site's own icon,
+// served at its real size, so the dimension tags stay true.
+const SITE_ICON = { url: `${SITE_URL}/apple-touch-icon.png`, width: 180, height: 180, type: 'image/png' };
+const SITE_DESCRIPTION = 'Sow2Grow is a global tribal marketplace where sowers plant seeds, bestowers fund growth, and orchards turn community support into sustainable impact.';
+
+function renderHtml(opts: {
+  title: string; description: string; image: string | null; canonicalPath: string;
+  fixedImage?: { url: string; width: number; height: number; type: string };
+}): string {
+  const { title, description, image, canonicalPath, fixedImage } = opts;
   const canonicalUrl = `${SITE_URL}${canonicalPath}`;
   const t = escapeHtml(title);
   const pageTitle = title === 'Sow2Grow' ? 'Sow2Grow' : `${t} — Sow2Grow`;
   const d = escapeHtml(description);
   const imageUrl = image ? crawlerImageUrl(image) : null;
-  const imageTags = imageUrl
+  const imageTags = fixedImage
+    ? `
+    <meta property="og:image" content="${escapeHtml(fixedImage.url)}">
+    <meta property="og:image:width" content="${fixedImage.width}">
+    <meta property="og:image:height" content="${fixedImage.height}">
+    <meta property="og:image:type" content="${fixedImage.type}">
+    <meta name="twitter:image" content="${escapeHtml(fixedImage.url)}">`
+    : imageUrl
     ? `
     <meta property="og:image" content="${escapeHtml(imageUrl)}">
     <meta property="og:image:width" content="${OG_IMAGE_WIDTH}">
@@ -89,7 +104,7 @@ function renderHtml(opts: { title: string; description: string; image: string | 
 <meta property="og:description" content="${d}">
 <meta property="og:url" content="${canonicalUrl}">
 <meta property="og:site_name" content="Sow2Grow">${imageTags}
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="${fixedImage ? 'summary' : 'summary_large_image'}">
 <meta name="twitter:title" content="${t}">
 <meta name="twitter:description" content="${d}">
 <meta http-equiv="refresh" content="0; url=${canonicalPath}">
@@ -119,8 +134,35 @@ export default async function handler(req: any, res: any) {
 
   if (!username) return fallback();
 
+  const headers = { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}`, 'content-type': 'application/json' };
+
+  // No open stall: the link is still that member's invite
+  // (src/lib/invite/inviteLink.ts), and the app shows a join page naming
+  // them -- the preview says the same.
+  const invite = async () => {
+    try {
+      const profRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/profiles_public?select=display_name,first_name,username&username=eq.${encodeURIComponent(username)}&limit=1`,
+        { headers },
+      );
+      const profs = profRes.ok ? await profRes.json() : [];
+      const p = Array.isArray(profs) ? profs[0] : null;
+      const name = p ? (p.display_name?.trim() || p.first_name?.trim() || p.username?.trim() || null) : null;
+      if (!name) return fallback();
+      res.setHeader('content-type', 'text/html; charset=utf-8');
+      res.status(200).send(renderHtml({
+        title: `${name} invited you to Sow2Grow`,
+        description: SITE_DESCRIPTION,
+        image: null,
+        fixedImage: SITE_ICON,
+        canonicalPath,
+      }));
+    } catch {
+      fallback();
+    }
+  };
+
   try {
-    const headers = { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}`, 'content-type': 'application/json' };
 
     const ownerRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_stall_owner_id_by_username`, {
       method: 'POST',
@@ -128,7 +170,7 @@ export default async function handler(req: any, res: any) {
       body: JSON.stringify({ _username: username }),
     });
     const ownerId = ownerRes.ok ? await ownerRes.json() : null;
-    if (!ownerId || typeof ownerId !== 'string') return fallback();
+    if (!ownerId || typeof ownerId !== 'string') return invite();
 
     const stallRes = await fetch(
       `${SUPABASE_URL}/rest/v1/stalls?select=name,tagline,front_image_path,published&user_id=eq.${encodeURIComponent(ownerId)}&limit=1`,
@@ -136,7 +178,7 @@ export default async function handler(req: any, res: any) {
     );
     const rows = stallRes.ok ? await stallRes.json() : [];
     const stall = Array.isArray(rows) ? rows[0] : null;
-    if (!stall || !stall.published) return fallback();
+    if (!stall || !stall.published) return invite();
 
     res.setHeader('content-type', 'text/html; charset=utf-8');
     res.status(200).send(renderHtml({

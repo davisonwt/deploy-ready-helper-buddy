@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import StallSideNav from './StallSideNav';
 import StallTodayPanel from './StallTodayPanel';
 import { StallDrawer } from './StallInteriorView';
+import InviteButton from '@/components/invite/InviteButton';
 
 // Lazy for the same reason Index.tsx's own SeedCard import is lazy -- keep
 // its ~510kB chunk out of the main bundle for every page load.
@@ -153,6 +154,12 @@ export default function EmptyPlotView() {
     </Link>
   );
 
+  // No stall needed to invite: the link opens a join page until the plot is
+  // built, then the stall itself.
+  const InvitePeopleButton = () => (
+    <InviteButton className="inline-flex items-center gap-2 rounded-full border border-amber-400/60 px-6 py-3 text-base font-semibold text-amber-100 hover:bg-amber-500/10 transition-colors" />
+  );
+
   // The hero *is* the first screen: just the headline, sub line and button,
   // overlaid bottom-left over the full-height plot image on a soft dark
   // gradient -- nothing else competes for that first look.
@@ -161,7 +168,10 @@ export default function EmptyPlotView() {
       <div className="pointer-events-auto max-w-xl space-y-3">
         <h1 className="font-serif text-2xl sm:text-4xl font-bold text-amber-50 drop-shadow">your plot is ready</h1>
         <p className="text-sm sm:text-base text-amber-100/70">three steps and your shop is open</p>
-        <StartBuildingButton />
+        <div className="flex flex-wrap items-center gap-3">
+          <StartBuildingButton />
+          <InvitePeopleButton />
+        </div>
       </div>
     </div>
   );
@@ -173,7 +183,10 @@ export default function EmptyPlotView() {
     <div className="bg-[#0d0805] px-5 py-10 sm:px-10">
       <div className="mx-auto max-w-3xl space-y-6">
         {stepCards}
-        <StartBuildingButton />
+        <div className="flex flex-wrap items-center gap-3">
+          <StartBuildingButton />
+          <InvitePeopleButton />
+        </div>
       </div>
     </div>
   );

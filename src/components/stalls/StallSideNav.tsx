@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, LogOut } from 'lucide-react';
 import { COCKPIT_NAV, COCKPIT_NAV_MORE, SCRIPTURE_STUDY_LINK, type CockpitNavItem } from '@/lib/nav/cockpitNav';
+import InviteButton from '@/components/invite/InviteButton';
 import { useRoles } from '@/hooks/useRoles';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavCounts, type NavCounts } from '@/hooks/useNavCounts';
@@ -198,7 +199,23 @@ export default function StallSideNav({ onNavigate, className = '' }: Props) {
           (src/lib/layout/bottomChrome.ts), which shrinks to exactly 0 on
           a page/context that renders this nav with no bar at all. */}
       <nav className="flex-1 min-h-0 overflow-y-auto py-1" style={BOTTOM_CHROME_PADDING_STYLE}>
-        {COCKPIT_NAV.map((item, i) => renderRow(item, i > 0))}
+        {COCKPIT_NAV.map((item, i) => (
+          item.path === '/my-tribe' ? (
+            <Fragment key={item.label}>
+              {renderRow(item, i > 0)}
+              {/* An action, not a route, so it sits beside the nav data
+                  rather than in COCKPIT_NAV. Every member has a link,
+                  stall or not. */}
+              <InviteButton
+                hideIcon
+                className="flex w-full items-center gap-2.5 px-3 py-2 border-t border-amber-500/10 hover:bg-amber-500/10 transition-colors text-left"
+              >
+                <span className="text-base leading-none w-5 text-center shrink-0" style={{ color: '#22c55e' }}>🤝</span>
+                <span className="truncate font-serif text-[13px] text-amber-100/90 flex-1 min-w-0">Invite people</span>
+              </InviteButton>
+            </Fragment>
+          ) : renderRow(item, i > 0)
+        ))}
 
         {/* Flow v2 step 8: everything KEEP-but-secondary lives behind this
             toggle instead of cluttering the primary list above. */}

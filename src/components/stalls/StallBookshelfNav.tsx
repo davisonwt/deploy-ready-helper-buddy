@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { COCKPIT_NAV, COCKPIT_NAV_MORE, type CockpitNavItem } from '@/lib/nav/cockpitNav';
+import InviteButton from '@/components/invite/InviteButton';
 import { useRoles } from '@/hooks/useRoles';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavCounts, type NavCounts } from '@/hooks/useNavCounts';
@@ -85,6 +86,20 @@ export default function StallBookshelfNav({ onNavigate, className = '' }: Props)
   return (
     <div className={`bg-[#0d0805] ${className}`}>
       <div className="flex items-end gap-2 overflow-x-auto px-4 pt-4 pb-0 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* First on the shelf so a phone sees it without scrolling. An
+            action, not a route, so it is not part of COCKPIT_NAV. */}
+        <InviteButton
+          hideIcon
+          className="relative snap-start shrink-0 w-12 h-40 rounded-t-md border border-emerald-400/40 bg-gradient-to-b from-emerald-800 to-emerald-950 shadow-[0_2px_6px_rgba(0,0,0,0.5)] flex flex-col items-center justify-between py-3 active:scale-95 transition-transform"
+        >
+          <span className="text-base" aria-hidden>🤝</span>
+          <span
+            className="font-serif text-[11px] font-semibold text-emerald-100 tracking-wide whitespace-nowrap"
+            style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+          >
+            Invite people
+          </span>
+        </InviteButton>
         {spines.map((item, i) => {
           const isWanderingHearts = item.path === WANDERING_HEARTS_PATH;
           const isChatApp = item.label === CHAT_APP_LABEL;

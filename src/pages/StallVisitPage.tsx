@@ -9,6 +9,7 @@ import { useStallTemplates } from '@/hooks/useStallTemplates';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import StallInteriorView from '@/components/stalls/StallInteriorView';
 import StallFrontGate from '@/components/stalls/StallFrontGate';
+import InviteJoinView from '@/components/invite/InviteJoinView';
 import { readAndClearPendingWelcomeInviter } from '@/lib/referral';
 import { STALL_TIER_LABEL, resolveStallHotspots, type StallHotspot, type StallTier } from '@/lib/stalls/stallTypes';
 
@@ -44,7 +45,7 @@ export default function StallVisitPage() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const templates = useStallTemplates();
 
   const [stall, setStall] = useState<StallRow | null | undefined>(undefined); // undefined = loading
@@ -162,6 +163,15 @@ export default function StallVisitPage() {
   }
 
   if (!stall || (!stall.published && !isOwner)) {
+    // A member's invite link is /stall/<username>?ref=<code> whether or not
+    // they have a stall (src/lib/invite/inviteLink.ts). With no open stall,
+    // a signed-out visitor gets the join page instead of a dead end.
+    if (!user && authLoading) {
+      return <div className="flex min-h-[50vh] items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+    }
+    if (!user && username) {
+      return <InviteJoinView username={username} refCode={new URLSearchParams(location.search).get('ref')} />;
+    }
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center space-y-3">
         <UserX className="h-10 w-10 mx-auto text-muted-foreground" />
